@@ -139,6 +139,75 @@ export interface Invoice {
   paidAt?: string
 }
 
+export interface BusinessProfile {
+  id: string
+  userId: string
+  // Company Information
+  companyName: string
+  slug: string
+  logoURL?: string
+  coverImageURL?: string
+  industry: string
+  companySize: 'solo' | '2-10' | '11-50' | '50+'
+  yearsInBusiness: number
+  serviceAreas: string[]
+  website?: string
+  linkedIn?: string
+  facebook?: string
+  description: string
+  missionStatement?: string
+  // Verification & Credentials
+  licenseNumber?: string
+  licenseVerified: boolean
+  hasGeneralLiability: boolean
+  hasWorkersComp: boolean
+  backgroundCheckStatus: 'clear' | 'pending' | 'not_completed'
+  bbbRating?: string
+  googleRating?: number
+  certifications?: string[]
+  // Subscription
+  subscriptionTier: 'basic' | 'premium' | 'professional' | 'enterprise'
+  isVerifiedContractor: boolean
+  isEnterprisePartner: boolean
+  // Stats
+  totalJobsPosted: number
+  workersHiredYTD: number
+  avgJobValue?: number
+  successRate?: number
+  avgTimeToFill?: number
+  repeatHireRate?: number
+  // Ratings
+  overallRating: number
+  reviewCount: number
+  ratingBreakdown?: {
+    communication: number
+    quality: number
+    timeliness: number
+    fairPay: number
+  }
+  responseRate?: number
+  // Meta
+  profileCompletionPct: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface BusinessReview {
+  id: string
+  businessId: string
+  workerId: string
+  workerName: string
+  workerAvatar?: string
+  jobTitle: string
+  rating: number
+  communication: number
+  quality: number
+  timeliness: number
+  fairPay: number
+  comment: string
+  createdAt: string
+}
+
 export interface AdminStats {
   totalUsers: number
   totalWorkers: number

@@ -8,7 +8,7 @@ import Button from '@/components/ui/Button'
 import Link from 'next/link'
 import {
   Briefcase, DollarSign, Users, TrendingUp,
-  Plus, Clock, CheckCircle, Eye
+  Plus, Clock, CheckCircle, Eye, Building2, Shield, Award,
 } from 'lucide-react'
 import { formatCurrency, formatRelativeDate, STATUS_LABELS } from '@/lib/utils'
 
@@ -130,6 +130,45 @@ export default function EmployerDashboardPage() {
 
             {/* Sidebar */}
             <div className="space-y-4">
+              {/* Business Profile Card */}
+              <Card className="border-primary-200 dark:border-primary-800 bg-primary-50/50 dark:bg-primary-900/10">
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Building2 className="h-4 w-4 text-primary-600" />
+                    <CardTitle>Business Profile</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                    Set up your professional business profile so workers and enterprises can find and trust you.
+                  </p>
+                  <div className="flex flex-wrap gap-1.5 mb-3">
+                    <span className="inline-flex items-center gap-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded-full text-xs">
+                      <Shield className="h-3 w-3 text-primary-500" />
+                      Verified Contractor
+                    </span>
+                    <span className="inline-flex items-center gap-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded-full text-xs">
+                      <Award className="h-3 w-3 text-purple-500" />
+                      Enterprise Partner
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    <Link href="/dashboard/business/profile">
+                      <Button variant="primary" size="sm" className="w-full justify-start">
+                        <Building2 className="h-4 w-4" />
+                        Edit Business Profile
+                      </Button>
+                    </Link>
+                    <Link href="/dashboard/business/settings">
+                      <Button variant="outline" size="sm" className="w-full justify-start">
+                        <Award className="h-4 w-4" />
+                        Subscription & Verification
+                      </Button>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+
               <Card>
                 <CardHeader>
                   <div className="flex items-center gap-2">
