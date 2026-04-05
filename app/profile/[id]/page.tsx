@@ -1,4 +1,3 @@
-import { useParams } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import Button from '@/components/ui/Button'
@@ -8,7 +7,6 @@ import { ArrowLeft, Star, CheckCircle, MapPin, Briefcase, MessageSquare } from '
 import { getInitials } from '@/lib/utils'
 
 export default function UserProfilePage({ params }: { params: { id: string } }) {
-  // In a real app, fetch user data based on params.id
   const userId = params.id
 
   return (
@@ -16,7 +14,7 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
       <Navbar />
       <main className="flex-1">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <Link href="javascript:history.back()" className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 mb-6 text-sm">
+          <Link href="/workers" className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 mb-6 text-sm">
             <ArrowLeft className="h-4 w-4" />
             Back
           </Link>
