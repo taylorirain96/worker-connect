@@ -22,6 +22,7 @@ import {
   BarChart2,
 } from 'lucide-react'
 import type { BusinessProfile, BusinessReview } from '@/types'
+import { TrustBadgeList, TrustScoreBar } from '@/components/business/TrustBadge'
 
 // Mock data — replace with Firestore fetch once DB is connected
 const MOCK_BUSINESSES: Record<string, BusinessProfile> = {
@@ -120,6 +121,17 @@ const MOCK_REVIEWS: BusinessReview[] = [
   },
 ]
 
+// Compute trust verification count and score from BusinessProfile fields
+function computeProfileVerification(biz: BusinessProfile): { verifiedCount: number; trustScore: number } {
+  let verifiedCount = 0
+  if (biz.licenseVerified) verifiedCount++
+  if (biz.hasGeneralLiability || biz.hasWorkersComp) verifiedCount++
+  if (biz.backgroundCheckStatus === 'clear') verifiedCount++
+  if (biz.bbbRating || biz.googleRating) verifiedCount++
+  if (biz.certifications && biz.certifications.length > 0) verifiedCount++
+  return { verifiedCount, trustScore: verifiedCount * 20 }
+}
+
 function StarRating({ value, size = 'sm' }: { value: number; size?: 'sm' | 'md' }) {
   const cls = size === 'md' ? 'h-5 w-5' : 'h-4 w-4'
   return (
@@ -179,6 +191,7 @@ const companySizeLabels: Record<string, string> = {
 
 export default function BusinessProfilePage({ params }: { params: { slug: string } }) {
   const biz = MOCK_BUSINESSES[params.slug]
+  const { verifiedCount, trustScore } = biz ? computeProfileVerification(biz) : { verifiedCount: 0, trustScore: 0 }
 
   if (!biz) {
     return (
@@ -233,16 +246,15 @@ export default function BusinessProfilePage({ params }: { params: { slug: string
                       Verified
                     </span>
                   )}
-                  {biz.isVerifiedContractor && (
-                    <span className="inline-flex items-center gap-1 bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400 px-2 py-0.5 rounded-full text-xs font-semibold">
-                      <Shield className="h-3 w-3" />
-                      Verified Contractor
-                    </span>
-                  )}
                   <SubscriptionBadge tier={biz.subscriptionTier} isEnterprise={biz.isEnterprisePartner} />
                 </div>
 
                 <p className="text-gray-600 dark:text-gray-400 text-sm font-medium">{biz.industry}</p>
+
+                {/* Trust badges */}
+                <div className="flex flex-wrap items-center gap-2 mt-2">
+                  <TrustBadgeList verifiedCount={verifiedCount} />
+                </div>
 
                 <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-gray-500 dark:text-gray-400">
                   <span className="flex items-center gap-1">
@@ -448,6 +460,18 @@ export default function BusinessProfilePage({ params }: { params: { slug: string
                   </div>
                 </CardHeader>
                 <CardContent>
+                  {/* Trust score */}
+                  <div className="mb-4 pb-4 border-b border-gray-100 dark:border-gray-700">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Trust Score</span>
+                      <span className="text-sm font-bold text-gray-900 dark:text-white">{trustScore} / 100</span>
+                    </div>
+                    <TrustScoreBar score={trustScore} />
+                    <div className="mt-2">
+                      <TrustBadgeList verifiedCount={verifiedCount} />
+                    </div>
+                  </div>
+
                   <div className="space-y-2">
                     {biz.licenseNumber && (
                       <div className="flex items-center justify-between text-sm">

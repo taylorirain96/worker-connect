@@ -208,6 +208,69 @@ export interface BusinessReview {
   createdAt: string
 }
 
+export interface LicenseDetails {
+  licenseNumber: string
+  licenseType: string
+  state: string
+  expirationDate: string
+  verified: boolean
+  verifiedAt?: string
+}
+
+export interface InsuranceDetails {
+  hasGeneralLiability: boolean
+  generalLiabilityPolicyNumber?: string
+  generalLiabilityExpiration?: string
+  generalLiabilityCoverage?: number
+  hasWorkersComp: boolean
+  workersCompPolicyNumber?: string
+  workersCompExpiration?: string
+  verified: boolean
+  verifiedAt?: string
+}
+
+export interface BackgroundCheckDetails {
+  status: 'not_started' | 'pending' | 'clear' | 'issues'
+  provider?: string
+  completedAt?: string
+  expiresAt?: string
+}
+
+export interface ExternalRatingDetails {
+  bbbNumber?: string
+  bbbLink?: string
+  bbbRating?: string
+  bbbReviewCount?: number
+  googleProfileLink?: string
+  googleRating?: number
+  googleReviewCount?: number
+  lastSyncedAt?: string
+}
+
+export interface CertificationRecord {
+  id: string
+  name: string
+  issuingOrganization?: string
+  certificateNumber?: string
+  issueDate?: string
+  expirationDate?: string
+  verified: boolean
+  createdAt?: string
+}
+
+export interface BusinessVerification {
+  id: string
+  businessId: string
+  license: LicenseDetails | null
+  insurance: InsuranceDetails | null
+  backgroundCheck: BackgroundCheckDetails
+  externalRatings: ExternalRatingDetails
+  certifications: CertificationRecord[]
+  trustScore: number
+  verifiedCount: number
+  updatedAt: string
+}
+
 export interface AdminStats {
   totalUsers: number
   totalWorkers: number
