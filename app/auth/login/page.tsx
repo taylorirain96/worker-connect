@@ -34,6 +34,10 @@ export default function LoginPage() {
     try {
       const { signInWithEmailAndPassword } = await import('firebase/auth')
       const { auth } = await import('@/lib/firebase')
+      if (!auth) {
+        toast.error('Authentication service not available. Please configure Firebase.')
+        return
+      }
       await signInWithEmailAndPassword(auth, data.email, data.password)
       toast.success('Welcome back!')
       router.push('/dashboard')
@@ -52,6 +56,10 @@ export default function LoginPage() {
     try {
       const { signInWithPopup, GoogleAuthProvider } = await import('firebase/auth')
       const { auth } = await import('@/lib/firebase')
+      if (!auth) {
+        toast.error('Authentication service not available. Please configure Firebase.')
+        return
+      }
       const provider = new GoogleAuthProvider()
       await signInWithPopup(auth, provider)
       toast.success('Welcome back!')

@@ -59,23 +59,25 @@ export default function ProfilePage() {
 
       await updateProfile(user, { displayName: data.displayName })
 
-      const updates: Record<string, unknown> = {
-        displayName: data.displayName,
-        bio: data.bio || '',
-        location: data.location || '',
-        phone: data.phone || '',
-        website: data.website || '',
-        skills: data.skills ? data.skills.split(',').map((s) => s.trim()).filter(Boolean) : [],
-        availability: data.availability || 'available',
-        profileComplete: true,
-        updatedAt: new Date().toISOString(),
-      }
+      if (db) {
+        const updates: Record<string, unknown> = {
+          displayName: data.displayName,
+          bio: data.bio || '',
+          location: data.location || '',
+          phone: data.phone || '',
+          website: data.website || '',
+          skills: data.skills ? data.skills.split(',').map((s) => s.trim()).filter(Boolean) : [],
+          availability: data.availability || 'available',
+          profileComplete: true,
+          updatedAt: new Date().toISOString(),
+        }
 
-      if (profile?.role === 'worker' && data.hourlyRate !== undefined) {
-        updates.hourlyRate = data.hourlyRate
-      }
+        if (profile?.role === 'worker' && data.hourlyRate !== undefined) {
+          updates.hourlyRate = data.hourlyRate
+        }
 
-      await updateDoc(doc(db, 'users', user.uid), updates)
+        await updateDoc(doc(db, 'users', user.uid), updates)
+      }
       toast.success('Profile updated successfully!')
     } catch {
       toast.error('Failed to update profile')

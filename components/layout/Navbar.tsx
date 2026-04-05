@@ -19,6 +19,7 @@ export default function Navbar() {
     try {
       const { signOut } = await import('firebase/auth')
       const { auth } = await import('@/lib/firebase')
+      if (!auth) return
       await signOut(auth)
       toast.success('Signed out successfully')
       router.push('/')

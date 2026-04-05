@@ -50,6 +50,10 @@ function RegisterForm() {
   const createUserProfile = async (uid: string, email: string | null, displayName: string, role: string) => {
     const { doc, setDoc } = await import('firebase/firestore')
     const { db } = await import('@/lib/firebase')
+    if (!db) {
+      console.warn('Firestore not initialized')
+      return
+    }
     await setDoc(doc(db, 'users', uid), {
       uid,
       email,
@@ -71,6 +75,10 @@ function RegisterForm() {
     try {
       const { createUserWithEmailAndPassword, updateProfile } = await import('firebase/auth')
       const { auth } = await import('@/lib/firebase')
+      if (!auth) {
+        toast.error('Authentication service not available. Please configure Firebase.')
+        return
+      }
       const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password)
       await updateProfile(userCredential.user, { displayName: data.displayName })
       await createUserProfile(userCredential.user.uid, data.email, data.displayName, data.role)
@@ -91,6 +99,10 @@ function RegisterForm() {
     try {
       const { signInWithPopup, GoogleAuthProvider } = await import('firebase/auth')
       const { auth } = await import('@/lib/firebase')
+      if (!auth) {
+        toast.error('Authentication service not available. Please configure Firebase.')
+        return
+      }
       const provider = new GoogleAuthProvider()
       const result = await signInWithPopup(auth, provider)
       const user = result.user

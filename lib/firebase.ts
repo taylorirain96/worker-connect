@@ -4,38 +4,42 @@ import { getFirestore, type Firestore } from 'firebase/firestore'
 import { getDatabase, type Database } from 'firebase/database'
 import { getStorage, type FirebaseStorage } from 'firebase/storage'
 
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || 'placeholder-key',
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || 'placeholder.firebaseapp.com',
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'placeholder-project',
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'placeholder.appspot.com',
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '000000000000',
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '1:000000000000:web:placeholder',
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
-  databaseURL: `https://${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'placeholder-project'}-default-rtdb.firebaseio.com`,
+const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY
+const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID
+
+if (typeof window !== 'undefined' && (!apiKey || !projectId)) {
+  console.warn(
+    'Firebase environment variables are not configured. Set NEXT_PUBLIC_FIREBASE_* variables to enable authentication and database features.'
+  )
 }
 
-let app: FirebaseApp
-let auth: Auth
-let db: Firestore
-let rtdb: Database
-let storage: FirebaseStorage
+const firebaseConfig = {
+  apiKey: apiKey ?? '',
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ?? '',
+  projectId: projectId ?? '',
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ?? '',
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ?? '',
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID ?? '',
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
+  databaseURL: `https://${projectId ?? 'placeholder'}-default-rtdb.firebaseio.com`,
+}
 
-try {
-  app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]
-  auth = getAuth(app)
-  db = getFirestore(app)
-  rtdb = getDatabase(app)
-  storage = getStorage(app)
-} catch (error) {
-  console.warn('Firebase initialization error (expected during build/SSR without credentials):', error)
-  // These will be undefined during build if Firebase credentials are missing
-  // The app will work correctly at runtime when proper env vars are set
-  app = getApps()[0] || ({} as FirebaseApp)
-  auth = {} as Auth
-  db = {} as Firestore
-  rtdb = {} as Database
-  storage = {} as FirebaseStorage
+let app: FirebaseApp | null = null
+let auth: Auth | null = null
+let db: Firestore | null = null
+let rtdb: Database | null = null
+let storage: FirebaseStorage | null = null
+
+if (apiKey && projectId) {
+  try {
+    app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]
+    auth = getAuth(app)
+    db = getFirestore(app)
+    rtdb = getDatabase(app)
+    storage = getStorage(app)
+  } catch (error) {
+    console.error('Firebase initialization failed:', error)
+  }
 }
 
 export { auth, db, rtdb, storage }

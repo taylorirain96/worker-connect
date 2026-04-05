@@ -32,15 +32,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const initAuth = async () => {
       try {
-        const { auth, db } = await import('@/lib/firebase')
+        const firebaseModule = await import('@/lib/firebase')
+        const firebaseAuth = firebaseModule.auth
+        const firebaseDb = firebaseModule.db
+        if (!firebaseAuth) {
+          console.warn('Firebase Auth not initialized. Configure Firebase environment variables.')
+          setLoading(false)
+          return
+        }
         const { onAuthStateChanged } = await import('firebase/auth')
         const { doc, getDoc } = await import('firebase/firestore')
 
-        unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+        unsubscribe = onAuthStateChanged(firebaseAuth, async (firebaseUser) => {
           setUser(firebaseUser)
-          if (firebaseUser) {
+          if (firebaseUser && firebaseDb) {
             try {
-              const docRef = doc(db, 'users', firebaseUser.uid)
+              const docRef = doc(firebaseDb, 'users', firebaseUser.uid)
               const docSnap = await getDoc(docRef)
               if (docSnap.exists()) {
                 setProfile(docSnap.data() as UserProfile)
