@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { MapPin, Clock, DollarSign, Users, AlertCircle } from 'lucide-react'
 import type { Job } from '@/types'
-import { formatCurrency, formatRelativeDate, JOB_CATEGORIES, URGENCY_LABELS, STATUS_LABELS } from '@/lib/utils'
+import { formatCurrency, formatRelativeDate, JOB_CATEGORIES, STATUS_LABELS } from '@/lib/utils'
 import Badge from '@/components/ui/Badge'
 
 interface JobCardProps {
@@ -10,7 +10,6 @@ interface JobCardProps {
 
 export default function JobCard({ job }: JobCardProps) {
   const category = JOB_CATEGORIES.find((c) => c.id === job.category)
-  const urgency = URGENCY_LABELS[job.urgency]
   const status = STATUS_LABELS[job.status]
 
   return (

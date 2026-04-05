@@ -1,7 +1,8 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { MapPin, Star, CheckCircle, Briefcase, DollarSign } from 'lucide-react'
 import type { UserProfile } from '@/types'
-import { formatCurrency, getInitials } from '@/lib/utils'
+import { getInitials } from '@/lib/utils'
 import Badge from '@/components/ui/Badge'
 
 interface WorkerCardProps {
@@ -15,9 +16,11 @@ export default function WorkerCard({ worker }: WorkerCardProps) {
         <div className="flex items-start gap-4 mb-4">
           <div className="relative flex-shrink-0">
             {worker.photoURL ? (
-              <img
+              <Image
                 src={worker.photoURL}
                 alt={worker.displayName || 'Worker'}
+                width={56}
+                height={56}
                 className="h-14 w-14 rounded-full object-cover"
               />
             ) : (
