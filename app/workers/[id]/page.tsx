@@ -1,5 +1,5 @@
 'use client'
-import { useParams, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import Button from '@/components/ui/Button'
@@ -40,10 +40,9 @@ const MOCK_REVIEWS = [
   { id: '3', reviewerName: 'Robert M.', rating: 4, comment: 'Good work, arrived on time. Minor issue with cleanup but overall satisfied.', createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString() },
 ]
 
-export default function WorkerProfilePage() {
-  const params = useParams()
+export default function WorkerProfilePage({ params }: { params: { id: string } }) {
   const router = useRouter()
-  const worker = MOCK_WORKERS[params.id as string] || MOCK_WORKERS['w1']
+  const worker = MOCK_WORKERS[params.id] || MOCK_WORKERS['w1']
 
   return (
     <div className="flex flex-col min-h-screen">
