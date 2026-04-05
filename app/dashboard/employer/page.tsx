@@ -142,16 +142,6 @@ export default function EmployerDashboardPage() {
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
                     Set up your professional business profile to help workers and enterprises find and trust your company.
                   </p>
-                  <div className="flex flex-wrap gap-1.5 mb-3">
-                    <span className="inline-flex items-center gap-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded-full text-xs">
-                      <Shield className="h-3 w-3 text-primary-500" />
-                      Verified Contractor
-                    </span>
-                    <span className="inline-flex items-center gap-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded-full text-xs">
-                      <Award className="h-3 w-3 text-purple-500" />
-                      Enterprise Partner
-                    </span>
-                  </div>
                   <div className="space-y-2">
                     <Link href="/dashboard/business/profile">
                       <Button variant="primary" size="sm" className="w-full justify-start">
@@ -162,10 +152,57 @@ export default function EmployerDashboardPage() {
                     <Link href="/dashboard/business/settings">
                       <Button variant="outline" size="sm" className="w-full justify-start">
                         <Award className="h-4 w-4" />
-                        Subscription & Verification
+                        Subscription & Settings
                       </Button>
                     </Link>
                   </div>
+                </CardContent>
+              </Card>
+
+              {/* Verification Progress Widget */}
+              <Card className="border-green-200 dark:border-green-800">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Shield className="h-4 w-4 text-green-600" />
+                      <CardTitle>Verification Status</CardTitle>
+                    </div>
+                    <span className="text-xs text-gray-500">0 / 5</span>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-3">
+                    <div className="bg-green-500 h-2 rounded-full" style={{ width: '0%' }} />
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                    Complete verifications to earn trust badges and attract enterprise clients.
+                  </p>
+                  <div className="space-y-1.5 mb-3">
+                    {[
+                      { label: 'License Verification', done: false },
+                      { label: 'Insurance Verification', done: false },
+                      { label: 'Background Check', done: false },
+                      { label: 'BBB / Google Ratings', done: false },
+                      { label: 'Certifications', done: false },
+                    ].map((item) => (
+                      <div key={item.label} className="flex items-center gap-2 text-xs">
+                        {item.done ? (
+                          <CheckCircle className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
+                        ) : (
+                          <div className="h-3.5 w-3.5 rounded-full border-2 border-gray-300 dark:border-gray-600 flex-shrink-0" />
+                        )}
+                        <span className={item.done ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-500'}>
+                          {item.label}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <Link href="/dashboard/business/verification">
+                    <Button variant="outline" size="sm" className="w-full justify-center text-green-700 border-green-300 hover:bg-green-50 dark:text-green-400 dark:border-green-700 dark:hover:bg-green-900/20">
+                      <Shield className="h-4 w-4" />
+                      Start Verification
+                    </Button>
+                  </Link>
                 </CardContent>
               </Card>
 
