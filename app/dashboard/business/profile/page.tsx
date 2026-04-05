@@ -20,6 +20,7 @@ import {
   ChevronLeft,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { slugify } from '@/lib/utils'
 
 const INDUSTRIES = [
   'General Contractor',
@@ -115,17 +116,17 @@ function ProfileCompletionBar({ pct }: { pct: number }) {
 }
 
 function computeCompletion(form: FormState): number {
-  const fields: Array<keyof FormState> = [
+  const stringFields: Array<keyof FormState> = [
     'companyName', 'industry', 'companySize', 'yearsInBusiness',
     'description', 'licenseNumber',
   ]
-  const optionalBonus: Array<keyof FormState> = [
+  const optionalStringFields: Array<keyof FormState> = [
     'website', 'linkedIn', 'missionStatement',
   ]
   let score = 0
-  const total = fields.length + optionalBonus.length + 2 // +2 for serviceAreas & certifications
-  fields.forEach((f) => { if (String(form[f]).trim()) score++ })
-  optionalBonus.forEach((f) => { if (String(form[f]).trim()) score++ })
+  const total = stringFields.length + optionalStringFields.length + 2 // +2 for serviceAreas & certifications
+  stringFields.forEach((f) => { if (String(form[f]).trim()) score++ })
+  optionalStringFields.forEach((f) => { if (String(form[f]).trim()) score++ })
   if (form.serviceAreas.length > 0) score++
   if (form.certifications.length > 0) score++
   return Math.round((score / total) * 100)
@@ -200,7 +201,7 @@ export default function EditBusinessProfilePage() {
             <div className="hidden sm:flex items-center gap-2">
               {form.companyName && (
                 <Link
-                  href={`/business/${form.companyName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
+                  href={`/business/${slugify(form.companyName)}`}
                   className="text-sm text-primary-600 hover:text-primary-700 flex items-center gap-1"
                   target="_blank"
                 >

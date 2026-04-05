@@ -140,7 +140,7 @@ export default function EmployerDashboardPage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                    Set up your professional business profile so workers and enterprises can find and trust you.
+                    Set up your professional business profile to help workers and enterprises find and trust your company.
                   </p>
                   <div className="flex flex-wrap gap-1.5 mb-3">
                     <span className="inline-flex items-center gap-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded-full text-xs">

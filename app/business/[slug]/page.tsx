@@ -178,7 +178,31 @@ const companySizeLabels: Record<string, string> = {
 }
 
 export default function BusinessProfilePage({ params }: { params: { slug: string } }) {
-  const biz = MOCK_BUSINESSES[params.slug] ?? MOCK_BUSINESSES['apex-general-contracting']
+  const biz = MOCK_BUSINESSES[params.slug]
+
+  if (!biz) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+          <div className="text-center px-4">
+            <Building2 className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Business Not Found</h1>
+            <p className="text-gray-500 dark:text-gray-400 mb-6">
+              No business profile found for <strong>@{params.slug}</strong>.
+            </p>
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 bg-primary-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors"
+            >
+              Back to QuickTrade
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
