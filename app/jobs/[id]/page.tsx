@@ -1,0 +1,277 @@
+'use client'
+import { useState } from 'react'
+import { useParams, useRouter } from 'next/navigation'
+import Navbar from '@/components/layout/Navbar'
+import Footer from '@/components/layout/Footer'
+import { useAuth } from '@/components/providers/AuthProvider'
+import Button from '@/components/ui/Button'
+import Badge from '@/components/ui/Badge'
+import toast from 'react-hot-toast'
+import {
+  MapPin, Clock, DollarSign, Users, AlertCircle, ArrowLeft,
+  Calendar, Star, CheckCircle, Send
+} from 'lucide-react'
+import { formatCurrency, formatRelativeDate, JOB_CATEGORIES, URGENCY_LABELS } from '@/lib/utils'
+import type { Job } from '@/types'
+import Link from 'next/link'
+
+const MOCK_JOBS: Record<string, Job & { employerRating?: number; employerJobs?: number }> = {
+  '1': {
+    id: '1',
+    title: 'Fix Leaking Bathroom Pipe',
+    description: `I have a leaking pipe under the bathroom sink. Water is dripping consistently and needs to be fixed ASAP. The pipe appears to be cracked near the joint.
+
+**What needs to be done:**
+- Inspect the pipe and identify the issue
+- Replace the damaged section
+- Ensure no other leaks exist
+- Clean up after the work is done
+
+**Access:** Easy access under the sink cabinet. No need to break any walls.
+
+**Timeline:** Needs to be done within 48 hours ideally.`,
+    category: 'plumbing',
+    employerId: 'emp1',
+    employerName: 'John Smith',
+    location: 'New York, NY',
+    budget: 150,
+    budgetType: 'fixed',
+    urgency: 'high',
+    status: 'open',
+    skills: ['Plumbing', 'Pipe Repair', 'Fixture Installation'],
+    applicantsCount: 4,
+    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    updatedAt: new Date().toISOString(),
+    employerRating: 4.7,
+    employerJobs: 12,
+  },
+}
+
+export default function JobDetailPage() {
+  const params = useParams()
+  const router = useRouter()
+  const { user, profile } = useAuth()
+  const [applying, setApplying] = useState(false)
+  const [showApplyForm, setShowApplyForm] = useState(false)
+  const [coverLetter, setCoverLetter] = useState('')
+  const [proposedRate, setProposedRate] = useState('')
+
+  const job = MOCK_JOBS[params.id as string] || MOCK_JOBS['1']
+  const category = JOB_CATEGORIES.find((c) => c.id === job.category)
+  const urgency = URGENCY_LABELS[job.urgency]
+
+  const handleApply = async () => {
+    if (!user) {
+      toast.error('Please sign in to apply')
+      router.push('/auth/login')
+      return
+    }
+    if (profile?.role !== 'worker') {
+      toast.error('Only workers can apply to jobs')
+      return
+    }
+
+    setApplying(true)
+    try {
+      await new Promise((r) => setTimeout(r, 1000))
+      toast.success('Application submitted successfully!')
+      setShowApplyForm(false)
+      router.push('/dashboard/worker')
+    } catch {
+      toast.error('Failed to submit application')
+    } finally {
+      setApplying(false)
+    }
+  }
+
+  return (
+    <div className="flex flex-col min-h-screen">
+      <Navbar />
+      <main className="flex-1">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <Link href="/jobs" className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 mb-6 text-sm transition-colors">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Jobs
+          </Link>
+
+          <div className="grid lg:grid-cols-3 gap-6">
+            {/* Main Content */}
+            <div className="lg:col-span-2 space-y-6">
+              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                <div className="flex items-start gap-4 mb-4">
+                  <span className="text-4xl">{category?.icon || '🛠️'}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      <Badge variant={job.status === 'open' ? 'success' : 'default'}>
+                        {job.status === 'open' ? 'Open' : job.status}
+                      </Badge>
+                      {job.urgency === 'emergency' && (
+                        <Badge variant="danger" className="flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          Emergency
+                        </Badge>
+                      )}
+                      {job.urgency !== 'emergency' && (
+                        <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${urgency?.color}`}>
+                          {urgency?.label}
+                        </span>
+                      )}
+                    </div>
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{job.title}</h1>
+                    <div className="flex flex-wrap gap-4 mt-3 text-sm text-gray-500">
+                      <span className="flex items-center gap-1.5">
+                        <MapPin className="h-4 w-4 text-red-400" />
+                        {job.location}
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <Clock className="h-4 w-4 text-orange-400" />
+                        {formatRelativeDate(job.createdAt)}
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <Users className="h-4 w-4 text-blue-400" />
+                        {job.applicantsCount} applicants
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
+                  <h2 className="font-semibold text-gray-900 dark:text-white mb-3">Job Description</h2>
+                  <div className="prose prose-sm dark:prose-invert max-w-none text-gray-600 dark:text-gray-400 whitespace-pre-line">
+                    {job.description}
+                  </div>
+                </div>
+              </div>
+
+              {/* Skills Required */}
+              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                <h2 className="font-semibold text-gray-900 dark:text-white mb-3">Skills Required</h2>
+                <div className="flex flex-wrap gap-2">
+                  {job.skills.map((skill) => (
+                    <span key={skill} className="bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400 px-3 py-1 rounded-full text-sm font-medium">
+                      <CheckCircle className="h-3.5 w-3.5 inline mr-1" />
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Apply Form */}
+              {showApplyForm && (
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                  <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Submit Application</h2>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Cover Letter <span className="text-red-500">*</span>
+                      </label>
+                      <textarea
+                        rows={4}
+                        value={coverLetter}
+                        onChange={(e) => setCoverLetter(e.target.value)}
+                        placeholder="Introduce yourself, describe your relevant experience, and explain why you're the best fit for this job..."
+                        className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Proposed {job.budgetType === 'hourly' ? 'Hourly Rate' : 'Price'} ($) <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        value={proposedRate}
+                        onChange={(e) => setProposedRate(e.target.value)}
+                        placeholder={`Employer's budget: ${formatCurrency(job.budget)}`}
+                        className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      />
+                    </div>
+                    <div className="flex gap-3">
+                      <Button variant="outline" onClick={() => setShowApplyForm(false)} className="flex-1">
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleApply}
+                        loading={applying}
+                        disabled={!coverLetter || !proposedRate}
+                        className="flex-1"
+                      >
+                        <Send className="h-4 w-4" />
+                        Submit Application
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Sidebar */}
+            <div className="space-y-4">
+              {/* Budget Card */}
+              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <DollarSign className="h-5 w-5 text-green-500" />
+                  <span className="font-semibold text-gray-900 dark:text-white">Budget</span>
+                </div>
+                <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                  {formatCurrency(job.budget)}
+                  {job.budgetType === 'hourly' && <span className="text-base font-normal text-gray-500">/hr</span>}
+                </p>
+                <p className="text-sm text-gray-500 mt-1">
+                  {job.budgetType === 'fixed' ? 'Fixed price project' : 'Hourly rate'}
+                </p>
+
+                {job.deadline && (
+                  <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                      <Calendar className="h-4 w-4" />
+                      <span>Deadline: {new Date(job.deadline).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                )}
+
+                {job.status === 'open' && !showApplyForm && (
+                  <Button
+                    className="w-full mt-4"
+                    onClick={() => {
+                      if (!user) {
+                        router.push('/auth/login')
+                        return
+                      }
+                      setShowApplyForm(true)
+                    }}
+                  >
+                    Apply Now
+                  </Button>
+                )}
+              </div>
+
+              {/* Employer Card */}
+              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-3">About the Employer</h3>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="h-10 w-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center font-semibold text-primary-700 dark:text-primary-400">
+                    {job.employerName.charAt(0)}
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-white text-sm">{job.employerName}</p>
+                    <div className="flex items-center gap-1 text-xs text-gray-500">
+                      <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                      <span>{(job as { employerRating?: number }).employerRating || 'New'}</span>
+                      {(job as { employerJobs?: number }).employerJobs && (
+                        <span>· {(job as { employerJobs?: number }).employerJobs} jobs posted</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <Button variant="outline" size="sm" className="w-full">
+                  View Profile
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+      <Footer />
+    </div>
+  )
+}
