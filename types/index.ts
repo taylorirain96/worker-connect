@@ -255,6 +255,7 @@ export interface CertificationRecord {
   issueDate?: string
   expirationDate?: string
   verified: boolean
+  createdAt?: string
 }
 
 export interface BusinessVerification {

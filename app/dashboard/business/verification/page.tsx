@@ -67,6 +67,8 @@ const US_STATES = [
   'North Dakota','Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island',
   'South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont',
   'Virginia','Washington','West Virginia','Wisconsin','Wyoming',
+  'Washington D.C.','Puerto Rico','U.S. Virgin Islands','Guam',
+  'American Samoa','Northern Mariana Islands',
 ]
 
 const CERT_SUGGESTIONS = [

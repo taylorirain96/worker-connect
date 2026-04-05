@@ -107,7 +107,7 @@ export default function TrustBadge({ verifiedCount, trustScore, showScore = fals
   )
 }
 
-export function TrustBadgeList({ verifiedCount }: { verifiedCount: number; trustScore?: number }) {
+export function TrustBadgeList({ verifiedCount }: { verifiedCount: number }) {
   const earnedTiers = BADGE_TIERS.filter((t) => verifiedCount >= t.minVerifications)
 
   if (earnedTiers.length === 0) return null
