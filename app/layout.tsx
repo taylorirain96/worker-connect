@@ -5,7 +5,7 @@ import { AuthProvider } from '@/components/providers/AuthProvider'
 import { Toaster } from 'react-hot-toast'
 
 export const metadata: Metadata = {
-  title: 'Worker Connect - Find Skilled Trades Workers',
+  title: 'QuickTrade - Find Skilled Trades Workers',
   description:
     'Connect with skilled trades workers for plumbing, electrical, carpentry, HVAC, roofing, and more.',
 }

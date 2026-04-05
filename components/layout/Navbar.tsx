@@ -35,7 +35,7 @@ export default function Navbar() {
           <Link href="/" className="flex items-center space-x-2">
             <Wrench className="h-8 w-8 text-primary-600" />
             <span className="text-xl font-bold text-primary-600">
-              Worker<span className="text-accent-500">Connect</span>
+              Quick<span className="text-accent-500">Trade</span>
             </span>
           </Link>
 

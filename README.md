@@ -1,3 +1,3 @@
-# Worker Connect
+# QuickTrade
 
-This is the initial README file for the Worker Connect repository.
+This is the initial README file for the QuickTrade repository.
