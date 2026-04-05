@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import JobCard from '@/components/jobs/JobCard'
@@ -117,8 +117,8 @@ const MOCK_JOBS: Job[] = [
 
 export default function JobsPage() {
   const { profile } = useAuth()
-  const [jobs, setJobs] = useState<Job[]>(MOCK_JOBS)
-  const [loading, setLoading] = useState(false)
+  const [jobs] = useState<Job[]>(MOCK_JOBS)
+  const [loading] = useState(false)
   const [filters, setFilters] = useState({
     search: '',
     category: '',
