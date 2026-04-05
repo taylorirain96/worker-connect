@@ -127,7 +127,7 @@ function RegisterForm() {
         <Link href="/" className="flex items-center justify-center space-x-2 mb-6">
           <Wrench className="h-8 w-8 text-primary-600" />
           <span className="text-2xl font-bold text-primary-600">
-            Worker<span className="text-accent-500">Connect</span>
+            Quick<span className="text-accent-500">Trade</span>
           </span>
         </Link>
         <h2 className="text-center text-2xl font-bold text-gray-900 dark:text-white">

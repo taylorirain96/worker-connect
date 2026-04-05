@@ -10,11 +10,11 @@ export default function Footer() {
             <Link href="/" className="flex items-center space-x-2 mb-4">
               <Wrench className="h-6 w-6 text-primary-600" />
               <span className="text-lg font-bold text-primary-600">
-                Worker<span className="text-accent-500">Connect</span>
+                Quick<span className="text-accent-500">Trade</span>
               </span>
             </Link>
             <p className="text-gray-500 dark:text-gray-400 text-sm max-w-md mb-6">
-              Connecting skilled trades workers with employers. Find plumbers, electricians,
+              QuickTrade connects skilled trades workers with employers. Find plumbers, electricians,
               carpenters, HVAC technicians, and more.
             </p>
             <div className="flex space-x-4">
@@ -82,7 +82,7 @@ export default function Footer() {
         </div>
         <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            © {new Date().getFullYear()} WorkerConnect. All rights reserved.
+            © {new Date().getFullYear()} QuickTrade. All rights reserved.
           </p>
           <p className="text-sm text-gray-400">
             Built with ❤️ for skilled trades workers

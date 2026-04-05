@@ -71,7 +71,7 @@ export default function HowItWorksPage() {
               <Wrench className="h-4 w-4 text-accent-500" />
               Simple. Secure. Trusted.
             </div>
-            <h1 className="text-4xl font-bold mb-4">How WorkerConnect Works</h1>
+            <h1 className="text-4xl font-bold mb-4">How QuickTrade Works</h1>
             <p className="text-primary-100 text-lg max-w-2xl mx-auto">
               Whether you need work done or looking for work, our platform makes it easy and safe for
               everyone.
@@ -127,7 +127,7 @@ export default function HowItWorksPage() {
                 Start Earning Today
               </h2>
               <p className="text-gray-500 dark:text-gray-400">
-                Join thousands of skilled tradespeople already earning on WorkerConnect
+                Join thousands of skilled tradespeople already earning on QuickTrade
               </p>
             </div>
 
