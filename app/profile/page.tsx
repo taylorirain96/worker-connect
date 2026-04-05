@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -49,6 +49,12 @@ export default function ProfilePage() {
     },
   })
 
+  useEffect(() => {
+    if (!user) {
+      router.push('/auth/login')
+    }
+  }, [user, router])
+
   const onSubmit = async (data: ProfileFormData) => {
     if (!user) return
     setSaving(true)
@@ -87,7 +93,6 @@ export default function ProfilePage() {
   }
 
   if (!user) {
-    router.push('/auth/login')
     return null
   }
 
