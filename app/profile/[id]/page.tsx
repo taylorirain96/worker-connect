@@ -1,13 +1,11 @@
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import Button from '@/components/ui/Button'
-import Badge from '@/components/ui/Badge'
 import Link from 'next/link'
 import { ArrowLeft, Star, CheckCircle, MapPin, Briefcase, MessageSquare } from 'lucide-react'
 import { getInitials } from '@/lib/utils'
 
-export default function UserProfilePage({ params }: { params: { id: string } }) {
-  const userId = params.id
+export default function UserProfilePage() {
 
   return (
     <div className="flex flex-col min-h-screen">

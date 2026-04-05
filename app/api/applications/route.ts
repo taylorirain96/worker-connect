@@ -1,13 +1,8 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url)
-    const jobId = searchParams.get('jobId')
-    const workerId = searchParams.get('workerId')
-    const employerId = searchParams.get('employerId')
-
     // In production, fetch from Firestore
     return NextResponse.json({ applications: [], total: 0 })
   } catch (error) {

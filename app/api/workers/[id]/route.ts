@@ -1,11 +1,7 @@
 import { NextResponse } from 'next/server'
 
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET() {
   try {
-    const { id } = params
     // In production, fetch from Firestore
     return NextResponse.json({ error: 'Worker not found' }, { status: 404 })
   } catch (error) {

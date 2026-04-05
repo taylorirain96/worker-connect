@@ -1,13 +1,8 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url)
-    const revieweeId = searchParams.get('revieweeId')
-    const reviewerId = searchParams.get('reviewerId')
-    const jobId = searchParams.get('jobId')
-
     // In production, fetch from Firestore
     return NextResponse.json({ reviews: [], total: 0, averageRating: 0 })
   } catch (error) {

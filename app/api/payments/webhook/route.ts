@@ -10,7 +10,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Stripe not configured' }, { status: 500 })
     }
 
-    const body = await request.text()
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _body = await request.text()
     const signature = request.headers.get('stripe-signature')
 
     if (!signature || !webhookSecret) {
@@ -19,7 +20,7 @@ export async function POST(request: NextRequest) {
 
     // In production, verify and handle webhook events:
     // const stripe = new Stripe(stripeSecretKey)
-    // const event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
+    // const event = stripe.webhooks.constructEvent(_body, signature, webhookSecret)
     //
     // switch (event.type) {
     //   case 'payment_intent.succeeded':
