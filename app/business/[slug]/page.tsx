@@ -253,7 +253,7 @@ export default function BusinessProfilePage({ params }: { params: { slug: string
 
                 {/* Trust badges */}
                 <div className="flex flex-wrap items-center gap-2 mt-2">
-                  <TrustBadgeList verifiedCount={verifiedCount} trustScore={trustScore} />
+                  <TrustBadgeList verifiedCount={verifiedCount} />
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-gray-500 dark:text-gray-400">
@@ -468,7 +468,7 @@ export default function BusinessProfilePage({ params }: { params: { slug: string
                     </div>
                     <TrustScoreBar score={trustScore} />
                     <div className="mt-2">
-                      <TrustBadgeList verifiedCount={verifiedCount} trustScore={trustScore} />
+                      <TrustBadgeList verifiedCount={verifiedCount} />
                     </div>
                   </div>
 
