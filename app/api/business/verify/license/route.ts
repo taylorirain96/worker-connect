@@ -12,7 +12,7 @@ export async function POST(request: Request) {
   }
 
   // TODO: integrate with state licensing database for real verification
-  // For now, mark as verified immediately (mock behaviour)
+  // For now, mark as verified immediately (mock behavior)
   const result = {
     licenseNumber,
     licenseType,
