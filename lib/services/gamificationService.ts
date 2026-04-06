@@ -68,6 +68,11 @@ export const BADGE_DEFINITIONS: Record<string, { label: string; icon: string; de
   perfect_rating: { label: 'Top Rated', icon: '⭐', description: 'Maintained a 5.0 rating' },
   speed_worker: { label: 'Speed Worker', icon: '⚡', description: 'Completed a job within 24 hours' },
   verified_id: { label: 'ID Verified', icon: '✅', description: 'Identity has been verified' },
+  // Leaderboard badges
+  weekly_champion: { label: 'Champion', icon: '🥇', description: 'Ranked #1 on the weekly leaderboard' },
+  weekly_runner_up: { label: 'Runner-up', icon: '🥈', description: 'Ranked #2 on the weekly leaderboard' },
+  weekly_rising_star: { label: 'Rising Star', icon: '🥉', description: 'Ranked #3 on the weekly leaderboard' },
+  top_10: { label: 'Top 10', icon: '🏆', description: 'Entered the weekly top 10' },
 }
 
 export async function awardPoints(

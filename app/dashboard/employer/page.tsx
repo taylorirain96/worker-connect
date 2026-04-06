@@ -8,7 +8,7 @@ import Button from '@/components/ui/Button'
 import Link from 'next/link'
 import {
   Briefcase, DollarSign, Users, TrendingUp,
-  Plus, Clock, CheckCircle, Eye, Building2, Shield, Award,
+  Plus, Clock, CheckCircle, Eye, Building2, Shield, Award, Trophy, Star,
 } from 'lucide-react'
 import { formatCurrency, formatRelativeDate, STATUS_LABELS } from '@/lib/utils'
 
@@ -16,6 +16,12 @@ const MOCK_POSTED_JOBS = [
   { id: '1', title: 'Fix Leaking Bathroom Pipe', status: 'open', budget: 150, budgetType: 'fixed' as const, applicants: 4, createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() },
   { id: '2', title: 'Paint Living Room', status: 'in_progress', budget: 800, budgetType: 'fixed' as const, applicants: 9, createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString() },
   { id: '3', title: 'Landscaping & Yard Cleanup', status: 'completed', budget: 350, budgetType: 'fixed' as const, applicants: 6, createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString() },
+]
+
+const MOCK_TOP_PERFORMERS = [
+  { id: 'w1', name: 'Marcus Johnson', category: 'Electrical', rank: 1, weeklyPoints: 420, rating: 4.9, jobs: 8, trend: '↑' },
+  { id: 'w2', name: 'Sarah Williams', category: 'Plumbing', rank: 2, weeklyPoints: 380, rating: 4.8, jobs: 7, trend: '↑' },
+  { id: 'w3', name: 'James Rodriguez', category: 'HVAC', rank: 3, weeklyPoints: 350, rating: 4.7, jobs: 6, trend: '→' },
 ]
 
 export default function EmployerDashboardPage() {
@@ -153,6 +159,49 @@ export default function EmployerDashboardPage() {
                       <Button variant="outline" size="sm" className="w-full justify-start">
                         <Award className="h-4 w-4" />
                         Subscription & Settings
+                      </Button>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Top Performers Widget */}
+              <Card className="border-yellow-200 dark:border-yellow-800">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Trophy className="h-4 w-4 text-yellow-500" />
+                      <CardTitle>Top Performers</CardTitle>
+                    </div>
+                    <Link href="/leaderboard" className="text-xs text-primary-600 hover:text-primary-700">
+                      Full leaderboard →
+                    </Link>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {MOCK_TOP_PERFORMERS.map((worker) => (
+                      <div key={worker.id} className="flex items-center gap-3">
+                        <span className="text-lg w-6 flex-shrink-0 text-center">
+                          {worker.rank === 1 ? '🥇' : worker.rank === 2 ? '🥈' : '🥉'}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{worker.name}</p>
+                          <p className="text-xs text-gray-500">{worker.category} · {worker.weeklyPoints} pts</p>
+                        </div>
+                        <div className="flex items-center gap-1 text-xs text-gray-500 flex-shrink-0">
+                          <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                          {worker.rating}
+                          <span className="ml-1 text-xs">{worker.trend}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700">
+                    <Link href="/leaderboard">
+                      <Button variant="outline" size="sm" className="w-full justify-center text-yellow-700 border-yellow-300 hover:bg-yellow-50 dark:text-yellow-400 dark:border-yellow-700 dark:hover:bg-yellow-900/20">
+                        <Trophy className="h-4 w-4" />
+                        Hire Top Performer
                       </Button>
                     </Link>
                   </div>

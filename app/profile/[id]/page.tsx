@@ -2,10 +2,27 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import Button from '@/components/ui/Button'
 import Link from 'next/link'
-import { ArrowLeft, Star, CheckCircle, MapPin, Briefcase, MessageSquare } from 'lucide-react'
+import { ArrowLeft, Star, CheckCircle, MapPin, Briefcase, MessageSquare, Trophy } from 'lucide-react'
 import { getInitials } from '@/lib/utils'
+import { LEADERBOARD_BADGE_DEFINITIONS } from '@/lib/leaderboard/rankingLogic'
+
+/** Mock leaderboard data — replaced by real data once Firebase is wired. */
+const MOCK_RANK = {
+  rank: 4,
+  totalEntries: 48,
+  weeklyPoints: 310,
+  previousRank: 6,
+  badgesEarned: ['weekly_champion'],
+}
 
 export default function UserProfilePage() {
+  const rankChange = MOCK_RANK.previousRank - MOCK_RANK.rank
+  const trendLabel =
+    rankChange > 0
+      ? `↑ ${rankChange} from last week`
+      : rankChange < 0
+      ? `↓ ${Math.abs(rankChange)} from last week`
+      : '→ Same as last week'
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -43,6 +60,61 @@ export default function UserProfilePage() {
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* Leaderboard rank section */}
+            <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-700">
+              <div className="flex items-center gap-2 mb-3">
+                <Trophy className="h-5 w-5 text-yellow-500" />
+                <h2 className="text-base font-semibold text-gray-900 dark:text-white">Weekly Leaderboard</h2>
+              </div>
+              <div className="grid grid-cols-3 gap-3 mb-3">
+                <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 text-center">
+                  <p className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">
+                    #{MOCK_RANK.rank}
+                  </p>
+                  <p className="text-xs text-yellow-600 dark:text-yellow-500 mt-0.5">This Week</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{trendLabel}</p>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 text-center">
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {MOCK_RANK.weeklyPoints.toLocaleString()}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">Weekly Points</p>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 text-center">
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {MOCK_RANK.totalEntries}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">Total Workers</p>
+                </div>
+              </div>
+
+              {/* Leaderboard badges */}
+              {MOCK_RANK.badgesEarned.length > 0 && (
+                <div className="flex gap-2 flex-wrap mb-3">
+                  {MOCK_RANK.badgesEarned.map((b) => {
+                    const def = LEADERBOARD_BADGE_DEFINITIONS[b]
+                    if (!def) return null
+                    return (
+                      <span
+                        key={b}
+                        title={def.description}
+                        className="text-xs bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400 px-2 py-1 rounded-full"
+                      >
+                        {def.icon} {def.label}
+                      </span>
+                    )
+                  })}
+                </div>
+              )}
+
+              <Link
+                href="/leaderboard"
+                className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 hover:underline"
+              >
+                View full leaderboard →
+              </Link>
             </div>
 
             <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-700">
