@@ -3,18 +3,26 @@ import Link from 'next/link'
 import { useTheme } from 'next-themes'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { Sun, Moon, Menu, X, Wrench, ChevronDown } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import { useRouter } from 'next/navigation'
 import { getInitials } from '@/lib/utils'
 import NotificationCenter from '@/components/notifications/NotificationCenter'
+import { subscribeToTotalUnread } from '@/lib/services/messagingService'
 
 export default function Navbar() {
   const { theme, setTheme } = useTheme()
   const { user, profile } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
+  const [unreadMessages, setUnreadMessages] = useState(0)
   const router = useRouter()
+
+  useEffect(() => {
+    if (!user) return
+    const unsub = subscribeToTotalUnread(user.uid, setUnreadMessages)
+    return () => unsub()
+  }, [user])
 
   const handleSignOut = async () => {
     try {
@@ -104,8 +112,13 @@ export default function Navbar() {
                               Business Profile
                             </Link>
                           )}
-                          <Link href="/messages" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" onClick={() => setProfileOpen(false)}>
+                          <Link href="/messages" className="flex items-center justify-between px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" onClick={() => setProfileOpen(false)}>
                             Messages
+                            {unreadMessages > 0 && (
+                              <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full font-bold">
+                                {unreadMessages > 9 ? '9+' : unreadMessages}
+                              </span>
+                            )}
                           </Link>
                           {profile?.role === 'admin' && (
                             <Link href="/admin" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" onClick={() => setProfileOpen(false)}>
@@ -172,7 +185,14 @@ export default function Navbar() {
               {user && (
                 <div className="pt-3 border-t border-gray-200 dark:border-gray-700 space-y-1">
                   <Link href="/dashboard" className="block px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg" onClick={() => setMenuOpen(false)}>Dashboard</Link>
-                  <Link href="/messages" className="block px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg" onClick={() => setMenuOpen(false)}>Messages</Link>
+                  <Link href="/messages" className="flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg" onClick={() => setMenuOpen(false)}>
+                    Messages
+                    {unreadMessages > 0 && (
+                      <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full font-bold">
+                        {unreadMessages > 9 ? '9+' : unreadMessages}
+                      </span>
+                    )}
+                  </Link>
                   <button onClick={() => { handleSignOut(); setMenuOpen(false) }} className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg">Sign Out</button>
                 </div>
               )}
