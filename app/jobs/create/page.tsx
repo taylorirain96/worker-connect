@@ -54,24 +54,23 @@ export default function CreateJobPage() {
     }
 
     try {
-      const response = await fetch('/api/jobs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...data,
-          skills: data.skills ? data.skills.split(',').map((s) => s.trim()).filter(Boolean) : [],
-          employerId: user.uid,
-          employerName: user.displayName || user.email,
-        }),
+      const { saveJob } = await import('@/lib/services/jobService')
+      const jobId = await saveJob({
+        title: data.title,
+        description: data.description,
+        category: data.category as import('@/types').JobCategory,
+        location: data.location,
+        budget: data.budget,
+        budgetType: data.budgetType,
+        urgency: data.urgency,
+        skills: data.skills ? data.skills.split(',').map((s) => s.trim()).filter(Boolean) : [],
+        employerId: user.uid,
+        employerName: user.displayName || user.email || 'Employer',
+        status: 'open',
+        ...(data.deadline ? { deadline: data.deadline } : {}),
       })
-
-      if (!response.ok) {
-        throw new Error('Failed to create job')
-      }
-
-      const result = await response.json()
       toast.success('Job posted successfully!')
-      router.push(`/jobs/${result.id}`)
+      router.push(`/jobs/${jobId}`)
     } catch {
       toast.error('Failed to post job. Please try again.')
     }

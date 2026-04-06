@@ -2,11 +2,12 @@
 import Link from 'next/link'
 import { useTheme } from 'next-themes'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { Sun, Moon, Menu, X, Wrench, Bell, ChevronDown } from 'lucide-react'
+import { Sun, Moon, Menu, X, Wrench, ChevronDown } from 'lucide-react'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { useRouter } from 'next/navigation'
 import { getInitials } from '@/lib/utils'
+import NotificationCenter from '@/components/notifications/NotificationCenter'
 
 export default function Navbar() {
   const { theme, setTheme } = useTheme()
@@ -62,10 +63,7 @@ export default function Navbar() {
 
             {user ? (
               <div className="flex items-center space-x-2">
-                <button className="relative p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                  <Bell className="h-5 w-5" />
-                  <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-red-500 rounded-full"></span>
-                </button>
+                <NotificationCenter />
 
                 <div className="relative">
                   <button

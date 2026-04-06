@@ -16,7 +16,18 @@ export interface UserProfile {
   rating?: number
   reviewCount?: number
   completedJobs?: number
+  totalEarnings?: number
+  weeklyPoints?: number
+  allTimePoints?: number
+  badges?: string[]
+  level?: 'bronze' | 'silver' | 'gold' | 'platinum'
   verified?: boolean
+  verifiedDetails?: {
+    id: boolean
+    responded: boolean
+    reviews: boolean
+  }
+  verificationLevel?: 'unverified' | 'basic' | 'trusted'
   stripeCustomerId?: string
   stripeAccountId?: string
 }
@@ -36,6 +47,10 @@ export interface Job {
   status: 'open' | 'in_progress' | 'completed' | 'cancelled'
   skills: string[]
   applicantsCount: number
+  completionCount?: number
+  totalEarnings?: number
+  weeklyPoints?: number
+  badges?: string[]
   createdAt: string
   updatedAt: string
   deadline?: string
@@ -290,4 +305,27 @@ export interface CategoryInfo {
   icon: string
   description: string
   color: string
+}
+
+export interface Notification {
+  id: string
+  userId: string
+  jobId?: string
+  message: string
+  type: 'new_job' | 'new_review' | 'application' | 'message'
+  read: boolean
+  createdAt: string
+}
+
+export interface UserStats {
+  completedJobs: number
+  totalEarnings: number
+  weeklyPoints: number
+  allTimePoints: number
+  badges: string[]
+  verified: {
+    id: boolean
+    responded: boolean
+    reviews: boolean
+  }
 }
