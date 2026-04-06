@@ -1,7 +1,7 @@
 import Link from 'next/link'
-import { MapPin, Clock, DollarSign, Users, AlertCircle } from 'lucide-react'
+import { MapPin, Clock, DollarSign, Users, AlertCircle, Flame } from 'lucide-react'
 import type { Job } from '@/types'
-import { formatCurrency, formatRelativeDate, JOB_CATEGORIES, STATUS_LABELS } from '@/lib/utils'
+import { formatCurrency, formatRelativeDate, JOB_CATEGORIES, STATUS_LABELS, URGENCY_LABELS } from '@/lib/utils'
 import Badge from '@/components/ui/Badge'
 
 interface JobCardProps {
@@ -11,10 +11,20 @@ interface JobCardProps {
 export default function JobCard({ job }: JobCardProps) {
   const category = JOB_CATEGORIES.find((c) => c.id === job.category)
   const status = STATUS_LABELS[job.status]
+  const isUrgent = job.urgency === 'high' || job.urgency === 'emergency'
+  const urgencyLabel = URGENCY_LABELS[job.urgency]
 
   return (
     <Link href={`/jobs/${job.id}`}>
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 hover:shadow-md hover:border-primary-300 dark:hover:border-primary-700 transition-all cursor-pointer group">
+      <div
+        className={`bg-white dark:bg-gray-800 rounded-xl border p-5 hover:shadow-md transition-all cursor-pointer group ${
+          job.urgency === 'emergency'
+            ? 'border-red-300 dark:border-red-700 bg-red-50/30 dark:bg-red-900/10'
+            : job.urgency === 'high'
+            ? 'border-orange-300 dark:border-orange-700'
+            : 'border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-700'
+        }`}
+      >
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-3 min-w-0">
             <span className="text-2xl flex-shrink-0">{category?.icon || '🛠️'}</span>
@@ -32,7 +42,13 @@ export default function JobCard({ job }: JobCardProps) {
             {job.urgency === 'emergency' && (
               <Badge variant="danger" className="flex items-center gap-1">
                 <AlertCircle className="h-3 w-3" />
-                Emergency
+                EMERGENCY
+              </Badge>
+            )}
+            {job.urgency === 'high' && (
+              <Badge variant="warning" className="flex items-center gap-1">
+                <Flame className="h-3 w-3" />
+                URGENT
               </Badge>
             )}
           </div>
@@ -73,6 +89,13 @@ export default function JobCard({ job }: JobCardProps) {
             <span>{formatRelativeDate(job.createdAt)}</span>
           </div>
         </div>
+
+        {/* Urgency label for high/emergency jobs */}
+        {isUrgent && urgencyLabel && (
+          <div className={`mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center gap-1.5 text-xs font-medium ${urgencyLabel.color}`}>
+            <span>{urgencyLabel.label}</span>
+          </div>
+        )}
       </div>
     </Link>
   )
