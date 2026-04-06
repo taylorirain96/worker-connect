@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useCallback } from 'react'
+import Image from 'next/image'
 import type { JobPhoto } from '@/types'
 import { X, ChevronLeft, ChevronRight, Download, User, Clock } from 'lucide-react'
 import { formatRelativeDate } from '@/lib/utils'
@@ -93,12 +94,15 @@ export default function PhotoLightbox({ photos, currentIndex, onClose, onNavigat
         className="flex flex-col items-center max-w-4xl w-full mx-8 gap-4"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={photo.url}
-          alt={photo.caption || 'Job photo'}
-          className="max-h-[70vh] max-w-full object-contain rounded-lg shadow-2xl"
-        />
+        <div className="relative w-full h-[70vh]">
+          <Image
+            src={photo.url}
+            alt={photo.caption || 'Job photo'}
+            fill
+            className="object-contain rounded-lg shadow-2xl"
+            sizes="(max-width: 896px) 100vw, 896px"
+          />
+        </div>
 
         {/* Metadata bar */}
         <div className="w-full bg-gray-900/80 rounded-xl px-4 py-3 flex flex-wrap items-center justify-between gap-3 text-sm text-gray-200">
@@ -142,14 +146,13 @@ export default function PhotoLightbox({ photos, currentIndex, onClose, onNavigat
               <button
                 key={p.id}
                 onClick={() => onNavigate(i)}
-                className={`flex-shrink-0 h-14 w-14 rounded-lg overflow-hidden border-2 transition-colors ${
+                className={`relative flex-shrink-0 h-14 w-14 rounded-lg overflow-hidden border-2 transition-colors ${
                   i === currentIndex
                     ? 'border-primary-400'
                     : 'border-transparent opacity-60 hover:opacity-90'
                 }`}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={p.url} alt="" className="h-full w-full object-cover" />
+                <Image src={p.url} alt="" fill className="object-cover" sizes="56px" />
               </button>
             ))}
           </div>

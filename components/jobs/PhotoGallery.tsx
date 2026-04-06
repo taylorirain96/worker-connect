@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import type { JobPhoto } from '@/types'
 import PhotoLightbox from './PhotoLightbox'
 import BeforeAfterSlider from './BeforeAfterSlider'
@@ -76,11 +77,12 @@ export default function PhotoGallery({ photos, showComparisonSlider = true }: Ph
               className="group relative aspect-square rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500"
               aria-label={`View photo: ${photo.caption || TYPE_LABEL[photo.type]}`}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src={photo.url}
                 alt={photo.caption || TYPE_LABEL[photo.type]}
-                className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                fill
+                className="object-cover transition-transform group-hover:scale-105"
+                sizes="(max-width: 640px) 50vw, 33vw"
               />
               {/* Overlay */}
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />

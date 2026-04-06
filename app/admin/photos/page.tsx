@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { useAuth } from '@/components/providers/AuthProvider'
@@ -192,11 +193,12 @@ export default function AdminPhotosPage() {
                         <Card key={photo.id} padding="none" className="overflow-hidden">
                           {/* Photo */}
                           <div className="relative aspect-video bg-gray-100 dark:bg-gray-900">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
+                            <Image
                               src={photo.url}
                               alt={photo.caption || 'Job photo'}
-                              className="h-full w-full object-cover"
+                              fill
+                              className="object-cover"
+                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                             />
                             <span className={`absolute top-2 left-2 text-xs font-semibold px-2 py-0.5 rounded-full ${STATUS_COLOR[photo.approvalStatus]}`}>
                               {photo.approvalStatus}
