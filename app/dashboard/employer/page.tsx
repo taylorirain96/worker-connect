@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { useAuth } from '@/components/providers/AuthProvider'
@@ -8,16 +8,31 @@ import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import Link from 'next/link'
 import {
-  Briefcase, DollarSign, Users, TrendingUp,
+  Briefcase, DollarSign, Users,
   Plus, Clock, CheckCircle, Eye, Building2, Shield, Award, Trophy, Star,
   Camera, Filter,
 } from 'lucide-react'
 import { formatCurrency, formatRelativeDate, STATUS_LABELS } from '@/lib/utils'
+import { collection, query, where, orderBy, getDocs, type DocumentData } from 'firebase/firestore'
+import { db } from '@/lib/firebase'
+import type { Job } from '@/types'
 
-const MOCK_POSTED_JOBS = [
-  { id: '1', title: 'Fix Leaking Bathroom Pipe', status: 'completed', budget: 150, budgetType: 'fixed' as const, applicants: 4, createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), hasPhotos: true, photoCount: 2 },
-  { id: '2', title: 'Paint Living Room', status: 'in_progress', budget: 800, budgetType: 'fixed' as const, applicants: 9, createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), hasPhotos: false, photoCount: 0 },
-  { id: '3', title: 'Landscaping & Yard Cleanup', status: 'completed', budget: 350, budgetType: 'fixed' as const, applicants: 6, createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(), hasPhotos: false, photoCount: 0 },
+interface PostedJob {
+  id: string
+  title: string
+  status: string
+  budget: number
+  budgetType: 'fixed' | 'hourly'
+  applicants: number
+  createdAt: string
+  hasPhotos: boolean
+  photoCount: number
+}
+
+const MOCK_POSTED_JOBS: PostedJob[] = [
+  { id: '1', title: 'Fix Leaking Bathroom Pipe', status: 'completed', budget: 150, budgetType: 'fixed', applicants: 4, createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), hasPhotos: true, photoCount: 2 },
+  { id: '2', title: 'Paint Living Room', status: 'in_progress', budget: 800, budgetType: 'fixed', applicants: 9, createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), hasPhotos: false, photoCount: 0 },
+  { id: '3', title: 'Landscaping & Yard Cleanup', status: 'completed', budget: 350, budgetType: 'fixed', applicants: 6, createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(), hasPhotos: false, photoCount: 0 },
 ]
 
 const MOCK_TOP_PERFORMERS = [
@@ -26,21 +41,69 @@ const MOCK_TOP_PERFORMERS = [
   { id: 'w3', name: 'James Rodriguez', category: 'HVAC', rank: 3, weeklyPoints: 350, rating: 4.7, jobs: 6, trend: '→' },
 ]
 
+function docToPostedJob(id: string, data: DocumentData): PostedJob {
+  const toISO = (v: unknown) =>
+    v && typeof v === 'object' && 'toDate' in v
+      ? (v as { toDate: () => Date }).toDate().toISOString()
+      : typeof v === 'string' ? v : new Date().toISOString()
+  const job = { ...data, id } as Job
+  return {
+    id,
+    title: job.title,
+    status: job.status,
+    budget: job.budget,
+    budgetType: job.budgetType ?? 'fixed',
+    applicants: job.applicantsCount ?? 0,
+    createdAt: toISO(data.createdAt),
+    hasPhotos: Array.isArray(job.images) && job.images.length > 0,
+    photoCount: Array.isArray(job.images) ? job.images.length : 0,
+  }
+}
+
 export default function EmployerDashboardPage() {
   const { user } = useAuth()
+  const [postedJobs, setPostedJobs] = useState<PostedJob[]>([])
+  const [loadingJobs, setLoadingJobs] = useState(true)
   const [photoFilter, setPhotoFilter] = useState<'all' | 'with_photos' | 'no_photos'>('all')
 
-  const filteredJobs = MOCK_POSTED_JOBS.filter((job) => {
+  useEffect(() => {
+    if (!user?.uid || !db) {
+      setPostedJobs(MOCK_POSTED_JOBS)
+      setLoadingJobs(false)
+      return
+    }
+    async function fetchJobs() {
+      try {
+        const jobsRef = collection(db!, 'jobs')
+        const q = query(jobsRef, where('employerId', '==', user!.uid), orderBy('createdAt', 'desc'))
+        const snapshot = await getDocs(q)
+        const jobs = snapshot.docs.map((d) => docToPostedJob(d.id, d.data()))
+        setPostedJobs(jobs.length > 0 ? jobs : MOCK_POSTED_JOBS)
+      } catch {
+        setPostedJobs(MOCK_POSTED_JOBS)
+      } finally {
+        setLoadingJobs(false)
+      }
+    }
+    fetchJobs()
+  }, [user])((job) => {
     if (photoFilter === 'with_photos') return job.hasPhotos
     if (photoFilter === 'no_photos') return job.status === 'completed' && !job.hasPhotos
     return true
   })
 
+  const totalPosted = postedJobs.length
+  const activeJobs = postedJobs.filter((j) => j.status === 'in_progress' || j.status === 'open').length
+  const completedJobs = postedJobs.filter((j) => j.status === 'completed').length
+  const totalSpent = postedJobs
+    .filter((j) => j.status === 'completed')
+    .reduce((sum, j) => sum + j.budget, 0)
+
   const stats = [
-    { label: 'Jobs Posted', value: '6', icon: Briefcase, color: 'text-blue-600', bg: 'bg-blue-100 dark:bg-blue-900/30' },
-    { label: 'Active Jobs', value: '2', icon: Clock, color: 'text-orange-600', bg: 'bg-orange-100 dark:bg-orange-900/30' },
-    { label: 'Completed', value: '3', icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-100 dark:bg-green-900/30' },
-    { label: 'Total Spent', value: '$3,400', icon: DollarSign, color: 'text-primary-600', bg: 'bg-primary-100 dark:bg-primary-900/30' },
+    { label: 'Jobs Posted', value: String(totalPosted), icon: Briefcase, color: 'text-blue-600', bg: 'bg-blue-100 dark:bg-blue-900/30' },
+    { label: 'Active Jobs', value: String(activeJobs), icon: Clock, color: 'text-orange-600', bg: 'bg-orange-100 dark:bg-orange-900/30' },
+    { label: 'Completed', value: String(completedJobs), icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-100 dark:bg-green-900/30' },
+    { label: 'Total Spent', value: formatCurrency(totalSpent), icon: DollarSign, color: 'text-primary-600', bg: 'bg-primary-100 dark:bg-primary-900/30' },
   ]
 
   return (
@@ -120,7 +183,9 @@ export default function EmployerDashboardPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  {filteredJobs.length === 0 ? (
+                  {loadingJobs ? (
+                    <div className="text-center py-8 text-gray-400 text-sm">Loading…</div>
+                  ) : filteredJobs.length === 0 ? (
                     <div className="text-center py-8">
                       <Camera className="h-10 w-10 text-gray-300 mx-auto mb-3" />
                       <p className="text-gray-500 mb-1">No jobs match this filter</p>
@@ -155,7 +220,7 @@ export default function EmployerDashboardPage() {
                               <Badge
                                 variant={job.status === 'open' ? 'success' : job.status === 'in_progress' ? 'info' : 'default'}
                               >
-                                {status?.label}
+                                {status?.label ?? job.status}
                               </Badge>
                               <Link href={`/jobs/${job.id}`}>
                                 <button className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
@@ -264,57 +329,12 @@ export default function EmployerDashboardPage() {
                   <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
                     Complete verifications to earn trust badges and attract enterprise clients.
                   </p>
-                  <div className="space-y-1.5 mb-3">
-                    {[
-                      { label: 'License Verification', done: false },
-                      { label: 'Insurance Verification', done: false },
-                      { label: 'Background Check', done: false },
-                      { label: 'BBB / Google Ratings', done: false },
-                      { label: 'Certifications', done: false },
-                    ].map((item) => (
-                      <div key={item.label} className="flex items-center gap-2 text-xs">
-                        {item.done ? (
-                          <CheckCircle className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
-                        ) : (
-                          <div className="h-3.5 w-3.5 rounded-full border-2 border-gray-300 dark:border-gray-600 flex-shrink-0" />
-                        )}
-                        <span className={item.done ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-500'}>
-                          {item.label}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
                   <Link href="/dashboard/business/verification">
                     <Button variant="outline" size="sm" className="w-full justify-center text-green-700 border-green-300 hover:bg-green-50 dark:text-green-400 dark:border-green-700 dark:hover:bg-green-900/20">
                       <Shield className="h-4 w-4" />
                       Start Verification
                     </Button>
                   </Link>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-primary-600" />
-                    <CardTitle>Spending Overview</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">This month</span>
-                      <span className="font-semibold text-gray-900 dark:text-white">{formatCurrency(800)}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Last month</span>
-                      <span className="font-medium text-gray-700 dark:text-gray-300">{formatCurrency(1200)}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">All time</span>
-                      <span className="font-medium text-gray-700 dark:text-gray-300">{formatCurrency(3400)}</span>
-                    </div>
-                  </div>
                 </CardContent>
               </Card>
 
@@ -353,3 +373,4 @@ export default function EmployerDashboardPage() {
     </div>
   )
 }
+

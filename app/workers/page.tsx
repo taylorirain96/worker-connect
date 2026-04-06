@@ -1,11 +1,12 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import WorkerCard from '@/components/workers/WorkerCard'
 import WorkerFilters from '@/components/workers/WorkerFilters'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { Users } from 'lucide-react'
+import { getWorkers } from '@/lib/services/workerService'
 import type { UserProfile } from '@/types'
 
 const MOCK_WORKERS: UserProfile[] = [
@@ -120,7 +121,8 @@ const MOCK_WORKERS: UserProfile[] = [
 ]
 
 export default function WorkersPage() {
-  const [loading] = useState(false)
+  const [workers, setWorkers] = useState<UserProfile[]>([])
+  const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState({
     search: '',
     location: '',
@@ -131,7 +133,22 @@ export default function WorkersPage() {
     availability: '',
   })
 
-  const filteredWorkers = MOCK_WORKERS.filter((worker) => {
+  useEffect(() => {
+    async function fetchWorkers() {
+      setLoading(true)
+      try {
+        const fetched = await getWorkers()
+        setWorkers(fetched.length > 0 ? fetched : MOCK_WORKERS)
+      } catch {
+        setWorkers(MOCK_WORKERS)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchWorkers()
+  }, [])
+
+  const filteredWorkers = workers.filter((worker) => {
     if (filters.search && !worker.displayName?.toLowerCase().includes(filters.search.toLowerCase()) &&
         !worker.bio?.toLowerCase().includes(filters.search.toLowerCase())) return false
     if (filters.location && !worker.location?.toLowerCase().includes(filters.location.toLowerCase())) return false
