@@ -48,6 +48,16 @@ export default function AdminPage() {
     return null
   }
 
+  const MOCK_PAYMENT_ANALYTICS = {
+    totalRevenue: 2850000,
+    totalPayouts: 2100000,
+    pendingPayouts: 84500,
+    successfulPayments: 38410,
+    failedPayments: 355,
+    disputeCount: 12,
+    averagePaymentValue: 74.20,
+  }
+
   const stats = [
     { label: 'Total Users', value: MOCK_ADMIN_STATS.totalUsers.toLocaleString(), icon: Users, color: 'text-blue-600', bg: 'bg-blue-100 dark:bg-blue-900/30' },
     { label: 'Active Jobs', value: MOCK_ADMIN_STATS.openJobs.toLocaleString(), icon: Briefcase, color: 'text-orange-600', bg: 'bg-orange-100 dark:bg-orange-900/30' },
@@ -96,6 +106,34 @@ export default function AdminPage() {
                 <div className="text-xs text-gray-500">{label}</div>
               </div>
             ))}
+          </div>
+
+          {/* Payment Analytics */}
+          <div className="mb-8">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <DollarSign className="h-5 w-5 text-emerald-500" />
+              Payment Analytics
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { label: 'Successful Payments', value: MOCK_PAYMENT_ANALYTICS.successfulPayments.toLocaleString(), icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-100 dark:bg-emerald-900/30' },
+                { label: 'Failed Payments', value: MOCK_PAYMENT_ANALYTICS.failedPayments.toLocaleString(), icon: AlertTriangle, color: 'text-red-600', bg: 'bg-red-100 dark:bg-red-900/30' },
+                { label: 'Open Disputes', value: MOCK_PAYMENT_ANALYTICS.disputeCount.toLocaleString(), icon: AlertTriangle, color: 'text-orange-600', bg: 'bg-orange-100 dark:bg-orange-900/30' },
+                { label: 'Pending Payouts', value: formatCurrency(MOCK_PAYMENT_ANALYTICS.pendingPayouts), icon: Clock, color: 'text-amber-600', bg: 'bg-amber-100 dark:bg-amber-900/30' },
+              ].map(({ label, value, icon: Icon, color, bg }) => (
+                <Card key={label} padding="md">
+                  <div className="flex items-center gap-3">
+                    <div className={`h-10 w-10 rounded-xl ${bg} flex items-center justify-center flex-shrink-0`}>
+                      <Icon className={`h-5 w-5 ${color}`} />
+                    </div>
+                    <div>
+                      <p className="text-xl font-bold text-gray-900 dark:text-white">{value}</p>
+                      <p className="text-xs text-gray-500">{label}</p>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
           </div>
 
           <div className="grid lg:grid-cols-2 gap-6">
