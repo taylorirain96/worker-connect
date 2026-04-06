@@ -76,6 +76,10 @@ export const BADGE_DEFINITIONS: Record<string, { label: string; icon: string; de
   // Photo badges
   photo_master: { label: 'Photo Master', icon: '📸', description: 'Uploaded 50+ job photos' },
   detail_oriented: { label: 'Detail Oriented', icon: '🔍', description: 'Averaged 5+ photos per job' },
+  // Review badges
+  highly_rated: { label: 'Highly Rated', icon: '⭐', description: 'Maintained a 4.5+ average rating with 5+ reviews' },
+  customer_favorite: { label: 'Customer Favorite', icon: '❤️', description: 'Received 50+ reviews' },
+  responsive_pro: { label: 'Responsive Pro', icon: '💬', description: 'Responded to 90%+ of reviews' },
 }
 
 export async function awardPoints(

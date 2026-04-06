@@ -7,6 +7,7 @@ import { getInitials, formatCurrency } from '@/lib/utils'
 import { LEADERBOARD_BADGE_DEFINITIONS } from '@/lib/leaderboard/rankingLogic'
 import { generateReferralCode } from '@/lib/referrals/referralLogic'
 import { BADGE_DEFINITIONS } from '@/lib/services/gamificationService'
+import ReviewSummary from '@/components/reviews/ReviewSummary'
 
 /** Mock leaderboard data — replaced by real data once Firebase is wired. */
 const MOCK_RANK = {
@@ -246,6 +247,11 @@ export default function UserProfilePage() {
                   Send Message
                 </Button>
               </Link>
+            </div>
+
+            {/* Review Summary */}
+            <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-700">
+              <ReviewSummary entityId="mock-worker-id" profileId="mock-worker-id" />
             </div>
           </div>
         </div>
