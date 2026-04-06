@@ -432,3 +432,48 @@ export interface MonthlyEarnings {
   bonus: number
   jobCount: number
 }
+
+// ─── Photo Reviews Types ──────────────────────────────────────────────────────
+
+export type PhotoType = 'before' | 'after' | 'general'
+export type PhotoApprovalStatus = 'pending' | 'approved' | 'flagged'
+
+export interface JobPhoto {
+  id: string
+  jobId: string
+  workerId: string
+  workerName: string
+  url: string
+  storagePath: string
+  type: PhotoType
+  caption: string
+  approvalStatus: PhotoApprovalStatus
+  qualityScore?: number
+  moderatorNote?: string
+  uploadedAt: string
+}
+
+export interface JobPhotoUpload {
+  file: File
+  type: PhotoType
+  caption: string
+  preview: string
+}
+
+export interface PhotoStats {
+  totalPhotos: number
+  totalJobsWithPhotos: number
+  totalJobsCompleted: number
+  photoCompletionRate: number
+  avgPhotosPerJob: number
+  avgUploadResponseHours: number
+}
+
+export interface PhotoModerationAction {
+  photoId: string
+  action: 'approve' | 'flag'
+  moderatorId: string
+  note?: string
+  qualityScore?: number
+  actionAt: string
+}

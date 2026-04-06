@@ -1,4 +1,5 @@
 'use client'
+import { useState } from 'react'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { useAuth } from '@/components/providers/AuthProvider'
@@ -9,13 +10,14 @@ import Link from 'next/link'
 import {
   Briefcase, DollarSign, Users, TrendingUp,
   Plus, Clock, CheckCircle, Eye, Building2, Shield, Award, Trophy, Star,
+  Camera, Filter,
 } from 'lucide-react'
 import { formatCurrency, formatRelativeDate, STATUS_LABELS } from '@/lib/utils'
 
 const MOCK_POSTED_JOBS = [
-  { id: '1', title: 'Fix Leaking Bathroom Pipe', status: 'open', budget: 150, budgetType: 'fixed' as const, applicants: 4, createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() },
-  { id: '2', title: 'Paint Living Room', status: 'in_progress', budget: 800, budgetType: 'fixed' as const, applicants: 9, createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString() },
-  { id: '3', title: 'Landscaping & Yard Cleanup', status: 'completed', budget: 350, budgetType: 'fixed' as const, applicants: 6, createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString() },
+  { id: '1', title: 'Fix Leaking Bathroom Pipe', status: 'completed', budget: 150, budgetType: 'fixed' as const, applicants: 4, createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), hasPhotos: true, photoCount: 2 },
+  { id: '2', title: 'Paint Living Room', status: 'in_progress', budget: 800, budgetType: 'fixed' as const, applicants: 9, createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), hasPhotos: false, photoCount: 0 },
+  { id: '3', title: 'Landscaping & Yard Cleanup', status: 'completed', budget: 350, budgetType: 'fixed' as const, applicants: 6, createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(), hasPhotos: false, photoCount: 0 },
 ]
 
 const MOCK_TOP_PERFORMERS = [
@@ -26,6 +28,13 @@ const MOCK_TOP_PERFORMERS = [
 
 export default function EmployerDashboardPage() {
   const { user } = useAuth()
+  const [photoFilter, setPhotoFilter] = useState<'all' | 'with_photos' | 'no_photos'>('all')
+
+  const filteredJobs = MOCK_POSTED_JOBS.filter((job) => {
+    if (photoFilter === 'with_photos') return job.hasPhotos
+    if (photoFilter === 'no_photos') return job.status === 'completed' && !job.hasPhotos
+    return true
+  })
 
   const stats = [
     { label: 'Jobs Posted', value: '6', icon: Briefcase, color: 'text-blue-600', bg: 'bg-blue-100 dark:bg-blue-900/30' },
@@ -79,38 +88,67 @@ export default function EmployerDashboardPage() {
             <div className="lg:col-span-2">
               <Card>
                 <CardHeader>
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
                     <CardTitle>Your Job Postings</CardTitle>
-                    <Link href="/jobs/create" className="text-sm text-primary-600 hover:text-primary-700 flex items-center gap-1">
-                      <Plus className="h-3.5 w-3.5" />
-                      New job
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      {/* Photo filter */}
+                      <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+                        <Filter className="h-3.5 w-3.5 text-gray-400 ml-1" />
+                        {([
+                          { value: 'all', label: 'All' },
+                          { value: 'with_photos', label: '📸 Has Photos' },
+                          { value: 'no_photos', label: 'No Photos' },
+                        ] as const).map(({ value, label }) => (
+                          <button
+                            key={value}
+                            onClick={() => setPhotoFilter(value)}
+                            className={`text-xs px-2 py-0.5 rounded transition-colors ${
+                              photoFilter === value
+                                ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm font-medium'
+                                : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                      <Link href="/jobs/create" className="text-sm text-primary-600 hover:text-primary-700 flex items-center gap-1">
+                        <Plus className="h-3.5 w-3.5" />
+                        New job
+                      </Link>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  {MOCK_POSTED_JOBS.length === 0 ? (
+                  {filteredJobs.length === 0 ? (
                     <div className="text-center py-8">
-                      <Briefcase className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                      <p className="text-gray-500 mb-3">No jobs posted yet</p>
-                      <Link href="/jobs/create">
-                        <Button size="sm">Post Your First Job</Button>
-                      </Link>
+                      <Camera className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+                      <p className="text-gray-500 mb-1">No jobs match this filter</p>
+                      <button onClick={() => setPhotoFilter('all')} className="text-sm text-primary-600 hover:underline">
+                        Clear filter
+                      </button>
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      {MOCK_POSTED_JOBS.map((job) => {
+                      {filteredJobs.map((job) => {
                         const status = STATUS_LABELS[job.status]
                         return (
                           <div key={job.id} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                             <div className="flex-1 min-w-0">
                               <p className="font-medium text-gray-900 dark:text-white text-sm truncate">{job.title}</p>
-                              <div className="flex items-center gap-3 mt-0.5">
+                              <div className="flex items-center gap-3 mt-0.5 flex-wrap">
                                 <span className="text-xs text-gray-500">{formatCurrency(job.budget)}</span>
                                 <span className="flex items-center gap-1 text-xs text-gray-500">
                                   <Users className="h-3 w-3" />
                                   {job.applicants} applicants
                                 </span>
                                 <span className="text-xs text-gray-400">{formatRelativeDate(job.createdAt)}</span>
+                                {job.hasPhotos && (
+                                  <span className="flex items-center gap-0.5 text-xs text-primary-600 dark:text-primary-400">
+                                    <Camera className="h-3 w-3" />
+                                    {job.photoCount} photos
+                                  </span>
+                                )}
                               </div>
                             </div>
                             <div className="flex items-center gap-2">

@@ -2,10 +2,11 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import Button from '@/components/ui/Button'
 import Link from 'next/link'
-import { ArrowLeft, Star, CheckCircle, MapPin, Briefcase, MessageSquare, Trophy, DollarSign, Users } from 'lucide-react'
+import { ArrowLeft, Star, CheckCircle, MapPin, Briefcase, MessageSquare, Trophy, DollarSign, Users, Camera } from 'lucide-react'
 import { getInitials, formatCurrency } from '@/lib/utils'
 import { LEADERBOARD_BADGE_DEFINITIONS } from '@/lib/leaderboard/rankingLogic'
 import { generateReferralCode } from '@/lib/referrals/referralLogic'
+import { BADGE_DEFINITIONS } from '@/lib/services/gamificationService'
 
 /** Mock leaderboard data — replaced by real data once Firebase is wired. */
 const MOCK_RANK = {
@@ -13,7 +14,7 @@ const MOCK_RANK = {
   totalEntries: 48,
   weeklyPoints: 310,
   previousRank: 6,
-  badgesEarned: ['weekly_champion'],
+  badgesEarned: ['weekly_champion', 'photo_master'],
 }
 
 /** Mock earnings data — replaced by real data once Firebase is wired. */
@@ -22,6 +23,14 @@ const MOCK_EARNINGS = {
   thisMonth: 312.40,
   completedJobs: 47,
   referralCode: generateReferralCode('mock-worker-id'),
+}
+
+/** Mock photo stats — replaced by real data once Firebase is wired. */
+const MOCK_PHOTO_STATS = {
+  totalPhotos: 63,
+  photoCompletionRate: 87,
+  avgPhotosPerJob: 3.2,
+  totalJobsWithPhotos: 41,
 }
 
 export default function UserProfilePage() {
@@ -181,6 +190,53 @@ export default function UserProfilePage() {
 
             <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-700">
               <p className="text-gray-500 italic">This user has not added a bio yet.</p>
+            </div>
+
+            {/* Photo Documentation Stats */}
+            <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-700">
+              <div className="flex items-center gap-2 mb-3">
+                <Camera className="h-5 w-5 text-primary-600" />
+                <h2 className="text-base font-semibold text-gray-900 dark:text-white">Photo Documentation</h2>
+              </div>
+              <div className="grid grid-cols-3 gap-3 mb-3">
+                <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-3 text-center">
+                  <p className="text-2xl font-bold text-primary-700 dark:text-primary-400">
+                    {MOCK_PHOTO_STATS.totalPhotos}
+                  </p>
+                  <p className="text-xs text-primary-600 dark:text-primary-500 mt-0.5">Total Photos</p>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 text-center">
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {MOCK_PHOTO_STATS.photoCompletionRate}%
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">Photo Rate</p>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 text-center">
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {MOCK_PHOTO_STATS.avgPhotosPerJob}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">Avg / Job</p>
+                </div>
+              </div>
+
+              {/* Photo badges */}
+              <div className="flex gap-2 flex-wrap">
+                {MOCK_RANK.badgesEarned
+                  .filter((b) => b === 'photo_master' || b === 'detail_oriented')
+                  .map((b) => {
+                    const def = BADGE_DEFINITIONS[b]
+                    if (!def) return null
+                    return (
+                      <span
+                        key={b}
+                        title={def.description}
+                        className="text-xs bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400 px-2 py-1 rounded-full"
+                      >
+                        {def.icon} {def.label}
+                      </span>
+                    )
+                  })}
+              </div>
             </div>
 
             <div className="mt-6 flex gap-3">

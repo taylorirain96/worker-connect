@@ -73,6 +73,9 @@ export const BADGE_DEFINITIONS: Record<string, { label: string; icon: string; de
   weekly_runner_up: { label: 'Runner-up', icon: '🥈', description: 'Ranked #2 on the weekly leaderboard' },
   weekly_rising_star: { label: 'Rising Star', icon: '🥉', description: 'Ranked #3 on the weekly leaderboard' },
   top_10: { label: 'Top 10', icon: '🏆', description: 'Entered the weekly top 10' },
+  // Photo badges
+  photo_master: { label: 'Photo Master', icon: '📸', description: 'Uploaded 50+ job photos' },
+  detail_oriented: { label: 'Detail Oriented', icon: '🔍', description: 'Averaged 5+ photos per job' },
 }
 
 export async function awardPoints(
