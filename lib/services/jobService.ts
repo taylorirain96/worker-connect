@@ -66,7 +66,11 @@ export async function getJobsByCategory(category: JobCategory): Promise<Job[]> {
   return snapshot.docs.map((d) => docToJob(d.id, d.data()))
 }
 
-export async function getJobsNearby(location: string, radius: number = 10): Promise<Job[]> {
+export async function getJobsNearby(
+  location: string,
+  // radius is reserved for future geohash/geolocation query implementation
+  radius: number = 10
+): Promise<Job[]> {
   void radius
   if (!db) return []
   // Simple text-match filter — replace with geohash/geolocation query for production

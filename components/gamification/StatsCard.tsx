@@ -33,8 +33,8 @@ export default function StatsCard({ profile }: StatsCardProps) {
     ? Math.min(
         100,
         Math.round(
-          ((allTimePoints - (allTimePoints - (nextLevel.remaining))) /
-            nextLevel.remaining) *
+          ((allTimePoints - nextLevel.currentThreshold) /
+            (nextLevel.nextThreshold - nextLevel.currentThreshold)) *
             100
         )
       )

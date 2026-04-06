@@ -30,6 +30,7 @@ function docToNotification(id: string, data: DocumentData): Notification {
 
 export function subscribeToNearbyJobs(
   workerId: string,
+  // location and radius are reserved for future geo-query implementation
   location: string,
   radius: number = 10,
   onNewJob: (notification: Notification) => void

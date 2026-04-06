@@ -42,13 +42,13 @@ export default function JobCard({ job }: JobCardProps) {
             {job.urgency === 'emergency' && (
               <Badge variant="danger" className="flex items-center gap-1">
                 <AlertCircle className="h-3 w-3" />
-                🔴 EMERGENCY
+                EMERGENCY
               </Badge>
             )}
             {job.urgency === 'high' && (
               <Badge variant="warning" className="flex items-center gap-1">
                 <Flame className="h-3 w-3" />
-                🔴 URGENT
+                URGENT
               </Badge>
             )}
           </div>
@@ -90,7 +90,7 @@ export default function JobCard({ job }: JobCardProps) {
           </div>
         </div>
 
-        {/* Urgency label for medium */}
+        {/* Urgency label for high/emergency jobs */}
         {isUrgent && urgencyLabel && (
           <div className={`mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center gap-1.5 text-xs font-medium ${urgencyLabel.color}`}>
             <span>{urgencyLabel.label}</span>

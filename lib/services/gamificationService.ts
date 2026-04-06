@@ -26,15 +26,32 @@ export function calculateWorkerLevel(totalPoints: number): WorkerLevel {
   return 'bronze'
 }
 
-export function pointsToNextLevel(totalPoints: number): { next: WorkerLevel; remaining: number } | null {
+export function pointsToNextLevel(
+  totalPoints: number
+): { next: WorkerLevel; remaining: number; currentThreshold: number; nextThreshold: number } | null {
   if (totalPoints >= LEVEL_THRESHOLDS.platinum) return null
   if (totalPoints >= LEVEL_THRESHOLDS.gold) {
-    return { next: 'platinum', remaining: LEVEL_THRESHOLDS.platinum - totalPoints }
+    return {
+      next: 'platinum',
+      remaining: LEVEL_THRESHOLDS.platinum - totalPoints,
+      currentThreshold: LEVEL_THRESHOLDS.gold,
+      nextThreshold: LEVEL_THRESHOLDS.platinum,
+    }
   }
   if (totalPoints >= LEVEL_THRESHOLDS.silver) {
-    return { next: 'gold', remaining: LEVEL_THRESHOLDS.gold - totalPoints }
+    return {
+      next: 'gold',
+      remaining: LEVEL_THRESHOLDS.gold - totalPoints,
+      currentThreshold: LEVEL_THRESHOLDS.silver,
+      nextThreshold: LEVEL_THRESHOLDS.gold,
+    }
   }
-  return { next: 'silver', remaining: LEVEL_THRESHOLDS.silver - totalPoints }
+  return {
+    next: 'silver',
+    remaining: LEVEL_THRESHOLDS.silver - totalPoints,
+    currentThreshold: LEVEL_THRESHOLDS.bronze,
+    nextThreshold: LEVEL_THRESHOLDS.silver,
+  }
 }
 
 export const LEVEL_ICONS: Record<WorkerLevel, string> = {
@@ -56,6 +73,7 @@ export const BADGE_DEFINITIONS: Record<string, { label: string; icon: string; de
 export async function awardPoints(
   userId: string,
   points: number,
+  // reason is reserved for future analytics / audit-log use
   reason: string
 ): Promise<void> {
   void reason
