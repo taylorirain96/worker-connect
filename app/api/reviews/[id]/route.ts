@@ -69,8 +69,8 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
 
 export async function DELETE(request: NextRequest, { params }: RouteContext) {
   try {
-    // Auth check
-    const userId = request.headers.get('x-user-id') ?? (await request.json().catch(() => ({}))).userId
+    // Auth check – require user ID from header only (avoids consuming body stream)
+    const userId = request.headers.get('x-user-id')
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }

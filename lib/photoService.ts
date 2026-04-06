@@ -149,7 +149,8 @@ export async function uploadReviewPhoto(
   // Compress before upload
   const compressed = await compressImage(file)
 
-  const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
+  const nameParts = file.name.split('.')
+  const ext = nameParts.length > 1 ? (nameParts.pop()?.toLowerCase() ?? 'jpg') : 'jpg'
   const storagePath = `review-photos/${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
   const storageRef = ref(storage, storagePath)
 
@@ -194,7 +195,9 @@ export async function uploadReviewPhotos(
     } catch (err) {
       // Clean up already-uploaded photos on failure
       for (const path of uploadedPaths) {
-        await deleteReviewPhoto(path).catch(() => null)
+        await deleteReviewPhoto(path).catch((err) => {
+          console.warn(`Failed to clean up photo at ${path}:`, err)
+        })
       }
       throw err
     }

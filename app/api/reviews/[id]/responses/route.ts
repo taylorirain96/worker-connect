@@ -108,11 +108,10 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
 /** DELETE /api/reviews/[id]/responses – Delete the existing response */
 export async function DELETE(request: NextRequest, { params }: RouteContext) {
   try {
+    // Auth check – require user ID from header only (avoids consuming body stream)
     const userId = request.headers.get('x-user-id')
-    const body = await request.json().catch(() => ({}))
-    const effectiveUserId = userId ?? (body as { userId?: string }).userId
 
-    if (!effectiveUserId) {
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -125,7 +124,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ error: 'No response found' }, { status: 404 })
     }
 
-    if (review.response.authorId !== effectiveUserId) {
+    if (review.response.authorId !== userId) {
       return NextResponse.json({ error: 'Forbidden: you can only delete your own response' }, { status: 403 })
     }
 

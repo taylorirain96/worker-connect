@@ -137,7 +137,7 @@ export default function PhotoUpload({
           aria-label="Upload photos – click or drag and drop"
           onClick={() => inputRef.current?.click()}
           onKeyDown={(e) => e.key === 'Enter' && inputRef.current?.click()}
-          onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
+          onDragOver={(e) => { e.preventDefault(); if (!dragging) setDragging(true) }}
           onDragLeave={() => setDragging(false)}
           onDrop={handleDrop}
           className={cn(
