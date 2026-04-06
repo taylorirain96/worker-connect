@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
+import Image from 'next/image'
 
 interface BeforeAfterSliderProps {
   beforeUrl: string
@@ -76,11 +77,12 @@ export default function BeforeAfterSlider({
       onTouchStart={onTouchStart}
     >
       {/* After image (full width, behind) */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+      <Image
         src={afterUrl}
         alt={afterLabel}
-        className="block w-full h-full object-cover pointer-events-none"
+        fill
+        className="object-cover pointer-events-none"
+        sizes="(max-width: 768px) 100vw, 50vw"
         draggable={false}
       />
 
@@ -89,11 +91,12 @@ export default function BeforeAfterSlider({
         className="absolute inset-0 overflow-hidden"
         style={{ width: `${sliderPct}%` }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <Image
           src={beforeUrl}
           alt={beforeLabel}
-          className="block w-full h-full object-cover pointer-events-none"
+          fill
+          className="object-cover object-left pointer-events-none"
+          sizes="(max-width: 768px) 100vw, 50vw"
           draggable={false}
         />
       </div>
