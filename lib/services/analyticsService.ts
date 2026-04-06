@@ -173,8 +173,9 @@ const STATUS_BREAKDOWN: StatusBreakdownEntry[] = [
  * Fetch analytics for the current worker.
  * TODO: Replace with Firestore queries using workerId.
  */
-export async function getWorkerAnalytics(workerId: string): Promise<WorkerAnalytics> {
-  void workerId // TODO: use workerId for Firestore queries
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function getWorkerAnalytics(_workerId: string): Promise<WorkerAnalytics> {
+  // TODO: use _workerId for Firestore queries
   // Simulate network delay
   await new Promise((r) => setTimeout(r, 400))
 

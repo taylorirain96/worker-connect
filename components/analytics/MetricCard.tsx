@@ -26,9 +26,10 @@ export default function MetricCard({
   iconColor = 'text-primary-600',
   className,
 }: MetricCardProps) {
+  const trendValue = trend ?? 0
   const hasTrend = trend !== undefined && trend !== null
-  const trendPositive = hasTrend && trend! > 0
-  const trendNegative = hasTrend && trend! < 0
+  const trendPositive = hasTrend && trendValue > 0
+  const trendNegative = hasTrend && trendValue < 0
 
   return (
     <div className={cn(
@@ -63,7 +64,7 @@ export default function MetricCard({
             trendNegative ? 'text-red-600 dark:text-red-400' :
             'text-gray-400'
           )}>
-            {trend! > 0 ? '+' : ''}{trend!.toFixed(1)}%
+            {trendValue > 0 ? '+' : ''}{trendValue.toFixed(1)}%
           </span>
           {trendLabel && (
             <span className="text-xs text-gray-400 dark:text-gray-500">{trendLabel}</span>
