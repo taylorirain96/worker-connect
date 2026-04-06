@@ -18,17 +18,10 @@ export interface SearchFilters {
   dateTo?: string
 }
 
-export interface WorkerSearchFilters extends SearchFilters {
-  minHourlyRate?: number
-  maxHourlyRate?: number
-  availability?: 'available' | 'busy' | 'unavailable'
-}
+// Typed aliases – base SearchFilters already contains all fields; these exist for clarity at call sites.
+export type WorkerSearchFilters = SearchFilters
 
-export interface JobSearchFilters extends SearchFilters {
-  budgetMin?: number
-  budgetMax?: number
-  category?: string
-}
+export type JobSearchFilters = SearchFilters
 
 export interface SearchQuery {
   query: string

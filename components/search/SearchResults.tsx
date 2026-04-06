@@ -224,7 +224,7 @@ export default function SearchResults({
       {/* Result cards */}
       <ul className="space-y-3" aria-label="Search results">
         {results.map((result, i) => (
-          <li key={i}>
+          <li key={'id' in result.item ? (result.item as { id: string }).id : i}>
             {'hourlyRate' in result.item || 'bio' in result.item
               ? <WorkerCard result={result as SearchResult<UserProfile>} />
               : <JobCard result={result as SearchResult<Job>} />

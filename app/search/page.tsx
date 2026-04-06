@@ -26,7 +26,8 @@ export default function SearchPage() {
   const [loading, setLoading] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
   const [showSaved, setShowSaved] = useState(false)
-  const [userId] = useState<string | null>(null) // Replace with real auth context
+  // TODO: replace with real auth context (e.g., useAuth hook) to get the logged-in user ID
+  const [userId] = useState<string | null>(null)
 
   const updateUrl = useCallback(
     (q: string, type: TabType) => {

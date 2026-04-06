@@ -10,8 +10,6 @@ import {
   orderBy,
   limit,
   increment,
-  serverTimestamp,
-  Timestamp,
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import type { SavedSearch, SearchAlert, SearchAnalytics, SearchFilters, SearchIndex } from '@/types/search'
