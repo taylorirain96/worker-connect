@@ -3,6 +3,8 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { useAuth } from '@/components/providers/AuthProvider'
+import Link from 'next/link'
+import Button from '@/components/ui/Button'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import Badge from '@/components/ui/Badge'
@@ -70,9 +72,17 @@ export default function AdminPage() {
       <Navbar />
       <main className="flex-1 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
-            <p className="text-gray-500 mt-1">Platform overview and management</p>
+          <div className="mb-8 flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
+              <p className="text-gray-500 mt-1">Platform overview and management</p>
+            </div>
+            <Link href="/admin/analytics">
+              <Button variant="outline" className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4" />
+                Platform Analytics
+              </Button>
+            </Link>
           </div>
 
           {/* Stats */}

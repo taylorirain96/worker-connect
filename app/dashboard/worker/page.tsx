@@ -49,12 +49,20 @@ export default function WorkerDashboardPage() {
                 {profile?.availability === 'available' ? '🟢 You are visible to employers' : '🔴 Update your availability to get more jobs'}
               </p>
             </div>
-            <Link href="/jobs">
-              <Button className="flex items-center gap-2">
-                <Search className="h-4 w-4" />
-                Find Jobs
-              </Button>
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link href="/analytics">
+                <Button variant="outline" className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4" />
+                  Analytics
+                </Button>
+              </Link>
+              <Link href="/jobs">
+                <Button className="flex items-center gap-2">
+                  <Search className="h-4 w-4" />
+                  Find Jobs
+                </Button>
+              </Link>
+            </div>
           </div>
 
           {/* Stats */}
