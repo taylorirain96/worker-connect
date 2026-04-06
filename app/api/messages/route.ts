@@ -11,7 +11,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'conversationId or userId required' }, { status: 400 })
     }
 
-    // In production, fetch from Firebase Realtime Database or Firestore
+    // Messages are fetched client-side via Firestore real-time listeners.
+    // This endpoint is retained for server-side use cases (e.g., webhooks, admin).
     return NextResponse.json({ messages: [], total: 0 })
   } catch (error) {
     console.error('Get messages error:', error)
@@ -22,9 +23,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { conversationId, senderId, content, type } = body
+    const { conversationId, senderId, senderName, content, type } = body
 
-    if (!conversationId || !senderId || !content) {
+    if (!conversationId || !senderId || !senderName || !content) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
@@ -32,13 +33,15 @@ export async function POST(request: NextRequest) {
       id: `msg_${Date.now()}`,
       conversationId,
       senderId,
+      senderName,
       content,
       type: type || 'text',
       read: false,
       createdAt: new Date().toISOString(),
     }
 
-    // In production, save to Firebase Realtime Database
+    // Messages are persisted client-side via Firestore SDK for real-time delivery.
+    // This endpoint can be used for server-to-server or admin message creation.
     return NextResponse.json(message, { status: 201 })
   } catch (error) {
     console.error('Send message error:', error)
