@@ -5,7 +5,6 @@ import type {
   SearchResponse,
   SearchSuggestion,
   SearchFacets,
-  SearchFilters,
 } from '@/types/search'
 
 // ── Scoring helpers ───────────────────────────────────────────────────────────

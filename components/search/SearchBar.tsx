@@ -121,7 +121,6 @@ export default function SearchBar({
             placeholder={placeholder}
             aria-label="Search"
             aria-autocomplete="list"
-            aria-expanded={showSuggestions}
             aria-controls="search-suggestions"
             autoComplete="off"
             className="w-full pl-10 pr-12 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600

@@ -170,7 +170,7 @@ interface SearchResultsProps {
 
 export default function SearchResults({
   results,
-  type,
+  type: _type,
   loading,
   total,
   page,
