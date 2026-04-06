@@ -112,6 +112,9 @@ export default function Navbar() {
                               Business Profile
                             </Link>
                           )}
+                          <Link href="/notifications" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" onClick={() => setProfileOpen(false)}>
+                            🔔 Notifications
+                          </Link>
                           <Link href="/messages" className="flex items-center justify-between px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" onClick={() => setProfileOpen(false)}>
                             Messages
                             {unreadMessages > 0 && (
@@ -139,9 +142,15 @@ export default function Navbar() {
                               <Link href="/admin/analytics" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" onClick={() => setProfileOpen(false)}>
                                 📊 Platform Analytics
                               </Link>
+                              <Link href="/admin/notifications" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" onClick={() => setProfileOpen(false)}>
+                                🔔 Notification Manager
+                              </Link>
                             </>
                           )}
                           <div className="border-t border-gray-100 dark:border-gray-700 mt-1 pt-1">
+                            <Link href="/settings/notifications" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" onClick={() => setProfileOpen(false)}>
+                              ⚙️ Notification Settings
+                            </Link>
                             <button onClick={handleSignOut} className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                               Sign Out
                             </button>
