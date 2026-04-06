@@ -11,8 +11,9 @@ from typing import Type
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
 
-# Root of the Next.js project – one level up from this file's parent dir
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+# Root of the Next.js project – two levels up from this file's location
+# (crew/tools/codebase_tools.py -> crew/tools -> crew -> project root)
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
 # ---------------------------------------------------------------------------
@@ -127,11 +128,21 @@ class SearchCodebaseTool(BaseTool):
     args_schema: Type[BaseModel] = SearchCodebaseInput
 
     def _run(self, pattern: str, file_glob: str = "**/*.{ts,tsx,js,jsx}") -> str:
+        # Convert glob extensions like "**/*.{ts,tsx}" into --include=*.ts etc.
+        include_flags: list[str] = []
+        # Extract the basename part (last segment) of the glob
+        basename = file_glob.split("/")[-1]  # e.g. "*.{ts,tsx}" or "*.ts"
+        if "{" in basename and "}" in basename:
+            inner = basename[basename.index("{") + 1: basename.index("}")]
+            exts = inner.split(",")
+            prefix = basename[: basename.index("{")]
+            include_flags = [f"--include={prefix}{ext.strip()}" for ext in exts]
+        else:
+            include_flags = [f"--include={basename}"]
+
         try:
             result = subprocess.run(
-                ["grep", "-rn", "--include=*.ts", "--include=*.tsx",
-                 "--include=*.js", "--include=*.jsx",
-                 "-e", pattern, str(PROJECT_ROOT)],
+                ["grep", "-rn", *include_flags, "-e", pattern, str(PROJECT_ROOT)],
                 capture_output=True,
                 text=True,
                 timeout=30,
