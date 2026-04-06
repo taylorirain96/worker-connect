@@ -114,8 +114,18 @@ function RegisterForm() {
       )
       toast.success('Account created successfully!')
       router.push('/dashboard')
-    } catch {
-      toast.error('Failed to sign up with Google')
+    } catch (error: unknown) {
+      const err = error as { code?: string }
+      console.error('Google sign-up error:', error)
+      if (err.code === 'auth/popup-blocked') {
+        toast.error('Popup was blocked. Please allow popups and try again.')
+      } else if (err.code === 'auth/network-request-failed') {
+        toast.error('Network error. Please check your connection and try again.')
+      } else if (err.code === 'auth/popup-closed-by-user') {
+        toast.error('Sign-up cancelled.')
+      } else {
+        toast.error(`Failed to sign up with Google${err.code ? ` (${err.code})` : ''}`)
+      }
     } finally {
       setGoogleLoading(false)
     }
@@ -206,6 +216,7 @@ function RegisterForm() {
             <Input
               label="Full Name"
               type="text"
+              id="displayName"
               autoComplete="name"
               leftIcon={<User className="h-4 w-4" />}
               error={errors.displayName?.message}
@@ -215,6 +226,7 @@ function RegisterForm() {
             <Input
               label="Email address"
               type="email"
+              id="email"
               autoComplete="email"
               leftIcon={<Mail className="h-4 w-4" />}
               error={errors.email?.message}
@@ -224,6 +236,7 @@ function RegisterForm() {
             <Input
               label="Password"
               type={showPassword ? 'text' : 'password'}
+              id="password"
               autoComplete="new-password"
               leftIcon={<Lock className="h-4 w-4" />}
               rightIcon={
@@ -243,6 +256,7 @@ function RegisterForm() {
             <Input
               label="Confirm Password"
               type={showPassword ? 'text' : 'password'}
+              id="confirmPassword"
               autoComplete="new-password"
               leftIcon={<Lock className="h-4 w-4" />}
               error={errors.confirmPassword?.message}

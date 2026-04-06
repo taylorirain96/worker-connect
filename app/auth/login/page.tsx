@@ -64,8 +64,18 @@ export default function LoginPage() {
       await signInWithPopup(auth, provider)
       toast.success('Welcome back!')
       router.push('/dashboard')
-    } catch {
-      toast.error('Failed to sign in with Google')
+    } catch (error: unknown) {
+      const err = error as { code?: string }
+      console.error('Google sign-in error:', error)
+      if (err.code === 'auth/popup-blocked') {
+        toast.error('Popup was blocked. Please allow popups and try again.')
+      } else if (err.code === 'auth/network-request-failed') {
+        toast.error('Network error. Please check your connection and try again.')
+      } else if (err.code === 'auth/popup-closed-by-user') {
+        toast.error('Sign-in cancelled.')
+      } else {
+        toast.error(`Failed to sign in with Google${err.code ? ` (${err.code})` : ''}`)
+      }
     } finally {
       setGoogleLoading(false)
     }
@@ -128,6 +138,7 @@ export default function LoginPage() {
             <Input
               label="Email address"
               type="email"
+              id="email"
               autoComplete="email"
               leftIcon={<Mail className="h-4 w-4" />}
               error={errors.email?.message}
@@ -138,6 +149,7 @@ export default function LoginPage() {
               <Input
                 label="Password"
                 type={showPassword ? 'text' : 'password'}
+                id="password"
                 autoComplete="current-password"
                 leftIcon={<Lock className="h-4 w-4" />}
                 rightIcon={
