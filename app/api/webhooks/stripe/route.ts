@@ -1,54 +1,91 @@
 import { NextRequest, NextResponse } from 'next/server'
+import Stripe from 'stripe'
+import { adminDb } from '@/lib/firebase-admin'
+import { FieldValue } from 'firebase-admin/firestore'
 
-// Stripe webhook secret — set via STRIPE_WEBHOOK_SECRET env var
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET
 
 export async function POST(req: NextRequest) {
   const body = await req.text()
-  // Retrieved for future signature verification:
-  // stripe.webhooks.constructEvent(body, sig, WEBHOOK_SECRET!)
-  // TODO: enable once STRIPE_WEBHOOK_SECRET is configured
-  void req.headers.get('stripe-signature')
+  const sig = req.headers.get('stripe-signature')
 
-  if (!WEBHOOK_SECRET) {
-    console.warn('STRIPE_WEBHOOK_SECRET not configured — webhook verification skipped')
+  const stripeSecretKey = process.env.STRIPE_SECRET_KEY
+  if (!stripeSecretKey) {
+    return NextResponse.json({ error: 'Stripe not configured' }, { status: 500 })
   }
 
-  // TODO: Verify Stripe signature using the stripe library:
-  // import Stripe from 'stripe'
-  // const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
-  // const event = stripe.webhooks.constructEvent(body, sig, WEBHOOK_SECRET!)
+  const stripe = new Stripe(stripeSecretKey)
 
-  let event: { type: string; data: { object: Record<string, unknown> } }
-  try {
-    event = JSON.parse(body) as typeof event
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+  let event: Stripe.Event
+  if (WEBHOOK_SECRET && sig) {
+    try {
+      event = stripe.webhooks.constructEvent(body, sig, WEBHOOK_SECRET)
+    } catch (err) {
+      console.error('Stripe webhook signature verification failed:', err)
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
+    }
+  } else {
+    console.warn('STRIPE_WEBHOOK_SECRET not configured — skipping signature verification')
+    try {
+      event = JSON.parse(body) as Stripe.Event
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+    }
   }
 
   switch (event.type) {
     case 'payout.paid': {
-      // TODO: Update withdrawal status to 'completed' in Firestore
-      // TODO: Send payout deposited notification
-      console.log('Payout paid:', event.data.object)
+      const payout = event.data.object as Stripe.Payout
+      // Find and update the matching withdrawal record by stripeTransferId
+      const snapshot = await adminDb
+        .collection('withdrawals')
+        .where('stripeTransferId', '==', payout.id)
+        .limit(1)
+        .get()
+      if (!snapshot.empty) {
+        await snapshot.docs[0].ref.update({
+          status: 'completed',
+          completedAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+        })
+      }
       break
     }
     case 'payout.failed': {
-      // TODO: Update withdrawal status to 'failed' in Firestore
-      // TODO: Notify worker of failed payout
-      console.log('Payout failed:', event.data.object)
+      const payout = event.data.object as Stripe.Payout
+      const snapshot = await adminDb
+        .collection('withdrawals')
+        .where('stripeTransferId', '==', payout.id)
+        .limit(1)
+        .get()
+      if (!snapshot.empty) {
+        await snapshot.docs[0].ref.update({
+          status: 'failed',
+          failureReason: (payout as Stripe.Payout & { failure_message?: string }).failure_message ?? 'Unknown',
+          updatedAt: FieldValue.serverTimestamp(),
+        })
+      }
       break
     }
     case 'account.updated': {
-      // TODO: Sync Stripe Connect account status to worker profile
-      console.log('Account updated:', event.data.object)
+      const account = event.data.object as Stripe.Account
+      // Sync Connect account status back to the worker profile
+      const usersSnapshot = await adminDb
+        .collection('users')
+        .where('stripeAccountId', '==', account.id)
+        .limit(1)
+        .get()
+      if (!usersSnapshot.empty) {
+        await usersSnapshot.docs[0].ref.update({
+          stripeAccountVerified: account.details_submitted && account.payouts_enabled,
+          updatedAt: FieldValue.serverTimestamp(),
+        })
+      }
       break
     }
     default:
-      // Ignore unhandled event types
       break
   }
 
-  // Acknowledge receipt
   return NextResponse.json({ received: true }, { status: 200 })
 }
