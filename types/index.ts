@@ -540,3 +540,108 @@ export interface PaymentAnalytics {
   averagePaymentValue: number
   revenueByMonth: { month: string; label: string; revenue: number; payouts: number }[]
 }
+
+// ─── Dispute Resolution Types ─────────────────────────────────────────────────
+
+export type DisputeResolutionStatus =
+  | 'open'
+  | 'under_review'
+  | 'awaiting_evidence'
+  | 'resolved'
+  | 'closed'
+  | 'escalated'
+
+export type DisputeResolutionReason =
+  | 'quality_issues'
+  | 'non_payment'
+  | 'non_delivery'
+  | 'misrepresentation'
+  | 'safety_concern'
+  | 'overcharge'
+  | 'incomplete_work'
+  | 'other'
+
+export type DisputeDecision = 'approved' | 'denied' | 'partial_refund' | 'escalated'
+
+export type EvidenceType = 'photo' | 'document' | 'message_history' | 'other'
+
+export type AppealStatus = 'pending' | 'under_review' | 'approved' | 'denied'
+
+export interface Dispute {
+  id: string
+  jobId: string
+  jobTitle: string
+  workerId: string
+  workerName: string
+  clientId: string
+  clientName: string
+  reason: DisputeResolutionReason
+  description: string
+  status: DisputeResolutionStatus
+  filedBy: string
+  mediatorId?: string
+  mediatorName?: string
+  refundAmount?: number
+  refundStatus?: 'pending' | 'processing' | 'completed' | 'none'
+  createdAt: string
+  updatedAt: string
+  resolvedAt?: string
+  dueDate: string
+}
+
+export interface DisputeEvidence {
+  id: string
+  disputeId: string
+  type: EvidenceType
+  fileUrl?: string
+  storagePath?: string
+  fileName?: string
+  fileSize?: number
+  description: string
+  uploadedBy: string
+  uploaderName: string
+  timestamp: string
+}
+
+export interface DisputeMessage {
+  id: string
+  disputeId: string
+  senderId: string
+  senderName: string
+  senderRole: 'worker' | 'client' | 'mediator' | 'admin'
+  message: string
+  isInternal: boolean
+  read: boolean
+  timestamp: string
+}
+
+export interface DisputeResolution {
+  id: string
+  disputeId: string
+  decision: DisputeDecision
+  refundAmount: number
+  mediatorId: string
+  mediatorName: string
+  reasoning: string
+  timestamp: string
+}
+
+export interface RatingAppeal {
+  id: string
+  jobId: string
+  jobTitle: string
+  workerId: string
+  workerName: string
+  clientId: string
+  currentRating: number
+  appealReason: string
+  disputeId?: string
+  status: AppealStatus
+  mediatorId?: string
+  mediatorNote?: string
+  decision?: 'rating_removed' | 'rating_adjusted' | 'rating_upheld'
+  adjustedRating?: number
+  createdAt: string
+  updatedAt: string
+  resolvedAt?: string
+}
