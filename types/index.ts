@@ -329,3 +329,30 @@ export interface UserStats {
     reviews: boolean
   }
 }
+
+export type PhotoType = 'before' | 'after' | 'progress' | 'other'
+export type PhotoApprovalStatus = 'pending' | 'approved' | 'flagged'
+
+export interface JobPhoto {
+  id: string
+  jobId: string
+  workerId: string
+  workerName: string
+  url: string
+  thumbnailUrl?: string
+  caption: string
+  type: PhotoType
+  approvalStatus: PhotoApprovalStatus
+  qualityScore?: number
+  uploadedAt: string
+  fileSize: number
+  width?: number
+  height?: number
+}
+
+export interface PhotoUploadResult {
+  success: boolean
+  photoId?: string
+  url?: string
+  error?: string
+}

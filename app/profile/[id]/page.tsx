@@ -2,8 +2,50 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import Button from '@/components/ui/Button'
 import Link from 'next/link'
-import { ArrowLeft, Star, CheckCircle, MapPin, Briefcase, MessageSquare } from 'lucide-react'
+import { ArrowLeft, Star, CheckCircle, MapPin, Briefcase, MessageSquare, Camera } from 'lucide-react'
 import { getInitials } from '@/lib/utils'
+import PhotoGallery from '@/components/jobs/PhotoGallery'
+import type { JobPhoto } from '@/types'
+
+// Mock photo data for profile display
+const MOCK_PROFILE_PHOTOS: JobPhoto[] = [
+  {
+    id: 'prof-p1',
+    jobId: 'j1',
+    workerId: 'w1',
+    workerName: 'User Profile',
+    url: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400',
+    caption: 'Bathroom pipe repair — before',
+    type: 'before',
+    approvalStatus: 'approved',
+    uploadedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+    fileSize: 1_234_567,
+  },
+  {
+    id: 'prof-p2',
+    jobId: 'j1',
+    workerId: 'w1',
+    workerName: 'User Profile',
+    url: 'https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=400',
+    caption: 'Bathroom pipe repair — after',
+    type: 'after',
+    approvalStatus: 'approved',
+    uploadedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+    fileSize: 987_654,
+  },
+  {
+    id: 'prof-p3',
+    jobId: 'j2',
+    workerId: 'w1',
+    workerName: 'User Profile',
+    url: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400',
+    caption: 'Electrical panel — completed',
+    type: 'after',
+    approvalStatus: 'approved',
+    uploadedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+    fileSize: 2_100_000,
+  },
+]
 
 export default function UserProfilePage() {
 
@@ -57,6 +99,27 @@ export default function UserProfilePage() {
                 </Button>
               </Link>
             </div>
+          </div>
+
+          {/* Photo Stats */}
+          <div className="mt-6 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Camera className="h-5 w-5 text-primary-600" />
+              <h2 className="font-semibold text-gray-900 dark:text-white">Photo Documentation</h2>
+            </div>
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              {[
+                { label: 'Total Photos', value: MOCK_PROFILE_PHOTOS.length },
+                { label: 'Jobs Documented', value: new Set(MOCK_PROFILE_PHOTOS.map((p) => p.jobId)).size },
+                { label: 'Approval Rate', value: `${Math.round((MOCK_PROFILE_PHOTOS.filter((p) => p.approvalStatus === 'approved').length / MOCK_PROFILE_PHOTOS.length) * 100)}%` },
+              ].map(({ label, value }) => (
+                <div key={label} className="text-center">
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{label}</p>
+                </div>
+              ))}
+            </div>
+            <PhotoGallery photos={MOCK_PROFILE_PHOTOS} showComparisonTab />
           </div>
         </div>
       </main>

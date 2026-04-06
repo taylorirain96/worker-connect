@@ -9,11 +9,12 @@ import Badge from '@/components/ui/Badge'
 import toast from 'react-hot-toast'
 import {
   MapPin, Clock, DollarSign, Users, AlertCircle, ArrowLeft,
-  Calendar, Star, CheckCircle, Send
+  Calendar, Star, CheckCircle, Send, Camera
 } from 'lucide-react'
 import { formatCurrency, formatRelativeDate, JOB_CATEGORIES, URGENCY_LABELS } from '@/lib/utils'
-import type { Job } from '@/types'
+import type { Job, JobPhoto } from '@/types'
 import Link from 'next/link'
+import PhotoGallery from '@/components/jobs/PhotoGallery'
 
 const MOCK_JOBS: Record<string, Job & { employerRating?: number; employerJobs?: number }> = {
   '1': {
@@ -37,7 +38,7 @@ const MOCK_JOBS: Record<string, Job & { employerRating?: number; employerJobs?: 
     budget: 150,
     budgetType: 'fixed',
     urgency: 'high',
-    status: 'open',
+    status: 'completed',
     skills: ['Plumbing', 'Pipe Repair', 'Fixture Installation'],
     applicantsCount: 4,
     createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
@@ -46,6 +47,33 @@ const MOCK_JOBS: Record<string, Job & { employerRating?: number; employerJobs?: 
     employerJobs: 12,
   },
 }
+
+const MOCK_JOB_PHOTOS: JobPhoto[] = [
+  {
+    id: 'demo-p1',
+    jobId: '1',
+    workerId: 'w1',
+    workerName: 'Alex Rivera',
+    url: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600',
+    caption: 'Leaking pipe under bathroom sink',
+    type: 'before',
+    approvalStatus: 'approved',
+    uploadedAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
+    fileSize: 1_234_567,
+  },
+  {
+    id: 'demo-p2',
+    jobId: '1',
+    workerId: 'w1',
+    workerName: 'Alex Rivera',
+    url: 'https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=600',
+    caption: 'New pipe joint installed and sealed',
+    type: 'after',
+    approvalStatus: 'approved',
+    uploadedAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
+    fileSize: 987_654,
+  },
+]
 
 export default function JobDetailPage() {
   const params = useParams()
@@ -155,6 +183,27 @@ export default function JobDetailPage() {
                   ))}
                 </div>
               </div>
+
+              {/* Photo Gallery (completed jobs) */}
+              {job.status === 'completed' && (
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                      <Camera className="h-5 w-5 text-primary-600" />
+                      Job Photos
+                    </h2>
+                    {profile?.role === 'worker' && (
+                      <Link href={`/jobs/${job.id}/upload-photos`}>
+                        <Button size="sm" variant="outline">
+                          <Camera className="h-3.5 w-3.5" />
+                          Add Photos
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
+                  <PhotoGallery photos={MOCK_JOB_PHOTOS} />
+                </div>
+              )}
 
               {/* Apply Form */}
               {showApplyForm && (
