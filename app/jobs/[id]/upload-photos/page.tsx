@@ -47,7 +47,7 @@ export default function UploadPhotosPage() {
         await import('@/lib/photos/gamificationLogic')
       const { getWorkerPhotoStats } = await import('@/lib/photos/firebase')
 
-      const jobCompletedAt = new Date().toISOString() // fallback — real app would fetch from Firestore
+      const jobCompletedAt = new Date().toISOString() // TODO: fetch actual completion timestamp from Firestore job document
       await awardPhotoUploadPoints(user.uid, jobCompletedAt, count)
 
       const stats = await getWorkerPhotoStats(user.uid)

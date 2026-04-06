@@ -57,7 +57,7 @@ export async function uploadJobPhoto(
   type: PhotoType,
   onProgress?: (pct: number) => void
 ): Promise<{ photoId: string; url: string }> {
-  if (!storage || !db) throw new Error('Firebase not initialised')
+  if (!storage || !db) throw new Error('Firebase not initialized')
 
   const ext = file.name.split('.').pop() ?? 'jpg'
   const storageRef = ref(storage, `job-photos/${jobId}/${workerId}/${Date.now()}.${ext}`)

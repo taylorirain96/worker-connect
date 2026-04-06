@@ -92,6 +92,11 @@ export default function PhotoUploadForm({
     setPhotos((prev) => prev.map((p, i) => (i === index ? { ...p, type } : p)))
   }
 
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    setDragOver(true)
+  }
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
     setDragOver(false)
@@ -170,7 +175,7 @@ export default function PhotoUploadForm({
             ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
             : 'border-gray-300 dark:border-gray-600 hover:border-primary-400'
         }`}
-        onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
+        onDragOver={handleDragOver}
         onDragLeave={() => setDragOver(false)}
         onDrop={handleDrop}
       >

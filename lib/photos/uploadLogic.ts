@@ -6,6 +6,11 @@ export const PHOTO_CONSTRAINTS = {
   acceptedExtensions: ['.jpg', '.jpeg', '.png'],
 }
 
+/** Default max width (px) for client-side image resizing — Full HD width */
+const DEFAULT_MAX_WIDTH_PX = 1920
+/** Default JPEG/PNG compression quality (0–1) */
+const DEFAULT_COMPRESSION_QUALITY = 0.85
+
 export interface FileValidationResult {
   valid: boolean
   error?: string
@@ -45,8 +50,8 @@ export function validatePhotoCount(count: number): FileValidationResult {
  */
 export async function compressImage(
   file: File,
-  maxWidthPx = 1920,
-  quality = 0.85
+  maxWidthPx = DEFAULT_MAX_WIDTH_PX,
+  quality = DEFAULT_COMPRESSION_QUALITY
 ): Promise<File> {
   return new Promise((resolve) => {
     const reader = new FileReader()

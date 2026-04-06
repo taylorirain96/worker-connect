@@ -38,7 +38,7 @@ const MOCK_JOBS: Record<string, Job & { employerRating?: number; employerJobs?: 
     budget: 150,
     budgetType: 'fixed',
     urgency: 'high',
-    status: 'completed',
+    status: 'completed', // Mock status set to 'completed' to demonstrate the photo gallery feature
     skills: ['Plumbing', 'Pipe Repair', 'Fixture Installation'],
     applicantsCount: 4,
     createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),

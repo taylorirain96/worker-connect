@@ -1,5 +1,8 @@
 import { awardPoints, awardBadge, getBadges } from '@/lib/services/gamificationService'
 
+/** Milliseconds per hour — used for early-upload bonus calculation */
+const MS_PER_HOUR = 1000 * 60 * 60
+
 export const PHOTO_POINTS = {
   uploadTwoOrMore: 25,
   fullCompletionBonus: 50,
@@ -23,7 +26,7 @@ export async function awardPhotoUploadPoints(
 
   const completedMs = new Date(jobCompletedAt).getTime()
   const now = Date.now()
-  const hoursElapsed = (now - completedMs) / (1000 * 60 * 60)
+  const hoursElapsed = (now - completedMs) / MS_PER_HOUR
   const isEarly = hoursElapsed <= 24
 
   const basePoints = PHOTO_POINTS.uploadTwoOrMore

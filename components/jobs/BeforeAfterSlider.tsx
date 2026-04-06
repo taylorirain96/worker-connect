@@ -92,7 +92,7 @@ export default function BeforeAfterSlider({
           src={beforeSrc}
           alt={beforeLabel}
           className="absolute inset-0 w-full h-full object-cover block"
-          style={{ minWidth: containerRef.current?.offsetWidth ?? 0 }}
+          style={{ minWidth: '100%' }}
           draggable={false}
         />
       </div>
