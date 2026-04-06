@@ -2,9 +2,10 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import Button from '@/components/ui/Button'
 import Link from 'next/link'
-import { ArrowLeft, Star, CheckCircle, MapPin, Briefcase, MessageSquare, Trophy } from 'lucide-react'
-import { getInitials } from '@/lib/utils'
+import { ArrowLeft, Star, CheckCircle, MapPin, Briefcase, MessageSquare, Trophy, DollarSign, Users } from 'lucide-react'
+import { getInitials, formatCurrency } from '@/lib/utils'
 import { LEADERBOARD_BADGE_DEFINITIONS } from '@/lib/leaderboard/rankingLogic'
+import { generateReferralCode } from '@/lib/referrals/referralLogic'
 
 /** Mock leaderboard data — replaced by real data once Firebase is wired. */
 const MOCK_RANK = {
@@ -13,6 +14,14 @@ const MOCK_RANK = {
   weeklyPoints: 310,
   previousRank: 6,
   badgesEarned: ['weekly_champion'],
+}
+
+/** Mock earnings data — replaced by real data once Firebase is wired. */
+const MOCK_EARNINGS = {
+  totalLifetime: 1847.50,
+  thisMonth: 312.40,
+  completedJobs: 47,
+  referralCode: generateReferralCode('mock-worker-id'),
 }
 
 export default function UserProfilePage() {
@@ -115,6 +124,59 @@ export default function UserProfilePage() {
               >
                 View full leaderboard →
               </Link>
+            </div>
+
+            {/* Earnings section */}
+            <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-700">
+              <div className="flex items-center gap-2 mb-3">
+                <DollarSign className="h-5 w-5 text-emerald-500" />
+                <h2 className="text-base font-semibold text-gray-900 dark:text-white">Earnings</h2>
+              </div>
+              <div className="grid grid-cols-3 gap-3 mb-3">
+                <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg p-3 text-center">
+                  <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">
+                    {formatCurrency(MOCK_EARNINGS.totalLifetime)}
+                  </p>
+                  <p className="text-xs text-emerald-600 dark:text-emerald-500 mt-0.5">Lifetime</p>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 text-center">
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {formatCurrency(MOCK_EARNINGS.thisMonth)}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">This Month</p>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 text-center">
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {MOCK_EARNINGS.completedJobs}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">Jobs Done</p>
+                </div>
+              </div>
+
+              {/* Referral code */}
+              <div className="flex items-center justify-between p-3 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-primary-500" />
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Referral Code</p>
+                    <p className="text-sm font-bold font-mono text-primary-600 dark:text-primary-400">
+                      {MOCK_EARNINGS.referralCode}
+                    </p>
+                  </div>
+                </div>
+                <Link
+                  href="/referrals"
+                  className="text-xs text-primary-600 hover:text-primary-700 dark:text-primary-400 hover:underline"
+                >
+                  View referrals →
+                </Link>
+              </div>
+
+              <div className="mt-3 flex gap-3">
+                <Link href="/earnings" className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 hover:underline">
+                  Earnings dashboard →
+                </Link>
+              </div>
             </div>
 
             <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-700">

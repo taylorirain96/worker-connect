@@ -329,3 +329,106 @@ export interface UserStats {
     reviews: boolean
   }
 }
+
+// ─── Referral & Rewards Types ─────────────────────────────────────────────────
+
+export type ReferralStatus = 'pending' | 'signed_up' | 'completed_3' | 'completed_50' | 'trusted_pro'
+
+export interface Referral {
+  id: string
+  referrerId: string
+  referredId?: string
+  referralCode: string
+  status: ReferralStatus
+  createdAt: string
+  updatedAt: string
+  earnedAmount: number
+  referredName?: string
+  referredEmail?: string
+  jobsCompleted?: number
+}
+
+export interface ReferralStats {
+  totalReferred: number
+  totalCompleted: number
+  conversionRate: number
+  totalEarned: number
+  pendingEarnings: number
+  activeReferrals: number
+  milestoneProgress: {
+    current: number
+    nextMilestone: number
+    nextBonus: number
+  }
+}
+
+export type CashbackSource = 'job' | 'referral_bonus' | 'milestone' | 'bonus'
+
+export interface EarningsTransaction {
+  id: string
+  workerId: string
+  type: CashbackSource
+  amount: number
+  description: string
+  jobId?: string
+  referralId?: string
+  status: 'pending' | 'available' | 'withdrawn'
+  createdAt: string
+  weekOf?: string
+}
+
+export type WithdrawalStatus = 'pending' | 'processing' | 'completed' | 'failed'
+export type TransferType = 'standard' | 'instant'
+
+export interface Withdrawal {
+  id: string
+  workerId: string
+  amount: number
+  fee: number
+  netAmount: number
+  bankAccountId: string
+  bankAccountLast4: string
+  bankName: string
+  transferType: TransferType
+  status: WithdrawalStatus
+  stripeTransferId?: string
+  createdAt: string
+  updatedAt: string
+  completedAt?: string
+  failureReason?: string
+}
+
+export interface BankAccount {
+  id: string
+  workerId: string
+  bankName: string
+  last4: string
+  routingNumber?: string
+  accountType: 'checking' | 'savings'
+  isDefault: boolean
+  stripeExternalAccountId?: string
+  verified: boolean
+  createdAt: string
+}
+
+export interface EarningsSummary {
+  totalLifetime: number
+  totalThisMonth: number
+  totalLastMonth: number
+  cashbackEarned: number
+  referralEarned: number
+  bonusEarned: number
+  pendingBalance: number
+  availableBalance: number
+  monthlyBreakdown: MonthlyEarnings[]
+}
+
+export interface MonthlyEarnings {
+  month: string        // e.g. "2024-01"
+  label: string        // e.g. "Jan 2024"
+  total: number
+  cashback: number
+  referral: number
+  bonus: number
+  jobCount: number
+}
