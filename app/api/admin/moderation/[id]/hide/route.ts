@@ -22,7 +22,7 @@ export async function POST(
       return NextResponse.json({ error: 'Review not found' }, { status: 404 })
     }
 
-    // Toggle: hide a published/flagged review, or unhide (restore to approved) a hidden one
+    // Toggle: unhide a removed review back to approved, or hide any visible review
     const newStatus = review.moderationStatus === 'removed' ? 'approved' : 'removed'
     await moderateReview(id, newStatus, moderatorId, note)
 

@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     }
 
     const { reviews, lastDoc: _lastDoc } = await getReviewsForEntity(entityId, { sortBy, filterRating, pageSize })
-    return NextResponse.json({ reviews, total: reviews.length })
+    return NextResponse.json({ reviews, count: reviews.length })
   } catch (error) {
     console.error('Get reviews error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

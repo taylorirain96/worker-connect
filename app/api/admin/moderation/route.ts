@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
 
     // In production, verify the caller has admin role via Firebase Admin SDK before proceeding
     const reviews = await getFlaggedReviews(pageSize)
-    return NextResponse.json({ reviews, total: reviews.length })
+    return NextResponse.json({ reviews, count: reviews.length })
   } catch (error) {
     console.error('Get moderation queue error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

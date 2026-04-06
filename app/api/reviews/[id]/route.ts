@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { getReviewById, deleteReview } from '@/lib/reviews/firebase'
-import { moderateReview } from '@/lib/reviews/firebase'
+import { getReviewById, deleteReview, moderateReview } from '@/lib/reviews/firebase'
 
 export async function GET(
   _request: NextRequest,
