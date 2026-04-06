@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { STRIPE_CONNECT_CONFIG } from '@/lib/stripe/stripeConnect'
 
 /**
  * GET  /api/payouts?workerId=xxx  — list payouts for a worker
@@ -72,8 +73,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    if (amount < 25) {
-      return NextResponse.json({ error: 'Minimum payout amount is $25.00' }, { status: 400 })
+    if (amount < STRIPE_CONNECT_CONFIG.minPayoutAmount) {
+      return NextResponse.json({ error: `Minimum payout amount is $${STRIPE_CONNECT_CONFIG.minPayoutAmount}.00` }, { status: 400 })
     }
 
     // In production:

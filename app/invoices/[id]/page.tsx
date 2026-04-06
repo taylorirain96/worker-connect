@@ -102,7 +102,7 @@ export default function InvoiceDetailPage({ params }: PageProps) {
       '',
       '───────────────────────────────────────',
       `Services                   $${invoice.amount.toFixed(2)}`,
-      `Tax (8%)                   $${invoice.tax.toFixed(2)}`,
+      `Tax (${taxRatePct > 0 ? taxRatePct + '%' : ''})          $${invoice.tax.toFixed(2)}`,
       '───────────────────────────────────────',
       `TOTAL                      $${invoice.total.toFixed(2)}`,
       '═══════════════════════════════════════',
@@ -139,6 +139,12 @@ export default function InvoiceDetailPage({ params }: PageProps) {
       </div>
     )
   }
+
+  // Compute tax rate dynamically from the invoice amounts
+  const taxRatePct = invoice.amount > 0
+    ? Math.round((invoice.tax / invoice.amount) * 1000) / 10
+    : 0
+  const taxLabel = taxRatePct > 0 ? `Tax (${taxRatePct}%)` : 'Tax'
 
   const statusCfg = STATUS_CONFIG[invoice.status]
   const invoiceNumber = `INV-${invoice.id.slice(-6).toUpperCase()}`
@@ -219,7 +225,7 @@ export default function InvoiceDetailPage({ params }: PageProps) {
                     </span>
                   </div>
                   <div className="flex justify-between items-center px-4 py-3 text-gray-500">
-                    <span className="text-sm">Tax (8%)</span>
+                    <span className="text-sm">{taxLabel}</span>
                     <span className="text-sm">{formatCurrency(invoice.tax)}</span>
                   </div>
                 </div>

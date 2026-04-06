@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { formatCurrency, formatDate } from '@/lib/utils'
+import { STRIPE_CONNECT_CONFIG } from '@/lib/stripe/stripeConnect'
 import type { Payout, PayoutSettings } from '@/types'
 import {
   ArrowLeft, TrendingUp, CheckCircle, Clock, XCircle, Settings, ArrowRight, ShieldCheck
@@ -237,13 +238,13 @@ export default function PayoutsPage() {
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">$</span>
                       <input
                         type="number"
-                        min={25}
+                        min={STRIPE_CONNECT_CONFIG.minPayoutAmount}
                         value={settings.minimumAmount}
                         onChange={(e) => setSettings({ ...settings, minimumAmount: Number(e.target.value) })}
                         className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 pl-7 pr-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
                       />
                     </div>
-                    <p className="text-xs text-gray-400 mt-1">Minimum is $25.00</p>
+                    <p className="text-xs text-gray-400 mt-1">Minimum is {formatCurrency(STRIPE_CONNECT_CONFIG.minPayoutAmount)}</p>
                   </div>
                   <div className="flex gap-3 justify-end">
                     <Button variant="ghost" size="sm" onClick={() => setShowSettings(false)}>Cancel</Button>

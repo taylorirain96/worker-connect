@@ -248,18 +248,12 @@ export async function savePayoutSettings(
   settings: Omit<PayoutSettings, 'workerId' | 'updatedAt'>
 ): Promise<void> {
   if (!db) throw new Error('Firestore not available')
+  const { setDoc } = await import('firebase/firestore')
   const ref = doc(db, PAYOUT_SETTINGS_COL, workerId)
-  await updateDoc(ref, {
+  // setDoc with merge:true creates or updates the document atomically
+  await setDoc(ref, {
     ...settings,
     workerId,
     updatedAt: serverTimestamp(),
-  }).catch(async () => {
-    // Document may not exist yet — use addDoc equivalent via setDoc
-    const { setDoc } = await import('firebase/firestore')
-    await setDoc(ref, {
-      ...settings,
-      workerId,
-      updatedAt: serverTimestamp(),
-    })
-  })
+  }, { merge: true })
 }
