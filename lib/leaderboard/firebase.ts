@@ -218,6 +218,7 @@ function getMockLeaderboard(category: JobCategory | 'all', topN: number): Leader
 
   const previousRankMap: Record<string, number> = {
     w1: 2, w2: 1, w3: 3, w4: 5, w5: 4, w6: 7, w7: 6, w8: 8, w9: 10, w10: 9,
+    w11: 11, w12: 12,
   }
 
   return filtered.slice(0, topN).map((w, idx) => {

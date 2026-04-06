@@ -124,7 +124,7 @@ export async function addWeeklyPoints(
   await updateDoc(ref, {
     weeklyPoints: increment(points),
     updatedAt: serverTimestamp(),
-  }).catch(() => {
-    // Document doesn't exist yet — will be created on next updateWorkerWeeklyStats call
+  }).catch((err) => {
+    console.warn('addWeeklyPoints: document not found, will be initialised on next stat update', err)
   })
 }

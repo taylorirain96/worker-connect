@@ -47,12 +47,12 @@ export const LEADERBOARD_BADGE_DEFINITIONS: Record<string, { label: string; icon
 
 /**
  * Returns the ISO week identifier for a given date, e.g. "2024-W03".
+ * The week starts on Sunday.
  */
 export function getWeekId(date: Date = new Date()): string {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
-  const dayOfWeek = d.getUTCDay()
-  // Shift so week starts on Sunday (0)
-  d.setUTCDate(d.getUTCDate() - dayOfWeek + (dayOfWeek === 0 ? 0 : 7))
+  // Move back to the most recent Sunday
+  d.setUTCDate(d.getUTCDate() - d.getUTCDay())
   const year = d.getUTCFullYear()
   const startOfYear = new Date(Date.UTC(year, 0, 1))
   const weekNumber = Math.ceil(((d.getTime() - startOfYear.getTime()) / 86400000 + startOfYear.getUTCDay() + 1) / 7)
