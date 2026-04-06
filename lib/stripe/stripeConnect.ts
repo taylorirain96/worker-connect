@@ -7,6 +7,8 @@
 export const STRIPE_CONNECT_CONFIG = {
   /** Minimum withdrawal amount in cents */
   minWithdrawalCents: 2500,
+  /** Minimum payout amount in dollars */
+  minPayoutAmount: 25,
   /** Supported payout currencies */
   supportedCurrencies: ['usd'],
   /** Stripe Connect account type used for workers */

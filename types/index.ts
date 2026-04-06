@@ -477,3 +477,66 @@ export interface PhotoModerationAction {
   qualityScore?: number
   actionAt: string
 }
+
+// ─── Payment Processing Types ─────────────────────────────────────────────────
+
+export type PayoutSchedule = 'daily' | 'weekly' | 'monthly' | 'manual'
+export type PayoutMethod = 'bank_account' | 'debit_card'
+export type PayoutStatus = 'pending' | 'in_transit' | 'paid' | 'failed' | 'canceled'
+
+export interface Payout {
+  id: string
+  workerId: string
+  amount: number
+  currency: string
+  method: PayoutMethod
+  status: PayoutStatus
+  stripePayoutId?: string
+  bankAccountLast4?: string
+  bankName?: string
+  estimatedArrival?: string
+  failureMessage?: string
+  createdAt: string
+  updatedAt: string
+  paidAt?: string
+}
+
+export interface PayoutSettings {
+  workerId: string
+  schedule: PayoutSchedule
+  minimumAmount: number
+  method: PayoutMethod
+  bankAccountId?: string
+  stripeConnectId?: string
+  updatedAt: string
+}
+
+export type DisputeStatus = 'needs_response' | 'under_review' | 'charge_refunded' | 'won' | 'lost' | 'warning_closed'
+export type DisputeReason = 'bank_cannot_process' | 'check_returned' | 'credit_not_processed' | 'customer_initiated' | 'debit_not_authorized' | 'duplicate' | 'fraudulent' | 'general' | 'incorrect_account_details' | 'insufficient_funds' | 'product_not_received' | 'product_unacceptable' | 'subscription_canceled' | 'unrecognized'
+
+export interface PaymentDispute {
+  id: string
+  paymentId: string
+  jobId: string
+  workerId: string
+  employerId: string
+  amount: number
+  currency: string
+  reason: DisputeReason
+  status: DisputeStatus
+  stripeDisputeId: string
+  dueBy?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface PaymentAnalytics {
+  totalRevenue: number
+  totalPayouts: number
+  pendingPayouts: number
+  successfulPayments: number
+  failedPayments: number
+  disputeCount: number
+  averagePaymentValue: number
+  revenueByMonth: { month: string; label: string; revenue: number; payouts: number }[]
+}
