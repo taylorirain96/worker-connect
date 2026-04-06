@@ -47,6 +47,9 @@ export default function Navbar() {
             <Link href="/workers" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
               Find Workers
             </Link>
+            <Link href="/leaderboard" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
+              🏆 Leaderboard
+            </Link>
             <Link href="/how-it-works" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
               How It Works
             </Link>
@@ -149,6 +152,9 @@ export default function Navbar() {
               </Link>
               <Link href="/workers" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 px-3 py-2 rounded-lg transition-colors" onClick={() => setMenuOpen(false)}>
                 Find Workers
+              </Link>
+              <Link href="/leaderboard" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 px-3 py-2 rounded-lg transition-colors" onClick={() => setMenuOpen(false)}>
+                🏆 Leaderboard
               </Link>
               <Link href="/how-it-works" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 px-3 py-2 rounded-lg transition-colors" onClick={() => setMenuOpen(false)}>
                 How It Works
