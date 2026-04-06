@@ -77,8 +77,7 @@ export function buildReferralStats(referrals: Referral[]): ReferralStats {
     .reduce((sum, r) => sum + r.earnedAmount, 0)
 
   const pendingEarnings = referrals
-    .filter((r) => r.status === 'signed_up')
-    .reduce((sum) => sum + REFERRAL_BONUSES.completed_3, 0)
+    .filter((r) => r.status === 'signed_up').length * REFERRAL_BONUSES.completed_3
 
   const nextMilestoneEntry = MILESTONE_BONUSES.find((m) => completed.length < m.referrals)
   const nextMilestone = nextMilestoneEntry?.referrals ?? MILESTONE_BONUSES[MILESTONE_BONUSES.length - 1].referrals

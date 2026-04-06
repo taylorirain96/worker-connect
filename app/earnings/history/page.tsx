@@ -5,6 +5,7 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { Card } from '@/components/ui/Card'
 import { formatCurrency, formatDateTime } from '@/lib/utils'
+import { WITHDRAWAL_FEES } from '@/lib/earnings/calculateEarnings'
 import type { EarningsTransaction, Withdrawal } from '@/types'
 import { ArrowLeft, DollarSign, ArrowUpRight, Clock, CheckCircle, XCircle } from 'lucide-react'
 
@@ -171,7 +172,7 @@ export default function HistoryPage() {
                       </p>
                       <p className="text-xs text-gray-400">{formatDateTime(w.createdAt)}</p>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                        Fee: {formatCurrency(w.fee + (w.transferType === 'instant' ? 0.25 : 0))} · Net: {formatCurrency(w.netAmount)}
+                        Fee: {formatCurrency(w.fee + (w.transferType === 'instant' ? WITHDRAWAL_FEES.instant.flat : 0))} · Net: {formatCurrency(w.netAmount)}
                       </p>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">

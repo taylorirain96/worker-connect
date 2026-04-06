@@ -5,8 +5,9 @@ const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET
 
 export async function POST(req: NextRequest) {
   const body = await req.text()
-  // Stripe signature header — used for webhook verification
-  // TODO: verify with stripe.webhooks.constructEvent(body, sig, WEBHOOK_SECRET!)
+  // Retrieved for future signature verification:
+  // stripe.webhooks.constructEvent(body, sig, WEBHOOK_SECRET!)
+  // TODO: enable once STRIPE_WEBHOOK_SECRET is configured
   void req.headers.get('stripe-signature')
 
   if (!WEBHOOK_SECRET) {
