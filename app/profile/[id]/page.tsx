@@ -2,9 +2,12 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import Button from '@/components/ui/Button'
 import Link from 'next/link'
-import { ArrowLeft, Star, CheckCircle, MapPin, Briefcase, MessageSquare, Trophy } from 'lucide-react'
+import { ArrowLeft, Star, CheckCircle, MapPin, Briefcase, MessageSquare, Trophy, Camera } from 'lucide-react'
 import { getInitials } from '@/lib/utils'
 import { LEADERBOARD_BADGE_DEFINITIONS } from '@/lib/leaderboard/rankingLogic'
+import PhotoGallery from '@/components/jobs/PhotoGallery'
+import { MOCK_PHOTOS } from '@/lib/photos/firebase'
+import { PHOTO_BADGE_DEFINITIONS, computePhotoBadges } from '@/lib/photos/gamificationLogic'
 
 /** Mock leaderboard data — replaced by real data once Firebase is wired. */
 const MOCK_RANK = {
@@ -14,6 +17,19 @@ const MOCK_RANK = {
   previousRank: 6,
   badgesEarned: ['weekly_champion'],
 }
+
+/** Mock photo stats — replaced by real Firestore data once Firebase is wired. */
+const MOCK_WORKER_ID = 'worker1'
+const MOCK_PHOTO_STATS = {
+  totalPhotos: MOCK_PHOTOS.filter((p) => p.workerId === MOCK_WORKER_ID).length,
+  jobsWithPhotos: 1,
+  totalCompletedJobs: 3,
+}
+const photoCompletionRate = MOCK_PHOTO_STATS.totalCompletedJobs > 0
+  ? Math.round((MOCK_PHOTO_STATS.jobsWithPhotos / MOCK_PHOTO_STATS.totalCompletedJobs) * 100)
+  : 0
+const workerPhotos = MOCK_PHOTOS.filter((p) => p.workerId === MOCK_WORKER_ID)
+const earnedPhotoBadges = computePhotoBadges(workerPhotos, MOCK_PHOTO_STATS.totalCompletedJobs)
 
 export default function UserProfilePage() {
   const rankChange = MOCK_RANK.previousRank - MOCK_RANK.rank
@@ -119,6 +135,52 @@ export default function UserProfilePage() {
 
             <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-700">
               <p className="text-gray-500 italic">This user has not added a bio yet.</p>
+            </div>
+
+            {/* Photo stats & gallery */}
+            <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-700">
+              <div className="flex items-center gap-2 mb-3">
+                <Camera className="h-5 w-5 text-primary-500" />
+                <h2 className="text-base font-semibold text-gray-900 dark:text-white">Job Photos</h2>
+              </div>
+
+              {/* Stats */}
+              <div className="grid grid-cols-3 gap-3 mb-4">
+                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 text-center">
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{MOCK_PHOTO_STATS.totalPhotos}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Photos</p>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 text-center">
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{photoCompletionRate}%</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Jobs with Photos</p>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 text-center">
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {MOCK_PHOTO_STATS.jobsWithPhotos > 0
+                      ? (MOCK_PHOTO_STATS.totalPhotos / MOCK_PHOTO_STATS.jobsWithPhotos).toFixed(1)
+                      : '0'}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">Avg per Job</p>
+                </div>
+              </div>
+
+              {/* Photo badges */}
+              {earnedPhotoBadges.map((badgeId) => {
+                const badge = PHOTO_BADGE_DEFINITIONS[badgeId]
+                if (!badge) return null
+                return (
+                  <span
+                    key={badge.id}
+                    title={badge.description}
+                    className="inline-flex items-center gap-1 mr-2 mb-2 text-xs bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400 px-2 py-1 rounded-full"
+                  >
+                    {badge.icon} {badge.label}
+                  </span>
+                )
+              })}
+
+              {/* Gallery highlights */}
+              <PhotoGallery photos={workerPhotos} className="mt-3" />
             </div>
 
             <div className="mt-6 flex gap-3">

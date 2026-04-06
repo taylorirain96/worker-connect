@@ -329,3 +329,41 @@ export interface UserStats {
     reviews: boolean
   }
 }
+
+export interface JobPhoto {
+  id: string
+  jobId: string
+  workerId: string
+  workerName: string
+  url: string
+  thumbnailUrl?: string
+  caption: string
+  type: 'before' | 'after' | 'progress'
+  approvalStatus: 'pending' | 'approved' | 'flagged'
+  qualityScore?: number
+  moderatorNote?: string
+  fileSize: number
+  width?: number
+  height?: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface PhotoUploadItem {
+  file: File
+  preview: string
+  caption: string
+  type: 'before' | 'after' | 'progress'
+  progress: number
+  status: 'idle' | 'uploading' | 'done' | 'error'
+  errorMessage?: string
+}
+
+export interface PhotoStats {
+  totalPhotos: number
+  totalJobs: number
+  jobsWithPhotos: number
+  photoCompletionRate: number
+  avgPhotosPerJob: number
+  photoBadges: string[]
+}

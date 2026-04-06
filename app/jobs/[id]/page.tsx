@@ -9,11 +9,13 @@ import Badge from '@/components/ui/Badge'
 import toast from 'react-hot-toast'
 import {
   MapPin, Clock, DollarSign, Users, AlertCircle, ArrowLeft,
-  Calendar, Star, CheckCircle, Send
+  Calendar, Star, CheckCircle, Send, Camera
 } from 'lucide-react'
 import { formatCurrency, formatRelativeDate, JOB_CATEGORIES, URGENCY_LABELS } from '@/lib/utils'
 import type { Job } from '@/types'
 import Link from 'next/link'
+import PhotoGallery from '@/components/jobs/PhotoGallery'
+import { MOCK_PHOTOS } from '@/lib/photos/firebase'
 
 const MOCK_JOBS: Record<string, Job & { employerRating?: number; employerJobs?: number }> = {
   '1': {
@@ -142,6 +144,28 @@ export default function JobDetailPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Job Photos */}
+              {job.status === 'completed' && (
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <Camera className="h-5 w-5 text-primary-500" />
+                      <h2 className="font-semibold text-gray-900 dark:text-white">Job Photos</h2>
+                    </div>
+                    {profile?.role === 'worker' && (
+                      <Link
+                        href={`/jobs/${job.id}/upload-photos`}
+                        className="text-sm text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1"
+                      >
+                        <Camera className="h-3.5 w-3.5" />
+                        Upload Photos
+                      </Link>
+                    )}
+                  </div>
+                  <PhotoGallery photos={MOCK_PHOTOS.filter((p) => p.jobId === job.id)} />
+                </div>
+              )}
 
               {/* Skills Required */}
               <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
