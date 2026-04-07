@@ -27,11 +27,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-/**
- * PUT /api/notifications/preferences
- * Update notification preferences for the authenticated user.
- */
-export async function PUT(request: NextRequest) {
+async function upsertPreferences(request: NextRequest) {
   try {
     const userId = request.headers.get('x-user-id')
     if (!userId) {
@@ -59,7 +55,23 @@ export async function PUT(request: NextRequest) {
     await saveNotificationPreferences(merged)
     return NextResponse.json(merged)
   } catch (error) {
-    console.error('PUT /api/notifications/preferences error:', error)
+    console.error('upsertPreferences error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
+}
+
+/**
+ * PUT /api/notifications/preferences
+ * Update notification preferences for the authenticated user.
+ */
+export async function PUT(request: NextRequest) {
+  return upsertPreferences(request)
+}
+
+/**
+ * POST /api/notifications/preferences
+ * Update notification preferences for the authenticated user (alias for PUT).
+ */
+export async function POST(request: NextRequest) {
+  return upsertPreferences(request)
 }

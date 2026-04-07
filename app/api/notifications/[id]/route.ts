@@ -36,6 +36,30 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 }
 
 /**
+ * PATCH /api/notifications/[id]
+ * Mark a single notification as read (alias for PUT to match spec).
+ */
+export async function PATCH(request: NextRequest, { params }: RouteParams) {
+  try {
+    const userId = request.headers.get('x-user-id')
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { id } = params
+    if (!id) {
+      return NextResponse.json({ error: 'Missing notification id' }, { status: 400 })
+    }
+
+    await markNotificationRead(id)
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error(`PATCH /api/notifications/${params.id} error:`, error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+/**
  * DELETE /api/notifications/[id]
  * Soft-delete a notification.
  */
