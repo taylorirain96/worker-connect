@@ -16,7 +16,7 @@ export default function PortfolioStats({ portfolio }: Props) {
         <p className="text-xs text-gray-500 mt-1">Avg Rating</p>
       </div>
       <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-        <p className="text-2xl font-bold text-blue-600 truncate text-lg">
+        <p className="text-lg font-bold text-blue-600 truncate">
           {portfolio.featuredItem ? '⭐' : '—'}
         </p>
         <p className="text-xs text-gray-500 mt-1">Featured Work</p>
