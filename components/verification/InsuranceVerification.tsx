@@ -34,7 +34,7 @@ export default function InsuranceVerification({ status, expiresAt, onUpload }: P
       )}
       <label className="flex items-center gap-2 cursor-pointer px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 w-fit">
         📄 Upload Insurance Document
-        <input type="file" accept="image/*,.pdf" className="hidden" onChange={handleChange} />
+        <input type="file" accept="image/*,.pdf" aria-label="Upload insurance document" className="hidden" onChange={handleChange} />
       </label>
     </div>
   )

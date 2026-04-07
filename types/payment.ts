@@ -93,7 +93,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlanConfig[] = [
 import type { ReputationTier } from '@/types/reputation'
 export type ReputationTierPayment = ReputationTier
 export interface EarningsByReputationTier {
-  tier: ReputationTierPayment
+  tier: ReputationTier
   avgEarningsPerJob: number
   avgMonthlyEarnings: number
   premiumJobAccess: boolean

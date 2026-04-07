@@ -2,6 +2,7 @@ import { db } from '@/lib/firebase'
 import { collection, doc, getDoc, setDoc, getDocs, query, orderBy, limit as firestoreLimit } from 'firebase/firestore'
 import type { ReputationScore, ReputationLeaderboardEntry, EarningsByTier } from '@/types/reputation'
 import { calculateReputationScore, getReputationTier, getTrustShields } from '@/lib/utils/reputationAlgorithm'
+import { EARNINGS_BY_REPUTATION_TIER } from '@/types/payment'
 
 export async function getReputationScore(userId: string): Promise<ReputationScore | null> {
   if (!db) return null
@@ -73,10 +74,10 @@ export async function getLeaderboard(limit: number = 10): Promise<ReputationLead
 }
 
 export async function getEarningsByTier(): Promise<EarningsByTier[]> {
-  return [
-    { tier: 'rookie', avgEarnings: 600, totalWorkers: 0, premiumJobAccess: false },
-    { tier: 'professional', avgEarnings: 1500, totalWorkers: 0, premiumJobAccess: false },
-    { tier: 'expert', avgEarnings: 3000, totalWorkers: 0, premiumJobAccess: true },
-    { tier: 'master', avgEarnings: 6000, totalWorkers: 0, premiumJobAccess: true },
-  ]
+  return EARNINGS_BY_REPUTATION_TIER.map(e => ({
+    tier: e.tier,
+    avgEarnings: e.avgMonthlyEarnings,
+    totalWorkers: 0,
+    premiumJobAccess: e.premiumJobAccess,
+  }))
 }

@@ -92,6 +92,6 @@ export async function getMoverStats(): Promise<MoverStats> {
   }
 }
 
-export function calculateRelocationBadge(workerId: string, completionRate: number, targetCity: string): boolean {
+export function calculateRelocationBadge(_workerId: string, completionRate: number, targetCity: string): boolean {
   return Boolean(targetCity) && completionRate >= 80
 }

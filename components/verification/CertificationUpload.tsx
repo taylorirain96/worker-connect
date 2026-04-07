@@ -32,7 +32,7 @@ export default function CertificationUpload({ certifications, onUpload }: Props)
       )}
       <label className="flex items-center gap-2 cursor-pointer px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 w-fit">
         + Upload Certification
-        <input type="file" accept="image/*,.pdf" className="hidden" onChange={handleChange('certification')} />
+        <input type="file" accept="image/*,.pdf" aria-label="Upload certification" className="hidden" onChange={handleChange('certification')} />
       </label>
     </div>
   )
