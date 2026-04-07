@@ -24,12 +24,12 @@ export async function POST(req: NextRequest) {
       console.error('Stripe webhook signature verification failed:', err)
       return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
     }
-  } else {
-    // In production, always require a verified signature. Allow unsigned payloads
-    // only in local development (NODE_ENV !== 'production') to ease testing.
+  } else if (!WEBHOOK_SECRET) {
+    // In production, always require a configured webhook secret.
+    // Allow unsigned payloads only in local development to ease testing.
     if (process.env.NODE_ENV === 'production') {
-      console.error('Stripe webhook received without signature in production — rejecting')
-      return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 })
+      console.error('STRIPE_WEBHOOK_SECRET is not set — rejecting unsigned webhook in production')
+      return NextResponse.json({ error: 'Webhook secret not configured on server' }, { status: 500 })
     }
     console.warn('STRIPE_WEBHOOK_SECRET not configured — skipping signature verification (dev only)')
     try {
@@ -37,6 +37,10 @@ export async function POST(req: NextRequest) {
     } catch {
       return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
     }
+  } else {
+    // WEBHOOK_SECRET is set but the stripe-signature header is missing
+    console.error('Stripe webhook received without stripe-signature header')
+    return NextResponse.json({ error: 'Missing stripe-signature header' }, { status: 400 })
   }
 
   switch (event.type) {

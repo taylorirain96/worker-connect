@@ -39,7 +39,8 @@ export async function GET(request: NextRequest) {
       workers = workers.filter((w) => w.location?.toLowerCase().includes(loc))
     }
     if (minRating) {
-      workers = workers.filter((w) => (w.rating ?? 0) >= parseFloat(minRating))
+      const minRatingValue = parseFloat(minRating)
+      workers = workers.filter((w) => (w.rating ?? 0) >= minRatingValue)
     }
     if (category) {
       const cat = category.toLowerCase()
@@ -49,9 +50,10 @@ export async function GET(request: NextRequest) {
     }
 
     const total = workers.length
-    // Secondary in-memory sort: blend rating (60%) + completionRate (40%) so that
-    // high-completion workers (Mover Mode candidates) are promoted above workers
-    // who have a good rating but poor follow-through.
+    // Secondary in-memory sort: blend rating (60%) + completionRate (40%).
+    // The 60/40 split prioritises overall quality (rating) while giving meaningful
+    // weight to contract follow-through (completionRate), surfacing Mover Mode
+    // candidates who consistently complete what they accept.
     workers.sort((a, b) => {
       const scoreA = ((a.rating ?? 0) / 5) * 0.6 + (a.completionRate ?? 0) * 0.4
       const scoreB = ((b.rating ?? 0) / 5) * 0.6 + (b.completionRate ?? 0) * 0.4

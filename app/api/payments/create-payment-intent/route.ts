@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
 
+/** Platform fee charged on every Connect payment (5 %). */
+const PLATFORM_FEE_RATE = 0.05
+
 export async function POST(request: Request) {
   try {
     const body = await request.json()
@@ -27,8 +30,8 @@ export async function POST(request: Request) {
     const amountCents = Math.round(amount * 100)
     const resolvedCurrency = currency || 'usd'
 
-    // Platform fee: 5% of the job amount
-    const platformFeeCents = Math.round(amountCents * 0.05)
+    // Platform fee: PLATFORM_FEE_RATE of the job amount
+    const platformFeeCents = Math.round(amountCents * PLATFORM_FEE_RATE)
 
     const paymentIntentParams: Stripe.PaymentIntentCreateParams = {
       amount: amountCents,
