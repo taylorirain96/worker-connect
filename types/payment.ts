@@ -30,8 +30,10 @@ export interface SubscriptionPlanConfig {
   id: SubscriptionPlan
   name: string
   description: string
+  /** Monthly price in USD when billed monthly */
   monthlyPrice: number
-  yearlyPrice: number
+  /** Monthly price in USD when billed annually (discounted rate per month) */
+  yearlyPricePerMonth: number
   features: string[]
   jobLimit: number | null
   highlighted?: boolean
@@ -43,7 +45,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlanConfig[] = [
     name: 'Free',
     description: 'Perfect for getting started',
     monthlyPrice: 0,
-    yearlyPrice: 0,
+    yearlyPricePerMonth: 0,
     jobLimit: 3,
     features: [
       'Up to 3 active jobs',
@@ -57,7 +59,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlanConfig[] = [
     name: 'Pro',
     description: 'For growing businesses',
     monthlyPrice: 29,
-    yearlyPrice: 26,
+    yearlyPricePerMonth: 26,
     jobLimit: null,
     highlighted: true,
     features: [
@@ -74,7 +76,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlanConfig[] = [
     name: 'Enterprise',
     description: 'For large organisations',
     monthlyPrice: 99,
-    yearlyPrice: 89,
+    yearlyPricePerMonth: 89,
     jobLimit: null,
     features: [
       'Everything in Pro',

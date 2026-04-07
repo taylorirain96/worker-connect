@@ -29,9 +29,9 @@ function downloadInvoiceText(invoice: Invoice) {
     ``,
     `Status:   ${invoice.status.toUpperCase()}`,
     `Due Date: ${new Date(invoice.dueDate).toLocaleDateString()}`,
-    invoice.paidAt ? `Paid:     ${new Date(invoice.paidAt).toLocaleDateString()}` : '',
+    invoice.paidAt ? `Paid:     ${new Date(invoice.paidAt).toLocaleDateString()}` : undefined,
   ]
-    .filter((l) => l !== undefined)
+    .filter((l): l is string => l !== undefined)
     .join('\n')
 
   const blob = new Blob([lines], { type: 'text/plain' })

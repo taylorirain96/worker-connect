@@ -78,6 +78,7 @@ export async function POST(req: NextRequest) {
     // })
     // Store subscription in Firestore
 
+    // paymentMethodId will be attached to the Stripe customer in production
     void paymentMethodId
 
     const PLAN_AMOUNTS: Record<SubscriptionPlan, Record<string, number>> = {

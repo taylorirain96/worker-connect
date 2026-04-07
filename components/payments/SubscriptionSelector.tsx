@@ -87,7 +87,7 @@ export default function SubscriptionSelector({
       <div className="grid gap-4 sm:grid-cols-3">
         {SUBSCRIPTION_PLANS.map((plan) => {
           const price =
-            billingInterval === 'year' ? plan.yearlyPrice : plan.monthlyPrice
+            billingInterval === 'year' ? plan.yearlyPricePerMonth : plan.monthlyPrice
           const isCurrent = plan.id === currentPlan
           const isLoading = loading === plan.id
 
@@ -147,6 +147,8 @@ export default function SubscriptionSelector({
                 className="w-full"
                 disabled={isCurrent}
                 loading={isLoading}
+                title={isCurrent ? 'Already subscribed to this plan' : undefined}
+                aria-label={isCurrent ? `Already subscribed to ${plan.name}` : `Subscribe to ${plan.name}`}
                 onClick={() => void handleSelect(plan.id)}
               >
                 {isCurrent ? 'Current plan' : plan.monthlyPrice === 0 ? 'Downgrade' : 'Upgrade'}

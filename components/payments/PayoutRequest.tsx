@@ -165,7 +165,7 @@ export default function PayoutRequest({
       <Button
         type="submit"
         loading={loading}
-        disabled={!hasStripeAccount && !register('stripeConnectAccountId')}
+        disabled={!hasStripeAccount && !stripeConnectAccountId}
         className="w-full gap-2"
       >
         <TrendingUp className="h-4 w-4" />

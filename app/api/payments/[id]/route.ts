@@ -66,7 +66,8 @@ export async function POST(
       // await updatePaymentStatus(paymentIntent.metadata.paymentId, 'completed')
       // return NextResponse.json({ status: paymentIntent.status })
 
-      void paymentMethodId
+      // paymentMethodId will be passed to stripe.paymentIntents.confirm() in production
+    void paymentMethodId
       return NextResponse.json({ status: 'succeeded', paymentIntentId: id })
     }
 
