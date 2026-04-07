@@ -25,7 +25,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
     }
   } else {
-    console.warn('STRIPE_WEBHOOK_SECRET not configured — skipping signature verification')
+    // In production, always require a verified signature. Allow unsigned payloads
+    // only in local development (NODE_ENV !== 'production') to ease testing.
+    if (process.env.NODE_ENV === 'production') {
+      console.error('Stripe webhook received without signature in production — rejecting')
+      return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 })
+    }
+    console.warn('STRIPE_WEBHOOK_SECRET not configured — skipping signature verification (dev only)')
     try {
       event = JSON.parse(body) as Stripe.Event
     } catch {

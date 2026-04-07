@@ -16,6 +16,7 @@ export interface UserProfile {
   rating?: number
   reviewCount?: number
   completedJobs?: number
+  completionRate?: number // 0–1 fraction of accepted jobs completed (used for Mover Mode ranking)
   totalEarnings?: number
   weeklyPoints?: number
   allTimePoints?: number

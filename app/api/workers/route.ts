@@ -49,6 +49,14 @@ export async function GET(request: NextRequest) {
     }
 
     const total = workers.length
+    // Secondary in-memory sort: blend rating (60%) + completionRate (40%) so that
+    // high-completion workers (Mover Mode candidates) are promoted above workers
+    // who have a good rating but poor follow-through.
+    workers.sort((a, b) => {
+      const scoreA = ((a.rating ?? 0) / 5) * 0.6 + (a.completionRate ?? 0) * 0.4
+      const scoreB = ((b.rating ?? 0) / 5) * 0.6 + (b.completionRate ?? 0) * 0.4
+      return scoreB - scoreA
+    })
     // Simple page-based slicing
     const start = (page - 1) * limit
     const paginated = workers.slice(start, start + limit)
