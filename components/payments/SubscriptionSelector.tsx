@@ -29,7 +29,7 @@ export default function SubscriptionSelector({ userId, currentPlan = 'free', onS
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch('/api/subscriptions/create')
+        const res = await fetch('/api/subscriptions/plans')
         if (!res.ok) throw new Error('Failed to load plans')
         const data = await res.json() as { plans: SubscriptionPlanDetails[] }
         setPlans(data.plans ?? [])
@@ -71,7 +71,10 @@ export default function SubscriptionSelector({ userId, currentPlan = 'free', onS
     )
   }
 
-  const yearlyDiscount = 17 // percent saved on yearly billing
+  const paidPlans = plans.filter((p) => p.priceMonthly > 0)
+  const yearlyDiscount = paidPlans.length > 0
+    ? Math.round((1 - paidPlans[0].priceYearly / (paidPlans[0].priceMonthly * 12)) * 100)
+    : 17
 
   return (
     <div className="space-y-6">

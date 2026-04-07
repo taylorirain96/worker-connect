@@ -46,7 +46,8 @@ export async function POST(req: NextRequest) {
     const total = Math.round((subtotal + tax) * 100) / 100
 
     const now = new Date()
-    const invoiceNumber = `INV-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}-${Date.now().toString().slice(-6)}`
+    const uniqueSuffix = crypto.randomUUID().replace(/-/g, '').slice(0, 8).toUpperCase()
+    const invoiceNumber = `INV-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}-${uniqueSuffix}`
     const dueDateValue = dueDate ?? new Date(now.getTime() + 30 * 86_400_000).toISOString()
 
     const invoiceData = {

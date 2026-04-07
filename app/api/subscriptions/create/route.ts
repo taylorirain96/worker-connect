@@ -106,7 +106,6 @@ export async function POST(req: NextRequest) {
       cancelAtPeriodEnd: false,
       priceMonthly: price,
       currency: 'usd' as const,
-      billingCycle,
       createdAt: now.toISOString(),
       updatedAt: now.toISOString(),
     }
