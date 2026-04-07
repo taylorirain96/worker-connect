@@ -55,11 +55,11 @@ export async function getLeaderboard(limit: number = 10): Promise<ReputationLead
     const q = query(collection(db, 'reputationScores'), orderBy('score', 'desc'), firestoreLimit(limit))
     const snap = await getDocs(q)
     return snap.docs.map((d, i) => {
-      const data = d.data() as ReputationScore
+      const data = d.data() as ReputationScore & { name?: string; avatar?: string }
       return {
         userId: data.userId,
-        name: (d.data().name as string) || 'Worker',
-        avatar: d.data().avatar as string | undefined,
+        name: data.name || 'Worker',
+        avatar: data.avatar,
         score: data.score,
         tier: data.tier,
         trustShields: data.trustShields,
