@@ -88,3 +88,19 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlanConfig[] = [
     ],
   },
 ]
+
+// Reputation-tier earnings integration
+export type ReputationTierPayment = 'rookie' | 'professional' | 'expert' | 'master'
+export interface EarningsByReputationTier {
+  tier: ReputationTierPayment
+  avgEarningsPerJob: number
+  avgMonthlyEarnings: number
+  premiumJobAccess: boolean
+  subscriptionRecommendation: 'free' | 'pro' | 'enterprise'
+}
+export const EARNINGS_BY_REPUTATION_TIER: EarningsByReputationTier[] = [
+  { tier: 'rookie', avgEarningsPerJob: 75, avgMonthlyEarnings: 600, premiumJobAccess: false, subscriptionRecommendation: 'free' },
+  { tier: 'professional', avgEarningsPerJob: 125, avgMonthlyEarnings: 1500, premiumJobAccess: false, subscriptionRecommendation: 'pro' },
+  { tier: 'expert', avgEarningsPerJob: 200, avgMonthlyEarnings: 3000, premiumJobAccess: true, subscriptionRecommendation: 'pro' },
+  { tier: 'master', avgEarningsPerJob: 350, avgMonthlyEarnings: 6000, premiumJobAccess: true, subscriptionRecommendation: 'enterprise' },
+]
