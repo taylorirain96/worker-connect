@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -19,6 +19,7 @@ interface Props {
 export default function InsuranceVerification({ onSubmit }: Props) {
   const [loading, setLoading] = useState(false)
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({ resolver: zodResolver(schema) })
+  const minDate = useMemo(() => new Date().toISOString().split('T')[0], [])
 
   const submit = async (data: FormData) => {
     setLoading(true)
@@ -54,7 +55,7 @@ export default function InsuranceVerification({ onSubmit }: Props) {
         <input
           type="date"
           {...register('expiryDate')}
-          min={new Date().toISOString().split('T')[0]}
+          min={minDate}
           className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         {errors.expiryDate && <p className="text-xs text-red-500 mt-1">{errors.expiryDate.message}</p>}

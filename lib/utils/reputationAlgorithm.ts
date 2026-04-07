@@ -29,12 +29,14 @@ export function calculateReputationScore(data: ReputationInput): ReputationResul
     portfolioScore * 0.05
   )
 
+  // Tier assignment: rookie 0–40, professional 41–70, expert 71–85, master 86–100
   let tier: ReputationTier
   if (score <= 40) tier = 'rookie'
   else if (score <= 70) tier = 'professional'
   else if (score <= 85) tier = 'expert'
   else tier = 'master'
 
+  // Trust shields: 1 (0–19), 2 (20–39), 3 (40–59), 4 (60–79), 5 (80–100)
   let trustShields: number
   if (score <= 19) trustShields = 1
   else if (score <= 39) trustShields = 2
