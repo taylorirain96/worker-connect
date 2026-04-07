@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import type { MoverLeaderboardEntry } from '@/types/reputation'
 
 interface Props {
@@ -30,7 +31,7 @@ export default function MoverLeaderboard({ entries }: Props) {
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
                     {entry.avatar ? (
-                      <img src={entry.avatar} alt={entry.name} className="w-8 h-8 rounded-full object-cover" />
+                      <Image src={entry.avatar} alt={entry.name} width={32} height={32} className="w-8 h-8 rounded-full object-cover" />
                     ) : (
                       <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold text-sm">
                         {entry.name.charAt(0)}

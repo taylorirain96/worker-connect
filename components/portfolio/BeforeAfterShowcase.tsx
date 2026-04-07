@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import type { PortfolioItem } from '@/types/reputation'
 
 interface Props {
@@ -12,7 +13,7 @@ export default function BeforeAfterShowcase({ item }: Props) {
         <div className="space-y-1">
           <p className="text-xs font-medium text-gray-500 uppercase">Before</p>
           {item.beforeImageUrl ? (
-            <img src={item.beforeImageUrl} alt="Before" className="w-full h-36 object-cover rounded-lg" />
+            <Image src={item.beforeImageUrl} alt="Before" width={400} height={144} className="w-full h-36 object-cover rounded-lg" />
           ) : (
             <div className="w-full h-36 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-sm">No image</div>
           )}
@@ -20,7 +21,7 @@ export default function BeforeAfterShowcase({ item }: Props) {
         <div className="space-y-1">
           <p className="text-xs font-medium text-gray-500 uppercase">After</p>
           {item.afterImageUrl ? (
-            <img src={item.afterImageUrl} alt="After" className="w-full h-36 object-cover rounded-lg" />
+            <Image src={item.afterImageUrl} alt="After" width={400} height={144} className="w-full h-36 object-cover rounded-lg" />
           ) : (
             <div className="w-full h-36 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-sm">No image</div>
           )}

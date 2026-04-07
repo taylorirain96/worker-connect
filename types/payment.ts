@@ -90,7 +90,8 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlanConfig[] = [
 ]
 
 // Reputation-tier earnings integration
-export type ReputationTierPayment = 'rookie' | 'professional' | 'expert' | 'master'
+import type { ReputationTier } from '@/types/reputation'
+export type ReputationTierPayment = ReputationTier
 export interface EarningsByReputationTier {
   tier: ReputationTierPayment
   avgEarningsPerJob: number

@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import type { PortfolioItem } from '@/types/reputation'
 
 interface Props {
@@ -12,7 +13,7 @@ export default function PortfolioCard({ item, onClick }: Props) {
       onClick={onClick}
     >
       {item.afterImageUrl ? (
-        <img src={item.afterImageUrl} alt={item.title} className="w-full h-40 object-cover" />
+        <Image src={item.afterImageUrl} alt={item.title} width={400} height={160} className="w-full h-40 object-cover" />
       ) : (
         <div className="w-full h-40 bg-gray-100 flex items-center justify-center text-gray-400 text-4xl">🔨</div>
       )}
