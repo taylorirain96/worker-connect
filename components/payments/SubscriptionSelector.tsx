@@ -33,7 +33,7 @@ export default function SubscriptionSelector({
     if (plan === currentPlan) return
     setLoading(plan)
     try {
-      const res = await fetch('/api/subscriptions', {
+      const res = await fetch('/api/subscriptions/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, plan, billingInterval }),
