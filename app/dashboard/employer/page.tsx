@@ -86,7 +86,9 @@ export default function EmployerDashboardPage() {
       }
     }
     fetchJobs()
-  }, [user])((job) => {
+  }, [user])
+
+  const filteredJobs = postedJobs.filter((job) => {
     if (photoFilter === 'with_photos') return job.hasPhotos
     if (photoFilter === 'no_photos') return job.status === 'completed' && !job.hasPhotos
     return true
