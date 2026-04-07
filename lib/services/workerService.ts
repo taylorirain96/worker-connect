@@ -59,6 +59,15 @@ export async function getWorkers(filters: WorkerFilters = {}): Promise<UserProfi
     )
   }
 
+  // Composite sort: rating (60%) + completionRate (40%) — mirrors the /api/workers ranking
+  // so that workers with high Contract Completion Rates are promoted above those with
+  // a good rating but poor follow-through (Mover Mode prioritization).
+  workers.sort((a, b) => {
+    const scoreA = ((a.rating ?? 0) / 5) * 0.6 + (a.completionRate ?? 0) * 0.4
+    const scoreB = ((b.rating ?? 0) / 5) * 0.6 + (b.completionRate ?? 0) * 0.4
+    return scoreB - scoreA
+  })
+
   return workers
 }
 

@@ -1,4 +1,5 @@
 'use client'
+import { Suspense } from 'react'
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
@@ -13,7 +14,7 @@ import { db } from '@/lib/firebase'
 
 type ConnectStatus = 'idle' | 'loading' | 'connected' | 'incomplete' | 'error'
 
-export default function StripeConnectPage() {
+function StripeConnectContent() {
   const { user, profile } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -227,5 +228,13 @@ export default function StripeConnectPage() {
       </main>
       <Footer />
     </div>
+  )
+}
+
+export default function StripeConnectPage() {
+  return (
+    <Suspense fallback={<div className="flex flex-col min-h-screen"><div className="flex-1 flex items-center justify-center"><LoadingSpinner size="lg" /></div></div>}>
+      <StripeConnectContent />
+    </Suspense>
   )
 }

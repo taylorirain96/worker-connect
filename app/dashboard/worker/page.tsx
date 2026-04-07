@@ -66,7 +66,7 @@ export default function WorkerDashboardPage() {
             apps.slice(0, 5).map((a) => ({
               id: a.id,
               title: a.jobTitle,
-              employer: a.workerName, // employer name stored in workerName field
+              employer: a.employerId, // Application doesn't store employerName; use employerId
               status: a.status,
               appliedAt: a.createdAt,
               budget: a.proposedRate,
