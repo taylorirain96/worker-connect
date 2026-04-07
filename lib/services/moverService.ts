@@ -16,7 +16,6 @@ import {
 import { db } from '@/lib/firebase'
 import type { Job } from '@/types'
 import type { MoverSettings, MoverLeaderboardEntry } from '@/types/reputation'
-import { isRelocationReady as calcRelocationReady } from '@/lib/utils/completionRateCalc'
 
 // ─── Collection names ────────────────────────────────────────────────────────
 
@@ -83,7 +82,12 @@ export async function updateMoverSettings(
 /** Check whether a worker is currently relocation-ready. */
 export async function isRelocationReady(workerId: string): Promise<boolean> {
   const settings = await getMoverSettings(workerId)
-  return calcRelocationReady(settings.targetRelocationCity, settings.relocationReadiness)
+  const { targetRelocationCity, relocationReadiness } = settings
+  return (
+    targetRelocationCity !== null &&
+    targetRelocationCity.trim().length > 0 &&
+    relocationReadiness >= 80
+  )
 }
 
 /** Return the top `n` mover workers sorted by relocationSuccessRate descending. */

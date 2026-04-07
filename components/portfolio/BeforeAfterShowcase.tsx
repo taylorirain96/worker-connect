@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 
 interface Props {
   before: string
@@ -9,8 +9,18 @@ interface Props {
 
 export function BeforeAfterShowcase({ before, after }: Props) {
   const [dividerPct, setDividerPct] = useState(50)
+  const [containerWidth, setContainerWidth] = useState(0)
   const containerRef = useRef<HTMLDivElement>(null)
   const dragging = useRef(false)
+
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    setContainerWidth(el.offsetWidth)
+    const ro = new ResizeObserver(() => setContainerWidth(el.offsetWidth))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   const updateFromEvent = useCallback((clientX: number) => {
     const el = containerRef.current
@@ -52,7 +62,7 @@ export function BeforeAfterShowcase({ before, after }: Props) {
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
-      {/* After photo (full) */}
+      {/* After photo (full width baseline) */}
       <img src={after} alt="After" className="absolute inset-0 w-full h-full object-cover" />
 
       {/* Before photo clipped to left side */}
@@ -60,7 +70,12 @@ export function BeforeAfterShowcase({ before, after }: Props) {
         className="absolute inset-0 overflow-hidden"
         style={{ width: `${dividerPct}%` }}
       >
-        <img src={before} alt="Before" className="absolute inset-0 w-full h-full object-cover" />
+        <img
+          src={before}
+          alt="Before"
+          className="absolute inset-0 h-full object-cover"
+          style={{ width: containerWidth > 0 ? containerWidth : '100%' }}
+        />
       </div>
 
       {/* Divider line */}
