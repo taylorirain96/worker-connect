@@ -38,7 +38,7 @@ export function GovernmentIdUpload({ workerId: _workerId, onComplete }: Props) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <p className="text-sm text-gray-600">
-        Upload a clear photo of a government-issued ID (passport, driver's license, or national ID).
+        Upload a clear photo of a government-issued ID (passport, driver&apos;s license, or national ID).
       </p>
       <div
         className="border-2 border-dashed border-gray-300 rounded-xl p-8 flex flex-col items-center gap-2 cursor-pointer hover:border-indigo-400 transition-colors"

@@ -70,7 +70,7 @@ export function PortfolioCard({ project }: Props) {
         <p className="text-sm text-gray-600 line-clamp-2">{project.description}</p>
         {project.clientTestimonial && (
           <p className="text-xs text-gray-500 italic border-l-2 border-indigo-200 pl-2 mt-2 line-clamp-2">
-            "{project.clientTestimonial}"
+            &ldquo;{project.clientTestimonial}&rdquo;
           </p>
         )}
         <p className="text-xs text-gray-400">

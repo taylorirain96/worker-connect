@@ -9,7 +9,7 @@ interface Props {
   workerId: string
 }
 
-export function PortfolioGallery({ projects }: Props) {
+export function PortfolioGallery({ projects, workerId: _workerId }: Props) {
   const categories = ['All', ...Array.from(new Set(projects.map((p) => p.category)))]
   const [activeCategory, setActiveCategory] = useState('All')
 

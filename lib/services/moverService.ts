@@ -20,7 +20,6 @@ import type { MoverSettings, MoverLeaderboardEntry } from '@/types/reputation'
 // ─── Collection names ────────────────────────────────────────────────────────
 
 const MOVER_SETTINGS_COL = 'moverSettings'
-const MOVER_STATS_COL = 'moverStats'
 const JOBS_COL = 'jobs'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

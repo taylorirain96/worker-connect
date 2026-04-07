@@ -6,7 +6,6 @@ import {
   doc,
   addDoc,
   updateDoc,
-  getDoc,
   getDocs,
   query,
   where,
@@ -24,7 +23,6 @@ import type {
 // ─── Collection names ────────────────────────────────────────────────────────
 
 const RECORDS_COL = 'verificationRecords'
-const PROFILES_COL = 'verificationProfiles'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
