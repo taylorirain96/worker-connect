@@ -14,7 +14,8 @@ import {
 } from 'recharts'
 import { formatCurrency } from '@/lib/utils'
 import type { PaymentAnalytics } from '@/types'
-import { DollarSign, TrendingUp, AlertTriangle, CheckCircle } from 'lucide-react'
+import type { MoverModeStats } from '@/types/payment'
+import { DollarSign, TrendingUp, AlertTriangle, CheckCircle, MapPin, Package } from 'lucide-react'
 
 interface MetricCardProps {
   label: string
@@ -35,8 +36,18 @@ function MetricCard({ label, value, icon, color }: MetricCardProps) {
   )
 }
 
+interface AnalyticsData extends PaymentAnalytics {
+  bundleBreakdown?: {
+    single: { count: number; revenue: number }
+    '3pack': { count: number; revenue: number }
+    '10pack': { count: number; revenue: number }
+  }
+  moverModeStats?: MoverModeStats
+  topCategories?: Array<{ category: string; revenue: number; count: number }>
+}
+
 export default function PaymentAnalytics() {
-  const [analytics, setAnalytics] = useState<PaymentAnalytics | null>(null)
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -44,7 +55,7 @@ export default function PaymentAnalytics() {
     fetch('/api/admin/payments/analytics')
       .then((r) => {
         if (!r.ok) throw new Error('Failed to load analytics')
-        return r.json() as Promise<PaymentAnalytics>
+        return r.json() as Promise<AnalyticsData>
       })
       .then(setAnalytics)
       .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Unknown error'))
@@ -71,6 +82,16 @@ export default function PaymentAnalytics() {
       </div>
     )
   }
+
+  const bundleData = analytics.bundleBreakdown
+    ? [
+        { name: 'Single', ...analytics.bundleBreakdown.single },
+        { name: '3-Pack', ...analytics.bundleBreakdown['3pack'] },
+        { name: '10-Pack', ...analytics.bundleBreakdown['10pack'] },
+      ]
+    : null
+
+  const mover = analytics.moverModeStats
 
   return (
     <div className="space-y-6">
@@ -149,13 +170,124 @@ export default function PaymentAnalytics() {
         </ResponsiveContainer>
       </div>
 
+      {/* Price Anchoring – Bundle breakdown */}
+      {bundleData && (
+        <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
+          <div className="flex items-center gap-2 mb-4">
+            <Package className="h-4 w-4 text-primary-600" />
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+              Price Anchoring – Bundle Breakdown
+            </h3>
+          </div>
+          <div className="grid grid-cols-3 gap-3 mb-4">
+            {bundleData.map((b) => (
+              <div
+                key={b.name}
+                className="rounded-lg bg-gray-50 dark:bg-gray-700/50 p-3 text-center"
+              >
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{b.name}</p>
+                <p className="text-base font-bold text-gray-900 dark:text-white">
+                  {b.count.toLocaleString()}
+                </p>
+                <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                  {formatCurrency(b.revenue)}
+                </p>
+              </div>
+            ))}
+          </div>
+          <ResponsiveContainer width="100%" height={180}>
+            <BarChart data={bundleData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
+              <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+              <YAxis
+                tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`}
+                tick={{ fontSize: 11 }}
+                width={48}
+              />
+              <Tooltip
+                formatter={(value) => [formatCurrency(Number(value)), 'Revenue']}
+                contentStyle={{ fontSize: 12 }}
+              />
+              <Bar dataKey="revenue" name="Revenue" fill="#6366f1" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* Mover Mode stats */}
+      {mover && (
+        <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
+          <div className="flex items-center gap-2 mb-4">
+            <MapPin className="h-4 w-4 text-amber-500" />
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Mover Mode Metrics</h3>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
+            <div className="rounded-lg bg-amber-50 dark:bg-amber-900/20 p-3">
+              <p className="text-xs text-amber-700 dark:text-amber-400 mb-0.5">Mover Workers</p>
+              <p className="text-xl font-bold text-amber-900 dark:text-amber-300">
+                {mover.totalMoverWorkers.toLocaleString()}
+              </p>
+            </div>
+            <div className="rounded-lg bg-amber-50 dark:bg-amber-900/20 p-3">
+              <p className="text-xs text-amber-700 dark:text-amber-400 mb-0.5">Opportunities</p>
+              <p className="text-xl font-bold text-amber-900 dark:text-amber-300">
+                {mover.totalMoverOpportunities.toLocaleString()}
+              </p>
+            </div>
+            <div className="rounded-lg bg-amber-50 dark:bg-amber-900/20 p-3">
+              <p className="text-xs text-amber-700 dark:text-amber-400 mb-0.5">Acceptance Rate</p>
+              <p className="text-xl font-bold text-amber-900 dark:text-amber-300">
+                {(mover.moverAcceptanceRate * 100).toFixed(0)}%
+              </p>
+            </div>
+            <div className="rounded-lg bg-amber-50 dark:bg-amber-900/20 p-3">
+              <p className="text-xs text-amber-700 dark:text-amber-400 mb-0.5">Success Rate</p>
+              <p className="text-xl font-bold text-amber-900 dark:text-amber-300">
+                {(mover.moverSuccessRate * 100).toFixed(0)}%
+              </p>
+            </div>
+            <div className="rounded-lg bg-amber-50 dark:bg-amber-900/20 p-3">
+              <p className="text-xs text-amber-700 dark:text-amber-400 mb-0.5">Avg Bonus</p>
+              <p className="text-xl font-bold text-amber-900 dark:text-amber-300">
+                {mover.avgBonusPercentage.toFixed(1)}%
+              </p>
+            </div>
+            <div className="rounded-lg bg-amber-50 dark:bg-amber-900/20 p-3">
+              <p className="text-xs text-amber-700 dark:text-amber-400 mb-0.5">Mover Revenue</p>
+              <p className="text-xl font-bold text-amber-900 dark:text-amber-300">
+                {formatCurrency(mover.totalMoverRevenue)}
+              </p>
+            </div>
+          </div>
+          <div>
+            <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
+              Top Relocation Cities
+            </p>
+            <ul className="space-y-1.5">
+              {mover.topRelocationCities.map((c) => (
+                <li
+                  key={c.city}
+                  className="flex items-center justify-between text-sm"
+                >
+                  <span className="flex items-center gap-1.5 text-gray-700 dark:text-gray-300">
+                    <MapPin className="h-3 w-3 text-amber-500" />
+                    {c.city}
+                  </span>
+                  <span className="font-medium text-gray-900 dark:text-white">{c.count} workers</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+
       {/* Top categories */}
-      {'topCategories' in analytics && Array.isArray((analytics as Record<string, unknown>).topCategories) && (
+      {analytics.topCategories && (
         <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Revenue by Category</h3>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart
-              data={(analytics as Record<string, unknown>).topCategories as { category: string; revenue: number; count: number }[]}
+              data={analytics.topCategories}
               margin={{ top: 4, right: 4, left: 0, bottom: 0 }}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
