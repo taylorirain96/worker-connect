@@ -75,7 +75,7 @@ export async function getMoverOpportunities(targetCity: string, category?: strin
   }
 }
 
-export async function getMoverStats(workerId?: string): Promise<MoverStats> {
+export async function getMoverStats(_workerId?: string): Promise<MoverStats> {
   const mock: MoverStats = {
     totalMoverWorkers: 1240,
     averageRelocationSuccessRate: 84,
