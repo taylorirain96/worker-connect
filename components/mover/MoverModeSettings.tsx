@@ -55,6 +55,9 @@ export default function MoverModeSettings({ settings, onSave }: Props) {
       <div className="flex items-center gap-3">
         <button
           type="button"
+          role="switch"
+          aria-checked={isActive}
+          aria-label="Active for Relocation Jobs"
           onClick={() => setIsActive(!isActive)}
           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isActive ? 'bg-blue-600' : 'bg-gray-300'}`}
         >

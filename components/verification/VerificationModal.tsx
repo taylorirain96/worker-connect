@@ -33,7 +33,9 @@ export default function VerificationModal({ isOpen, onClose, type, onComplete }:
       <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900">{LABELS[type]}</h2>
-          <button onClick={onClose} aria-label="Close modal" className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
+          <button onClick={onClose} aria-label="Close modal" className="text-gray-400 hover:text-gray-600 leading-none">
+            <span aria-hidden="true" className="text-xl">×</span>
+          </button>
         </div>
         <p className="text-sm text-gray-600">{INSTRUCTIONS[type]}</p>
         <div className="flex gap-3 pt-2">

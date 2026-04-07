@@ -21,8 +21,11 @@ export default function PortfolioCard({ item, onClick }: Props) {
         <span className="text-xs text-blue-600 font-medium uppercase tracking-wide">{item.category}</span>
         <h3 className="text-sm font-semibold text-gray-900 line-clamp-1">{item.title}</h3>
         {item.clientTestimonial && (
-          <div className="flex items-center gap-1 text-yellow-500 text-xs">
-            {'★'.repeat(Math.round(item.clientTestimonial.rating))}
+          <div
+            className="flex items-center gap-1 text-yellow-500 text-xs"
+            aria-label={`Rating: ${item.clientTestimonial.rating} out of 5 stars`}
+          >
+            <span aria-hidden="true">{'★'.repeat(Math.round(item.clientTestimonial.rating))}</span>
             <span className="text-gray-400">{item.clientTestimonial.rating}/5</span>
           </div>
         )}

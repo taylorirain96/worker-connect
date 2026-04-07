@@ -35,6 +35,14 @@ export default function CompletionRateChart({ trend }: Props) {
           />
         </LineChart>
       </ResponsiveContainer>
+      <table className="sr-only" aria-label="Completion rate trend data">
+        <thead><tr><th>Month</th><th>Rate (%)</th></tr></thead>
+        <tbody>
+          {trend.map((pt) => (
+            <tr key={pt.month}><td>{pt.month}</td><td>{pt.rate}</td></tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   )
 }
