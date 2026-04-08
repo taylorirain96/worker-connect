@@ -1,0 +1,61 @@
+research_feature:
+  description: >
+    Research the QuickTrade codebase and the following feature request:
+
+    "{feature_request}"
+
+    Steps you MUST complete:
+    1. Use the ListProjectFiles tool to explore the top-level directory
+       structure (app/, lib/, components/, types/).
+    2. Read the key reference files listed below to understand existing
+       patterns before writing anything:
+         - types/index.ts  (shared TypeScript types)
+         - lib/firebase.ts  (Firebase client setup)
+         - lib/services/jobService.ts  (example Firestore service)
+         - app/layout.tsx  (root layout / providers)
+    3. Search for any files already related to the feature request topic
+       using the SearchCodebase tool.
+    4. Based on your findings, produce a detailed feature specification that
+       includes:
+         a. Summary of what needs to be built.
+         b. New TypeScript types / interfaces to add to types/index.ts.
+         c. New or modified Firestore service methods (lib/services/).
+         d. New or modified API routes (app/api/).
+         e. New React page(s) and/or components with their exact file paths.
+         f. Any new Tailwind classes or UI patterns needed.
+         g. Step-by-step implementation order so the developer agent can
+            work without back-tracking.
+  expected_output: >
+    A structured Markdown document with sections for Summary, Types,
+    Service Layer, API Routes, UI Components/Pages, and Implementation
+    Order. Include exact file paths for every artefact.
+  agent: researcher
+
+implement_feature:
+  description: >
+    Implement the feature exactly as described in the researcher's
+    specification. For each file listed in the spec:
+
+    1. Use the ReadFile tool to check whether the file already exists.
+    2. If the file exists, use the ReadFile tool to read its current
+       content, then produce the complete updated version.
+    3. If the file does not exist, produce its complete content from
+       scratch.
+    4. Use the WriteFile tool to write the final content to disk.
+
+    Important rules:
+    - Never use placeholder comments such as "// TODO" or "...existing code".
+    - Every TypeScript file must compile without errors given the existing
+      tsconfig.json.
+    - Follow the import style used elsewhere in the project (named imports,
+      @/ path aliases).
+    - Apply Tailwind classes consistent with the rest of the UI.
+    - After writing all files, summarise every file that was created or
+      modified and confirm the feature is complete.
+  expected_output: >
+    A summary listing every file created or modified, along with a
+    one-sentence description of what changed in each file. End with
+    "Feature implementation complete."
+  agent: developer
+  context:
+    - research_feature

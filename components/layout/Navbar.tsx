@@ -2,18 +2,27 @@
 import Link from 'next/link'
 import { useTheme } from 'next-themes'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { Sun, Moon, Menu, X, Wrench, Bell, ChevronDown } from 'lucide-react'
-import { useState } from 'react'
+import { Sun, Moon, Menu, X, Wrench, ChevronDown } from 'lucide-react'
+import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import { useRouter } from 'next/navigation'
 import { getInitials } from '@/lib/utils'
+import NotificationCenter from '@/components/notifications/NotificationCenter'
+import { subscribeToTotalUnread } from '@/lib/services/messagingService'
 
 export default function Navbar() {
   const { theme, setTheme } = useTheme()
   const { user, profile } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
+  const [unreadMessages, setUnreadMessages] = useState(0)
   const router = useRouter()
+
+  useEffect(() => {
+    if (!user) return
+    const unsub = subscribeToTotalUnread(user.uid, setUnreadMessages)
+    return () => unsub()
+  }, [user])
 
   const handleSignOut = async () => {
     try {
@@ -46,6 +55,9 @@ export default function Navbar() {
             <Link href="/workers" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
               Find Workers
             </Link>
+            <Link href="/leaderboard" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
+              🏆 Leaderboard
+            </Link>
             <Link href="/how-it-works" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
               How It Works
             </Link>
@@ -62,10 +74,7 @@ export default function Navbar() {
 
             {user ? (
               <div className="flex items-center space-x-2">
-                <button className="relative p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                  <Bell className="h-5 w-5" />
-                  <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-red-500 rounded-full"></span>
-                </button>
+                <NotificationCenter />
 
                 <div className="relative">
                   <button
@@ -103,15 +112,45 @@ export default function Navbar() {
                               Business Profile
                             </Link>
                           )}
-                          <Link href="/messages" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" onClick={() => setProfileOpen(false)}>
-                            Messages
+                          <Link href="/notifications" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" onClick={() => setProfileOpen(false)}>
+                            🔔 Notifications
                           </Link>
-                          {profile?.role === 'admin' && (
-                            <Link href="/admin" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" onClick={() => setProfileOpen(false)}>
-                              Admin Panel
+                          <Link href="/messages" className="flex items-center justify-between px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" onClick={() => setProfileOpen(false)}>
+                            Messages
+                            {unreadMessages > 0 && (
+                              <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full font-bold">
+                                {unreadMessages > 9 ? '9+' : unreadMessages}
+                              </span>
+                            )}
+                          </Link>
+                          <Link href="/payments" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" onClick={() => setProfileOpen(false)}>
+                            Payments
+                          </Link>
+                          <Link href="/earnings" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" onClick={() => setProfileOpen(false)}>
+                            Earnings
+                          </Link>
+                          {profile?.role === 'worker' && (
+                            <Link href="/analytics" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" onClick={() => setProfileOpen(false)}>
+                              📊 Analytics
                             </Link>
                           )}
+                          {profile?.role === 'admin' && (
+                            <>
+                              <Link href="/admin" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" onClick={() => setProfileOpen(false)}>
+                                Admin Panel
+                              </Link>
+                              <Link href="/admin/analytics" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" onClick={() => setProfileOpen(false)}>
+                                📊 Platform Analytics
+                              </Link>
+                              <Link href="/admin/notifications" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" onClick={() => setProfileOpen(false)}>
+                                🔔 Notification Manager
+                              </Link>
+                            </>
+                          )}
                           <div className="border-t border-gray-100 dark:border-gray-700 mt-1 pt-1">
+                            <Link href="/settings/notifications" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" onClick={() => setProfileOpen(false)}>
+                              ⚙️ Notification Settings
+                            </Link>
                             <button onClick={handleSignOut} className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                               Sign Out
                             </button>
@@ -152,6 +191,9 @@ export default function Navbar() {
               <Link href="/workers" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 px-3 py-2 rounded-lg transition-colors" onClick={() => setMenuOpen(false)}>
                 Find Workers
               </Link>
+              <Link href="/leaderboard" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 px-3 py-2 rounded-lg transition-colors" onClick={() => setMenuOpen(false)}>
+                🏆 Leaderboard
+              </Link>
               <Link href="/how-it-works" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 px-3 py-2 rounded-lg transition-colors" onClick={() => setMenuOpen(false)}>
                 How It Works
               </Link>
@@ -168,7 +210,24 @@ export default function Navbar() {
               {user && (
                 <div className="pt-3 border-t border-gray-200 dark:border-gray-700 space-y-1">
                   <Link href="/dashboard" className="block px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg" onClick={() => setMenuOpen(false)}>Dashboard</Link>
-                  <Link href="/messages" className="block px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg" onClick={() => setMenuOpen(false)}>Messages</Link>
+                  <Link href="/messages" className="flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg" onClick={() => setMenuOpen(false)}>
+                    Messages
+                    {unreadMessages > 0 && (
+                      <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full font-bold">
+                        {unreadMessages > 9 ? '9+' : unreadMessages}
+                      </span>
+                    )}
+                  </Link>
+                  {profile?.role === 'worker' && (
+                    <Link href="/analytics" className="block px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg" onClick={() => setMenuOpen(false)}>
+                      📊 Analytics
+                    </Link>
+                  )}
+                  {profile?.role === 'admin' && (
+                    <Link href="/admin/analytics" className="block px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg" onClick={() => setMenuOpen(false)}>
+                      📊 Platform Analytics
+                    </Link>
+                  )}
                   <button onClick={() => { handleSignOut(); setMenuOpen(false) }} className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg">Sign Out</button>
                 </div>
               )}

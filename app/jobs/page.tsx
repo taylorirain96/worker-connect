@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import JobCard from '@/components/jobs/JobCard'
@@ -8,6 +8,7 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import Link from 'next/link'
 import { Plus, Briefcase } from 'lucide-react'
 import { useAuth } from '@/components/providers/AuthProvider'
+import { getJobs } from '@/lib/services/jobService'
 import type { Job } from '@/types'
 
 const MOCK_JOBS: Job[] = [
@@ -117,8 +118,8 @@ const MOCK_JOBS: Job[] = [
 
 export default function JobsPage() {
   const { profile } = useAuth()
-  const [jobs] = useState<Job[]>(MOCK_JOBS)
-  const [loading] = useState(false)
+  const [jobs, setJobs] = useState<Job[]>([])
+  const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState({
     search: '',
     category: '',
@@ -129,7 +130,29 @@ export default function JobsPage() {
     status: '',
   })
 
-  const filteredJobs = jobs.filter((job) => {
+  useEffect(() => {
+    async function fetchJobs() {
+      setLoading(true)
+      try {
+        const fetched = await getJobs()
+        // Fall back to mock data when Firestore is not configured or returns empty
+        setJobs(fetched.length > 0 ? fetched : MOCK_JOBS)
+      } catch {
+        setJobs(MOCK_JOBS)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchJobs()
+  }, [])
+
+  // Sort urgent jobs first
+  const sortedJobs = [...jobs].sort((a, b) => {
+    const urgencyOrder = { emergency: 0, high: 1, medium: 2, low: 3 }
+    return urgencyOrder[a.urgency] - urgencyOrder[b.urgency]
+  })
+
+  const filteredJobs = sortedJobs.filter((job) => {
     if (filters.search && !job.title.toLowerCase().includes(filters.search.toLowerCase()) &&
         !job.description.toLowerCase().includes(filters.search.toLowerCase())) return false
     if (filters.category && job.category !== filters.category) return false
@@ -230,3 +253,4 @@ export default function JobsPage() {
     </div>
   )
 }
+
