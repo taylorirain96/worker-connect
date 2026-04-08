@@ -14,7 +14,13 @@ import {
 } from 'recharts'
 import { formatCurrency } from '@/lib/utils'
 import type { PaymentAnalytics } from '@/types'
-import { DollarSign, TrendingUp, AlertTriangle, CheckCircle } from 'lucide-react'
+import type { MoverModeAnalytics } from '@/types/payment'
+import { DollarSign, TrendingUp, AlertTriangle, CheckCircle, MapPin, Package, Users } from 'lucide-react'
+
+interface FullAnalytics extends PaymentAnalytics {
+  bundleBreakdown?: Record<string, { count: number; revenue: number }>
+  moverMode?: MoverModeAnalytics
+}
 
 interface MetricCardProps {
   label: string
@@ -36,7 +42,7 @@ function MetricCard({ label, value, icon, color }: MetricCardProps) {
 }
 
 export default function PaymentAnalytics() {
-  const [analytics, setAnalytics] = useState<PaymentAnalytics | null>(null)
+  const [analytics, setAnalytics] = useState<FullAnalytics | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -44,7 +50,7 @@ export default function PaymentAnalytics() {
     fetch('/api/admin/payments/analytics')
       .then((r) => {
         if (!r.ok) throw new Error('Failed to load analytics')
-        return r.json() as Promise<PaymentAnalytics>
+        return r.json() as Promise<FullAnalytics>
       })
       .then(setAnalytics)
       .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Unknown error'))
@@ -172,6 +178,99 @@ export default function PaymentAnalytics() {
               <Bar dataKey="revenue" name="Revenue" fill="#6366f1" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* Bundle pricing breakdown */}
+      {analytics.bundleBreakdown && (
+        <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
+          <div className="flex items-center gap-2 mb-4">
+            <Package className="h-4 w-4 text-primary-600" />
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Bundle Sales Breakdown</h3>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            {Object.entries(analytics.bundleBreakdown).map(([type, data]) => (
+              <div
+                key={type}
+                className="rounded-lg bg-gray-50 dark:bg-gray-700/40 px-4 py-3 text-center"
+              >
+                <p className="text-xs text-gray-500 dark:text-gray-400 capitalize mb-1">
+                  {type === '3pack' ? '3-Job Bundle' : type === '10pack' ? '10-Job Bundle' : 'Single Job'}
+                </p>
+                <p className="text-lg font-bold text-gray-900 dark:text-white">
+                  {formatCurrency(data.revenue)}
+                </p>
+                <p className="text-xs text-gray-400">{data.count.toLocaleString()} sales</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Mover Mode metrics */}
+      {analytics.moverMode && (
+        <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 space-y-4">
+          <div className="flex items-center gap-2 mb-2">
+            <MapPin className="h-4 w-4 text-emerald-600" />
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Mover Mode</h3>
+          </div>
+
+          {/* Mover KPIs */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/20 px-3 py-3 text-center">
+              <Users className="h-4 w-4 text-emerald-600 mx-auto mb-1" />
+              <p className="text-lg font-bold text-gray-900 dark:text-white">
+                {analytics.moverMode.activeMoverWorkers.toLocaleString()}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Active Movers</p>
+            </div>
+            <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 px-3 py-3 text-center">
+              <TrendingUp className="h-4 w-4 text-blue-600 mx-auto mb-1" />
+              <p className="text-lg font-bold text-gray-900 dark:text-white">
+                {analytics.moverMode.moverAcceptanceRate.toFixed(1)}%
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Acceptance Rate</p>
+            </div>
+            <div className="rounded-lg bg-purple-50 dark:bg-purple-900/20 px-3 py-3 text-center">
+              <DollarSign className="h-4 w-4 text-purple-600 mx-auto mb-1" />
+              <p className="text-lg font-bold text-gray-900 dark:text-white">
+                ${analytics.moverMode.avgMoverPremiumFee.toFixed(2)}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Avg Premium Fee</p>
+            </div>
+            <div className="rounded-lg bg-amber-50 dark:bg-amber-900/20 px-3 py-3 text-center">
+              <CheckCircle className="h-4 w-4 text-amber-600 mx-auto mb-1" />
+              <p className="text-lg font-bold text-gray-900 dark:text-white">
+                {analytics.moverMode.moverJobsAccepted.toLocaleString()}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Jobs Accepted</p>
+            </div>
+          </div>
+
+          {/* Top relocation cities */}
+          <div>
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wide">
+              Top Relocation Cities
+            </p>
+            <ul className="space-y-2">
+              {analytics.moverMode.topRelocationCities.map((city, idx) => (
+                <li
+                  key={city.city}
+                  className="flex items-center justify-between text-sm"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="w-5 text-xs text-gray-400 font-mono">{idx + 1}.</span>
+                    <MapPin className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0" />
+                    <span className="text-gray-700 dark:text-gray-300">{city.city}</span>
+                  </div>
+                  <div className="flex items-center gap-4 text-xs text-gray-500">
+                    <span>{city.workerCount} workers</span>
+                    <span>{city.jobCount} jobs</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       )}
     </div>
