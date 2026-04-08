@@ -25,7 +25,7 @@ import { getYearlyEarnings } from './taxService'
 
 const FORMS_COL = 'taxForms1099'
 const BUSINESS_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? 'worker-connect'
-const BUSINESS_EIN = process.env.BUSINESS_EIN ?? '00-0000000'
+const BUSINESS_EIN = process.env.BUSINESS_EIN ?? ''
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -58,6 +58,9 @@ export async function generate1099(
   year: number
 ): Promise<TaxForm1099NEC> {
   if (!db) throw new Error('Firestore not available')
+  if (!BUSINESS_EIN) {
+    throw new Error('BUSINESS_EIN environment variable is not configured. Cannot generate 1099 forms.')
+  }
 
   // Check if already generated
   const existing = await getWorker1099s(workerId)

@@ -58,17 +58,41 @@ export async function PUT(
     if (status === 'accepted') {
       try {
         const { createFullInvoice } = await import('@/lib/services/paymentService')
+
+        // Build detailed line items from quote breakdown
+        const lineItems: { description: string; quantity: number; unitPrice: number }[] = [
+          { description: `Base price — ${quote.jobTitle}`, quantity: 1, unitPrice: quote.basePrice },
+        ]
+        if (quote.laborHours && quote.laborRate) {
+          lineItems.push({
+            description: `Labor (${quote.laborHours}h @ $${quote.laborRate}/hr)`,
+            quantity: quote.laborHours,
+            unitPrice: quote.laborRate,
+          })
+        }
+        if (quote.materials?.length) {
+          for (const m of quote.materials) {
+            lineItems.push({ description: m.description, quantity: 1, unitPrice: m.cost })
+          }
+        }
+        if (quote.travel?.cost) {
+          lineItems.push({ description: `Travel (${quote.travel.distance} miles)`, quantity: 1, unitPrice: quote.travel.cost })
+        }
+
+        const subtotal = lineItems.reduce((s, i) => s + i.quantity * i.unitPrice, 0)
+        const tax = quote.tax ?? 0
+
         await createFullInvoice({
           jobId: quote.jobId,
           jobTitle: quote.jobTitle,
           employerId: quote.employerId,
           workerId: quote.workerId,
           workerName: quote.workerName,
-          amount: quote.totalPrice,
-          items: [{ description: quote.description, quantity: 1, unitPrice: quote.totalPrice }],
-          subtotal: quote.totalPrice,
-          tax: quote.tax ?? 0,
-          total: quote.totalPrice + (quote.tax ?? 0),
+          amount: subtotal,
+          items: lineItems,
+          subtotal,
+          tax,
+          total: subtotal + tax,
           status: 'draft',
           dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         })

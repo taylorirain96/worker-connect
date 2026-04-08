@@ -83,7 +83,12 @@ export default function WorkerQuoteForm({
           basePrice: Number(data.basePrice),
           laborHours: data.laborHours ? Number(data.laborHours) : undefined,
           laborRate: data.laborRate ? Number(data.laborRate) : undefined,
-          materials: data.materials.length ? data.materials.map((m) => ({ ...m, cost: Number(m.cost) })) : undefined,
+          materials: (() => {
+            const valid = data.materials
+              .filter((m) => m.description.trim() && Number(m.cost) > 0)
+              .map((m) => ({ description: m.description.trim(), cost: Number(m.cost) }))
+            return valid.length > 0 ? valid : undefined
+          })(),
           travel: data.travelCost ? { distance: Number(data.travelDistance), cost: Number(data.travelCost) } : undefined,
           description: data.description,
           timeline: data.timeline || undefined,
