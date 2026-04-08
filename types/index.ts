@@ -227,20 +227,44 @@ export interface Payment {
   updatedAt: string
 }
 
+export interface InvoiceItem {
+  description: string
+  quantity: number
+  unitPrice: number
+}
+
 export interface Invoice {
   id: string
+  invoiceNumber?: string // INV-YYYYMMDD-XXXX
   jobId: string
-  jobTitle: string
+  jobTitle?: string
   employerId: string
   workerId: string
-  workerName: string
+  workerName?: string
   amount: number
+  items?: InvoiceItem[]
+  subtotal?: number
   tax: number
   total: number
-  status: 'draft' | 'sent' | 'paid' | 'overdue'
+  status: 'draft' | 'sent' | 'paid' | 'completed' | 'overdue' | 'cancelled'
   dueDate: string
   createdAt: string
+  updatedAt?: string
   paidAt?: string
+}
+
+export interface Refund {
+  id: string
+  paymentId: string
+  amount: number
+  reason: string
+  stripeRefundId?: string
+  status: 'pending' | 'completed' | 'failed'
+  failureReason?: string
+  createdAt: string
+  updatedAt: string
+  completedAt?: string
+  failedAt?: string
 }
 
 export interface BusinessProfile {
@@ -772,6 +796,7 @@ export type DisputeResolutionStatus =
   | 'resolved'
   | 'closed'
   | 'escalated'
+  | 'refunded'
 
 export type DisputeResolutionReason =
   | 'quality_issues'
@@ -791,16 +816,19 @@ export type AppealStatus = 'pending' | 'under_review' | 'approved' | 'denied'
 
 export interface Dispute {
   id: string
-  jobId: string
-  jobTitle: string
-  workerId: string
-  workerName: string
-  clientId: string
-  clientName: string
-  reason: DisputeResolutionReason
+  paymentId?: string // link to a payment for payment-based disputes
+  jobId?: string
+  jobTitle?: string
+  workerId?: string
+  workerName?: string
+  clientId?: string
+  clientName?: string
+  reason: string
   description: string
+  evidence?: string[]
   status: DisputeResolutionStatus
-  filedBy: string
+  notes?: string
+  filedBy?: string
   mediatorId?: string
   mediatorName?: string
   refundAmount?: number
@@ -808,7 +836,7 @@ export interface Dispute {
   createdAt: string
   updatedAt: string
   resolvedAt?: string
-  dueDate: string
+  dueDate?: string
 }
 
 export interface DisputeEvidence {
