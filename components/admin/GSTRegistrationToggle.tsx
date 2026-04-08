@@ -10,10 +10,11 @@ export default function GSTRegistrationToggle() {
   const [showConfirm, setShowConfirm] = useState(false)
 
   useEffect(() => {
-    fetch('/api/platform/gst/threshold')
+    fetch('/api/platform/gst/register')
       .then(r => r.json())
       .then(d => {
-        setIsRegistered(d.status === 'registered')
+        setIsRegistered(d.isRegistered === true)
+        if (d.registeredDate) setRegisteredDate(d.registeredDate)
         setLoading(false)
       })
       .catch(() => setLoading(false))

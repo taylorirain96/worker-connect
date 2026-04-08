@@ -1,6 +1,17 @@
 import { NextResponse } from 'next/server'
 import { gstService } from '@/lib/services/gstService'
 
+export async function GET() {
+  try {
+    const isRegistered = await gstService.isGSTRegistered()
+    const registeredDate = isRegistered ? await gstService.getRegistrationDate() : null
+    return NextResponse.json({ isRegistered, registeredDate })
+  } catch (error) {
+    console.error('Error fetching GST registration status:', error)
+    return NextResponse.json({ error: 'Failed to fetch GST registration status' }, { status: 500 })
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const { registrationDate } = await request.json()
