@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic'
 /**
  * GET /api/admin/payments/analytics
  * Returns revenue analytics for the admin dashboard.
+ * Includes bundle-pricing breakdown and Mover Mode metrics.
  */
 export async function GET() {
   try {
@@ -40,6 +41,27 @@ export async function GET() {
         { category: 'Carpentry', revenue: 380000, count: 1970 },
         { category: 'Roofing', revenue: 290000, count: 1500 },
       ],
+      // Bundle / Price-Anchoring breakdown
+      bundleBreakdown: {
+        single: { count: 8240, revenue: 824000 },
+        '3pack': { count: 3150, revenue: 897750 },
+        '10pack': { count: 1280, revenue: 1152000 },
+      },
+      // Mover Mode metrics
+      moverMode: {
+        activeMoverWorkers: 342,
+        moverJobsPosted: 1870,
+        moverJobsAccepted: 1243,
+        moverAcceptanceRate: 66.5,
+        avgMoverPremiumFee: 18.5,
+        topRelocationCities: [
+          { city: 'Austin, TX', workerCount: 78, jobCount: 412 },
+          { city: 'Miami, FL', workerCount: 65, jobCount: 348 },
+          { city: 'Denver, CO', workerCount: 54, jobCount: 291 },
+          { city: 'Phoenix, AZ', workerCount: 49, jobCount: 267 },
+          { city: 'Nashville, TN', workerCount: 38, jobCount: 198 },
+        ],
+      },
     }
 
     return NextResponse.json(analytics)
