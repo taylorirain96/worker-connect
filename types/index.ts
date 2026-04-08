@@ -877,6 +877,61 @@ export interface DisputeResolution {
   timestamp: string
 }
 
+// ─── Onboarding ─────────────────────────────────────────────────────────────
+
+export interface OnboardingProgress {
+  workerId: string
+  completion: number // 0-100
+  requiredFields: {
+    name: boolean
+    email: boolean
+    phone: boolean
+    location: boolean
+    skills: boolean
+    hourlyRate: boolean
+    bio: boolean
+    profilePhoto: boolean
+  }
+  completedAt?: string
+}
+
+export interface WorkerVerificationRecord {
+  id: string
+  workerId: string
+  type: 'government_id' | 'background_check' | 'insurance' | 'certification' | 'bbb'
+  status: 'pending' | 'submitted' | 'approved' | 'rejected'
+  documentUrl?: string
+  token?: string
+  submittedAt?: string
+  reviewedAt?: string
+  approvedAt?: string
+  rejectionReason?: string
+  notes?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface StripeConnectStatus {
+  accountId: string
+  status: 'incomplete' | 'pending_review' | 'active'
+  chargesEnabled: boolean
+  payoutsEnabled: boolean
+  requirements?: {
+    currently_due: string[]
+    eventually_due: string[]
+    past_due: string[]
+  }
+}
+
+export interface OnboardingChecklistItem {
+  id: string
+  label: string
+  description: string
+  completed: boolean
+  required: boolean
+  order: number
+}
+
 export interface RatingAppeal {
   id: string
   jobId: string

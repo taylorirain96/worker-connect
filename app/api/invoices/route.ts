@@ -24,17 +24,8 @@ async function generateInvoiceNumber(): Promise<string> {
   }
 }
 
-const VALID_TRANSITIONS: Record<string, string[]> = {
-  draft: ['sent', 'cancelled'],
-  sent: ['paid', 'cancelled', 'overdue'],
-  paid: ['completed'],
-  overdue: ['paid', 'cancelled'],
-  completed: [],
-  cancelled: [],
-}
+// VALID_TRANSITIONS is defined locally in [id]/route.ts for status updates
 
-// Export for use in [id]/route.ts
-export { VALID_TRANSITIONS }
 
 /**
  * GET  /api/invoices?workerId=xxx  — list invoices for a worker
