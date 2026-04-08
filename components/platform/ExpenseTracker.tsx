@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import type { ExpenseRecord } from '@/types'
 
 const CATEGORIES = [
@@ -23,7 +23,7 @@ export default function ExpenseTracker() {
   })
   const [filterCategory, setFilterCategory] = useState('')
 
-  const fetchExpenses = async () => {
+  const fetchExpenses = useCallback(async () => {
     setLoading(true)
     try {
       const params = new URLSearchParams()
@@ -36,9 +36,9 @@ export default function ExpenseTracker() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [filterCategory])
 
-  useEffect(() => { fetchExpenses() }, [filterCategory])
+  useEffect(() => { fetchExpenses() }, [fetchExpenses])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

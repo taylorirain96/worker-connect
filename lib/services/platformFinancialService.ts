@@ -89,6 +89,7 @@ class PlatformFinancialService {
     }
 
     const platformCommission = Number((totalJobValue * PLATFORM_COMMISSION_RATE).toFixed(2))
+    // Stripe standard processing fees: 2.9% of transaction volume + $0.30 per transaction
     const stripeProcessingFee = Number((totalJobValue * 0.029 + totalJobsCompleted * 0.30).toFixed(2))
     const netPlatformRevenue = Number((platformCommission - stripeProcessingFee).toFixed(2))
 

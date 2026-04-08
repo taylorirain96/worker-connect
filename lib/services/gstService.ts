@@ -58,6 +58,7 @@ class GSTService {
     // string comparison is safe here (e.g. '2026-01' <= '2026-02').
     const finQ = query(
       collection(db!, 'platformFinancials'),
+      // slice(0, 7) extracts the YYYY-MM portion from the ISO date string for month-level comparison
       where('month', '>=', periodStart.slice(0, 7)),
       where('month', '<=', periodEnd.slice(0, 7))
     )
