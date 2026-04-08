@@ -54,6 +54,8 @@ class GSTService {
       throw new Error('GST not registered. Cannot generate GST return.')
     }
 
+    // Bimonthly periods are always within the same calendar year, so YYYY-MM
+    // string comparison is safe here (e.g. '2026-01' <= '2026-02').
     const finQ = query(
       collection(db!, 'platformFinancials'),
       where('month', '>=', periodStart.slice(0, 7)),

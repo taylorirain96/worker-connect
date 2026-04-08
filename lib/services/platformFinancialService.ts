@@ -83,7 +83,10 @@ class PlatformFinancialService {
       const jobsSnap = await getDocs(jobsQ)
       totalJobsCompleted = jobsSnap.size
       jobsSnap.forEach(d => { totalJobValue += (d.data().budget || 0) })
-    } catch (_) {}
+    } catch (err) {
+      // Jobs collection may not exist yet or lack required indexes; gracefully default to zero
+      console.warn('Could not fetch completed jobs for financials:', err)
+    }
 
     const platformCommission = Number((totalJobValue * PLATFORM_COMMISSION_RATE).toFixed(2))
     const stripeProcessingFee = Number((totalJobValue * 0.029 + totalJobsCompleted * 0.30).toFixed(2))
