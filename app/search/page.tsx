@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { Suspense, useState, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { SlidersHorizontal, Bookmark, X, Users, Briefcase, LayoutGrid } from 'lucide-react'
 import SearchBar from '@/components/search/SearchBar'
@@ -10,7 +10,7 @@ import type { SearchFilters as SearchFiltersType, SearchResult } from '@/types/s
 
 type TabType = 'all' | 'workers' | 'jobs'
 
-export default function SearchPage() {
+function SearchPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -293,5 +293,13 @@ export default function SearchPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center"><p className="text-gray-500">Loading…</p></div>}>
+      <SearchPageContent />
+    </Suspense>
   )
 }
