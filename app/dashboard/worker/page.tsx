@@ -1,4 +1,5 @@
 'use client'
+import { useEffect, useState } from 'react'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { useAuth } from '@/components/providers/AuthProvider'
@@ -10,28 +11,88 @@ import {
   Briefcase, DollarSign, Star, Clock, TrendingUp,
   CheckCircle, AlertCircle, Search
 } from 'lucide-react'
-import { formatCurrency, STATUS_LABELS } from '@/lib/utils'
+import { formatCurrency, STATUS_LABELS, formatRelativeDate } from '@/lib/utils'
+import { collection, query, where, orderBy, getDocs, type DocumentData } from 'firebase/firestore'
+import { db } from '@/lib/firebase'
+import type { Application } from '@/types'
 
-const MOCK_APPLIED_JOBS = [
-  { id: '1', title: 'Fix Leaking Bathroom Pipe', employer: 'John Smith', status: 'pending', appliedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), budget: 150, budgetType: 'fixed' as const },
-  { id: '2', title: 'Install New Electrical Panel', employer: 'Sarah Johnson', status: 'accepted', appliedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), budget: 2500, budgetType: 'fixed' as const },
-  { id: '3', title: 'HVAC System Maintenance', employer: 'Mike Williams', status: 'rejected', appliedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), budget: 200, budgetType: 'fixed' as const },
+interface RecentApplication {
+  id: string
+  title: string
+  employer: string
+  status: string
+  appliedAt: string
+  budget: number
+  budgetType: 'fixed' | 'hourly'
+}
+
+const MOCK_APPLIED_JOBS: RecentApplication[] = [
+  { id: '1', title: 'Fix Leaking Bathroom Pipe', employer: 'John Smith', status: 'pending', appliedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), budget: 150, budgetType: 'fixed' },
+  { id: '2', title: 'Install New Electrical Panel', employer: 'Sarah Johnson', status: 'accepted', appliedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), budget: 2500, budgetType: 'fixed' },
+  { id: '3', title: 'HVAC System Maintenance', employer: 'Mike Williams', status: 'rejected', appliedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), budget: 200, budgetType: 'fixed' },
 ]
 
-const MOCK_EARNINGS = [
-  { month: 'Nov', amount: 3200 },
-  { month: 'Dec', amount: 4100 },
-  { month: 'Jan', amount: 2800 },
-]
+function docToApplication(id: string, data: DocumentData): Application {
+  const toISO = (v: unknown) =>
+    v && typeof v === 'object' && 'toDate' in v
+      ? (v as { toDate: () => Date }).toDate().toISOString()
+      : typeof v === 'string'
+      ? v
+      : new Date().toISOString()
+  return { ...data, id, createdAt: toISO(data.createdAt), updatedAt: toISO(data.updatedAt) } as Application
+}
 
 export default function WorkerDashboardPage() {
   const { user, profile } = useAuth()
+  const [applications, setApplications] = useState<RecentApplication[]>([])
+  const [loadingApps, setLoadingApps] = useState(true)
+
+  useEffect(() => {
+    if (!user?.uid || !db) {
+      setApplications(MOCK_APPLIED_JOBS)
+      setLoadingApps(false)
+      return
+    }
+    async function fetchApplications() {
+      try {
+        const appsRef = collection(db!, 'applications')
+        const q = query(appsRef, where('workerId', '==', user!.uid), orderBy('createdAt', 'desc'))
+        const snapshot = await getDocs(q)
+        const apps = snapshot.docs.map((d) => docToApplication(d.id, d.data()))
+        if (apps.length === 0) {
+          setApplications(MOCK_APPLIED_JOBS)
+        } else {
+          setApplications(
+            apps.slice(0, 5).map((a) => ({
+              id: a.id,
+              title: a.jobTitle,
+              employer: a.employerId, // employerName is not stored on Application; field is present for future use but not currently rendered in the UI
+              status: a.status,
+              appliedAt: a.createdAt,
+              budget: a.proposedRate,
+              budgetType: 'fixed' as const,
+            }))
+          )
+        }
+      } catch {
+        setApplications(MOCK_APPLIED_JOBS)
+      } finally {
+        setLoadingApps(false)
+      }
+    }
+    fetchApplications()
+  }, [user])
+
+  const totalApplied = applications.length
+  const activeJobs = applications.filter((a) => a.status === 'accepted').length
+  const completedJobs = profile?.completedJobs ?? 0
+  const totalEarned = profile?.totalEarnings ?? 0
 
   const stats = [
-    { label: 'Jobs Applied', value: '8', icon: Briefcase, color: 'text-blue-600', bg: 'bg-blue-100 dark:bg-blue-900/30' },
-    { label: 'Active Jobs', value: '2', icon: Clock, color: 'text-orange-600', bg: 'bg-orange-100 dark:bg-orange-900/30' },
-    { label: 'Completed', value: '12', icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-100 dark:bg-green-900/30' },
-    { label: 'Total Earned', value: '$8,240', icon: DollarSign, color: 'text-primary-600', bg: 'bg-primary-100 dark:bg-primary-900/30' },
+    { label: 'Jobs Applied', value: String(totalApplied), icon: Briefcase, color: 'text-blue-600', bg: 'bg-blue-100 dark:bg-blue-900/30' },
+    { label: 'Active Jobs', value: String(activeJobs), icon: Clock, color: 'text-orange-600', bg: 'bg-orange-100 dark:bg-orange-900/30' },
+    { label: 'Completed', value: String(completedJobs), icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-100 dark:bg-green-900/30' },
+    { label: 'Total Earned', value: formatCurrency(totalEarned), icon: DollarSign, color: 'text-primary-600', bg: 'bg-primary-100 dark:bg-primary-900/30' },
   ]
 
   return (
@@ -93,7 +154,9 @@ export default function WorkerDashboardPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  {MOCK_APPLIED_JOBS.length === 0 ? (
+                  {loadingApps ? (
+                    <div className="text-center py-8 text-gray-400 text-sm">Loading…</div>
+                  ) : applications.length === 0 ? (
                     <div className="text-center py-8">
                       <Briefcase className="h-10 w-10 text-gray-300 mx-auto mb-3" />
                       <p className="text-gray-500">No applications yet</p>
@@ -103,18 +166,18 @@ export default function WorkerDashboardPage() {
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      {MOCK_APPLIED_JOBS.map((app) => {
+                      {applications.map((app) => {
                         const status = STATUS_LABELS[app.status]
                         return (
                           <div key={app.id} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                             <div className="flex-1 min-w-0">
                               <p className="font-medium text-gray-900 dark:text-white text-sm truncate">{app.title}</p>
-                              <p className="text-xs text-gray-500 mt-0.5">by {app.employer} · {formatCurrency(app.budget)}</p>
+                              <p className="text-xs text-gray-500 mt-0.5">{formatCurrency(app.budget)} · {formatRelativeDate(app.appliedAt)}</p>
                             </div>
                             <Badge
                               variant={app.status === 'accepted' ? 'success' : app.status === 'rejected' ? 'danger' : 'warning'}
                             >
-                              {status?.label}
+                              {status?.label ?? app.status}
                             </Badge>
                           </div>
                         )
@@ -125,7 +188,7 @@ export default function WorkerDashboardPage() {
               </Card>
             </div>
 
-            {/* Profile Completion & Earnings */}
+            {/* Profile Completion & Quick Stats */}
             <div className="space-y-4">
               {/* Profile Completion */}
               <Card>
@@ -157,44 +220,24 @@ export default function WorkerDashboardPage() {
                 </CardContent>
               </Card>
 
-              {/* Quick Stats */}
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-primary-600" />
-                    <CardTitle>This Month</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
-                    {formatCurrency(MOCK_EARNINGS[MOCK_EARNINGS.length - 1].amount)}
-                  </div>
-                  <p className="text-sm text-green-600 flex items-center gap-1">
-                    <TrendingUp className="h-3.5 w-3.5" />
-                    +28% from last month
-                  </p>
-                  <div className="flex gap-1 mt-4 items-end h-12">
-                    {MOCK_EARNINGS.map(({ month, amount }) => {
-                      const max = Math.max(...MOCK_EARNINGS.map((e) => e.amount))
-                      const height = (amount / max) * 100
-                      return (
-                        <div key={month} className="flex-1 flex flex-col items-center gap-1">
-                          <div
-                            className="w-full bg-primary-500 rounded-sm"
-                            style={{ height: `${height}%` }}
-                          />
-                          <span className="text-xs text-gray-400">{month}</span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
+              {/* Rating */}
+              {(profile?.rating ?? 0) > 0 && (
+                <div className="flex items-center gap-1 text-xs text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+                  <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
+                  <span>Your rating: <strong className="text-gray-900 dark:text-white">{profile?.rating?.toFixed(1)}</strong> ({profile?.reviewCount ?? 0} reviews)</span>
+                </div>
+              )}
 
-              <div className="flex items-center gap-1 text-xs text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
-                <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-                <span>Your rating: <strong className="text-gray-900 dark:text-white">4.9</strong> (87 reviews)</span>
-              </div>
+              {/* Earnings link */}
+              <Link href="/earnings">
+                <div className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
+                  <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <TrendingUp className="h-4 w-4 text-primary-600" />
+                    View Earnings & Withdraw
+                  </div>
+                  <span className="text-xs text-primary-600">→</span>
+                </div>
+              </Link>
             </div>
           </div>
         </div>
@@ -203,3 +246,4 @@ export default function WorkerDashboardPage() {
     </div>
   )
 }
+

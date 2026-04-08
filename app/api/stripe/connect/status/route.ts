@@ -1,45 +1,33 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import Stripe from 'stripe'
 
-/**
- * GET /api/stripe/connect/status?accountId=acct_xxx
- * Returns the Stripe Connect account status for a worker.
- */
-export async function GET(req: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
     const stripeSecretKey = process.env.STRIPE_SECRET_KEY
     if (!stripeSecretKey) {
       return NextResponse.json({ error: 'Stripe not configured' }, { status: 500 })
     }
 
-    const { searchParams } = new URL(req.url)
+    const { searchParams } = new URL(request.url)
     const accountId = searchParams.get('accountId')
 
     if (!accountId) {
-      return NextResponse.json({ error: 'Missing accountId' }, { status: 400 })
+      return NextResponse.json({ error: 'accountId is required' }, { status: 400 })
     }
 
-    // In production use the Stripe SDK:
-    // const stripe = new Stripe(stripeSecretKey)
-    // const account = await stripe.accounts.retrieve(accountId)
-    // return NextResponse.json({
-    //   accountId: account.id,
-    //   chargesEnabled: account.charges_enabled,
-    //   payoutsEnabled: account.payouts_enabled,
-    //   detailsSubmitted: account.details_submitted,
-    //   requiresAction: !account.details_submitted || !account.charges_enabled,
-    // })
+    const stripe = new Stripe(stripeSecretKey)
+    const account = await stripe.accounts.retrieve(accountId)
 
-    // Mock response for development
     return NextResponse.json({
-      accountId,
-      chargesEnabled: true,
-      payoutsEnabled: true,
-      detailsSubmitted: true,
-      requiresAction: false,
+      accountId: account.id,
+      chargesEnabled: account.charges_enabled,
+      payoutsEnabled: account.payouts_enabled,
+      detailsSubmitted: account.details_submitted,
+      requiresAction: !account.details_submitted || !account.payouts_enabled,
     })
   } catch (error) {
     console.error('Stripe account status error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to fetch account status' }, { status: 500 })
   }
 }
