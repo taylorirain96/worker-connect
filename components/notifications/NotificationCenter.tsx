@@ -1,18 +1,12 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import { Bell, X, CheckCheck } from 'lucide-react'
+import { Bell, X, CheckCheck, Settings } from 'lucide-react'
 import Link from 'next/link'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { subscribeToNotifications, markAsRead, clearNotifications } from '@/lib/services/notificationService'
-import { formatRelativeDate } from '@/lib/utils'
+import { subscribeToNotifications } from '@/lib/notifications/firebase'
+import { markNotificationRead, markAllNotificationsRead, deleteNotification, clearAllNotifications } from '@/lib/notifications/firebase'
+import NotificationItem from '@/components/NotificationItem'
 import type { Notification } from '@/types'
-
-const TYPE_ICONS: Record<Notification['type'], string> = {
-  new_job: '💼',
-  new_review: '⭐',
-  application: '📋',
-  message: '💬',
-}
 
 export default function NotificationCenter() {
   const { user } = useAuth()
@@ -42,14 +36,24 @@ export default function NotificationCenter() {
   if (!user) return null
 
   const handleMarkRead = async (id: string) => {
-    await markAsRead(id)
+    await markNotificationRead(id)
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     )
   }
 
+  const handleMarkAllRead = async () => {
+    await markAllNotificationsRead(user.uid)
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
+  }
+
+  const handleDelete = async (id: string) => {
+    await deleteNotification(id)
+    setNotifications((prev) => prev.filter((n) => n.id !== id))
+  }
+
   const handleClearAll = async () => {
-    await clearNotifications(user.uid)
+    await clearAllNotifications(user.uid)
     setNotifications([])
     setOpen(false)
   }
@@ -83,60 +87,65 @@ export default function NotificationCenter() {
                   </span>
                 )}
               </h3>
-              {notifications.length > 0 && (
-                <button
-                  onClick={handleClearAll}
-                  className="flex items-center gap-1 text-xs text-gray-500 hover:text-red-500 dark:text-gray-400 dark:hover:text-red-400 transition-colors"
-                >
-                  <X className="h-3 w-3" />
-                  Clear all
-                </button>
-              )}
+              <div className="flex items-center gap-2">
+                {unreadCount > 0 && (
+                  <button
+                    onClick={handleMarkAllRead}
+                    className="flex items-center gap-1 text-xs text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors"
+                    title="Mark all as read"
+                  >
+                    <CheckCheck className="h-3.5 w-3.5" />
+                  </button>
+                )}
+                {notifications.length > 0 && (
+                  <button
+                    onClick={handleClearAll}
+                    className="flex items-center gap-1 text-xs text-gray-500 hover:text-red-500 dark:text-gray-400 dark:hover:text-red-400 transition-colors"
+                    title="Clear all"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* List */}
-            <div className="max-h-80 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700">
+            <div className="max-h-96 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700">
               {notifications.length === 0 ? (
                 <div className="py-10 text-center text-sm text-gray-400 dark:text-gray-500">
                   <Bell className="h-8 w-8 mx-auto mb-2 opacity-30" />
                   No notifications yet
                 </div>
               ) : (
-                notifications.map((n) => (
-                  <div
+                notifications.slice(0, 15).map((n) => (
+                  <NotificationItem
                     key={n.id}
-                    className={`flex gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${
-                      !n.read ? 'bg-primary-50 dark:bg-primary-900/10' : ''
-                    }`}
-                  >
-                    <span className="text-lg flex-shrink-0 mt-0.5">{TYPE_ICONS[n.type]}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-800 dark:text-gray-200 leading-snug">
-                        {n.message}
-                      </p>
-                      <p className="text-xs text-gray-400 mt-0.5">{formatRelativeDate(n.createdAt)}</p>
-                      {n.jobId && (
-                        <Link
-                          href={`/jobs/${n.jobId}`}
-                          className="text-xs text-primary-600 hover:underline mt-1 inline-block"
-                          onClick={() => { handleMarkRead(n.id); setOpen(false) }}
-                        >
-                          View job →
-                        </Link>
-                      )}
-                    </div>
-                    {!n.read && (
-                      <button
-                        onClick={() => handleMarkRead(n.id)}
-                        className="flex-shrink-0 text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
-                        title="Mark as read"
-                      >
-                        <CheckCheck className="h-4 w-4" />
-                      </button>
-                    )}
-                  </div>
+                    notification={n}
+                    onMarkRead={(id) => { handleMarkRead(id); }}
+                    onDelete={handleDelete}
+                    compact
+                  />
                 ))
               )}
+            </div>
+
+            {/* Footer */}
+            <div className="border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 px-4 py-2 flex items-center justify-between">
+              <Link
+                href="/notifications"
+                className="text-xs text-primary-600 dark:text-primary-400 hover:underline font-medium"
+                onClick={() => setOpen(false)}
+              >
+                View all notifications
+              </Link>
+              <Link
+                href="/settings/notifications"
+                className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                title="Notification settings"
+                onClick={() => setOpen(false)}
+              >
+                <Settings className="h-3.5 w-3.5" />
+              </Link>
             </div>
           </div>
         </>

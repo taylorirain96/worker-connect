@@ -6,6 +6,7 @@ import Footer from '@/components/layout/Footer'
 import { useAuth } from '@/components/providers/AuthProvider'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
+import PhotoGallery from '@/components/jobs/PhotoGallery'
 import toast from 'react-hot-toast'
 import {
   MapPin, Clock, DollarSign, Users, AlertCircle, ArrowLeft,
@@ -38,7 +39,7 @@ const MOCK_JOBS: Record<string, Job & { employerRating?: number; employerJobs?: 
     budget: 150,
     budgetType: 'fixed',
     urgency: 'high',
-    status: 'completed', // Mock status set to 'completed' to demonstrate the photo gallery feature
+    status: 'completed',
     skills: ['Plumbing', 'Pipe Repair', 'Fixture Installation'],
     applicantsCount: 4,
     createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
@@ -50,28 +51,28 @@ const MOCK_JOBS: Record<string, Job & { employerRating?: number; employerJobs?: 
 
 const MOCK_JOB_PHOTOS: JobPhoto[] = [
   {
-    id: 'demo-p1',
+    id: 'p1',
     jobId: '1',
     workerId: 'w1',
-    workerName: 'Alex Rivera',
+    workerName: 'Marcus Johnson',
     url: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600',
-    caption: 'Leaking pipe under bathroom sink',
+    storagePath: '',
     type: 'before',
+    caption: 'Leaking pipe under sink — before repair',
     approvalStatus: 'approved',
-    uploadedAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-    fileSize: 1_234_567,
+    uploadedAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
   },
   {
-    id: 'demo-p2',
+    id: 'p2',
     jobId: '1',
     workerId: 'w1',
-    workerName: 'Alex Rivera',
-    url: 'https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=600',
-    caption: 'New pipe joint installed and sealed',
+    workerName: 'Marcus Johnson',
+    url: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600',
+    storagePath: '',
     type: 'after',
+    caption: 'New pipe installed and fully sealed',
     approvalStatus: 'approved',
     uploadedAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-    fileSize: 987_654,
   },
 ]
 
@@ -85,6 +86,7 @@ export default function JobDetailPage() {
   const [proposedRate, setProposedRate] = useState('')
 
   const job = MOCK_JOBS[params.id as string] || MOCK_JOBS['1']
+  const jobPhotos = MOCK_JOB_PHOTOS.filter((p) => p.jobId === (params.id as string) || p.jobId === '1')
   const category = JOB_CATEGORIES.find((c) => c.id === job.category)
   const urgency = URGENCY_LABELS[job.urgency]
 
@@ -184,24 +186,29 @@ export default function JobDetailPage() {
                 </div>
               </div>
 
-              {/* Photo Gallery (completed jobs) */}
+              {/* Photo Gallery — shown when job is completed */}
               {job.status === 'completed' && (
                 <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    <div className="flex items-center gap-2">
                       <Camera className="h-5 w-5 text-primary-600" />
-                      Job Photos
-                    </h2>
+                      <h2 className="font-semibold text-gray-900 dark:text-white">
+                        Job Photos
+                        {jobPhotos.length > 0 && (
+                          <span className="ml-2 text-sm font-normal text-gray-500">({jobPhotos.length})</span>
+                        )}
+                      </h2>
+                    </div>
                     {profile?.role === 'worker' && (
                       <Link href={`/jobs/${job.id}/upload-photos`}>
-                        <Button size="sm" variant="outline">
+                        <Button size="sm" variant="outline" className="flex items-center gap-1.5">
                           <Camera className="h-3.5 w-3.5" />
                           Add Photos
                         </Button>
                       </Link>
                     )}
                   </div>
-                  <PhotoGallery photos={MOCK_JOB_PHOTOS} />
+                  <PhotoGallery photos={jobPhotos} />
                 </div>
               )}
 

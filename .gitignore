@@ -32,3 +32,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# python / crewai
+crew/.venv/
+crew/__pycache__/
+crew/tools/__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+crew/.env
