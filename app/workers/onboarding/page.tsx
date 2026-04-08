@@ -24,7 +24,7 @@ const STEPS = [
   { id: 'verification', title: 'ID Verification', description: 'Verify your identity to build trust with clients.' },
   { id: 'profile_info', title: 'Profile Information', description: 'Tell clients about yourself.' },
   { id: 'skills', title: 'Skills & Hourly Rate', description: 'Showcase your expertise and set your rate.' },
-  { id: 'profile_photo', title: 'Profile Photo', description: 'Add a professional photo so clients can recognise you.' },
+  { id: 'profile_photo', title: 'Profile Photo', description: 'Add a professional photo so clients can recognize you.' },
   { id: 'review', title: 'Review & Complete', description: 'Almost done! Review your profile before going live.' },
 ] as const
 

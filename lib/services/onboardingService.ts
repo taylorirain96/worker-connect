@@ -376,7 +376,7 @@ export async function getOnboardingChecklist(
   let stripeConnected = false
   try {
     const stripeStatus = await getStripeConnectStatus(workerId)
-    stripeConnected = stripeStatus.status === 'active' || stripeStatus.accountId !== ''
+    stripeConnected = stripeStatus.accountId !== '' && stripeStatus.status !== 'incomplete'
   } catch {
     stripeConnected = false
   }

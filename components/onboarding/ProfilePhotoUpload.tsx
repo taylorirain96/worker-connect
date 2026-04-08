@@ -2,8 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { Camera, Trash2 } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { getInitials } from '@/lib/utils'
+import { cn, getInitials } from '@/lib/utils'
 import Button from '@/components/ui/Button'
 
 interface ProfilePhotoUploadProps {
