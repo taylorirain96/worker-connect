@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 /**
  * GET /api/payments/history?userId=xxx&role=worker|employer&limit=20&offset=0
  * Returns paginated payment history for a user.
