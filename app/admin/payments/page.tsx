@@ -34,6 +34,11 @@ const STATUS_COLORS: Record<string, 'success' | 'danger' | 'warning' | 'info'> =
 
 // ─── Mock payment data ────────────────────────────────────────────────────────
 
+// Simple deterministic pseudo-random based on seed (not for security use)
+function seededVal(seed: number, scale: number): number {
+  return Math.abs(Math.sin(seed * 9301 + 49297) * scale)
+}
+
 function generateMockPayments(count: number): AdminPaymentRow[] {
   const statuses: AdminPaymentRow['status'][] = ['succeeded', 'succeeded', 'succeeded', 'failed', 'pending', 'refunded']
   const types: AdminPaymentRow['type'][] = ['payment', 'payment', 'payment', 'refund', 'payout']
@@ -43,7 +48,7 @@ function generateMockPayments(count: number): AdminPaymentRow[] {
     id: `pay-${(i + 1).toString().padStart(6, '0')}`,
     userId: `user-${(i % 20) + 1}`,
     userName: names[i % 10],
-    amount: Math.round(50 + Math.random() * 2000),
+    amount: Math.round(50 + seededVal(i, 2000)),
     status: statuses[i % 6],
     type: types[i % 5],
     method: PAYMENT_METHODS[i % 4],
@@ -63,8 +68,8 @@ function generateRevenueChart(days: number) {
     d.setDate(d.getDate() - (days - 1 - i))
     return {
       date: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      revenue: Math.round(4000 + Math.sin(i * 0.6) * 1500 + Math.random() * 800),
-      transactions: Math.round(20 + Math.random() * 30),
+      revenue: Math.round(4000 + Math.sin(i * 0.6) * 1500 + seededVal(i + 300, 800)),
+      transactions: Math.round(20 + seededVal(i + 400, 30)),
     }
   })
 }
