@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback, DragEvent, ChangeEvent } from 'react'
+import Image from 'next/image'
 import type { JobPhoto, JobPhotoUpload, PhotoType } from '@/types'
 import { uploadJobPhoto } from '@/lib/photos/firebase'
 import { validatePhotoFile, compressImage, createPreviewUrl, blobToFile, MIN_PHOTOS, MAX_PHOTOS } from '@/lib/photos/uploadLogic'
@@ -202,8 +203,13 @@ export default function PhotoUploadForm({
             <div key={item.id} className="flex gap-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3">
               {/* Preview */}
               <div className="relative h-20 w-20 flex-shrink-0 rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-600">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={item.preview} alt="" className="h-full w-full object-cover" />
+                <Image
+                  src={item.preview}
+                  alt=""
+                  fill
+                  className="object-cover"
+                  unoptimized
+                />
                 {item.uploadProgress > 0 && !item.uploaded && (
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                     <span className="text-white text-xs font-bold">{item.uploadProgress}%</span>

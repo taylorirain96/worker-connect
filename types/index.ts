@@ -125,6 +125,95 @@ export interface Review {
   createdAt: string
 }
 
+// ─── Rating & Reviews System ──────────────────────────────────────────────────
+
+export type ReviewType = 'worker_review' | 'enterprise_review'
+export type ReviewModerationStatus = 'pending' | 'approved' | 'flagged' | 'removed'
+
+export interface CategoryRatings {
+  communication: number
+  quality: number
+  timeliness: number
+  professionalism: number
+}
+
+export interface DetailedReview {
+  id: string
+  jobId: string
+  jobTitle: string
+  reviewType: ReviewType
+  /** The person writing the review */
+  reviewerId: string
+  reviewerName: string
+  reviewerAvatar?: string
+  reviewerRole: 'worker' | 'employer' | 'admin'
+  /** The person/enterprise being reviewed */
+  revieweeId: string
+  revieweeName: string
+  /** Overall 1-5 star rating */
+  rating: number
+  /** Per-category 1-5 scores */
+  categories: CategoryRatings
+  comment: string
+  /** Up to 3 photo URLs as proof */
+  photos: string[]
+  /** Storage paths for cleanup */
+  photoStoragePaths: string[]
+  isAnonymous: boolean
+  moderationStatus: ReviewModerationStatus
+  moderatorId?: string
+  moderatorNote?: string
+  /** How many users found this review helpful */
+  helpfulCount: number
+  /** How many users found this review unhelpful */
+  unhelpfulCount: number
+  /** Response from the reviewee */
+  response?: ReviewResponse
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ReviewResponse {
+  id: string
+  reviewId: string
+  authorId: string
+  authorName: string
+  authorAvatar?: string
+  text: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ReviewVote {
+  id: string
+  reviewId: string
+  userId: string
+  vote: 'helpful' | 'unhelpful'
+  createdAt: string
+}
+
+export interface ReviewReport {
+  id: string
+  reviewId: string
+  reporterId: string
+  reason: 'spam' | 'inappropriate' | 'fake' | 'harassment' | 'other'
+  description?: string
+  createdAt: string
+}
+
+export interface ReviewAggregates {
+  id: string          // same as userId/enterpriseId
+  entityId: string
+  entityType: 'worker' | 'enterprise'
+  totalReviews: number
+  averageRating: number
+  /** Distribution: { '1': count, '2': count, ... '5': count } */
+  ratingDistribution: Record<string, number>
+  categoryAverages: CategoryRatings
+  responseRate: number
+  updatedAt: string
+}
+
 export interface Payment {
   id: string
   jobId: string
@@ -308,13 +397,146 @@ export interface CategoryInfo {
   color: string
 }
 
+// ─── Notification Types ───────────────────────────────────────────────────────
+
+export type NotificationType =
+  // Job alerts
+  | 'new_job'
+  | 'application_received'
+  | 'job_status_change'
+  | 'job_completed'
+  // Message alerts
+  | 'new_message'
+  | 'message_reply'
+  | 'conversation_started'
+  // Legacy compatibility
+  | 'application'
+  | 'new_review'
+  | 'message'
+  // Payment alerts
+  | 'payment_received'
+  | 'invoice_created'
+  | 'payout_processed'
+  | 'payment_failed'
+  // Review alerts
+  | 'review_received'
+  | 'review_response_needed'
+  | 'rating_changed'
+  // Verification alerts
+  | 'document_uploaded'
+  | 'verification_approved'
+  | 'verification_rejected'
+  | 'badge_earned'
+  // System alerts
+  | 'account_update'
+  | 'security_alert'
+  | 'maintenance'
+  // Gamification alerts
+  | 'points_earned'
+  | 'badge_unlocked'
+  | 'milestone_reached'
+  | 'leaderboard_change'
+
+export type NotificationChannel = 'push' | 'email' | 'sms' | 'in_app'
+
+export type NotificationFrequency = 'instant' | 'daily_digest' | 'weekly_digest' | 'off'
+
+export type NotificationCategory =
+  | 'jobs'
+  | 'messages'
+  | 'payments'
+  | 'reviews'
+  | 'verification'
+  | 'system'
+  | 'gamification'
+
 export interface Notification {
   id: string
   userId: string
   jobId?: string
   message: string
-  type: 'new_job' | 'new_review' | 'application' | 'message'
+  title?: string
+  type: NotificationType
+  category?: NotificationCategory
+  channel?: NotificationChannel
   read: boolean
+  actionUrl?: string
+  imageUrl?: string
+  metadata?: Record<string, string | number | boolean>
+  deliveryStatus?: NotificationDeliveryStatus
+  createdAt: string
+  readAt?: string
+}
+
+export interface NotificationDeliveryStatus {
+  push?: 'pending' | 'sent' | 'delivered' | 'failed'
+  email?: 'pending' | 'sent' | 'delivered' | 'bounced' | 'failed'
+  sms?: 'pending' | 'sent' | 'delivered' | 'failed'
+  in_app?: 'delivered' | 'read'
+}
+
+export interface NotificationPreferences {
+  userId: string
+  channels: {
+    push: boolean
+    email: boolean
+    sms: boolean
+    in_app: boolean
+  }
+  categories: {
+    jobs: NotificationCategoryPreference
+    messages: NotificationCategoryPreference
+    payments: NotificationCategoryPreference
+    reviews: NotificationCategoryPreference
+    verification: NotificationCategoryPreference
+    system: NotificationCategoryPreference
+    gamification: NotificationCategoryPreference
+  }
+  quietHours: {
+    enabled: boolean
+    startTime: string  // "HH:MM" 24h format
+    endTime: string    // "HH:MM" 24h format
+    timezone: string
+  }
+  updatedAt: string
+}
+
+export interface NotificationCategoryPreference {
+  push: boolean
+  email: boolean
+  sms: boolean
+  frequency: NotificationFrequency
+}
+
+export interface NotificationTemplate {
+  id: string
+  name: string
+  type: NotificationType
+  channel: NotificationChannel
+  subject?: string
+  body: string
+  htmlBody?: string
+  variables: string[]
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface AdminNotificationRequest {
+  id?: string
+  title: string
+  message: string
+  type: NotificationType
+  targetSegment: 'all' | 'workers' | 'employers' | 'specific'
+  targetUserIds?: string[]
+  channels: NotificationChannel[]
+  scheduledAt?: string
+  sentAt?: string
+  status: 'draft' | 'scheduled' | 'sent' | 'cancelled'
+  sentCount?: number
+  deliveredCount?: number
+  failedCount?: number
+  createdBy: string
   createdAt: string
 }
 
@@ -477,4 +699,172 @@ export interface PhotoModerationAction {
   note?: string
   qualityScore?: number
   actionAt: string
+}
+
+// ─── Payment Processing Types ─────────────────────────────────────────────────
+
+export type PayoutSchedule = 'daily' | 'weekly' | 'monthly' | 'manual'
+export type PayoutMethod = 'bank_account' | 'debit_card'
+export type PayoutStatus = 'pending' | 'in_transit' | 'paid' | 'failed' | 'canceled'
+
+export interface Payout {
+  id: string
+  workerId: string
+  amount: number
+  currency: string
+  method: PayoutMethod
+  status: PayoutStatus
+  stripePayoutId?: string
+  bankAccountLast4?: string
+  bankName?: string
+  estimatedArrival?: string
+  failureMessage?: string
+  createdAt: string
+  updatedAt: string
+  paidAt?: string
+}
+
+export interface PayoutSettings {
+  workerId: string
+  schedule: PayoutSchedule
+  minimumAmount: number
+  method: PayoutMethod
+  bankAccountId?: string
+  stripeConnectId?: string
+  updatedAt: string
+}
+
+export type DisputeStatus = 'needs_response' | 'under_review' | 'charge_refunded' | 'won' | 'lost' | 'warning_closed'
+export type DisputeReason = 'bank_cannot_process' | 'check_returned' | 'credit_not_processed' | 'customer_initiated' | 'debit_not_authorized' | 'duplicate' | 'fraudulent' | 'general' | 'incorrect_account_details' | 'insufficient_funds' | 'product_not_received' | 'product_unacceptable' | 'subscription_canceled' | 'unrecognized'
+
+export interface PaymentDispute {
+  id: string
+  paymentId: string
+  jobId: string
+  workerId: string
+  employerId: string
+  amount: number
+  currency: string
+  reason: DisputeReason
+  status: DisputeStatus
+  stripeDisputeId: string
+  dueBy?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface PaymentAnalytics {
+  totalRevenue: number
+  totalPayouts: number
+  pendingPayouts: number
+  successfulPayments: number
+  failedPayments: number
+  disputeCount: number
+  averagePaymentValue: number
+  revenueByMonth: { month: string; label: string; revenue: number; payouts: number }[]
+}
+
+// ─── Dispute Resolution Types ─────────────────────────────────────────────────
+
+export type DisputeResolutionStatus =
+  | 'open'
+  | 'under_review'
+  | 'awaiting_evidence'
+  | 'resolved'
+  | 'closed'
+  | 'escalated'
+
+export type DisputeResolutionReason =
+  | 'quality_issues'
+  | 'non_payment'
+  | 'non_delivery'
+  | 'misrepresentation'
+  | 'safety_concern'
+  | 'overcharge'
+  | 'incomplete_work'
+  | 'other'
+
+export type DisputeDecision = 'approved' | 'denied' | 'partial_refund' | 'escalated'
+
+export type EvidenceType = 'photo' | 'document' | 'message_history' | 'other'
+
+export type AppealStatus = 'pending' | 'under_review' | 'approved' | 'denied'
+
+export interface Dispute {
+  id: string
+  jobId: string
+  jobTitle: string
+  workerId: string
+  workerName: string
+  clientId: string
+  clientName: string
+  reason: DisputeResolutionReason
+  description: string
+  status: DisputeResolutionStatus
+  filedBy: string
+  mediatorId?: string
+  mediatorName?: string
+  refundAmount?: number
+  refundStatus?: 'pending' | 'processing' | 'completed' | 'none'
+  createdAt: string
+  updatedAt: string
+  resolvedAt?: string
+  dueDate: string
+}
+
+export interface DisputeEvidence {
+  id: string
+  disputeId: string
+  type: EvidenceType
+  fileUrl?: string
+  storagePath?: string
+  fileName?: string
+  fileSize?: number
+  description: string
+  uploadedBy: string
+  uploaderName: string
+  timestamp: string
+}
+
+export interface DisputeMessage {
+  id: string
+  disputeId: string
+  senderId: string
+  senderName: string
+  senderRole: 'worker' | 'client' | 'mediator' | 'admin'
+  message: string
+  isInternal: boolean
+  read: boolean
+  timestamp: string
+}
+
+export interface DisputeResolution {
+  id: string
+  disputeId: string
+  decision: DisputeDecision
+  refundAmount: number
+  mediatorId: string
+  mediatorName: string
+  reasoning: string
+  timestamp: string
+}
+
+export interface RatingAppeal {
+  id: string
+  jobId: string
+  jobTitle: string
+  workerId: string
+  workerName: string
+  clientId: string
+  currentRating: number
+  appealReason: string
+  disputeId?: string
+  status: AppealStatus
+  mediatorId?: string
+  mediatorNote?: string
+  decision?: 'rating_removed' | 'rating_adjusted' | 'rating_upheld'
+  adjustedRating?: number
+  createdAt: string
+  updatedAt: string
+  resolvedAt?: string
 }

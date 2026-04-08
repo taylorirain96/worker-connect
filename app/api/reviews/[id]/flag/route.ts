@@ -1,0 +1,34 @@
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+import { reportReview } from '@/lib/reviews/firebase'
+import type { ReviewReport } from '@/types'
+
+const VALID_REASONS: ReviewReport['reason'][] = ['spam', 'inappropriate', 'fake', 'harassment', 'other']
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const { id } = params
+    const body = await request.json()
+    const { reporterId, reason, description } = body
+
+    if (!reporterId) {
+      return NextResponse.json({ error: 'reporterId is required' }, { status: 400 })
+    }
+
+    if (!reason || !VALID_REASONS.includes(reason)) {
+      return NextResponse.json(
+        { error: `reason must be one of: ${VALID_REASONS.join(', ')}` },
+        { status: 400 }
+      )
+    }
+
+    await reportReview(id, reporterId, reason as ReviewReport['reason'], description)
+    return NextResponse.json({ reviewId: id, status: 'flagged' }, { status: 201 })
+  } catch (error) {
+    console.error('Flag review error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
