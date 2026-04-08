@@ -1227,6 +1227,8 @@ export interface YearlyPlatformSummary {
   gstReturnsGenerated: GSTReturn[]
   readyForAccountant: boolean
   exportURL?: string
+}
+
 // ─── Quotes & Estimates ──────────────────────────────────────────────────────
 
 export interface Quote {
@@ -1315,4 +1317,188 @@ export interface TaxForm1099NEC {
   generatedAt: string
   sentAt?: string
   status: 'generated' | 'sent' | 'archived'
+}
+
+// ─── Task 8: Communication, Learning & Career Development ────────────────────
+
+export interface Proposal {
+  id: string
+  jobId: string
+  workerId: string
+  employerId: string
+  workerName?: string
+  employerName?: string
+  status: 'pending' | 'negotiating' | 'accepted' | 'rejected'
+  proposedTerms: {
+    rate: number
+    hours: number
+    duration: string
+    specialRequests?: string
+  }
+  counterOffers: CounterOffer[]
+  createdAt: string
+  expiresAt: string
+  updatedAt: string
+}
+
+export interface CounterOffer {
+  id: string
+  proposedBy: 'worker' | 'employer'
+  rate: number
+  hours: number
+  duration: string
+  specialRequests?: string
+  message?: string
+  createdAt: string
+}
+
+export interface Agreement {
+  id: string
+  proposalId: string
+  jobId: string
+  workerId: string
+  employerId: string
+  workerName?: string
+  employerName?: string
+  agreedTerms: {
+    rate: number
+    hours: number
+    duration: string
+    deliverables: string[]
+    payment_schedule: string
+  }
+  signatureStatus: {
+    workerSigned: boolean
+    employerSigned: boolean
+    workerSignedAt?: string
+    employerSignedAt?: string
+  }
+  documentUrl?: string
+  status: 'draft' | 'pending_signature' | 'signed' | 'active' | 'completed'
+  createdAt: string
+  updatedAt: string
+}
+
+export interface SkillAspiration {
+  id: string
+  workerId: string
+  targetSkill: string
+  currentLevel: 'none' | 'beginner' | 'intermediate'
+  targetLevel: 'intermediate' | 'advanced' | 'expert'
+  motivation: string
+  trainingPath: string[]
+  progress: number
+  resourcesUsed: {
+    type: string
+    title: string
+    provider: string
+    status: 'planned' | 'in_progress' | 'completed'
+    completedAt?: string
+  }[]
+  status: 'active' | 'paused' | 'completed'
+  createdAt: string
+  updatedAt: string
+}
+
+export interface LearningJob {
+  id: string
+  workerId: string
+  supervisorId: string
+  employerId: string
+  originalJobId?: string
+  requiredSkill: string
+  skillBeingTaught: string
+  supervisorFeedback?: string
+  learningArrangement: {
+    supervisorId: string
+    trainingComponent: string
+    estimatedHours: number
+  }
+  skillGainedUpon: 'completion' | 'ongoing'
+  certificationEligible: boolean
+  status: 'active' | 'completed' | 'learning_failed' | 'mastered'
+  title: string
+  description: string
+  location: string
+  rate: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface SupervisorReport {
+  id: string
+  supervisorId: string
+  learningJobId: string
+  workerId: string
+  competencyAssessment: number
+  strengths: string[]
+  improvementAreas: string[]
+  readyForIndependent: boolean
+  certifyingSkill: boolean
+  notes?: string
+  createdAt: string
+}
+
+export interface CareerPath {
+  id: string
+  fromSkill: string
+  toSkill: string
+  steps: {
+    step: number
+    title: string
+    skillsNeeded: string[]
+    jobs: string[]
+    timeEstimate: string
+  }[]
+  successRate: number
+  averageTimeToComplete: number
+  description?: string
+}
+
+export interface Communication {
+  id: string
+  proposalId?: string
+  jobId: string
+  workerId: string
+  employerId: string
+  workerName?: string
+  employerName?: string
+  messages: ChatMessage[]
+  lastMessage?: string
+  unreadCount: number
+  status: 'active' | 'archived'
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ChatMessage {
+  id: string
+  sender: string
+  senderName: string
+  content: string
+  timestamp: string
+  read: boolean
+  type?: 'text' | 'image' | 'file'
+}
+
+export interface Certification {
+  id: string
+  workerId: string
+  workerName?: string
+  skill: string
+  level: 'beginner' | 'intermediate' | 'advanced' | 'expert'
+  issuedBy: string
+  issuedAt: string
+  expiresAt?: string
+  learningJobId?: string
+  supervisorId?: string
+  verified: boolean
+  badgeUrl?: string
+}
+
+export interface SkillLevel {
+  skill: string
+  level: 'none' | 'beginner' | 'intermediate' | 'advanced' | 'expert'
+  certifications: Certification[]
+  lastUpdated: string
 }
