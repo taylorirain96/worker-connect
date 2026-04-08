@@ -1010,3 +1010,136 @@ export interface WorkerMatchProfile {
     active: boolean
   }
 }
+
+// ─── Admin Dashboard Types ────────────────────────────────────────────────────
+
+export interface RevenueMetrics {
+  totalRevenue: number
+  platformCommission: number
+  workerEarnings: number
+  employerSpent: number
+  averageTransactionValue: number
+  transactionCount: number
+  successRate: number
+  previousPeriodRevenue: number
+  revenueGrowth: number // percentage
+}
+
+export interface PaymentMetrics {
+  total: number
+  succeeded: number
+  failed: number
+  pending: number
+  byMethod: { method: string; count: number; amount: number }[]
+  averageValue: number
+}
+
+export interface DisputeMetrics {
+  total: number
+  open: number
+  resolved: number
+  averageResolutionTime: number // hours
+  resolutionSuccessRate: number
+  topReasons: { reason: string; count: number }[]
+}
+
+export interface SystemMetrics {
+  apiResponseTime: { avg: number; p95: number; p99: number }
+  errorRate: number
+  uptime: number
+  activeUsers: number
+  concurrentSessions: number
+}
+
+export interface AdminUser {
+  id: string
+  email: string
+  role: 'super_admin' | 'moderator' | 'analyst'
+  permissions: string[]
+  createdAt: string
+  lastLogin?: string
+}
+
+export interface WorkerMetrics {
+  totalWorkers: number
+  activeWorkers: number
+  newWorkersThisPeriod: number
+  verifiedWorkers: number
+  avgRating: number
+  avgJobsCompleted: number
+  avgEarnings: number
+  topCategories: { category: string; count: number }[]
+}
+
+export interface EmployerMetrics {
+  totalEmployers: number
+  activeEmployers: number
+  newEmployersThisPeriod: number
+  verifiedEmployers: number
+  avgJobsPosted: number
+  avgSpend: number
+  topCategories: { category: string; count: number }[]
+}
+
+export interface DailyRevenue {
+  date: string
+  revenue: number
+  transactions: number
+  commission: number
+}
+
+export interface PaymentMethodBreakdown {
+  method: string
+  count: number
+  amount: number
+  percentage: number
+}
+
+export interface DisputeReasonStat {
+  reason: string
+  count: number
+  percentage: number
+}
+
+export interface ErrorTrend {
+  date: string
+  count: number
+  endpoint: string
+}
+
+export interface AdminWorkerRow {
+  id: string
+  name: string
+  email: string
+  rating: number
+  jobsCompleted: number
+  totalEarnings: number
+  verificationStatus: 'unverified' | 'basic' | 'trusted'
+  isActive: boolean
+  region: string
+  joinedAt: string
+}
+
+export interface AdminEmployerRow {
+  id: string
+  companyName: string
+  email: string
+  jobsPosted: number
+  totalSpent: number
+  activeJobs: number
+  verificationStatus: 'unverified' | 'basic' | 'trusted'
+  joinedAt: string
+}
+
+export interface AdminPaymentRow {
+  id: string
+  userId: string
+  userName: string
+  amount: number
+  status: 'succeeded' | 'failed' | 'pending' | 'refunded'
+  type: 'payment' | 'refund' | 'payout'
+  method: string
+  date: string
+  jobId?: string
+  jobTitle?: string
+}
