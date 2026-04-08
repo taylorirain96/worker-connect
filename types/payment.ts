@@ -1,8 +1,77 @@
 /**
  * Payment & Billing type definitions.
  * Core Payment, Invoice, Payout, and Dispute types live in types/index.ts.
- * This file adds Subscription and analytics-related types.
+ * This file adds Subscription, Bundle Pricing, Mover Mode, and analytics-related types.
  */
+
+// ---------------------------------------------------------------------------
+// Bundle / Price-Anchoring types
+// ---------------------------------------------------------------------------
+
+export type BundleType = 'single' | '3pack' | '10pack'
+
+export interface BundlePricing {
+  type: BundleType
+  jobCount: number
+  totalPrice: number
+  pricePerJob: number
+  savingsPerJob: number
+  savingsPercent: number
+  label: string
+}
+
+/** Job-bundle price anchoring: single $100 baseline, 5% and 10% discounts. */
+export const BUNDLE_PRICING: BundlePricing[] = [
+  {
+    type: 'single',
+    jobCount: 1,
+    totalPrice: 100,
+    pricePerJob: 100,
+    savingsPerJob: 0,
+    savingsPercent: 0,
+    label: 'Single Job',
+  },
+  {
+    type: '3pack',
+    jobCount: 3,
+    totalPrice: 285,
+    pricePerJob: 95,
+    savingsPerJob: 5,
+    savingsPercent: 5,
+    label: '3-Job Bundle',
+  },
+  {
+    type: '10pack',
+    jobCount: 10,
+    totalPrice: 900,
+    pricePerJob: 90,
+    savingsPerJob: 10,
+    savingsPercent: 10,
+    label: '10-Job Bundle',
+  },
+]
+
+// ---------------------------------------------------------------------------
+// Mover Mode types
+// ---------------------------------------------------------------------------
+
+export interface MoverProfile {
+  workerId: string
+  targetRelocationCity: string
+  isActive: boolean
+  hasRelocationBadge: boolean
+  relocationSuccessRate: number
+  completionRate: number
+}
+
+export interface MoverModeAnalytics {
+  activeMoverWorkers: number
+  moverJobsPosted: number
+  moverJobsAccepted: number
+  moverAcceptanceRate: number
+  avgMoverPremiumFee: number
+  topRelocationCities: { city: string; workerCount: number; jobCount: number }[]
+}
 
 export type SubscriptionPlan = 'free' | 'pro' | 'enterprise'
 export type SubscriptionStatus = 'active' | 'canceled' | 'paused' | 'trialing' | 'past_due'
