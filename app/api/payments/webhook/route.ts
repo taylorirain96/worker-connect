@@ -87,15 +87,27 @@ export async function POST(request: NextRequest) {
 
       case 'charge.dispute.created': {
         const dispute = event.data.object as Stripe.Dispute
+        const paymentIdFromDispute = typeof dispute.charge === 'string'
+          ? (await adminDb.collection('payments').where('stripeChargeId', '==', dispute.charge).limit(1).get()).docs[0]?.id
+          : undefined
         await adminDb.collection('disputes').add({
           stripeDisputeId: dispute.id,
           stripeChargeId: dispute.charge,
+          ...(paymentIdFromDispute ? { paymentId: paymentIdFromDispute } : {}),
           amount: dispute.amount,
           currency: dispute.currency,
           reason: dispute.reason,
-          status: dispute.status,
+          description: `Stripe dispute: ${dispute.reason}`,
+          evidence: [],
+          status: 'open',
+          notes: '',
           createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          dueDate: dispute.evidence_details?.due_by
+            ? new Date(dispute.evidence_details.due_by * 1000).toISOString()
+            : new Date(Date.now() + 7 * 86400000).toISOString(),
         })
+        console.log(`Dispute created from Stripe event: ${dispute.id}`)
         break
       }
 
@@ -107,6 +119,22 @@ export async function POST(request: NextRequest) {
             status: 'refunded',
             refundedAt: new Date().toISOString(),
           })
+        }
+        // Create a refund record for the most recent refund on this charge
+        const lastRefund = charge.refunds?.data?.[0]
+        if (lastRefund) {
+          await adminDb.collection('refunds').add({
+            ...(paymentId ? { paymentId } : {}),
+            stripeRefundId: lastRefund.id,
+            stripeChargeId: charge.id,
+            amount: lastRefund.amount / 100,
+            reason: lastRefund.reason ?? 'customer_request',
+            status: lastRefund.status === 'succeeded' ? 'completed' : 'pending',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            ...(lastRefund.status === 'succeeded' ? { completedAt: new Date().toISOString() } : {}),
+          })
+          console.log(`Refund record created from Stripe charge.refunded: ${lastRefund.id}`)
         }
         break
       }

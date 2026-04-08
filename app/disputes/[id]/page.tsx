@@ -127,7 +127,7 @@ export default function DisputeDetailPage() {
                   <p className="text-xs text-gray-400 dark:text-gray-500 mb-1">Dispute #{id.slice(0, 8)}</p>
                   <h1 className="text-xl font-bold text-gray-900 dark:text-white">{dispute.jobTitle}</h1>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                    {DISPUTE_REASON_LABELS[dispute.reason] ?? dispute.reason}
+                    {DISPUTE_REASON_LABELS[dispute.reason as keyof typeof DISPUTE_REASON_LABELS] ?? dispute.reason}
                   </p>
                 </div>
                 <DisputeStatusBadge status={dispute.status} />
@@ -136,7 +136,7 @@ export default function DisputeDetailPage() {
               <div className="mt-3 flex flex-wrap gap-4 text-xs text-gray-500 dark:text-gray-400">
                 <span>Worker: <strong className="text-gray-700 dark:text-gray-300">{dispute.workerName}</strong></span>
                 <span>Filed: <strong className="text-gray-700 dark:text-gray-300">{new Date(dispute.createdAt).toLocaleDateString()}</strong></span>
-                <span>Due by: <strong className="text-gray-700 dark:text-gray-300">{new Date(dispute.dueDate).toLocaleDateString()}</strong></span>
+                <span>Due by: <strong className="text-gray-700 dark:text-gray-300">{dispute.dueDate ? new Date(dispute.dueDate).toLocaleDateString() : 'N/A'}</strong></span>
                 {dispute.mediatorName && (
                   <span>Mediator: <strong className="text-gray-700 dark:text-gray-300">{dispute.mediatorName}</strong></span>
                 )}

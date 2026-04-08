@@ -77,6 +77,16 @@ const STATUS_CONFIG: Record<Invoice['status'], { label: string; icon: React.Reac
     icon: <AlertCircle className="h-4 w-4" />,
     className: 'text-red-700 bg-red-50 dark:bg-red-900/20 dark:text-red-300',
   },
+  completed: {
+    label: 'Completed',
+    icon: <CheckCircle className="h-4 w-4" />,
+    className: 'text-green-700 bg-green-50 dark:bg-green-900/20 dark:text-green-300',
+  },
+  cancelled: {
+    label: 'Cancelled',
+    icon: <FileText className="h-4 w-4" />,
+    className: 'text-gray-500 bg-gray-100 dark:bg-gray-700 dark:text-gray-400',
+  },
 }
 
 interface PageProps {

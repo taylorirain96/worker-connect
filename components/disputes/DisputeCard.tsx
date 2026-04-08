@@ -12,7 +12,7 @@ interface Props {
 }
 
 export default function DisputeCard({ dispute, href }: Props) {
-  const label = DISPUTE_REASON_LABELS[dispute.reason] ?? dispute.reason
+  const label = DISPUTE_REASON_LABELS[dispute.reason as keyof typeof DISPUTE_REASON_LABELS] ?? dispute.reason
   const ago = formatDistanceToNow(new Date(dispute.createdAt), { addSuffix: true })
 
   const inner = (

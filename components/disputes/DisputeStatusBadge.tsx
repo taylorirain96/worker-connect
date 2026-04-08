@@ -11,6 +11,7 @@ const CONFIG: Record<
   resolved: { label: 'Resolved', variant: 'success' },
   closed: { label: 'Closed', variant: 'default' },
   escalated: { label: 'Escalated', variant: 'danger' },
+  refunded: { label: 'Refunded', variant: 'success' },
 }
 
 export default function DisputeStatusBadge({ status }: { status: DisputeResolutionStatus }) {
