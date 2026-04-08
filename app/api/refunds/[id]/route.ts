@@ -86,9 +86,9 @@ export async function PUT(
     }
 
     const now = new Date().toISOString()
-    if (status === 'completed') updates.completedAt = now
+    if (status === 'completed') updates.completedAt = FieldValue.serverTimestamp()
     if (status === 'failed') {
-      updates.failedAt = now
+      updates.failedAt = FieldValue.serverTimestamp()
       if (failureReason) updates.failureReason = failureReason
     }
 

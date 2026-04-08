@@ -89,7 +89,7 @@ export async function PUT(
 
       updates.status = status
       if (status === 'resolved' || status === 'refunded') {
-        updates.resolvedAt = new Date().toISOString()
+        updates.resolvedAt = FieldValue.serverTimestamp()
       }
     }
 

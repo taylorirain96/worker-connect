@@ -263,7 +263,7 @@ export async function savePayoutSettings(
 
 // ─── Invoice (extended) ─────────────────────────────────────────────────────
 
-/** Generate an INV-YYYYMMDD-XXXX invoice number (client-side helper). */
+/** Generate an INV-YYYYMMDD-XXXX invoice number (utility). */
 function buildInvoiceNumber(seq: number): string {
   const datePart = new Date().toISOString().slice(0, 10).replace(/-/g, '')
   return `INV-${datePart}-${String(seq).padStart(4, '0')}`
