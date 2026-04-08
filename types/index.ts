@@ -577,6 +577,7 @@ export interface UserStats {
   }
 }
 
+export type PhotoType = 'before' | 'after' | 'progress' | 'other'
 // ─── Referral & Rewards Types ─────────────────────────────────────────────────
 
 export type ReferralStatus = 'pending' | 'signed_up' | 'completed_3' | 'completed_50' | 'trusted_pro'
@@ -691,6 +692,22 @@ export interface JobPhoto {
   workerId: string
   workerName: string
   url: string
+  thumbnailUrl?: string
+  caption: string
+  type: PhotoType
+  approvalStatus: PhotoApprovalStatus
+  qualityScore?: number
+  uploadedAt: string
+  fileSize: number
+  width?: number
+  height?: number
+}
+
+export interface PhotoUploadResult {
+  success: boolean
+  photoId?: string
+  url?: string
+  error?: string
   storagePath: string
   type: PhotoType
   caption: string

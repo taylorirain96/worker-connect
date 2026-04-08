@@ -1,124 +1,126 @@
 'use client'
-
-import { useEffect, useRef, useState, useCallback } from 'react'
-import Image from 'next/image'
+import { useRef, useState, useCallback } from 'react'
 
 interface BeforeAfterSliderProps {
-  beforeUrl: string
-  afterUrl: string
+  beforeSrc: string
+  afterSrc: string
   beforeLabel?: string
   afterLabel?: string
   className?: string
 }
 
-/**
- * A CSS-only before/after comparison slider.
- * Drag the divider to reveal the "before" (left) vs "after" (right) photo.
- */
 export default function BeforeAfterSlider({
-  beforeUrl,
-  afterUrl,
+  beforeSrc,
+  afterSrc,
   beforeLabel = 'Before',
   afterLabel = 'After',
   className = '',
 }: BeforeAfterSliderProps) {
-  const containerRef = useRef<HTMLDivElement>(null)
   const [sliderPct, setSliderPct] = useState(50)
+  const containerRef = useRef<HTMLDivElement>(null)
   const dragging = useRef(false)
 
   const updateSlider = useCallback((clientX: number) => {
-    if (!containerRef.current) return
-    const rect = containerRef.current.getBoundingClientRect()
+    const el = containerRef.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
     const pct = Math.min(100, Math.max(0, ((clientX - rect.left) / rect.width) * 100))
     setSliderPct(pct)
   }, [])
 
-  // Mouse events
   const onMouseDown = (e: React.MouseEvent) => {
     dragging.current = true
     updateSlider(e.clientX)
   }
-  const onMouseMove = useCallback(
-    (e: MouseEvent) => { if (dragging.current) updateSlider(e.clientX) },
-    [updateSlider]
-  )
-  const onMouseUp = useCallback(() => { dragging.current = false }, [])
 
-  // Touch events
+  const onMouseMove = (e: React.MouseEvent) => {
+    if (!dragging.current) return
+    updateSlider(e.clientX)
+  }
+
+  const onMouseUp = () => {
+    dragging.current = false
+  }
+
   const onTouchStart = (e: React.TouchEvent) => {
     dragging.current = true
     updateSlider(e.touches[0].clientX)
   }
-  const onTouchMove = useCallback(
-    (e: TouchEvent) => { if (dragging.current) updateSlider(e.touches[0].clientX) },
-    [updateSlider]
-  )
-  const onTouchEnd = useCallback(() => { dragging.current = false }, [])
 
-  useEffect(() => {
-    window.addEventListener('mousemove', onMouseMove)
-    window.addEventListener('mouseup', onMouseUp)
-    window.addEventListener('touchmove', onTouchMove)
-    window.addEventListener('touchend', onTouchEnd)
-    return () => {
-      window.removeEventListener('mousemove', onMouseMove)
-      window.removeEventListener('mouseup', onMouseUp)
-      window.removeEventListener('touchmove', onTouchMove)
-      window.removeEventListener('touchend', onTouchEnd)
-    }
-  }, [onMouseMove, onMouseUp, onTouchMove, onTouchEnd])
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (!dragging.current) return
+    updateSlider(e.touches[0].clientX)
+  }
+
+  const onTouchEnd = () => {
+    dragging.current = false
+  }
 
   return (
     <div
       ref={containerRef}
-      className={`relative select-none overflow-hidden rounded-xl bg-gray-900 ${className}`}
-      style={{ cursor: 'col-resize' }}
+      className={`relative select-none overflow-hidden rounded-lg cursor-ew-resize ${className}`}
       onMouseDown={onMouseDown}
+      onMouseMove={onMouseMove}
+      onMouseUp={onMouseUp}
+      onMouseLeave={onMouseUp}
       onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      role="slider"
+      aria-label="Before/after comparison slider"
+      aria-valuenow={Math.round(sliderPct)}
+      aria-valuemin={0}
+      aria-valuemax={100}
     >
-      {/* After image (full width, behind) */}
-      <Image
-        src={afterUrl}
+      {/* After image (bottom layer – full width) */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={afterSrc}
         alt={afterLabel}
-        fill
-        className="object-cover pointer-events-none"
-        sizes="(max-width: 768px) 100vw, 50vw"
+        className="w-full h-full object-cover block"
         draggable={false}
       />
 
-      {/* Before image (clipped to left of slider) */}
+      {/* Before image (top layer – clipped to slider position) */}
       <div
         className="absolute inset-0 overflow-hidden"
         style={{ width: `${sliderPct}%` }}
       >
-        <Image
-          src={beforeUrl}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={beforeSrc}
           alt={beforeLabel}
-          fill
-          className="object-cover object-left pointer-events-none"
-          sizes="(max-width: 768px) 100vw, 50vw"
+          className="absolute inset-0 w-full h-full object-cover block"
+          style={{ minWidth: '100%' }}
           draggable={false}
         />
       </div>
 
       {/* Divider line */}
       <div
-        className="absolute inset-y-0 flex items-center justify-center"
-        style={{ left: `calc(${sliderPct}% - 1px)` }}
+        className="absolute inset-y-0 w-0.5 bg-white shadow-lg pointer-events-none"
+        style={{ left: `${sliderPct}%` }}
       >
-        <div className="w-0.5 h-full bg-white/80 shadow-md" />
-        <div className="absolute h-9 w-9 rounded-full bg-white shadow-lg flex items-center justify-center border-2 border-primary-500">
-          <svg viewBox="0 0 24 24" className="h-5 w-5 text-primary-600 fill-none stroke-current stroke-2">
+        {/* Handle */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-8 w-8 bg-white rounded-full shadow-lg flex items-center justify-center border-2 border-primary-500">
+          <svg
+            className="h-4 w-4 text-primary-600"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
             <path strokeLinecap="round" strokeLinejoin="round" d="M8 9l-3 3 3 3M16 9l3 3-3 3" />
           </svg>
         </div>
       </div>
 
       {/* Labels */}
-      <span className="absolute top-2 left-3 text-xs font-semibold text-white bg-black/50 px-2 py-0.5 rounded-full pointer-events-none">
+      <span className="absolute bottom-2 left-2 text-xs font-semibold bg-black/50 text-white px-2 py-0.5 rounded pointer-events-none">
         {beforeLabel}
       </span>
-      <span className="absolute top-2 right-3 text-xs font-semibold text-white bg-black/50 px-2 py-0.5 rounded-full pointer-events-none">
+      <span className="absolute bottom-2 right-2 text-xs font-semibold bg-black/50 text-white px-2 py-0.5 rounded pointer-events-none">
         {afterLabel}
       </span>
     </div>

@@ -1,31 +1,32 @@
 'use client'
-
 import { useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { useAuth } from '@/components/providers/AuthProvider'
 import PhotoUploadForm from '@/components/jobs/PhotoUploadForm'
-import PhotoGallery from '@/components/jobs/PhotoGallery'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
-import type { JobPhoto } from '@/types'
 import Link from 'next/link'
-import { ArrowLeft, Camera, Info } from 'lucide-react'
+import { ArrowLeft, CheckCircle, Camera } from 'lucide-react'
+import toast from 'react-hot-toast'
 
 export default function UploadPhotosPage() {
   const params = useParams()
+  const router = useRouter()
   const { user, profile } = useAuth()
+  const [done, setDone] = useState(false)
+  const [uploadedCount, setUploadedCount] = useState(0)
+
   const jobId = params.id as string
-  const [uploadedPhotos, setUploadedPhotos] = useState<JobPhoto[]>([])
 
   if (!user || profile?.role !== 'worker') {
     return (
       <div className="flex flex-col min-h-screen">
         <Navbar />
         <main className="flex-1 flex items-center justify-center">
-          <div className="text-center space-y-3">
-            <Camera className="h-12 w-12 text-gray-300 mx-auto" />
-            <p className="text-gray-500">Please sign in as a worker to upload photos.</p>
+          <div className="text-center">
+            <p className="text-gray-500 mb-4">You must be signed in as a worker to upload photos.</p>
             <Link href="/auth/login">
               <Button>Sign In</Button>
             </Link>
@@ -34,6 +35,29 @@ export default function UploadPhotosPage() {
         <Footer />
       </div>
     )
+  }
+
+  const handleUploadComplete = async (count: number) => {
+    setUploadedCount(count)
+    setDone(true)
+
+    // Award gamification points
+    try {
+      const { awardPhotoUploadPoints, checkAndAwardPhotoMasterBadge, checkAndAwardDetailOrientedBadge } =
+        await import('@/lib/photos/gamificationLogic')
+      const { getWorkerPhotoStats } = await import('@/lib/photos/firebase')
+
+      const jobCompletedAt = new Date().toISOString() // TODO: fetch actual completion timestamp from Firestore job document
+      await awardPhotoUploadPoints(user.uid, jobCompletedAt, count)
+
+      const stats = await getWorkerPhotoStats(user.uid)
+      await checkAndAwardPhotoMasterBadge(user.uid, stats.totalPhotos)
+      await checkAndAwardDetailOrientedBadge(user.uid, stats.totalPhotos, stats.jobsWithPhotos)
+    } catch {
+      // gamification errors are non-critical
+    }
+
+    toast.success(`${count} photo${count !== 1 ? 's' : ''} uploaded successfully! +25 pts 🎉`)
   }
 
   return (
@@ -49,56 +73,50 @@ export default function UploadPhotosPage() {
             Back to Job
           </Link>
 
-          <div className="mb-6">
-            <div className="flex items-center gap-3 mb-2">
-              <Camera className="h-6 w-6 text-primary-600" />
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Upload Job Photos</h1>
-            </div>
-            <p className="text-gray-500 dark:text-gray-400 text-sm">
-              Document your work quality with before &amp; after photos. Upload at least 2 photos to earn +25 points.
-            </p>
-          </div>
-
-          {/* Gamification info banner */}
-          <div className="mb-6 p-4 bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20 border border-amber-200 dark:border-amber-800 rounded-xl flex items-start gap-3">
-            <Info className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-amber-800 dark:text-amber-300 space-y-0.5">
-              <p className="font-semibold">Earn Points &amp; Badges for Photo Documentation</p>
-              <ul className="list-disc list-inside space-y-0.5 text-amber-700 dark:text-amber-400">
-                <li>+25 points for uploading 2+ photos per job</li>
-                <li>1.5× multiplier if uploaded within 24 hours of completion</li>
-                <li>📸 <strong>Photo Master</strong> badge at 50+ total photos</li>
-                <li>🔍 <strong>Detail Oriented</strong> badge for 5+ photos per job average</li>
-              </ul>
-            </div>
-          </div>
-
-          {/* Upload form */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-            <PhotoUploadForm
-              jobId={jobId}
-              workerId={user.uid}
-              workerName={user.displayName ?? 'Worker'}
-              onComplete={(photos) => {
-                setUploadedPhotos(photos)
-              }}
-            />
-          </div>
-
-          {/* Preview of just-uploaded photos */}
-          {uploadedPhotos.length > 0 && (
-            <div className="mt-6 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-              <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Uploaded Photos</h2>
-              <PhotoGallery photos={uploadedPhotos} />
-              <div className="mt-4 flex gap-3">
-                <Link href={`/jobs/${jobId}`} className="flex-1">
-                  <Button variant="outline" className="w-full">Back to Job</Button>
-                </Link>
-                <Link href="/dashboard/worker" className="flex-1">
-                  <Button className="w-full">Go to Dashboard</Button>
-                </Link>
-              </div>
-            </div>
+          {done ? (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                  Photos Uploaded!
+                </h2>
+                <p className="text-gray-500 mb-2">
+                  {uploadedCount} photo{uploadedCount !== 1 ? 's' : ''} submitted for this job.
+                </p>
+                <p className="text-sm text-primary-600 font-medium mb-6">
+                  🏆 +25 points awarded to your profile!
+                </p>
+                <div className="flex gap-3 justify-center">
+                  <Link href={`/jobs/${jobId}`}>
+                    <Button variant="outline">View Job</Button>
+                  </Link>
+                  <Button onClick={() => router.push('/dashboard/worker')}>
+                    Go to Dashboard
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Camera className="h-5 w-5 text-primary-600" />
+                  <CardTitle>Upload Job Photos</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                  Document your completed work with before &amp; after photos. Upload at least 2 photos to earn bonus points and help build your reputation.
+                </p>
+                <PhotoUploadForm
+                  jobId={jobId}
+                  workerId={user.uid}
+                  workerName={user.displayName ?? 'Worker'}
+                  onUploadComplete={handleUploadComplete}
+                  onCancel={() => router.push(`/jobs/${jobId}`)}
+                />
+              </CardContent>
+            </Card>
           )}
         </div>
       </main>

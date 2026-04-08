@@ -1,111 +1,113 @@
-/**
- * Client-side photo validation and lightweight compression.
- * Heavy server-side compression (Sharp/Cloudinary) is handled on upload APIs;
- * this module focuses on pre-flight checks and canvas-based resizing.
- */
-
-export const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const
-export const MAX_FILE_SIZE_MB = 5
-export const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
-export const MIN_PHOTOS = 2
-export const MAX_PHOTOS = 10
-export const MAX_DIMENSION = 2048 // resize to at most 2048px on the longest side
-
-export interface ValidationError {
-  field: string
-  message: string
+export const PHOTO_CONSTRAINTS = {
+  maxFiles: 10,
+  minFiles: 2,
+  maxSizeBytes: 5 * 1024 * 1024, // 5 MB
+  acceptedTypes: ['image/jpeg', 'image/png'],
+  acceptedExtensions: ['.jpg', '.jpeg', '.png'],
 }
 
-/** Validate a single file before upload */
-export function validatePhotoFile(file: File): ValidationError | null {
-  if (!ACCEPTED_TYPES.includes(file.type as (typeof ACCEPTED_TYPES)[number])) {
-    return { field: 'type', message: `${file.name}: Only JPEG, PNG, and WebP images are accepted.` }
+/** Default max width (px) for client-side image resizing — Full HD width */
+const DEFAULT_MAX_WIDTH_PX = 1920
+/** Default JPEG/PNG compression quality (0–1) */
+const DEFAULT_COMPRESSION_QUALITY = 0.85
+
+export interface FileValidationResult {
+  valid: boolean
+  error?: string
+}
+
+/** Validate a single file against type and size constraints */
+export function validatePhotoFile(file: File): FileValidationResult {
+  if (!PHOTO_CONSTRAINTS.acceptedTypes.includes(file.type)) {
+    return { valid: false, error: 'Only JPEG and PNG files are accepted.' }
   }
-  if (file.size > MAX_FILE_SIZE_BYTES) {
+  if (file.size > PHOTO_CONSTRAINTS.maxSizeBytes) {
+    return { valid: false, error: 'File size must be 5 MB or less.' }
+  }
+  return { valid: true }
+}
+
+/** Validate the number of files selected */
+export function validatePhotoCount(count: number): FileValidationResult {
+  if (count < PHOTO_CONSTRAINTS.minFiles) {
     return {
-      field: 'size',
-      message: `${file.name}: File exceeds ${MAX_FILE_SIZE_MB} MB limit (${(file.size / 1024 / 1024).toFixed(1)} MB).`,
+      valid: false,
+      error: `Please upload at least ${PHOTO_CONSTRAINTS.minFiles} photos.`,
     }
   }
-  return null
+  if (count > PHOTO_CONSTRAINTS.maxFiles) {
+    return {
+      valid: false,
+      error: `You can upload at most ${PHOTO_CONSTRAINTS.maxFiles} photos.`,
+    }
+  }
+  return { valid: true }
 }
 
-/** Validate the full upload batch */
-export function validatePhotoBatch(files: File[]): ValidationError[] {
-  const errors: ValidationError[] = []
-  if (files.length < MIN_PHOTOS) {
-    errors.push({ field: 'count', message: `Please upload at least ${MIN_PHOTOS} photos.` })
-  }
-  if (files.length > MAX_PHOTOS) {
-    errors.push({ field: 'count', message: `You can upload at most ${MAX_PHOTOS} photos.` })
-  }
-  for (const file of files) {
-    const err = validatePhotoFile(file)
-    if (err) errors.push(err)
-  }
-  return errors
-}
-
-/**
- * Compress/resize an image via an off-screen canvas.
- * Returns a new Blob at JPEG quality 0.85, no larger than MAX_DIMENSION px.
+/** Compress / resize an image file in the browser using a canvas element.
+ *  Returns a new Blob at reduced quality.  If the browser does not support
+ *  canvas-based compression the original file is returned unchanged.
  */
-export async function compressImage(file: File, maxDimension = MAX_DIMENSION): Promise<Blob> {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    const url = URL.createObjectURL(file)
-    img.onload = () => {
-      URL.revokeObjectURL(url)
-      let { width, height } = img
-      if (width > maxDimension || height > maxDimension) {
-        if (width >= height) {
-          height = Math.round((height * maxDimension) / width)
-          width = maxDimension
-        } else {
-          width = Math.round((width * maxDimension) / height)
-          height = maxDimension
-        }
-      }
-      const canvas = document.createElement('canvas')
-      canvas.width = width
-      canvas.height = height
-      const ctx = canvas.getContext('2d')
-      if (!ctx) {
-        reject(new Error('Canvas context unavailable'))
-        return
-      }
-      ctx.drawImage(img, 0, 0, width, height)
-      canvas.toBlob(
-        (blob) => {
-          if (blob) resolve(blob)
-          else reject(new Error('Canvas toBlob failed'))
-        },
-        'image/jpeg',
-        0.85
-      )
-    }
-    img.onerror = () => {
-      URL.revokeObjectURL(url)
-      reject(new Error('Failed to load image'))
-    }
-    img.src = url
-  })
-}
-
-/** Build a data-URL preview for a File without uploading */
-export function createPreviewUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
+export async function compressImage(
+  file: File,
+  maxWidthPx = DEFAULT_MAX_WIDTH_PX,
+  quality = DEFAULT_COMPRESSION_QUALITY
+): Promise<File> {
+  return new Promise((resolve) => {
     const reader = new FileReader()
-    reader.onload = () => resolve(reader.result as string)
-    reader.onerror = reject
+    reader.onload = (e) => {
+      const img = new Image()
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        let { width, height } = img
+        if (width > maxWidthPx) {
+          height = Math.round((height * maxWidthPx) / width)
+          width = maxWidthPx
+        }
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')
+        if (!ctx) {
+          resolve(file)
+          return
+        }
+        ctx.drawImage(img, 0, 0, width, height)
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              resolve(file)
+              return
+            }
+            const compressed = new File([blob], file.name, {
+              type: file.type,
+              lastModified: Date.now(),
+            })
+            // Only use compressed version if it is actually smaller
+            resolve(compressed.size < file.size ? compressed : file)
+          },
+          file.type,
+          quality
+        )
+      }
+      img.src = e.target?.result as string
+    }
     reader.readAsDataURL(file)
   })
 }
 
-/** Convert a Blob back to a File with the original name */
-export function blobToFile(blob: Blob, originalName: string): File {
-  // Canvas compression always outputs JPEG
-  const ext = 'jpg'
-  const name = originalName.replace(/\.[^.]+$/, `.${ext}`)
-  return new File([blob], name, { type: blob.type })
+/** Return a human-readable file size string */
+export function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+/** Create a local preview URL for a File object */
+export function createPreviewUrl(file: File): string {
+  return URL.createObjectURL(file)
+}
+
+/** Revoke a previously created preview URL to free memory */
+export function revokePreviewUrl(url: string): void {
+  URL.revokeObjectURL(url)
 }

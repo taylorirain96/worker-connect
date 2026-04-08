@@ -1,124 +1,157 @@
 'use client'
-
 import { useState } from 'react'
-import Image from 'next/image'
+import { Camera, Columns2 } from 'lucide-react'
 import type { JobPhoto } from '@/types'
 import PhotoLightbox from './PhotoLightbox'
 import BeforeAfterSlider from './BeforeAfterSlider'
-import { Camera, ChevronDown, ChevronUp } from 'lucide-react'
-import { formatRelativeDate } from '@/lib/utils'
+import Badge from '@/components/ui/Badge'
 
 interface PhotoGalleryProps {
   photos: JobPhoto[]
-  /** Show the before/after comparison slider if pairs are available */
-  showComparisonSlider?: boolean
+  jobTitle?: string
+  showComparisonTab?: boolean
 }
 
-const TYPE_LABEL: Record<string, string> = {
+const TYPE_LABELS: Record<string, string> = {
   before: 'Before',
   after: 'After',
-  general: 'General',
+  progress: 'Progress',
+  other: 'Other',
 }
 
-const TYPE_COLOR: Record<string, string> = {
-  before: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
-  after:  'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
-  general: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400',
+const TYPE_COLORS: Record<string, string> = {
+  before: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
+  after: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+  progress: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  other: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
 }
 
-export default function PhotoGallery({ photos, showComparisonSlider = true }: PhotoGalleryProps) {
+export default function PhotoGallery({
+  photos,
+  jobTitle,
+  showComparisonTab = true,
+}: PhotoGalleryProps) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
-  const [showAll, setShowAll] = useState(false)
+  const [activeTab, setActiveTab] = useState<'gallery' | 'comparison'>('gallery')
 
-  if (photos.length === 0) {
+  const approvedPhotos = photos.filter((p) => p.approvalStatus !== 'flagged')
+  const beforePhotos = approvedPhotos.filter((p) => p.type === 'before')
+  const afterPhotos = approvedPhotos.filter((p) => p.type === 'after')
+  const hasComparison = beforePhotos.length > 0 && afterPhotos.length > 0
+
+  if (approvedPhotos.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-10 text-gray-400 dark:text-gray-600 gap-2">
-        <Camera className="h-10 w-10" />
-        <p className="text-sm">No photos uploaded yet</p>
+      <div className="text-center py-10 text-gray-400">
+        <Camera className="h-10 w-10 mx-auto mb-2 opacity-40" />
+        <p className="text-sm">No photos available for this job.</p>
       </div>
     )
   }
 
-  // Find first before/after pair for the comparison slider
-  const beforePhoto = photos.find((p) => p.type === 'before')
-  const afterPhoto = photos.find((p) => p.type === 'after')
-  const hasComparison = showComparisonSlider && !!beforePhoto && !!afterPhoto
-
-  const visiblePhotos = showAll ? photos : photos.slice(0, 6)
-
   return (
-    <div className="space-y-4">
-      {/* Before/After slider */}
-      {hasComparison && (
-        <div>
-          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-            Before / After Comparison
-          </p>
-          <BeforeAfterSlider
-            beforeUrl={beforePhoto!.url}
-            afterUrl={afterPhoto!.url}
-            className="aspect-video"
-          />
+    <div>
+      {/* Header / tabs */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Camera className="h-5 w-5 text-primary-600" />
+          <h3 className="font-semibold text-gray-900 dark:text-white">
+            {jobTitle ? `${jobTitle} — ` : ''}Photos ({approvedPhotos.length})
+          </h3>
         </div>
-      )}
 
-      {/* Grid */}
-      <div>
-        {hasComparison && (
-          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-            All Photos ({photos.length})
-          </p>
+        {showComparisonTab && hasComparison && (
+          <div className="flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden text-sm">
+            <button
+              onClick={() => setActiveTab('gallery')}
+              className={`px-3 py-1.5 flex items-center gap-1.5 transition-colors ${
+                activeTab === 'gallery'
+                  ? 'bg-primary-600 text-white'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+              }`}
+            >
+              <Camera className="h-3.5 w-3.5" />
+              Gallery
+            </button>
+            <button
+              onClick={() => setActiveTab('comparison')}
+              className={`px-3 py-1.5 flex items-center gap-1.5 transition-colors ${
+                activeTab === 'comparison'
+                  ? 'bg-primary-600 text-white'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+              }`}
+            >
+              <Columns2 className="h-3.5 w-3.5" />
+              Compare
+            </button>
+          </div>
         )}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {visiblePhotos.map((photo, idx) => (
+      </div>
+
+      {/* Gallery grid */}
+      {activeTab === 'gallery' && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          {approvedPhotos.map((photo, index) => (
             <button
               key={photo.id}
-              onClick={() => setLightboxIndex(idx)}
-              className="group relative aspect-square rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500"
-              aria-label={`View photo: ${photo.caption || TYPE_LABEL[photo.type]}`}
+              className="group relative aspect-square rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 hover:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
+              onClick={() => setLightboxIndex(index)}
+              aria-label={`View photo: ${photo.caption || `Photo ${index + 1}`}`}
             >
-              <Image
-                src={photo.url}
-                alt={photo.caption || TYPE_LABEL[photo.type]}
-                fill
-                className="object-cover transition-transform group-hover:scale-105"
-                sizes="(max-width: 640px) 50vw, 33vw"
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={photo.thumbnailUrl ?? photo.url}
+                alt={photo.caption || `Photo ${index + 1}`}
+                className="h-full w-full object-cover transition-transform group-hover:scale-105"
               />
-              {/* Overlay */}
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
               {/* Type badge */}
-              <span className={`absolute top-2 left-2 text-xs font-semibold px-2 py-0.5 rounded-full ${TYPE_COLOR[photo.type] ?? TYPE_COLOR.general}`}>
-                {TYPE_LABEL[photo.type] ?? photo.type}
+              <span
+                className={`absolute top-1.5 left-1.5 text-xs font-medium px-1.5 py-0.5 rounded ${TYPE_COLORS[photo.type]}`}
+              >
+                {TYPE_LABELS[photo.type] ?? photo.type}
               </span>
-              {/* Caption */}
-              {photo.caption && (
-                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent p-2 translate-y-full group-hover:translate-y-0 transition-transform">
-                  <p className="text-white text-xs truncate">{photo.caption}</p>
-                  <p className="text-white/60 text-xs">{formatRelativeDate(photo.uploadedAt)}</p>
-                </div>
-              )}
+              {/* Hover overlay */}
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
             </button>
           ))}
         </div>
+      )}
 
-        {photos.length > 6 && (
-          <button
-            onClick={() => setShowAll(!showAll)}
-            className="mt-3 w-full flex items-center justify-center gap-1.5 text-sm text-primary-600 dark:text-primary-400 hover:underline"
-          >
-            {showAll ? (
-              <><ChevronUp className="h-4 w-4" /> Show less</>
-            ) : (
-              <><ChevronDown className="h-4 w-4" /> Show all {photos.length} photos</>
-            )}
-          </button>
-        )}
-      </div>
+      {/* Before/after comparison */}
+      {activeTab === 'comparison' && hasComparison && (
+        <div className="space-y-6">
+          {beforePhotos.map((before, i) => {
+            const after = afterPhotos[i] ?? afterPhotos[0]
+            return (
+              <div key={before.id} className="space-y-2">
+                <BeforeAfterSlider
+                  beforeSrc={before.url}
+                  afterSrc={after.url}
+                  beforeLabel={before.caption || 'Before'}
+                  afterLabel={after.caption || 'After'}
+                  className="w-full aspect-video"
+                />
+                <p className="text-xs text-gray-500 text-center">
+                  Drag slider to compare · By {before.workerName}
+                </p>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Status summary */}
+      {photos.some((p) => p.approvalStatus === 'pending') && (
+        <div className="mt-3 flex items-center gap-2">
+          <Badge variant="warning" className="text-xs">
+            {photos.filter((p) => p.approvalStatus === 'pending').length} pending review
+          </Badge>
+        </div>
+      )}
 
       {/* Lightbox */}
       {lightboxIndex !== null && (
         <PhotoLightbox
-          photos={photos}
+          photos={approvedPhotos}
           currentIndex={lightboxIndex}
           onClose={() => setLightboxIndex(null)}
           onNavigate={setLightboxIndex}

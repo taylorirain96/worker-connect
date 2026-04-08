@@ -1,4 +1,8 @@
 'use client'
+import { useEffect, useCallback } from 'react'
+import { X, ChevronLeft, ChevronRight, Download } from 'lucide-react'
+import type { JobPhoto } from '@/types'
+import { formatDateTime } from '@/lib/utils'
 
 import { useEffect, useCallback } from 'react'
 import Image from 'next/image'
@@ -13,155 +17,142 @@ interface PhotoLightboxProps {
   onNavigate: (index: number) => void
 }
 
-const TYPE_LABEL: Record<string, string> = {
-  before: 'Before',
-  after: 'After',
-  general: 'General',
-}
-
-export default function PhotoLightbox({ photos, currentIndex, onClose, onNavigate }: PhotoLightboxProps) {
+export default function PhotoLightbox({
+  photos,
+  currentIndex,
+  onClose,
+  onNavigate,
+}: PhotoLightboxProps) {
   const photo = photos[currentIndex]
-  const hasPrev = currentIndex > 0
-  const hasNext = currentIndex < photos.length - 1
 
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-      if (e.key === 'ArrowLeft' && hasPrev) onNavigate(currentIndex - 1)
-      if (e.key === 'ArrowRight' && hasNext) onNavigate(currentIndex + 1)
-    },
-    [onClose, hasPrev, hasNext, currentIndex, onNavigate]
-  )
+  const goPrev = useCallback(() => {
+    if (currentIndex > 0) onNavigate(currentIndex - 1)
+  }, [currentIndex, onNavigate])
+
+  const goNext = useCallback(() => {
+    if (currentIndex < photos.length - 1) onNavigate(currentIndex + 1)
+  }, [currentIndex, photos.length, onNavigate])
 
   useEffect(() => {
-    document.addEventListener('keydown', handleKeyDown)
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown)
-      document.body.style.overflow = ''
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+      else if (e.key === 'ArrowLeft') goPrev()
+      else if (e.key === 'ArrowRight') goNext()
     }
-  }, [handleKeyDown])
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [onClose, goPrev, goNext])
 
   if (!photo) return null
 
-  const handleDownload = () => {
-    const link = document.createElement('a')
-    link.href = photo.url
-    link.download = `photo-${photo.id}.jpg`
-    link.target = '_blank'
-    link.rel = 'noopener noreferrer'
-    link.click()
+  const TYPE_LABELS: Record<string, string> = {
+    before: 'Before',
+    after: 'After',
+    progress: 'Progress',
+    other: 'Other',
   }
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Photo viewer"
     >
-      {/* Close */}
-      <button
-        onClick={onClose}
-        className="absolute top-4 right-4 text-white/80 hover:text-white bg-black/40 hover:bg-black/60 rounded-full p-2 transition-colors z-10"
-        aria-label="Close lightbox"
-      >
-        <X className="h-6 w-6" />
-      </button>
-
-      {/* Prev */}
-      {hasPrev && (
-        <button
-          onClick={(e) => { e.stopPropagation(); onNavigate(currentIndex - 1) }}
-          className="absolute left-4 text-white/80 hover:text-white bg-black/40 hover:bg-black/60 rounded-full p-2 transition-colors z-10"
-          aria-label="Previous photo"
-        >
-          <ChevronLeft className="h-7 w-7" />
-        </button>
-      )}
-
-      {/* Next */}
-      {hasNext && (
-        <button
-          onClick={(e) => { e.stopPropagation(); onNavigate(currentIndex + 1) }}
-          className="absolute right-4 text-white/80 hover:text-white bg-black/40 hover:bg-black/60 rounded-full p-2 transition-colors z-10"
-          aria-label="Next photo"
-        >
-          <ChevronRight className="h-7 w-7" />
-        </button>
-      )}
-
-      {/* Image */}
+      {/* Content — stop propagation so clicking inside doesn't close */}
       <div
-        className="flex flex-col items-center max-w-4xl w-full mx-8 gap-4"
+        className="relative flex flex-col items-center max-w-5xl w-full mx-4"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="relative w-full h-[70vh]">
-          <Image
-            src={photo.url}
-            alt={photo.caption || 'Job photo'}
-            fill
-            className="object-contain rounded-lg shadow-2xl"
-            sizes="(max-width: 896px) 100vw, 896px"
-          />
-        </div>
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute -top-10 right-0 text-white/80 hover:text-white p-1 rounded"
+          aria-label="Close"
+        >
+          <X className="h-6 w-6" />
+        </button>
+
+        {/* Counter */}
+        <span className="absolute -top-10 left-0 text-white/60 text-sm">
+          {currentIndex + 1} / {photos.length}
+        </span>
+
+        {/* Main image */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={photo.url}
+          alt={photo.caption || `Photo ${currentIndex + 1}`}
+          className="max-h-[75vh] max-w-full rounded-lg object-contain"
+        />
+
+        {/* Navigation */}
+        {currentIndex > 0 && (
+          <button
+            onClick={goPrev}
+            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-12 text-white/70 hover:text-white bg-black/40 hover:bg-black/60 rounded-full p-2 transition-colors"
+            aria-label="Previous photo"
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </button>
+        )}
+        {currentIndex < photos.length - 1 && (
+          <button
+            onClick={goNext}
+            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-12 text-white/70 hover:text-white bg-black/40 hover:bg-black/60 rounded-full p-2 transition-colors"
+            aria-label="Next photo"
+          >
+            <ChevronRight className="h-6 w-6" />
+          </button>
+        )}
 
         {/* Metadata bar */}
-        <div className="w-full bg-gray-900/80 rounded-xl px-4 py-3 flex flex-wrap items-center justify-between gap-3 text-sm text-gray-200">
-          <div className="flex items-center gap-3 flex-wrap">
-            <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-              photo.type === 'before'
-                ? 'bg-orange-500/30 text-orange-300'
-                : photo.type === 'after'
-                ? 'bg-green-500/30 text-green-300'
-                : 'bg-gray-500/30 text-gray-300'
-            }`}>
-              {TYPE_LABEL[photo.type] ?? photo.type}
-            </span>
-            {photo.caption && <span className="text-gray-300">{photo.caption}</span>}
-          </div>
-          <div className="flex items-center gap-4 text-xs text-gray-400 flex-shrink-0">
-            {photo.workerName && (
-              <span className="flex items-center gap-1">
-                <User className="h-3.5 w-3.5" />
-                {photo.workerName}
-              </span>
+        <div className="mt-4 w-full bg-gray-900/80 rounded-lg p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div>
+            {photo.caption && (
+              <p className="text-white font-medium text-sm">{photo.caption}</p>
             )}
-            <span className="flex items-center gap-1">
-              <Clock className="h-3.5 w-3.5" />
-              {formatRelativeDate(photo.uploadedAt)}
-            </span>
-            <button
-              onClick={handleDownload}
-              className="flex items-center gap-1 text-primary-400 hover:text-primary-300 transition-colors"
-            >
-              <Download className="h-3.5 w-3.5" />
-              Download
-            </button>
+            <div className="flex items-center gap-3 mt-1 text-xs text-gray-400">
+              <span className="capitalize px-2 py-0.5 rounded bg-primary-700/50 text-primary-300 font-medium">
+                {TYPE_LABELS[photo.type] ?? photo.type}
+              </span>
+              <span>By {photo.workerName}</span>
+              <span>{formatDateTime(photo.uploadedAt)}</span>
+            </div>
           </div>
+          <a
+            href={photo.url}
+            download
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs text-gray-300 hover:text-white bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition-colors flex-shrink-0"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Download className="h-3.5 w-3.5" />
+            Download
+          </a>
         </div>
 
         {/* Thumbnail strip */}
         {photos.length > 1 && (
-          <div className="flex gap-2 overflow-x-auto pb-1">
+          <div className="mt-3 flex gap-2 overflow-x-auto pb-1 max-w-full">
             {photos.map((p, i) => (
               <button
                 key={p.id}
                 onClick={() => onNavigate(i)}
-                className={`relative flex-shrink-0 h-14 w-14 rounded-lg overflow-hidden border-2 transition-colors ${
+                className={`flex-shrink-0 h-14 w-14 rounded overflow-hidden border-2 transition-colors ${
                   i === currentIndex
                     ? 'border-primary-400'
-                    : 'border-transparent opacity-60 hover:opacity-90'
+                    : 'border-transparent opacity-60 hover:opacity-100'
                 }`}
               >
-                <Image src={p.url} alt="" fill className="object-cover" sizes="56px" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={p.thumbnailUrl ?? p.url} alt="" className="h-full w-full object-cover" />
               </button>
             ))}
           </div>
         )}
-      </div>
-
-      {/* Counter */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/60 text-xs">
-        {currentIndex + 1} / {photos.length}
       </div>
     </div>
   )

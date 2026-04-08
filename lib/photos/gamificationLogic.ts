@@ -1,75 +1,69 @@
-/**
- * Photo-specific gamification logic.
- * Awards points and badges when workers upload job photos.
- */
-
 import { awardPoints, awardBadge, getBadges } from '@/lib/services/gamificationService'
-import { getWorkerPhotos } from '@/lib/photos/firebase'
 
-export const PHOTO_POINTS_BASE = 25          // +25 for uploading ≥2 photos on a job
-export const PHOTO_COMPLETION_BONUS = 50     // +50 for 100% photo completion (all jobs)
-export const PHOTO_QUICK_MULTIPLIER = 1.5    // 1.5× multiplier if uploaded within 24 h of job completion
-export const PHOTO_MASTER_THRESHOLD = 50     // badge: Photo Master
-export const DETAIL_ORIENTED_AVG = 5         // badge: Detail Oriented (avg ≥5 photos/job)
+/** Milliseconds per hour — used for early-upload bonus calculation */
+const MS_PER_HOUR = 1000 * 60 * 60
 
-export interface PhotoGamificationResult {
-  pointsAwarded: number
-  badgesAwarded: string[]
+export const PHOTO_POINTS = {
+  uploadTwoOrMore: 25,
+  fullCompletionBonus: 50,
+  earlyUploadMultiplier: 1.5, // within 24 hours of job completion
+} as const
+
+export const PHOTO_BADGES = {
+  photoMaster: 'photo_master',      // 50+ photos uploaded
+  detailOriented: 'detail_oriented', // 5+ photos per job average
+} as const
+
+/** Award +25 points when a worker uploads 2 or more photos for a job.
+ *  Applies a 1.5× multiplier when photos are uploaded within 24 hours.
+ */
+export async function awardPhotoUploadPoints(
+  workerId: string,
+  jobCompletedAt: string,
+  photoCount: number
+): Promise<void> {
+  if (photoCount < 2) return
+
+  const completedMs = new Date(jobCompletedAt).getTime()
+  const now = Date.now()
+  const hoursElapsed = (now - completedMs) / MS_PER_HOUR
+  const isEarly = hoursElapsed <= 24
+
+  const basePoints = PHOTO_POINTS.uploadTwoOrMore
+  const points = isEarly
+    ? Math.round(basePoints * PHOTO_POINTS.earlyUploadMultiplier)
+    : basePoints
+
+  const reason = isEarly
+    ? `Photo upload within 24h (${photoCount} photos) — ${points} pts`
+    : `Photo upload (${photoCount} photos) — ${points} pts`
+
+  await awardPoints(workerId, points, reason)
 }
 
-/**
- * Award points and check badge eligibility after a worker uploads photos for a job.
- *
- * @param workerId          Worker UID
- * @param jobCompletedAt    ISO timestamp when the job was marked complete (for time bonus)
- * @param photoCount        Number of photos uploaded for this specific job
- */
-export async function awardPhotoPoints(
+/** Award the "Photo Master" badge when total photos reach 50 */
+export async function checkAndAwardPhotoMasterBadge(
   workerId: string,
-  jobCompletedAt: string | null,
-  photoCount: number
-): Promise<PhotoGamificationResult> {
-  const result: PhotoGamificationResult = { pointsAwarded: 0, badgesAwarded: [] }
-
-  if (photoCount < 2) return result
-
-  // Base points
-  let points = PHOTO_POINTS_BASE
-
-  // Time-based multiplier: 1.5× if uploaded within 24 hours of job completion
-  if (jobCompletedAt) {
-    const completedAt = new Date(jobCompletedAt).getTime()
-    const now = Date.now()
-    const hoursElapsed = (now - completedAt) / (1000 * 60 * 60)
-    if (hoursElapsed <= 24) {
-      points = Math.round(points * PHOTO_QUICK_MULTIPLIER)
-    }
+  totalPhotos: number
+): Promise<void> {
+  if (totalPhotos < 50) return
+  const badges = await getBadges(workerId)
+  if (!badges.includes(PHOTO_BADGES.photoMaster)) {
+    await awardBadge(workerId, PHOTO_BADGES.photoMaster)
   }
+}
 
-  await awardPoints(workerId, points, 'photo_upload')
-  result.pointsAwarded = points
-
-  // Check badge eligibility
-  const [existingBadges, allPhotos] = await Promise.all([
-    getBadges(workerId),
-    getWorkerPhotos(workerId, 500),
-  ])
-
-  const totalPhotos = allPhotos.length
-
-  // Photo Master badge: 50+ photos total
-  if (totalPhotos >= PHOTO_MASTER_THRESHOLD && !existingBadges.includes('photo_master')) {
-    await awardBadge(workerId, 'photo_master')
-    result.badgesAwarded.push('photo_master')
+/** Award the "Detail Oriented" badge when average photos/job reaches 5 */
+export async function checkAndAwardDetailOrientedBadge(
+  workerId: string,
+  totalPhotos: number,
+  jobsWithPhotos: number
+): Promise<void> {
+  if (jobsWithPhotos === 0) return
+  const avg = totalPhotos / jobsWithPhotos
+  if (avg < 5) return
+  const badges = await getBadges(workerId)
+  if (!badges.includes(PHOTO_BADGES.detailOriented)) {
+    await awardBadge(workerId, PHOTO_BADGES.detailOriented)
   }
-
-  // Detail Oriented badge: average ≥5 photos per job
-  const jobIds = new Set(allPhotos.map((p) => p.jobId))
-  const avgPhotosPerJob = jobIds.size > 0 ? totalPhotos / jobIds.size : 0
-  if (avgPhotosPerJob >= DETAIL_ORIENTED_AVG && !existingBadges.includes('detail_oriented')) {
-    await awardBadge(workerId, 'detail_oriented')
-    result.badgesAwarded.push('detail_oriented')
-  }
-
-  return result
 }

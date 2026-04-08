@@ -9,43 +9,59 @@ import {
   where,
   orderBy,
   serverTimestamp,
-  increment,
-  limit,
+  Timestamp,
 } from 'firebase/firestore'
-import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage'
+import {
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
+  deleteObject,
+} from 'firebase/storage'
 import { db, storage } from '@/lib/firebase'
-import type { JobPhoto, PhotoApprovalStatus, PhotoStats } from '@/types'
+import type { JobPhoto, PhotoApprovalStatus, PhotoType } from '@/types'
 
-// ─── Upload ───────────────────────────────────────────────────────────────────
+/** Convert a Firestore doc snapshot to a JobPhoto */
+function docToPhoto(id: string, data: Record<string, unknown>): JobPhoto {
+  const uploadedAt =
+    data.uploadedAt instanceof Timestamp
+      ? data.uploadedAt.toDate().toISOString()
+      : typeof data.uploadedAt === 'string'
+        ? data.uploadedAt
+        : new Date().toISOString()
 
-export interface UploadProgress {
-  progress: number
-  url?: string
-  error?: string
+  return {
+    id,
+    jobId: (data.jobId as string) ?? '',
+    workerId: (data.workerId as string) ?? '',
+    workerName: (data.workerName as string) ?? '',
+    url: (data.url as string) ?? '',
+    thumbnailUrl: data.thumbnailUrl as string | undefined,
+    caption: (data.caption as string) ?? '',
+    type: (data.type as PhotoType) ?? 'other',
+    approvalStatus: (data.approvalStatus as PhotoApprovalStatus) ?? 'pending',
+    qualityScore: data.qualityScore as number | undefined,
+    uploadedAt,
+    fileSize: (data.fileSize as number) ?? 0,
+    width: data.width as number | undefined,
+    height: data.height as number | undefined,
+  }
 }
 
-/**
- * Upload a photo file to Firebase Storage and save metadata to Firestore.
- * Returns the download URL on success.
- */
+/** Upload a photo file to Firebase Storage and save metadata to Firestore */
 export async function uploadJobPhoto(
   jobId: string,
   workerId: string,
   workerName: string,
   file: File,
-  type: 'before' | 'after' | 'general',
   caption: string,
+  type: PhotoType,
   onProgress?: (pct: number) => void
-): Promise<JobPhoto> {
-  if (!storage || !db) {
-    throw new Error('Firebase is not configured')
-  }
+): Promise<{ photoId: string; url: string }> {
+  if (!storage || !db) throw new Error('Firebase not initialized')
 
   const ext = file.name.split('.').pop() ?? 'jpg'
-  const storagePath = `job-photos/${jobId}/${workerId}/${Date.now()}.${ext}`
-  const storageRef = ref(storage, storagePath)
+  const storageRef = ref(storage, `job-photos/${jobId}/${workerId}/${Date.now()}.${ext}`)
 
-  // Upload with progress tracking
   await new Promise<void>((resolve, reject) => {
     const task = uploadBytesResumable(storageRef, file)
     task.on(
@@ -66,38 +82,15 @@ export async function uploadJobPhoto(
     workerId,
     workerName,
     url,
-    storagePath,
-    type,
     caption,
+    type,
     approvalStatus: 'pending',
+    fileSize: file.size,
     uploadedAt: serverTimestamp(),
   })
 
-  // Bump per-job photo count on the job document (best-effort)
-  try {
-    await updateDoc(doc(db, 'jobs', jobId), { photoCount: increment(1) })
-  } catch (err) {
-    // job doc may not exist in demo mode – log and continue
-    if (process.env.NODE_ENV === 'development') {
-      console.debug('[photos/firebase] Could not update job photoCount:', err)
-    }
-  }
-
-  return {
-    id: docRef.id,
-    jobId,
-    workerId,
-    workerName,
-    url,
-    storagePath,
-    type,
-    caption,
-    approvalStatus: 'pending',
-    uploadedAt: new Date().toISOString(),
-  }
+  return { photoId: docRef.id, url }
 }
-
-// ─── Queries ──────────────────────────────────────────────────────────────────
 
 /** Fetch all photos for a given job */
 export async function getJobPhotos(jobId: string): Promise<JobPhoto[]> {
@@ -108,115 +101,73 @@ export async function getJobPhotos(jobId: string): Promise<JobPhoto[]> {
     orderBy('uploadedAt', 'asc')
   )
   const snap = await getDocs(q)
-  return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<JobPhoto, 'id'>) }))
+  return snap.docs.map((d) => docToPhoto(d.id, d.data() as Record<string, unknown>))
 }
 
 /** Fetch all photos uploaded by a given worker */
-export async function getWorkerPhotos(workerId: string, maxResults = 50): Promise<JobPhoto[]> {
+export async function getWorkerPhotos(workerId: string): Promise<JobPhoto[]> {
   if (!db) return []
   const q = query(
     collection(db, 'jobPhotos'),
     where('workerId', '==', workerId),
-    orderBy('uploadedAt', 'desc'),
-    limit(maxResults)
+    orderBy('uploadedAt', 'desc')
   )
   const snap = await getDocs(q)
-  return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<JobPhoto, 'id'>) }))
+  return snap.docs.map((d) => docToPhoto(d.id, d.data() as Record<string, unknown>))
 }
 
-/** Fetch photos pending moderation */
-export async function getPendingPhotos(maxResults = 50): Promise<JobPhoto[]> {
+/** Fetch all photos pending moderation (admin) */
+export async function getPendingPhotos(): Promise<JobPhoto[]> {
   if (!db) return []
   const q = query(
     collection(db, 'jobPhotos'),
     where('approvalStatus', '==', 'pending'),
-    orderBy('uploadedAt', 'asc'),
-    limit(maxResults)
+    orderBy('uploadedAt', 'desc')
   )
   const snap = await getDocs(q)
-  return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<JobPhoto, 'id'>) }))
+  return snap.docs.map((d) => docToPhoto(d.id, d.data() as Record<string, unknown>))
 }
 
-/** Get photo stats for a worker */
-export async function getWorkerPhotoStats(workerId: string): Promise<PhotoStats> {
-  if (!db) {
-    return {
-      totalPhotos: 0,
-      totalJobsWithPhotos: 0,
-      totalJobsCompleted: 0,
-      photoCompletionRate: 0,
-      avgPhotosPerJob: 0,
-      avgUploadResponseHours: 0,
-    }
-  }
-
-  const photosSnap = await getDocs(
-    query(collection(db, 'jobPhotos'), where('workerId', '==', workerId))
-  )
-  const photos = photosSnap.docs.map((d) => d.data() as Omit<JobPhoto, 'id'>)
-
-  const totalPhotos = photos.length
-  const jobsWithPhotos = new Set(photos.map((p) => p.jobId)).size
-
-  // Count completed jobs for the worker (best-effort)
-  let totalJobsCompleted = jobsWithPhotos
-  try {
-    const jobsSnap = await getDocs(
-      query(
-        collection(db, 'jobs'),
-        where('assignedWorkerId', '==', workerId),
-        where('status', '==', 'completed')
-      )
-    )
-    totalJobsCompleted = Math.max(jobsWithPhotos, jobsSnap.size)
-  } catch {
-    // ignore
-  }
-
-  return {
-    totalPhotos,
-    totalJobsWithPhotos: jobsWithPhotos,
-    totalJobsCompleted,
-    photoCompletionRate:
-      totalJobsCompleted > 0 ? Math.round((jobsWithPhotos / totalJobsCompleted) * 100) : 0,
-    avgPhotosPerJob: jobsWithPhotos > 0 ? Math.round((totalPhotos / jobsWithPhotos) * 10) / 10 : 0,
-    avgUploadResponseHours: 0, // complex aggregation – kept simple
-  }
-}
-
-// ─── Moderation ───────────────────────────────────────────────────────────────
-
-export async function moderatePhoto(
+/** Update a photo's approval status (admin moderation) */
+export async function updatePhotoStatus(
   photoId: string,
-  action: 'approve' | 'flag',
-  moderatorId: string,
-  note?: string,
+  status: PhotoApprovalStatus,
   qualityScore?: number
 ): Promise<void> {
   if (!db) return
-  const updates: Record<string, unknown> = {
-    approvalStatus: action === 'approve' ? 'approved' : 'flagged',
-    moderatorId,
-    moderatedAt: serverTimestamp(),
-  }
-  if (note) updates.moderatorNote = note
+  const updates: Record<string, unknown> = { approvalStatus: status }
   if (qualityScore !== undefined) updates.qualityScore = qualityScore
-
   await updateDoc(doc(db, 'jobPhotos', photoId), updates)
 }
 
-export async function deleteJobPhoto(photoId: string): Promise<void> {
+/** Delete a photo from both Storage and Firestore */
+export async function deleteJobPhoto(photoId: string, storageUrl: string): Promise<void> {
   if (!db || !storage) return
-  const snap = await getDoc(doc(db, 'jobPhotos', photoId))
-  if (!snap.exists()) return
-  const data = snap.data() as JobPhoto
   try {
-    await deleteObject(ref(storage, data.storagePath))
+    const storageRef = ref(storage, storageUrl)
+    await deleteObject(storageRef)
   } catch {
-    // already deleted or path wrong – ignore
+    // ignore if already deleted
   }
-  await updateDoc(doc(db, 'jobPhotos', photoId), {
-    approvalStatus: 'flagged' as PhotoApprovalStatus,
-    deleted: true,
-  })
+  const docRef = doc(db, 'jobPhotos', photoId)
+  const snap = await getDoc(docRef)
+  if (snap.exists()) {
+    await updateDoc(docRef, { approvalStatus: 'flagged' })
+  }
+}
+
+/** Count photos uploaded by a worker */
+export async function getWorkerPhotoStats(workerId: string): Promise<{
+  totalPhotos: number
+  approvedPhotos: number
+  jobsWithPhotos: number
+}> {
+  if (!db) return { totalPhotos: 0, approvedPhotos: 0, jobsWithPhotos: 0 }
+  const q = query(collection(db, 'jobPhotos'), where('workerId', '==', workerId))
+  const snap = await getDocs(q)
+  const photos = snap.docs.map((d) => d.data() as Record<string, unknown>)
+  const totalPhotos = photos.length
+  const approvedPhotos = photos.filter((p) => p.approvalStatus === 'approved').length
+  const uniqueJobs = new Set(photos.map((p) => p.jobId as string))
+  return { totalPhotos, approvedPhotos, jobsWithPhotos: uniqueJobs.size }
 }
