@@ -1143,3 +1143,88 @@ export interface AdminPaymentRow {
   jobId?: string
   jobTitle?: string
 }
+
+// ─── Platform Financial Types (NZ GST Compliant) ─────────────────────────────
+
+export interface PlatformFinancials {
+  id: string
+  month: string // "2026-05"
+  year: number
+  totalJobsCompleted: number
+  totalJobValue: number
+  platformCommissionPercentage: number
+  platformCommission: number
+  stripeProcessingFee: number
+  netPlatformRevenue: number
+  expenses: ExpenseRecord[]
+  totalExpenses: number
+  totalExpenseGST: number
+  expensesByCategory: {
+    hosting: number
+    software: number
+    officeSupplies: number
+    professionalServices: number
+    infrastructure: number
+    other: number
+  }
+  gst: {
+    isRegistered: boolean
+    registeredDate?: string
+    registrationThreshold: number
+    annualRunRateTowardThreshold: number
+    thresholdProgress: number
+    gstOnPlatformCommission?: number
+    gstClaimableOnExpenses?: number
+    netGSTOwedToIRD?: number
+    gstReturnReady?: boolean
+  }
+  netProfit: number
+  netProfitAfterGST?: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ExpenseRecord {
+  id: string
+  date: string
+  category: 'hosting' | 'software' | 'officeSupplies' | 'professionalServices' | 'infrastructure' | 'other'
+  description: string
+  amount: number
+  gst: number
+  totalCost: number
+  receipt?: string
+  claimableForGST: boolean
+  status: 'pending' | 'approved' | 'rejected'
+  createdAt: string
+}
+
+export interface GSTReturn {
+  id: string
+  year: number
+  period: 'bimonthly' | 'monthly'
+  startDate: string
+  endDate: string
+  gstCollected: number
+  gstClaimable: number
+  netGSTOwed: number
+  status: 'draft' | 'ready' | 'filed' | 'submitted'
+  readyForIRD: boolean
+  downloadURL?: string
+  filedDate?: string
+  createdAt: string
+}
+
+export interface YearlyPlatformSummary {
+  year: number
+  totalRevenue: number
+  totalExpenses: number
+  totalGSTCollected?: number
+  totalGSTClaimable?: number
+  totalGSTOwed?: number
+  netProfit: number
+  netProfitAfterGST?: number
+  byMonth: PlatformFinancials[]
+  gstReturnsGenerated: GSTReturn[]
+  readyForAccountant: boolean
+  exportURL?: string
+}
