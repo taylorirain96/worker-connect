@@ -11,7 +11,8 @@ import {
 import type { Job, MatchedJob, WorkerMatchProfile } from '@/types'
 import type { MoverSettings } from '@/types/reputation'
 
-// ─── Skill synonyms for partial matching ─────────────────────────────────────
+// Default assumed hours for a fixed-price job when computing implied hourly rate
+const DEFAULT_FIXED_PRICE_HOURS = 8
 
 const SKILL_SYNONYMS: Record<string, string[]> = {
   plumbing: ['pipe fitting', 'drain', 'plumber', 'waterworks'],
@@ -86,6 +87,9 @@ export function filterJobsBySkills(jobs: Job[], workerSkills: string[]): Job[] {
 /**
  * Filter jobs by budget compatibility.
  * Keeps jobs where implied hourly rate >= workerHourlyRate * (1 - bufferPercent/100).
+ * NOTE: Fixed-price jobs are converted to an implied hourly rate by dividing
+ * the budget by DEFAULT_FIXED_PRICE_HOURS (8 h). This is a simplifying assumption —
+ * adjust this constant or extend the Job type with a duration field for greater accuracy.
  */
 export function filterJobsByBudget(
   jobs: Job[],
@@ -97,8 +101,8 @@ export function filterJobsByBudget(
     if (job.budgetType === 'hourly') {
       return job.budget >= minAcceptable
     }
-    // Fixed-price job: assume 8-hour project, compute implied hourly rate
-    const impliedHourly = job.budget / 8
+    // Fixed-price job: assume DEFAULT_FIXED_PRICE_HOURS hour project, compute implied hourly rate
+    const impliedHourly = job.budget / DEFAULT_FIXED_PRICE_HOURS
     return impliedHourly >= minAcceptable
   })
 }
@@ -130,8 +134,11 @@ export function filterJobsByLocation(
 }
 
 /**
- * Boost job scores for Mover Mode workers.
- * Jobs in target city get +15, nearby cities get +5.
+ * Boost job scores for Mover Mode workers (used inside the main matching algorithm).
+ * Jobs in the worker's target relocation city get +15, jobs in nearby cities (same
+ * state) get +5. These values are intentionally smaller than the endpoint-level
+ * `applyMoverModeScoring` bonuses (+20 / +10) which are applied on top when the
+ * dedicated mover-opportunities route is used.
  */
 export function prioritizeMoverMode(
   jobs: MatchedJob[],
@@ -239,7 +246,7 @@ export function calculateMatchScore(
     }
   } else {
     // Fixed price
-    const impliedHourly = job.budget / 8
+    const impliedHourly = job.budget / DEFAULT_FIXED_PRICE_HOURS
     if (impliedHourly >= workerRate) {
       budgetScore = 10
       reasons.push(`Budget: Suitable (fixed $${job.budget})`)

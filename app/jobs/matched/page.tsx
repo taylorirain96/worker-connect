@@ -39,7 +39,7 @@ function MatchedJobsContent() {
       <div className="flex items-start gap-3 p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-300 text-sm">
         <Info className="h-5 w-5 flex-shrink-0 mt-0.5" />
         <div>
-          <p className="font-medium">Personalised Job Matches</p>
+          <p className="font-medium">Personalized Job Matches</p>
           <p className="mt-0.5 text-blue-700 dark:text-blue-400">
             Jobs are scored based on your skills (40%), rating (20%), completion rate (20%),
             budget (10%) and location (10%). Mover Mode workers get priority boosts for
