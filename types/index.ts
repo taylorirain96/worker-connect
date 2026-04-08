@@ -951,3 +951,45 @@ export interface RatingAppeal {
   updatedAt: string
   resolvedAt?: string
 }
+
+// ─── Job Matching System ──────────────────────────────────────────────────────
+
+export interface JobLocation {
+  city: string
+  state: string
+  coordinates: [number, number]
+  remote: boolean
+}
+
+export interface MatchedJob extends Job {
+  matchScore: number
+  matchReasons: string[]
+  isRemote: boolean
+  distanceKm?: number
+}
+
+export interface JobApplication {
+  id: string
+  workerId: string
+  jobId: string
+  status: 'pending' | 'accepted' | 'rejected' | 'withdrawn'
+  coverLetter?: string
+  appliedAt: string
+  respondedAt?: string
+  rejectionReason?: string
+}
+
+export interface WorkerMatchProfile {
+  workerId: string
+  skills: string[]
+  hourlyRate: number
+  reputation: number
+  completionRate: number
+  location: { city: string; state: string; coordinates: [number, number] }
+  availability: 'full_time' | 'part_time' | 'contract'
+  moverMode?: {
+    targetCity: string
+    relocationReadiness: number
+    active: boolean
+  }
+}
