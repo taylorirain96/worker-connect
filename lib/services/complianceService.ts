@@ -196,9 +196,15 @@ const COUNTRY_REQUIREMENTS: Record<string, ComplianceRequirement> = {
   },
 }
 
+// All current EU member states (27 members as of 2024)
+const EU_COUNTRIES = [
+  'AT', 'BE', 'BG', 'CY', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI',
+  'FR', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'MT',
+  'NL', 'PL', 'PT', 'RO', 'SE', 'SI', 'SK',
+]
+
 export function getCountryRequirements(countryCode: string): ComplianceRequirement {
   const upper = countryCode.toUpperCase()
-  const EU_COUNTRIES = ['DE', 'FR', 'IT', 'ES', 'NL', 'BE', 'AT', 'PT', 'IE', 'PL']
 
   if (COUNTRY_REQUIREMENTS[upper]) return COUNTRY_REQUIREMENTS[upper]
   if (EU_COUNTRIES.includes(upper)) {

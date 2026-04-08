@@ -41,8 +41,12 @@ export default function TaxCalculator({ workerId: _workerId }: TaxCalculatorProp
     }
   }
 
-  const fmt = (n: number) =>
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n)
+  const fmt = (n: number) => {
+    const currency = result?.countryCode
+      ? ({ US: 'USD', NZ: 'NZD', AU: 'AUD', GB: 'GBP', CA: 'CAD', DE: 'EUR', FR: 'EUR', JP: 'JPY', SG: 'SGD', IN: 'INR' }[result.countryCode] ?? 'USD')
+      : 'USD'
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(n)
+  }
 
   return (
     <Card>

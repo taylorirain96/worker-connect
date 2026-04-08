@@ -83,7 +83,13 @@ export async function updateUserConsents(
 export async function getDataExportForUser(userId: string): Promise<Record<string, unknown>> {
   if (!db) return { userId, exported: true, data: {} }
 
-  const collections = ['workerTaxProfiles', 'userConsents', 'gdprDataRequests']
+  const collections = [
+    'workerTaxProfiles',
+    'userConsents',
+    'gdprDataRequests',
+    'userLanguagePreferences',
+    'userCurrencyPreferences',
+  ]
   const result: Record<string, unknown> = { userId, exportedAt: new Date().toISOString() }
 
   for (const col of collections) {

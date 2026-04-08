@@ -59,6 +59,8 @@ export function calculateTaxes(input: TaxCalculationInput): TaxCalculationResult
   }
 
   if (countryCode === 'GB') {
+    // UK NI Class 1 rates for 2024/25: primary threshold £12,570, upper threshold £50,270
+    // Rate: 12% on earnings between thresholds, 2% above upper threshold
     const niThreshold = 12570
     const niUpperThreshold = 50270
     if (grossIncome > niThreshold) {

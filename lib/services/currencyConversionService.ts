@@ -2,6 +2,8 @@ import { db } from '@/lib/firebase'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
 import type { CurrencyConversion } from '@/types/global'
 
+// Static fallback rates relative to USD (last updated 2024-01).
+// These are used when Firestore cache is unavailable or stale.
 const STATIC_RATES: Record<string, number> = {
   USD: 1,
   NZD: 1.63,
