@@ -244,7 +244,7 @@ class PlatformFinancialService {
     ]
     cats.forEach(cat => {
       const amt = yearly.byMonth.reduce((s, m) => s + (m.expensesByCategory[cat] || 0), 0)
-      const gst = Number((amt * 0.15).toFixed(2))
+      const gst = Number((amt * GST_RATE).toFixed(2))
       lines.push([cat, amt.toFixed(2), gst.toFixed(2), (amt + gst).toFixed(2)].join(','))
     })
 
