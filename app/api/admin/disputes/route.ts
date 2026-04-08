@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
+// Simple deterministic pseudo-random based on seed (not for security use)
+function seededVal(seed: number, scale: number): number {
+  return Math.abs(Math.sin(seed * 9301 + 49297) * scale)
+}
+
 const MOCK_DISPUTES = Array.from({ length: 50 }, (_, i) => ({
   id: `dispute-${i + 1}`,
   workerId: `worker-${(i % 10) + 1}`,
@@ -10,7 +15,7 @@ const MOCK_DISPUTES = Array.from({ length: 50 }, (_, i) => ({
   employerId: `employer-${(i % 8) + 1}`,
   employerName: ['Acme Corp', 'BuildRight LLC', 'HomePro', 'FixIt Services', 'QuickBuild',
     'ProConstruct', 'UrbanFix', 'CityWorks'][i % 8],
-  amount: Math.round(200 + Math.random() * 1800),
+  amount: Math.round(200 + seededVal(i, 1800)),
   reason: ['quality_issues', 'non_delivery', 'overcharge', 'misrepresentation', 'other'][i % 5],
   status: ['open', 'under_review', 'resolved', 'closed', 'awaiting_evidence'][i % 5],
   createdAt: new Date(Date.now() - (i + 1) * 2 * 86400000).toISOString(),

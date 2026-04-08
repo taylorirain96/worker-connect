@@ -333,7 +333,7 @@ export default function AdminWorkersPage() {
 
               <div className="grid grid-cols-2 gap-4 mb-6">
                 {[
-                  { label: 'Rating', value: `⭐ ${selectedWorker.rating}` },
+                  { label: 'Rating', value: `${selectedWorker.rating} / 5` },
                   { label: 'Jobs Completed', value: selectedWorker.jobsCompleted },
                   { label: 'Total Earnings', value: formatCurrency(selectedWorker.totalEarnings) },
                   { label: 'Region', value: selectedWorker.region },

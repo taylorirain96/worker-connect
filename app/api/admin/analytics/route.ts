@@ -24,7 +24,9 @@ export async function GET(request: NextRequest) {
       const dailyRevenue = Array.from({ length: Math.min(daysDiff, 90) }, (_, i) => {
         const d = new Date(start)
         d.setDate(d.getDate() + i)
-        const revenue = Math.round(5000 + Math.sin(i * 0.5) * 2000 + Math.random() * 1000)
+        // Use deterministic variation based on index to avoid Math.random() in production paths
+        const variation = Math.abs(Math.sin(i * 1.7 + 3.14) * 1000)
+        const revenue = Math.round(5000 + Math.sin(i * 0.5) * 2000 + variation)
         return {
           date: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
           revenue,

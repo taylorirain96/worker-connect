@@ -23,6 +23,7 @@ import type { AdminPaymentRow } from '@/types'
 type DateRange = '7d' | '30d' | '90d'
 type PaymentStatus = 'all' | 'succeeded' | 'failed' | 'pending' | 'refunded'
 
+const DAYS_MAP: Record<DateRange, number> = { '7d': 7, '30d': 30, '90d': 90 }
 const PAYMENT_METHODS = ['card', 'bank_transfer', 'apple_pay', 'google_pay']
 const STATUS_COLORS: Record<string, 'success' | 'danger' | 'warning' | 'info'> = {
   succeeded: 'success',
@@ -104,7 +105,6 @@ export default function AdminPaymentsPage() {
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
 
-  const daysMap: Record<DateRange, number> = { '7d': 7, '30d': 30, '90d': 90 }
   const [chartData, setChartData] = useState(() => generateRevenueChart(30))
 
   useEffect(() => {
@@ -113,20 +113,21 @@ export default function AdminPaymentsPage() {
 
   const refresh = useCallback(() => {
     setLoading(true)
+    const days = DAYS_MAP[dateRange]
     setTimeout(() => {
-      setChartData(generateRevenueChart(daysMap[dateRange]))
+      setChartData(generateRevenueChart(days))
       setLoading(false)
       setRefreshing(false)
     }, 400)
-  }, [dateRange]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [dateRange])
 
   useEffect(() => {
     if (!authLoading && profile?.role === 'admin') refresh()
   }, [authLoading, profile, refresh])
 
   useEffect(() => {
-    setChartData(generateRevenueChart(daysMap[dateRange]))
-  }, [dateRange]) // eslint-disable-line react-hooks/exhaustive-deps
+    setChartData(generateRevenueChart(DAYS_MAP[dateRange]))
+  }, [dateRange])
 
   // Filter & sort payments
   const filtered = MOCK_PAYMENTS.filter((p) => {
@@ -235,7 +236,7 @@ export default function AdminPaymentsPage() {
             <MetricCard
               label="Total Revenue"
               value={formatCurrency(totalRevenue)}
-              subtitle={`${daysMap[dateRange]} days`}
+              subtitle={`${DAYS_MAP[dateRange]} days`}
               icon={<TrendingUp className="h-5 w-5" />}
               iconBg="bg-emerald-100 dark:bg-emerald-900/30"
               iconColor="text-emerald-600"

@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
+// Simple deterministic pseudo-random based on seed (not for security use)
+function seededVal(seed: number, scale: number): number {
+  return Math.abs(Math.sin(seed * 9301 + 49297) * scale)
+}
+
 const VERIFICATION_STATUSES = ['unverified', 'basic', 'trusted'] as const
 
 const MOCK_EMPLOYERS = Array.from({ length: 150 }, (_, i) => ({
@@ -11,9 +16,9 @@ const MOCK_EMPLOYERS = Array.from({ length: 150 }, (_, i) => ({
     'ProConstruct', 'UrbanFix', 'CityWorks', 'MetroHome', 'SkyBuild',
   ][i % 10] + (i >= 10 ? ` ${Math.floor(i / 10)}` : ''),
   email: `employer${i + 1}@example.com`,
-  jobsPosted: Math.floor(1 + Math.random() * 80),
-  totalSpent: Math.round(500 + Math.random() * 100000),
-  activeJobs: Math.floor(Math.random() * 10),
+  jobsPosted: Math.floor(1 + seededVal(i, 80)),
+  totalSpent: Math.round(500 + seededVal(i + 50, 100000)),
+  activeJobs: Math.floor(seededVal(i + 100, 10)),
   verificationStatus: VERIFICATION_STATUSES[i % 3],
   joinedAt: new Date(Date.now() - (i + 1) * 5 * 86400000).toISOString(),
 }))

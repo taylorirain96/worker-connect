@@ -11,9 +11,10 @@ export async function GET() {
     // In production: aggregate from monitoring services, Firebase SDK, Stripe API, etc.
 
     const now = Date.now()
+    // Use deterministic variation rather than Math.random() (not for security use)
     const last24hErrors = Array.from({ length: 24 }, (_, i) => ({
       hour: `${23 - i}h ago`,
-      count: Math.floor(Math.random() * 8),
+      count: Math.floor(Math.abs(Math.sin(i * 2.71 + 1.41)) * 8),
     }))
 
     const recentErrors = [
