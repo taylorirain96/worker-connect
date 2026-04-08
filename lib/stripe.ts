@@ -6,6 +6,16 @@
  * higher-level helpers used by the payment API routes.
  */
 
+/** Converts a dollar amount to cents (Stripe uses the smallest currency unit). */
+export function toCents(amount: number): number {
+  return Math.round(amount * 100)
+}
+
+/** Converts cents back to a dollar amount. */
+export function fromCents(cents: number): number {
+  return cents / 100
+}
+
 import Stripe from 'stripe'
 
 let _stripe: Stripe | null = null
