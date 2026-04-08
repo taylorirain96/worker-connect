@@ -1143,3 +1143,93 @@ export interface AdminPaymentRow {
   jobId?: string
   jobTitle?: string
 }
+
+// ─── Quotes & Estimates ──────────────────────────────────────────────────────
+
+export interface Quote {
+  id: string
+  jobId: string
+  jobTitle: string
+  employerId: string
+  workerId: string
+  workerName: string
+  workerAvatar?: string
+  basePrice: number
+  laborHours?: number
+  laborRate?: number
+  materials?: { description: string; cost: number }[]
+  travel?: { distance: number; cost: number }
+  tax?: number
+  totalPrice: number
+  description: string
+  timeline?: string
+  availability?: string
+  conditions?: string
+  status: 'pending' | 'accepted' | 'rejected' | 'expired'
+  expiresAt: string
+  createdAt: string
+  updatedAt: string
+  acceptedAt?: string
+}
+
+export interface QuoteRequest {
+  jobId: string
+  jobTitle: string
+  employerId: string
+  requestMessage?: string
+  createdAt: string
+}
+
+// ─── Tax & Earnings Types ────────────────────────────────────────────────────
+
+export interface EarningsRecord {
+  id: string
+  workerId: string
+  jobId: string
+  jobTitle: string
+  grossAmount: number
+  platformFee: number
+  netAmount: number
+  tax?: number
+  status: 'pending' | 'available' | 'withdrawn'
+  createdAt: string
+  recordedDate: string
+}
+
+export interface QuarterlyEarnings {
+  workerId: string
+  year: number
+  quarter: 1 | 2 | 3 | 4
+  totalEarnings: number
+  totalJobs: number
+  monthBreakdown: {
+    month: string
+    earnings: number
+    jobs: number
+  }[]
+  estimatedTax?: number
+}
+
+export interface YearlyEarnings {
+  workerId: string
+  year: number
+  totalEarnings: number
+  totalJobs: number
+  byQuarter: QuarterlyEarnings[]
+  estimatedTotalTax?: number
+}
+
+export interface TaxForm1099NEC {
+  id: string
+  workerId: string
+  workerName: string
+  workerEmail: string
+  workerAddress: string
+  year: number
+  boxNC2: number
+  businessName: string
+  businessEIN: string
+  generatedAt: string
+  sentAt?: string
+  status: 'generated' | 'sent' | 'archived'
+}
