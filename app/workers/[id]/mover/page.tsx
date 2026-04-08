@@ -22,6 +22,7 @@ export default function MoverModePage({ params }: { params: { id: string } }) {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -50,7 +51,19 @@ export default function MoverModePage({ params }: { params: { id: string } }) {
 
         const lbRes = await fetch('/api/reputation/leaderboard?limit=5')
         if (lbRes.ok) {
-          setLeaderboard(MOCK_LEADERBOARD)
+          const lbData = await lbRes.json()
+          const entries: MoverLeaderboardEntry[] = (lbData.leaderboard ?? []).map(
+            (e: { userId: string; name: string; avatar?: string; completionRate: number; score: number; rank: number }) => ({
+              workerId: e.userId,
+              name: e.name,
+              avatar: e.avatar,
+              targetRelocationCity: '—',
+              relocationSuccessRate: e.score,
+              completionRate: e.completionRate,
+              rank: e.rank,
+            })
+          )
+          setLeaderboard(entries.length > 0 ? entries : MOCK_LEADERBOARD)
         } else {
           setLeaderboard(MOCK_LEADERBOARD)
         }
@@ -65,6 +78,7 @@ export default function MoverModePage({ params }: { params: { id: string } }) {
 
   const handleSave = async (updatedSettings: Partial<MoverSettings>) => {
     setSaving(true)
+    setSaveError(null)
     try {
       const res = await fetch(`/api/workers/${params.id}/mover-mode`, {
         method: 'PUT',
@@ -83,9 +97,11 @@ export default function MoverModePage({ params }: { params: { id: string } }) {
             setOpportunities(oppData.opportunities ?? [])
           }
         }
+      } else {
+        setSaveError('Failed to save settings. Please try again.')
       }
     } catch {
-      // noop — settings save failed silently
+      setSaveError('Failed to save settings. Please try again.')
     } finally {
       setSaving(false)
     }
@@ -122,6 +138,7 @@ export default function MoverModePage({ params }: { params: { id: string } }) {
               <MoverModeSettings settings={settings} onSave={handleSave} />
               {saving && <p className="text-sm text-blue-600">Saving…</p>}
               {saved && <p className="text-sm text-green-600">✓ Settings saved!</p>}
+              {saveError && <p className="text-sm text-red-600" role="alert">{saveError}</p>}
             </div>
 
             {/* Opportunities */}

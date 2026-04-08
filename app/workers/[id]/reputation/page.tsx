@@ -16,7 +16,7 @@ import CompletionRateChart from '@/components/completion/CompletionRateChart'
 import PortfolioGallery from '@/components/portfolio/PortfolioGallery'
 import PortfolioStats from '@/components/portfolio/PortfolioStats'
 import type { ReputationScore as ReputationScoreType, WorkerVerification, CompletionStats, VerificationType, WorkerPortfolio } from '@/types/reputation'
-import { calculateCompletionRate, getCompletionLabel } from '@/lib/utils/completionRateCalc'
+import { getCompletionLabel } from '@/lib/utils/completionRateCalc'
 
 const MOCK_REPUTATION: ReputationScoreType = {
   userId: 'demo',
@@ -82,8 +82,22 @@ export default function WorkerReputationPage({ params }: { params: { id: string 
         if (repRes.status === 'fulfilled' && repRes.value.ok) {
           const data = await repRes.value.json()
           setReputationScore(data)
+          // Derive completion stats from the reputation score breakdown
+          const cr = Math.round(data.breakdown?.completionRate ?? 97)
+          const total = 100
+          const completed = Math.round(total * (cr / 100))
+          setCompletionStats({
+            workerId: params.id,
+            completionRate: cr,
+            totalJobs: total,
+            completedJobs: completed,
+            cancelledJobs: total - completed,
+            label: getCompletionLabel(cr),
+            trend: MOCK_COMPLETION.trend,
+          })
         } else {
           setReputationScore(MOCK_REPUTATION)
+          setCompletionStats(MOCK_COMPLETION)
         }
 
         if (verRes.status === 'fulfilled' && verRes.value.ok) {
@@ -104,13 +118,6 @@ export default function WorkerReputationPage({ params }: { params: { id: string 
         } else {
           setPortfolio(MOCK_PORTFOLIO)
         }
-
-        const completionRate = calculateCompletionRate(100, 103)
-        setCompletionStats({
-          ...MOCK_COMPLETION,
-          completionRate,
-          label: getCompletionLabel(completionRate),
-        })
       } catch {
         setReputationScore(MOCK_REPUTATION)
         setBadges(MOCK_BADGES)
