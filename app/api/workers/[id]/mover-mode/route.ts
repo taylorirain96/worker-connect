@@ -1,31 +1,41 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getMoverSettings, updateMoverSettings } from '@/lib/services/moverService'
-
-export const dynamic = 'force-dynamic'
+import { NextResponse } from 'next/server';
+import { adminDb } from '@/lib/firebase-admin';
 
 export async function GET(
-  _request: NextRequest,
-  { params }: { params: { id: string } },
+  request: Request,
+  { params }: { params: { userId: string } }
 ) {
   try {
-    const settings = await getMoverSettings(params.id)
-    return NextResponse.json({ settings })
+    const { userId } = params;
+    const doc = await adminDb.collection('mover_modes').doc(userId).get();
+    
+    if (!doc.exists) {
+      return NextResponse.json({ enabled: false });
+    }
+
+    return NextResponse.json(doc.data());
   } catch (error) {
-    console.error('Get mover settings error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('Error fetching mover mode:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } },
+export async function POST(
+  request: Request,
+  { params }: { params: { userId: string } }
 ) {
   try {
-    const body = await request.json()
-    const settings = await updateMoverSettings(params.id, body)
-    return NextResponse.json({ settings })
+    const { userId } = params;
+    const body = await request.json();
+    
+    await adminDb.collection('mover_modes').doc(userId).set({
+      ...body,
+      updatedAt: new Date().toISOString(),
+    }, { merge: true });
+
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Update mover settings error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('Error updating mover mode:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
