@@ -4,10 +4,10 @@ import { addReviewResponse } from '@/lib/reviews/firebase'
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { reviewId: string } }
 ) {
   try {
-    const { id } = params
+    const { reviewId } = params
     const body = await request.json()
     const { authorId, authorName, authorAvatar, text } = body
 
@@ -23,12 +23,10 @@ export async function POST(
       return NextResponse.json({ error: 'Response must be 1000 characters or fewer' }, { status: 400 })
     }
 
-    const response = await addReviewResponse(id, authorId, authorName, authorAvatar, text)
+    const response = await addReviewResponse(reviewId, authorId, authorName, authorAvatar, text)
     return NextResponse.json(response, { status: 201 })
   } catch (error) {
     console.error('Add response error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
-
-

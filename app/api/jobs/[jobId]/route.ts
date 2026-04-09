@@ -12,13 +12,13 @@ export async function GET() {
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: { jobId: string } }
 ) {
   try {
-    const { id } = params
+    const { jobId } = params
     const body = await request.json()
     // In production, update in Firestore
-    return NextResponse.json({ id, ...body, updatedAt: new Date().toISOString() })
+    return NextResponse.json({ id: jobId, ...body, updatedAt: new Date().toISOString() })
   } catch (error) {
     console.error('Update job error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -27,12 +27,12 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: { jobId: string } }
 ) {
   try {
-    const { id } = params
+    const { jobId } = params
     // In production, delete from Firestore
-    return NextResponse.json({ message: 'Job deleted', id })
+    return NextResponse.json({ message: 'Job deleted', id: jobId })
   } catch (error) {
     console.error('Delete job error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

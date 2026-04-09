@@ -8,11 +8,11 @@ import {
 export const dynamic = 'force-dynamic'
 
 interface RouteParams {
-  params: { id: string }
+  params: { notificationId: string }
 }
 
 /**
- * PUT /api/notifications/[id]
+ * PUT /api/notifications/[notificationId]
  * Mark a single notification as read.
  */
 export async function PUT(request: NextRequest, { params }: RouteParams) {
@@ -22,21 +22,21 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id } = params
-    if (!id) {
+    const { notificationId } = params
+    if (!notificationId) {
       return NextResponse.json({ error: 'Missing notification id' }, { status: 400 })
     }
 
-    await markNotificationRead(id)
+    await markNotificationRead(notificationId)
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error(`PUT /api/notifications/${params.id} error:`, error)
+    console.error(`PUT /api/notifications/${params.notificationId} error:`, error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 /**
- * PATCH /api/notifications/[id]
+ * PATCH /api/notifications/[notificationId]
  * Mark a single notification as read (alias for PUT to match spec).
  */
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
@@ -46,21 +46,21 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id } = params
-    if (!id) {
+    const { notificationId } = params
+    if (!notificationId) {
       return NextResponse.json({ error: 'Missing notification id' }, { status: 400 })
     }
 
-    await markNotificationRead(id)
+    await markNotificationRead(notificationId)
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error(`PATCH /api/notifications/${params.id} error:`, error)
+    console.error(`PATCH /api/notifications/${params.notificationId} error:`, error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 /**
- * DELETE /api/notifications/[id]
+ * DELETE /api/notifications/[notificationId]
  * Soft-delete a notification.
  */
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
@@ -70,15 +70,15 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id } = params
-    if (!id) {
+    const { notificationId } = params
+    if (!notificationId) {
       return NextResponse.json({ error: 'Missing notification id' }, { status: 400 })
     }
 
-    await deleteNotification(id)
+    await deleteNotification(notificationId)
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error(`DELETE /api/notifications/${params.id} error:`, error)
+    console.error(`DELETE /api/notifications/${params.notificationId} error:`, error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

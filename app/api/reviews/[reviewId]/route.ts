@@ -4,11 +4,11 @@ import { getReviewById, deleteReview, moderateReview } from '@/lib/reviews/fireb
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { reviewId: string } }
 ) {
   try {
-    const { id } = params
-    const review = await getReviewById(id)
+    const { reviewId } = params
+    const review = await getReviewById(reviewId)
     if (!review) {
       return NextResponse.json({ error: 'Review not found' }, { status: 404 })
     }
@@ -21,10 +21,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { reviewId: string } }
 ) {
   try {
-    const { id } = params
+    const { reviewId } = params
     const body = await request.json()
     const { rating, comment, moderationStatus, moderatorId, moderatorNote } = body
 
@@ -43,12 +43,12 @@ export async function PUT(
 
     // Handle moderation status updates
     if (moderationStatus && moderatorId) {
-      await moderateReview(id, moderationStatus, moderatorId, moderatorNote)
-      return NextResponse.json({ id, moderationStatus, updatedAt: new Date().toISOString() })
+      await moderateReview(reviewId, moderationStatus, moderatorId, moderatorNote)
+      return NextResponse.json({ id: reviewId, moderationStatus, updatedAt: new Date().toISOString() })
     }
 
     // In production, update review fields in Firestore
-    return NextResponse.json({ id, ...body, updatedAt: new Date().toISOString() })
+    return NextResponse.json({ id: reviewId, ...body, updatedAt: new Date().toISOString() })
   } catch (error) {
     console.error('Update review error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -57,12 +57,12 @@ export async function PUT(
 
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { reviewId: string } }
 ) {
   try {
-    const { id } = params
-    await deleteReview(id)
-    return NextResponse.json({ message: 'Review deleted', id })
+    const { reviewId } = params
+    await deleteReview(reviewId)
+    return NextResponse.json({ message: 'Review deleted', id: reviewId })
   } catch (error) {
     console.error('Delete review error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

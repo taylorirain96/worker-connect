@@ -2,34 +2,34 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 /**
- * GET    /api/subscriptions/[id]  — get subscription details
- * PUT    /api/subscriptions/[id]  — update subscription (plan change, billing interval)
- * DELETE /api/subscriptions/[id]  — cancel subscription
+ * GET    /api/subscriptions/[subscriptionId]  — get subscription details
+ * PUT    /api/subscriptions/[subscriptionId]  — update subscription (plan change, billing interval)
+ * DELETE /api/subscriptions/[subscriptionId]  — cancel subscription
  */
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { subscriptionId: string } }
 ) {
   try {
-    const { id } = params
+    const { subscriptionId } = params
 
-    if (!id) {
+    if (!subscriptionId) {
       return NextResponse.json({ error: 'Missing subscription id' }, { status: 400 })
     }
 
     // In production: fetch from Firestore or Stripe
-    // const snap = await getDoc(doc(db, 'subscriptions', id))
+    // const snap = await getDoc(doc(db, 'subscriptions', subscriptionId))
     // if (!snap.exists()) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
     const mockSub = {
-      id,
+      id: subscriptionId,
       userId: 'user_1',
       plan: 'pro',
       status: 'active',
       billingInterval: 'month',
       amount: 29,
       currency: 'usd',
-      stripeSubscriptionId: `sub_stripe_${id}`,
+      stripeSubscriptionId: `sub_stripe_${subscriptionId}`,
       currentPeriodStart: new Date(Date.now() - 10 * 86400000).toISOString(),
       currentPeriodEnd: new Date(Date.now() + 20 * 86400000).toISOString(),
       cancelAtPeriodEnd: false,
@@ -39,24 +39,24 @@ export async function GET(
 
     return NextResponse.json({ subscription: mockSub })
   } catch (error) {
-    console.error('GET /api/subscriptions/[id] error:', error)
+    console.error('GET /api/subscriptions/[subscriptionId] error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { subscriptionId: string } }
 ) {
   try {
-    const { id } = params
+    const { subscriptionId } = params
     const body = await req.json() as {
       plan?: string
       billingInterval?: 'month' | 'year'
       cancelAtPeriodEnd?: boolean
     }
 
-    if (!id) {
+    if (!subscriptionId) {
       return NextResponse.json({ error: 'Missing subscription id' }, { status: 400 })
     }
 
@@ -69,24 +69,24 @@ export async function PUT(
     // Update Firestore record
 
     return NextResponse.json({
-      id,
+      id: subscriptionId,
       ...body,
       updatedAt: new Date().toISOString(),
     })
   } catch (error) {
-    console.error('PUT /api/subscriptions/[id] error:', error)
+    console.error('PUT /api/subscriptions/[subscriptionId] error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { subscriptionId: string } }
 ) {
   try {
-    const { id } = params
+    const { subscriptionId } = params
 
-    if (!id) {
+    if (!subscriptionId) {
       return NextResponse.json({ error: 'Missing subscription id' }, { status: 400 })
     }
 
@@ -96,13 +96,13 @@ export async function DELETE(
     // Update Firestore: { cancelAtPeriodEnd: true, status: 'canceled' }
 
     return NextResponse.json({
-      id,
+      id: subscriptionId,
       status: 'canceled',
       cancelAtPeriodEnd: true,
       updatedAt: new Date().toISOString(),
     })
   } catch (error) {
-    console.error('DELETE /api/subscriptions/[id] error:', error)
+    console.error('DELETE /api/subscriptions/[subscriptionId] error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
