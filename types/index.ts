@@ -577,7 +577,6 @@ export interface UserStats {
   }
 }
 
-export type PhotoType = 'before' | 'after' | 'progress' | 'other'
 // ─── Referral & Rewards Types ─────────────────────────────────────────────────
 
 export type ReferralStatus = 'pending' | 'signed_up' | 'completed_3' | 'completed_50' | 'trusted_pro'
@@ -683,7 +682,7 @@ export interface MonthlyEarnings {
 
 // ─── Photo Reviews Types ──────────────────────────────────────────────────────
 
-export type PhotoType = 'before' | 'after' | 'general'
+export type PhotoType = 'before' | 'after' | 'progress' | 'other' | 'general'
 export type PhotoApprovalStatus = 'pending' | 'approved' | 'flagged'
 
 export interface JobPhoto {
@@ -698,9 +697,11 @@ export interface JobPhoto {
   approvalStatus: PhotoApprovalStatus
   qualityScore?: number
   uploadedAt: string
-  fileSize: number
+  fileSize?: number
   width?: number
   height?: number
+  storagePath?: string
+  moderatorNote?: string
 }
 
 export interface PhotoUploadResult {
