@@ -10,6 +10,7 @@ export async function GET(request: NextRequest) {
     if (!stripeSecretKey) {
       return NextResponse.json({ error: 'Stripe not configured' }, { status: 500 })
     }
+    const { searchParams } = request.nextUrl
 
     const { searchParams } = request.nextUrl
     const accountId = searchParams.get('accountId')
