@@ -11,7 +11,6 @@ import PeerBenchmarkingCard from '@/components/growth/PeerBenchmarkingCard'
 import SkillsDemandAnalysis from '@/components/growth/SkillsDemandAnalysis'
 import CompletionVelocityChart from '@/components/growth/CompletionVelocityChart'
 import RatingTrajectoryChart from '@/components/growth/RatingTrajectoryChart'
-import SuccessRecommendation from '@/components/growth/SuccessRecommendation';
 import type { GrowthScore, EarningsTrend, PeerComparison, ChurnRiskProfile, LifecycleStage } from '@/types'
 
 export default function GrowthDashboardPage() {
