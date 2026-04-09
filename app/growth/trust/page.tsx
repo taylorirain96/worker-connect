@@ -113,8 +113,9 @@ export default function TrustMediationPage() {
         <div className="bg-[#0f172a] rounded-lg p-6 border border-gray-700 mb-6">
           <h3 className="text-lg font-semibold text-white mb-4">Submit New Appeal</h3>
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-400 mb-2">Reason for Appeal</label>
+            <label htmlFor="appeal-reason" className="block text-sm font-medium text-gray-400 mb-2">Reason for Appeal</label>
             <textarea
+              id="appeal-reason"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               className="w-full bg-[#1a2332] border border-gray-700 rounded-lg p-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#b822e4] focus:border-transparent"
