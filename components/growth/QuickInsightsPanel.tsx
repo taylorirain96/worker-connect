@@ -42,7 +42,7 @@ export default function QuickInsightsPanel({ growthScore, churnRisk, lifecycle }
       </Card>
 
       {/* Churn Risk Card */}
-      <Card className="bg-[#0f172a] border-slate-800">
+    <Card className="bg-[#0f172a] border-slate-800 shadow-glow transition-all duration-300 hover:scale-[1.02]">
         <CardContent className="p-6">
           <div className={`inline-flex p-2 rounded-lg mb-3 ${RISK_COLORS[churnRisk.level]}`}>
             <Shield className="h-5 w-5" />
