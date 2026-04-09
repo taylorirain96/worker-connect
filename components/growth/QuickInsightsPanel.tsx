@@ -10,51 +10,58 @@ interface Props {
 }
 
 const RISK_COLORS = {
-  low:      'text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20',
-  medium:   'text-amber-500 bg-amber-50 dark:bg-amber-900/20',
-  high:     'text-rose-500 bg-rose-50 dark:bg-rose-900/20',
-  critical: 'text-red-600 bg-red-50 dark:bg-red-900/20',
+  low:      'text-[#08d9d6] bg-[#08d9d6]/10', // Vibrant Teal
+  medium:   'text-[#e97be4] bg-[#e97be4]/10', // Moody Pink
+  high:     'text-rose-500 bg-rose-500/10',
+  critical: 'text-red-600 bg-red-600/10',
 }
 
 const STAGE_COLORS = {
-  new:       'text-blue-500 bg-blue-50 dark:bg-blue-900/20',
-  active:    'text-green-500 bg-green-50 dark:bg-green-900/20',
-  pro:       'text-purple-500 bg-purple-50 dark:bg-purple-900/20',
-  master:    'text-amber-500 bg-amber-50 dark:bg-amber-900/20',
-  'at-risk': 'text-rose-500 bg-rose-50 dark:bg-rose-900/20',
+  new:       'text-slate-400 bg-slate-800',
+  active:    'text-[#08d9d6] bg-[#08d9d6]/10',
+  pro:       'text-[#b822e4] bg-[#b822e4]/10',
+  master:    'text-[#e97be4] bg-[#e97be4]/10',
+  'at-risk': 'text-rose-500 bg-rose-500/10',
 }
 
 export default function QuickInsightsPanel({ growthScore, churnRisk, lifecycle }: Props) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      <Card>
-        <CardContent>
-          <div className={`inline-flex p-2 rounded-lg mb-3 ${growthScore.score >= 70 ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-amber-50 dark:bg-amber-900/20'}`}>
-            <TrendingUp className={`h-5 w-5 ${growthScore.score >= 70 ? 'text-emerald-500' : 'text-amber-500'}`} />
+      {/* Growth Score Card */}
+      <Card className="bg-[#0f172a] border-slate-800 breathing-glow">
+        <CardContent className="p-6">
+          <div className={`inline-flex p-2 rounded-lg mb-3 bg-[#b822e4]/10`}>
+            <TrendingUp className="h-5 w-5 text-[#b822e4]" />
           </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Growth Score</p>
-          <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{growthScore.score}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 capitalize">{growthScore.trend} trend</p>
+          <p className="text-sm text-slate-400 font-medium">Growth Score</p>
+          <p className="text-3xl font-bold text-white mt-1">{growthScore.score}</p>
+          <p className="text-xs text-[#08d9d6] mt-1 font-semibold uppercase tracking-wider capitalize">
+            {growthScore.trend} trend
+          </p>
         </CardContent>
       </Card>
-      <Card>
-        <CardContent>
+
+      {/* Churn Risk Card */}
+      <Card className="bg-[#0f172a] border-slate-800">
+        <CardContent className="p-6">
           <div className={`inline-flex p-2 rounded-lg mb-3 ${RISK_COLORS[churnRisk.level]}`}>
-            <Shield className={`h-5 w-5 ${RISK_COLORS[churnRisk.level].split(' ')[0]}`} />
+            <Shield className="h-5 w-5" />
           </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Churn Risk</p>
-          <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1 capitalize">{churnRisk.level}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Score: {churnRisk.score}/100</p>
+          <p className="text-sm text-slate-400 font-medium">Churn Risk</p>
+          <p className="text-3xl font-bold text-white mt-1 capitalize">{churnRisk.level}</p>
+          <p className="text-xs text-slate-400 mt-1">Score: {churnRisk.score}/100</p>
         </CardContent>
       </Card>
-      <Card>
-        <CardContent>
+
+      {/* Lifecycle Stage Card */}
+      <Card className="bg-[#0f172a] border-slate-800">
+        <CardContent className="p-6">
           <div className={`inline-flex p-2 rounded-lg mb-3 ${STAGE_COLORS[lifecycle.stage]}`}>
-            <Star className={`h-5 w-5 ${STAGE_COLORS[lifecycle.stage].split(' ')[0]}`} />
+            <Star className="h-5 w-5" />
           </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Lifecycle Stage</p>
-          <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{lifecycle.label}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{lifecycle.progressToNext}% to next</p>
+          <p className="text-sm text-slate-400 font-medium">Lifecycle Stage</p>
+          <p className="text-3xl font-bold text-white mt-1">{lifecycle.label}</p>
+          <p className="text-xs text-slate-400 mt-1">{lifecycle.progressToNext}% to next level</p>
         </CardContent>
       </Card>
     </div>
