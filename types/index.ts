@@ -577,7 +577,6 @@ export interface UserStats {
   }
 }
 
-export type PhotoType = 'before' | 'after' | 'progress' | 'other'
 // ─── Referral & Rewards Types ─────────────────────────────────────────────────
 
 export type ReferralStatus = 'pending' | 'signed_up' | 'completed_3' | 'completed_50' | 'trusted_pro'
@@ -683,7 +682,7 @@ export interface MonthlyEarnings {
 
 // ─── Photo Reviews Types ──────────────────────────────────────────────────────
 
-export type PhotoType = 'before' | 'after' | 'general'
+export type PhotoType = 'before' | 'after' | 'progress' | 'other' | 'general'
 export type PhotoApprovalStatus = 'pending' | 'approved' | 'flagged'
 
 export interface JobPhoto {
@@ -698,9 +697,11 @@ export interface JobPhoto {
   approvalStatus: PhotoApprovalStatus
   qualityScore?: number
   uploadedAt: string
-  fileSize: number
+  fileSize?: number
   width?: number
   height?: number
+  storagePath?: string
+  moderatorNote?: string
 }
 
 export interface PhotoUploadResult {
@@ -1501,4 +1502,123 @@ export interface SkillLevel {
   level: 'none' | 'beginner' | 'intermediate' | 'advanced' | 'expert'
   certifications: Certification[]
   lastUpdated: string
+}
+
+// ─── Growth & Intelligence Types ──────────────────────────────────────────────
+
+export interface GrowthScore {
+  score: number
+  trend: 'up' | 'down' | 'stable'
+  breakdown: {
+    earnings: number
+    completionRate: number
+    rating: number
+    engagement: number
+    growth: number
+  }
+  calculatedAt: string
+}
+
+export interface EarningsTrend {
+  period: string
+  earnings: number
+  jobs: number
+  avgPerJob: number
+}
+
+export interface JobRecommendation {
+  id: string
+  jobId: string
+  title: string
+  employer: string
+  budget: number
+  location: string
+  category: string
+  skills: string[]
+  score: number
+  breakdown: {
+    skills: number
+    rating: number
+    location: number
+    availability: number
+    specialization: number
+  }
+  postedAt: string
+  expiresAt?: string
+}
+
+export interface RecommendationFeedback {
+  workerId: string
+  jobId: string
+  action: 'like' | 'dislike' | 'applied' | 'dismissed'
+  timestamp: string
+}
+
+export interface EarningsProjection {
+  month: string
+  projected: number
+  low: number
+  high: number
+  confidence: number
+}
+
+export interface RateBenchmark {
+  skill: string
+  workerRate: number
+  marketAvg: number
+  topPercentile: number
+  region: string
+  trend: 'up' | 'down' | 'stable'
+}
+
+export interface PerformanceMetrics {
+  category: string
+  completionRate: number
+  avgRating: number
+  totalJobs: number
+  earnings: number
+  avgDuration: number
+}
+
+export interface PeerComparison {
+  metric: string
+  workerValue: number
+  peerAvg: number
+  topPercentile: number
+  percentile: number
+}
+
+export interface ChurnRiskProfile {
+  workerId: string
+  score: number
+  level: 'low' | 'medium' | 'high' | 'critical'
+  factors: Array<{
+    factor: string
+    impact: number
+    description: string
+  }>
+  lastActivity: string
+  recommendations: string[]
+}
+
+export interface LifecycleStage {
+  stage: 'new' | 'active' | 'pro' | 'master' | 'at-risk'
+  label: string
+  description: string
+  nextStage?: string
+  progressToNext: number
+  requirements: string[]
+}
+
+export interface EngagementScore {
+  score: number
+  trend: 'up' | 'down' | 'stable'
+  factors: {
+    loginFrequency: number
+    jobApplications: number
+    completionRate: number
+    responseTime: number
+    profileCompleteness: number
+  }
+  period: string
 }

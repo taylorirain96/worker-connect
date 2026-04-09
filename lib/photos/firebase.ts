@@ -117,7 +117,7 @@ export async function getWorkerPhotos(workerId: string): Promise<JobPhoto[]> {
 }
 
 /** Fetch all photos pending moderation (admin) */
-export async function getPendingPhotos(): Promise<JobPhoto[]> {
+export async function getPendingPhotos(limit?: number): Promise<JobPhoto[]> {
   if (!db) return []
   const q = query(
     collection(db, 'jobPhotos'),
@@ -125,7 +125,24 @@ export async function getPendingPhotos(): Promise<JobPhoto[]> {
     orderBy('uploadedAt', 'desc')
   )
   const snap = await getDocs(q)
-  return snap.docs.map((d) => docToPhoto(d.id, d.data() as Record<string, unknown>))
+  const photos = snap.docs.map((d) => docToPhoto(d.id, d.data() as Record<string, unknown>))
+  return limit ? photos.slice(0, limit) : photos
+}
+
+/** Moderate a photo (approve or flag) with optional notes and quality score */
+export async function moderatePhoto(
+  photoId: string,
+  action: 'approve' | 'flag',
+  _moderatorId: string,
+  note?: string,
+  qualityScore?: number
+): Promise<void> {
+  if (!db) return
+  const status: PhotoApprovalStatus = action === 'approve' ? 'approved' : 'flagged'
+  const updates: Record<string, unknown> = { approvalStatus: status }
+  if (qualityScore !== undefined) updates.qualityScore = qualityScore
+  if (note) updates.moderatorNote = note
+  await updateDoc(doc(db, 'jobPhotos', photoId), updates)
 }
 
 /** Update a photo's approval status (admin moderation) */

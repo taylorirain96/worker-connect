@@ -2,10 +2,14 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import Button from '@/components/ui/Button'
 import Link from 'next/link'
-import { ArrowLeft, Star, CheckCircle, MapPin, Briefcase, MessageSquare, Camera } from 'lucide-react'
-import { getInitials } from '@/lib/utils'
+import { ArrowLeft, Star, CheckCircle, MapPin, Briefcase, MessageSquare, Trophy, DollarSign, Users, Camera } from 'lucide-react'
+import { getInitials, formatCurrency } from '@/lib/utils'
 import PhotoGallery from '@/components/jobs/PhotoGallery'
 import type { JobPhoto } from '@/types'
+import { LEADERBOARD_BADGE_DEFINITIONS } from '@/lib/leaderboard/rankingLogic'
+import { generateReferralCode } from '@/lib/referrals/referralLogic'
+import { BADGE_DEFINITIONS } from '@/lib/services/gamificationService'
+import ReviewSummary from '@/components/reviews/ReviewSummary'
 
 // Mock photo data for profile display
 const MOCK_PROFILE_PHOTOS: JobPhoto[] = [
@@ -46,12 +50,6 @@ const MOCK_PROFILE_PHOTOS: JobPhoto[] = [
     fileSize: 2_100_000,
   },
 ]
-import { ArrowLeft, Star, CheckCircle, MapPin, Briefcase, MessageSquare, Trophy, DollarSign, Users, Camera } from 'lucide-react'
-import { getInitials, formatCurrency } from '@/lib/utils'
-import { LEADERBOARD_BADGE_DEFINITIONS } from '@/lib/leaderboard/rankingLogic'
-import { generateReferralCode } from '@/lib/referrals/referralLogic'
-import { BADGE_DEFINITIONS } from '@/lib/services/gamificationService'
-import ReviewSummary from '@/components/reviews/ReviewSummary'
 
 /** Mock leaderboard data — replaced by real data once Firebase is wired. */
 const MOCK_RANK = {
