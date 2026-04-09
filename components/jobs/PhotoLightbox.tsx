@@ -1,14 +1,9 @@
 'use client'
 import { useEffect, useCallback } from 'react'
+import Image from 'next/image'
 import { X, ChevronLeft, ChevronRight, Download } from 'lucide-react'
 import type { JobPhoto } from '@/types'
 import { formatDateTime } from '@/lib/utils'
-
-import { useEffect, useCallback } from 'react'
-import Image from 'next/image'
-import type { JobPhoto } from '@/types'
-import { X, ChevronLeft, ChevronRight, Download, User, Clock } from 'lucide-react'
-import { formatRelativeDate } from '@/lib/utils'
 
 interface PhotoLightboxProps {
   photos: JobPhoto[]
