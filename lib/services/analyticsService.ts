@@ -5,6 +5,7 @@
  */
 
 import { formatCurrency } from '@/lib/utils'
+import type { EarningsTrend, GrowthScore } from '@/types'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -327,4 +328,63 @@ function downloadCSV(csv: string, filename: string): void {
   link.click()
   document.body.removeChild(link)
   URL.revokeObjectURL(url)
+}
+
+// ─── Growth & Intelligence additions ──────────────────────────────────────────
+
+export async function getEarningsTrends(
+  _workerId: string,
+  period: 'daily' | 'weekly' | 'monthly' = 'monthly'
+): Promise<EarningsTrend[]> {
+  await new Promise((r) => setTimeout(r, 300))
+
+  if (period === 'monthly') {
+    return last12Months().map((p, i) => {
+      const earnings = Math.round(2500 + Math.sin(i * 0.8) * 800 + Math.random() * 500)
+      const jobs = Math.round(6 + Math.sin(i * 0.6) * 3)
+      return { period: p, earnings, jobs, avgPerJob: Math.round(earnings / jobs) }
+    })
+  }
+  if (period === 'weekly') {
+    return Array.from({ length: 12 }, (_, i) => {
+      const earnings = Math.round(700 + Math.sin(i * 0.5) * 200)
+      const jobs = Math.round(2 + Math.sin(i * 0.4))
+      return { period: `Wk ${i + 1}`, earnings, jobs, avgPerJob: Math.round(earnings / Math.max(1, jobs)) }
+    })
+  }
+  return last30DayLabels().slice(0, 14).map((p, i) => {
+    const earnings = Math.round(180 + Math.sin(i * 0.7) * 80)
+    const jobs = Math.round(1 + Math.sin(i * 0.5) * 0.5)
+    return { period: p, earnings, jobs, avgPerJob: Math.round(earnings / Math.max(1, jobs)) }
+  })
+}
+
+export async function getGrowthScore(_workerId: string): Promise<GrowthScore> {
+  await new Promise((r) => setTimeout(r, 200))
+  return {
+    score: 76,
+    trend: 'up',
+    breakdown: {
+      earnings:       80,
+      completionRate: 90,
+      rating:         85,
+      engagement:     70,
+      growth:         65,
+    },
+    calculatedAt: new Date().toISOString(),
+  }
+}
+
+export async function getSkillsDemand(
+  _workerId: string
+): Promise<Array<{ skill: string; demand: number; trend: string; avgRate: number }>> {
+  await new Promise((r) => setTimeout(r, 200))
+  return [
+    { skill: 'Plumbing',   demand: 92, trend: 'up',     avgRate: 75 },
+    { skill: 'Electrical', demand: 88, trend: 'up',     avgRate: 90 },
+    { skill: 'HVAC',       demand: 85, trend: 'stable', avgRate: 105 },
+    { skill: 'Carpentry',  demand: 76, trend: 'stable', avgRate: 72 },
+    { skill: 'Painting',   demand: 68, trend: 'down',   avgRate: 60 },
+    { skill: 'Roofing',    demand: 81, trend: 'up',     avgRate: 95 },
+  ]
 }
