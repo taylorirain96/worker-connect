@@ -42,21 +42,22 @@ export default function QuickInsightsPanel({ growthScore, churnRisk, lifecycle }
         </CardContent>
       </Card>
 
-      {/* Churn Risk Card */}
-    <Link href="/growth/trust" className="block">
-      <Card className="bg-[#0f172a] border-slate-800 shadow-glow transition-all duration-300 hover:scale-[1.02] cursor-pointer">
-        <CardContent className="p-6">
-          <div className={`inline-flex p-2 rounded-lg mb-3 ${RISK_COLORS[churnRisk.level]}`}>
-            <Shield className="h-5 w-5" />
-          </div>
-          <p className="text-sm text-slate-400 font-medium">Churn Risk</p>
-          <p className="text-3xl font-bold text-white mt-1 capitalize">{churnRisk.level}</p>
-          <p className="text-xs text-slate-400 mt-1">Score: {churnRisk.score}/100</p>
-        </CardContent>
-      </Card>
-</Link>
+      {/* Churn Risk Card - Linked to Trust */}
+      <Link href="/growth/trust" className="block">
+        <Card className="bg-[#0f172a] border-slate-800 shadow-glow transition-all duration-300 hover:scale-[1.02] cursor-pointer">
+          <CardContent className="p-6">
+            <div className={`inline-flex p-2 rounded-lg mb-3 ${RISK_COLORS[churnRisk.level]}`}>
+              <Shield className="h-5 w-5" />
+            </div>
+            <p className="text-sm text-slate-400 font-medium">Churn Risk</p>
+            <p className="text-3xl font-bold text-white mt-1 capitalize">{churnRisk.level}</p>
+            <p className="text-xs text-slate-400 mt-1">Score: {churnRisk.score}/100</p>
+          </CardContent>
+        </Card>
+      </Link>
+
       {/* Lifecycle Stage Card */}
-     <Card className="bg-[#0f172a] border-slate-800 shadow-glow transition-all duration-300 hover:scale-[1.02]">
+      <Card className="bg-[#0f172a] border-slate-800 shadow-glow transition-all duration-300 hover:scale-[1.02]">
         <CardContent className="p-6">
           <div className={`inline-flex p-2 rounded-lg mb-3 ${STAGE_COLORS[lifecycle.stage]}`}>
             <Star className="h-5 w-5" />
