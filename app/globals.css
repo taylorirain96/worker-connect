@@ -31,3 +31,38 @@
     -webkit-line-clamp: 3;
   }
 }
+/* --- MISSION DIRECTIVE: MOODY GLOW ENGINE --- */
+:root {
+  --moody-gradient: linear-gradient(90deg, #b822e4, #e97be4);
+}
+
+@keyframes light-sweep {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes breathing-glow {
+  0%, 100% { box-shadow: 0 0 5px 0 rgba(184, 34, 228, 0.2); }
+  50% { box-shadow: 0 0 25px 0 rgba(233, 123, 228, 0.4); }
+}
+
+.sweep-border {
+  position: relative;
+  z-index: 1;
+}
+
+.sweep-border::before {
+  content: '';
+  position: absolute;
+  inset: -2px; /* Subtle high-end border width */
+  border-radius: 1rem;
+  background: var(--moody-gradient);
+  background-size: 200% 200%;
+  animation: light-sweep 3s linear infinite;
+  z-index: -1;
+  filter: blur(2px) brightness(1.1);
+}
+
+.breathing-glow {
+  animation: breathing-glow 4s ease-in-out infinite;
+}
