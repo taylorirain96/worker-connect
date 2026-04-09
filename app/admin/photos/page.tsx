@@ -48,7 +48,7 @@ const MOCK_PHOTOS: JobPhoto[] = [
     workerName: 'Sarah Williams',
     url: 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=400',
     storagePath: 'job-photos/2/w2/general.jpg',
-    type: 'general',
+    type: 'other',
     caption: 'Electrical panel upgrade in progress',
     approvalStatus: 'pending',
     uploadedAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
