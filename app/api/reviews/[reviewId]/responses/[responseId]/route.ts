@@ -8,10 +8,10 @@ import { updateReviewResponse, deleteReviewResponse } from '@/lib/reviews/fireba
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string; responseId: string } }
+  { params }: { params: { reviewId: string; responseId: string } }
 ) {
   try {
-    const { id } = params
+    const { reviewId } = params
     const body = await request.json()
     const { text } = body
 
@@ -23,8 +23,8 @@ export async function PUT(
       return NextResponse.json({ error: 'Response must be 1000 characters or fewer' }, { status: 400 })
     }
 
-    await updateReviewResponse(id, text)
-    return NextResponse.json({ reviewId: id, text, updatedAt: new Date().toISOString() })
+    await updateReviewResponse(reviewId, text)
+    return NextResponse.json({ reviewId, text, updatedAt: new Date().toISOString() })
   } catch (error) {
     console.error('Update response error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -33,12 +33,12 @@ export async function PUT(
 
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: { id: string; responseId: string } }
+  { params }: { params: { reviewId: string; responseId: string } }
 ) {
   try {
-    const { id } = params
-    await deleteReviewResponse(id)
-    return NextResponse.json({ reviewId: id, message: 'Response deleted' })
+    const { reviewId } = params
+    await deleteReviewResponse(reviewId)
+    return NextResponse.json({ reviewId, message: 'Response deleted' })
   } catch (error) {
     console.error('Delete response error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

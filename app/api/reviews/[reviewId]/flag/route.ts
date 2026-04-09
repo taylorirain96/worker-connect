@@ -7,10 +7,10 @@ const VALID_REASONS: ReviewReport['reason'][] = ['spam', 'inappropriate', 'fake'
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { reviewId: string } }
 ) {
   try {
-    const { id } = params
+    const { reviewId } = params
     const body = await request.json()
     const { reporterId, reason, description } = body
 
@@ -25,8 +25,8 @@ export async function POST(
       )
     }
 
-    await reportReview(id, reporterId, reason as ReviewReport['reason'], description)
-    return NextResponse.json({ reviewId: id, status: 'flagged' }, { status: 201 })
+    await reportReview(reviewId, reporterId, reason as ReviewReport['reason'], description)
+    return NextResponse.json({ reviewId, status: 'flagged' }, { status: 201 })
   } catch (error) {
     console.error('Flag review error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

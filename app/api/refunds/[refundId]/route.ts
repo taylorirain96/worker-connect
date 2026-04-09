@@ -11,19 +11,19 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
 }
 
 /**
- * GET /api/refunds/[id]  — fetch a single refund
- * PUT /api/refunds/[id]  — update refund status
+ * GET /api/refunds/[refundId]  — fetch a single refund
+ * PUT /api/refunds/[refundId]  — update refund status
  */
 export async function GET(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: { refundId: string } }
 ) {
   try {
-    const { id } = params
-    if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
+    const { refundId } = params
+    if (!refundId) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
 
     try {
-      const snap = await adminDb.collection('refunds').doc(id).get()
+      const snap = await adminDb.collection('refunds').doc(refundId).get()
       if (!snap.exists) {
         return NextResponse.json({ error: 'Refund not found' }, { status: 404 })
       }
@@ -32,24 +32,24 @@ export async function GET(
       return NextResponse.json({ error: 'Refund not found' }, { status: 404 })
     }
   } catch (error) {
-    console.error('GET /api/refunds/[id] error:', error)
+    console.error('GET /api/refunds/[refundId] error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: { refundId: string } }
 ) {
   try {
-    const { id } = params
+    const { refundId } = params
     const body = await request.json() as {
       status?: string
       failureReason?: string
       stripeRefundId?: string
     }
 
-    if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
+    if (!refundId) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
 
     const { status, failureReason, stripeRefundId } = body
 
@@ -65,7 +65,7 @@ export async function PUT(
     if (stripeRefundId) updates.stripeRefundId = stripeRefundId
 
     try {
-      const snap = await adminDb.collection('refunds').doc(id).get()
+      const snap = await adminDb.collection('refunds').doc(refundId).get()
       if (!snap.exists) {
         return NextResponse.json({ error: 'Refund not found' }, { status: 404 })
       }
@@ -93,15 +93,15 @@ export async function PUT(
     }
 
     try {
-      await adminDb.collection('refunds').doc(id).update(updates)
-      console.log(`Refund ${id} updated: status=${status}`)
+      await adminDb.collection('refunds').doc(refundId).update(updates)
+      console.log(`Refund ${refundId} updated: status=${status}`)
     } catch {
       console.warn('Firestore unavailable — returning mock update response')
     }
 
-    return NextResponse.json({ id, status, updatedAt: now })
+    return NextResponse.json({ id: refundId, status, updatedAt: now })
   } catch (error) {
-    console.error('PUT /api/refunds/[id] error:', error)
+    console.error('PUT /api/refunds/[refundId] error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

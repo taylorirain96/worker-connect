@@ -4,10 +4,10 @@ import { FieldValue } from 'firebase-admin/firestore'
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: { applicationId: string } }
 ) {
   try {
-    const { id } = params
+    const { applicationId } = params
     const body = await request.json()
     const { status } = body as { status: string }
 
@@ -15,7 +15,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
     }
 
-    const appRef = adminDb.collection('applications').doc(id)
+    const appRef = adminDb.collection('applications').doc(applicationId)
     const snapshot = await appRef.get()
     if (!snapshot.exists) {
       return NextResponse.json({ error: 'Application not found' }, { status: 404 })
@@ -23,7 +23,7 @@ export async function PUT(
 
     await appRef.update({ status, updatedAt: FieldValue.serverTimestamp() })
 
-    return NextResponse.json({ id, status, updatedAt: new Date().toISOString() })
+    return NextResponse.json({ id: applicationId, status, updatedAt: new Date().toISOString() })
   } catch (error) {
     console.error('Update application error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

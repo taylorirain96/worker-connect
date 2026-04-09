@@ -2,23 +2,23 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 /**
- * GET  /api/payments/[id]  — fetch a single payment
- * POST /api/payments/[id]  — confirm / capture the payment
+ * GET  /api/payments/[paymentId]  — fetch a single payment
+ * POST /api/payments/[paymentId]  — confirm / capture the payment
  */
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { paymentId: string } }
 ) {
   try {
-    const { id } = params
+    const { paymentId } = params
 
-    if (!id) {
+    if (!paymentId) {
       return NextResponse.json({ error: 'Missing payment id' }, { status: 400 })
     }
 
-    // In production: fetch from Firestore via paymentService.getPayment(id)
+    // In production: fetch from Firestore via paymentService.getPayment(paymentId)
     const mockPayment = {
-      id,
+      id: paymentId,
       jobId: 'job_1',
       jobTitle: 'Plumbing Repair — Kitchen Sink',
       employerId: 'emp_1',
@@ -26,28 +26,28 @@ export async function GET(
       amount: 320,
       currency: 'usd',
       status: 'completed',
-      stripePaymentIntentId: `pi_${id}`,
+      stripePaymentIntentId: `pi_${paymentId}`,
       createdAt: new Date(Date.now() - 8 * 86400000).toISOString(),
       updatedAt: new Date(Date.now() - 8 * 86400000).toISOString(),
     }
 
     return NextResponse.json({ payment: mockPayment })
   } catch (error) {
-    console.error('GET /api/payments/[id] error:', error)
+    console.error('GET /api/payments/[paymentId] error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { paymentId: string } }
 ) {
   try {
-    const { id } = params
+    const { paymentId } = params
     const body = await req.json() as { action?: string; paymentMethodId?: string }
-    const { action = 'confirm', paymentMethodId } = body
+    const { action = 'confirm', paymentMethodId: _paymentMethodId } = body
 
-    if (!id) {
+    if (!paymentId) {
       return NextResponse.json({ error: 'Missing payment id' }, { status: 400 })
     }
 
@@ -60,29 +60,28 @@ export async function POST(
       // In production:
       // const { getStripe } = await import('@/lib/payments/stripe')
       // const stripe = getStripe()
-      // const paymentIntent = await stripe.paymentIntents.confirm(id, {
-      //   payment_method: paymentMethodId,
+      // const paymentIntent = await stripe.paymentIntents.confirm(paymentId, {
+      //   payment_method: _paymentMethodId,
       // })
       // await updatePaymentStatus(paymentIntent.metadata.paymentId, 'completed')
       // return NextResponse.json({ status: paymentIntent.status })
 
-      // paymentMethodId will be passed to stripe.paymentIntents.confirm() in production
-    void paymentMethodId
-      return NextResponse.json({ status: 'succeeded', paymentIntentId: id })
+      // _paymentMethodId will be passed to stripe.paymentIntents.confirm() in production
+      return NextResponse.json({ status: 'succeeded', paymentIntentId: paymentId })
     }
 
     if (action === 'refund') {
       // In production:
       // const stripe = getStripe()
-      // const refund = await stripe.refunds.create({ payment_intent: id })
+      // const refund = await stripe.refunds.create({ payment_intent: paymentId })
       // await updatePaymentStatus(paymentId, 'refunded')
 
-      return NextResponse.json({ status: 'refunded', paymentIntentId: id })
+      return NextResponse.json({ status: 'refunded', paymentIntentId: paymentId })
     }
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
   } catch (error) {
-    console.error('POST /api/payments/[id] error:', error)
+    console.error('POST /api/payments/[paymentId] error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -15,23 +15,23 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
 }
 
 /**
- * GET  /api/invoices/[id]   — fetch a single invoice
- * PUT  /api/invoices/[id]   — update invoice (status transitions, etc.)
- * PATCH /api/invoices/[id]  — alias for PUT (legacy support)
+ * GET  /api/invoices/[invoiceId]   — fetch a single invoice
+ * PUT  /api/invoices/[invoiceId]   — update invoice (status transitions, etc.)
+ * PATCH /api/invoices/[invoiceId]  — alias for PUT (legacy support)
  */
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { invoiceId: string } }
 ) {
   try {
-    const { id } = params
+    const { invoiceId } = params
 
-    if (!id) {
+    if (!invoiceId) {
       return NextResponse.json({ error: 'Missing invoice id' }, { status: 400 })
     }
 
     try {
-      const snap = await adminDb.collection('invoices').doc(id).get()
+      const snap = await adminDb.collection('invoices').doc(invoiceId).get()
       if (!snap.exists) {
         return NextResponse.json({ error: 'Invoice not found' }, { status: 404 })
       }
@@ -39,7 +39,7 @@ export async function GET(
     } catch {
       // Mock fallback when Firestore unavailable
       const mockInvoice = {
-        id,
+        id: invoiceId,
         invoiceNumber: 'INV-20260408-0001',
         jobId: 'job_1',
         jobTitle: 'Plumbing Repair — Kitchen Sink',
@@ -60,21 +60,21 @@ export async function GET(
       return NextResponse.json({ invoice: mockInvoice })
     }
   } catch (error) {
-    console.error('GET /api/invoices/[id] error:', error)
+    console.error('GET /api/invoices/[invoiceId] error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 async function handleUpdate(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { invoiceId: string } }
 ) {
   try {
-    const { id } = params
+    const { invoiceId } = params
     const body = await req.json() as { status?: string; [key: string]: unknown }
     const { status, ...rest } = body
 
-    if (!id) {
+    if (!invoiceId) {
       return NextResponse.json({ error: 'Missing invoice id' }, { status: 400 })
     }
 
@@ -83,7 +83,7 @@ async function handleUpdate(
     if (status !== undefined) {
       // Validate status transition
       try {
-        const snap = await adminDb.collection('invoices').doc(id).get()
+        const snap = await adminDb.collection('invoices').doc(invoiceId).get()
         if (!snap.exists) {
           return NextResponse.json({ error: 'Invoice not found' }, { status: 404 })
         }
@@ -104,18 +104,17 @@ async function handleUpdate(
     }
 
     try {
-      await adminDb.collection('invoices').doc(id).update(updates)
-      console.log(`Invoice ${id} updated: status=${status ?? 'no change'}`)
+      await adminDb.collection('invoices').doc(invoiceId).update(updates)
+      console.log(`Invoice ${invoiceId} updated: status=${status ?? 'no change'}`)
     } catch {
       console.warn('Firestore unavailable — returning mock update response')
     }
 
-    return NextResponse.json({ id, status: status ?? 'unchanged', updatedAt: new Date().toISOString() })
+    return NextResponse.json({ id: invoiceId, status: status ?? 'unchanged', updatedAt: new Date().toISOString() })
   } catch (error) {
-    console.error('PUT /api/invoices/[id] error:', error)
+    console.error('PUT /api/invoices/[invoiceId] error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 export { handleUpdate as PUT, handleUpdate as PATCH }
-
