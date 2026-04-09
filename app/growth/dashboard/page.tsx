@@ -1,4 +1,5 @@
 'use client'
+import SuccessRecommendation from '@/components/growth/SuccessRecommendation';
 import { useState, useEffect } from 'react'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
@@ -10,6 +11,7 @@ import PeerBenchmarkingCard from '@/components/growth/PeerBenchmarkingCard'
 import SkillsDemandAnalysis from '@/components/growth/SkillsDemandAnalysis'
 import CompletionVelocityChart from '@/components/growth/CompletionVelocityChart'
 import RatingTrajectoryChart from '@/components/growth/RatingTrajectoryChart'
+import SuccessRecommendation from '@/components/growth/SuccessRecommendation';
 import type { GrowthScore, EarningsTrend, PeerComparison, ChurnRiskProfile, LifecycleStage } from '@/types'
 
 export default function GrowthDashboardPage() {
@@ -71,7 +73,13 @@ export default function GrowthDashboardPage() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Growth Dashboard</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">Track your performance, earnings, and career growth</p>
         </div>
-
+<div className="mb-6">
+  <SuccessRecommendation 
+    title="Growth Opportunity: Premium Certification" 
+    description="Your performance is in the top 5%. Unlock high-tier business tasks by completing your Advanced Verification now."
+    actionLabel="Unlock Now"
+  />
+</div>
         <div className="mb-6">
           <QuickInsightsPanel growthScore={growthScore} churnRisk={churnRisk} lifecycle={lifecycle} />
         </div>
