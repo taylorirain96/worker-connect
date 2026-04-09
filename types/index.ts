@@ -682,7 +682,9 @@ export interface MonthlyEarnings {
 
 // ─── Photo Reviews Types ──────────────────────────────────────────────────────
 
+
 export type PhotoType = 'before' | 'after' | 'progress' | 'other' | 'general'
+
 export type PhotoApprovalStatus = 'pending' | 'approved' | 'flagged'
 
 export interface JobPhoto {
