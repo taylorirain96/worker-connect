@@ -8,7 +8,7 @@ import Button from '@/components/ui/Button'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import Badge from '@/components/ui/Badge'
-import { Users, Briefcase, DollarSign, TrendingUp, AlertTriangle, CheckCircle, Clock } from 'lucide-react'
+import { Users, Briefcase, DollarSign, TrendingUp, AlertTriangle, CheckCircle, Clock, BookOpen } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 
 const MOCK_ADMIN_STATS = {
@@ -144,6 +144,26 @@ export default function AdminPage() {
                 </Card>
               ))}
             </div>
+          </div>
+
+          {/* Master Playbook */}
+          <div className="mb-8">
+            <Link href="/admin/master-playbook" className="block group">
+              <div className="bg-gradient-to-r from-primary-600 to-indigo-600 rounded-2xl p-6 text-white shadow-md hover:shadow-lg transition-shadow">
+                <div className="flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+                    <BookOpen className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h2 className="text-lg font-bold">Master Playbook</h2>
+                    <p className="text-primary-100 text-sm mt-0.5">
+                      QuickTrade growth, SEO, authority signals &amp; NZ launch strategy — always up to date.
+                    </p>
+                  </div>
+                  <div className="text-primary-200 group-hover:translate-x-1 transition-transform">→</div>
+                </div>
+              </div>
+            </Link>
           </div>
 
           <div className="grid lg:grid-cols-2 gap-6">
