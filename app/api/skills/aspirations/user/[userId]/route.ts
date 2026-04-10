@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'  // ✅ CORRECT
+import type { NextRequest } from 'next/server'  // 
 import { getSkillAspirations } from '@/lib/services/skillAspirationService'
 
 export const dynamic = 'force-dynamic'
