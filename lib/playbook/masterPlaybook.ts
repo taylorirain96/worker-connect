@@ -26,6 +26,7 @@ export interface PlaybookSubsection {
   title: string
   items?: PlaybookCheckItem[]
   note?: string
+  subsections?: PlaybookSubsection[]
 }
 
 export const MASTER_PLAYBOOK: PlaybookSection[] = [
@@ -355,7 +356,7 @@ Website: https://quicktrade.co.nz
 Phone: [your phone]
 Email: hello@quicktrade.co.nz
 Address: Blenheim, Marlborough 7201, New Zealand
-Service Area: New Zealand (NZ, AU, US)
+Service Area: New Zealand (expand to AU and US in later phases)
 Founded: 2024`,
       },
       {
