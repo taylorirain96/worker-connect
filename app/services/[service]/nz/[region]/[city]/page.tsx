@@ -4,238 +4,261 @@ import Link from 'next/link'
 import Script from 'next/script'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
-import Button from '@/components/ui/Button'
 import {
   SERVICES,
   LOCATIONS,
-  NEARBY_MESH,
   getServiceBySlug,
   getLocation,
+  getNearbyLocations,
 } from '@/lib/seo/servicesData'
 
-const BASE = 'https://quicktrade.co.nz'
+const SITE_URL = 'https://quicktrade.co.nz'
 
 interface Props {
   params: Promise<{ service: string; region: string; city: string }>
 }
 
-export function generateStaticParams() {
-  return SERVICES.flatMap((s) =>
-    LOCATIONS.map((l) => ({
-      service: s.slug,
-      region: l.regionSlug,
-      city: l.citySlug,
-    })),
-  )
+export async function generateStaticParams() {
+  const paths: { service: string; region: string; city: string }[] = []
+  for (const service of SERVICES) {
+    for (const loc of LOCATIONS) {
+      paths.push({
+        service: service.slug,
+        region: loc.regionSlug,
+        city: loc.citySlug,
+      })
+    }
+  }
+  return paths
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { service: serviceSlug, region: regionSlug, city: citySlug } = await params
   const service = getServiceBySlug(serviceSlug)
   const location = getLocation(regionSlug, citySlug)
+
   if (!service || !location) return {}
 
   const title = `${service.namePlural} in ${location.cityName} | QuickTrade NZ`
   const description = `Find trusted ${service.namePlural} in ${location.cityName}, ${location.regionName}. Compare quotes and reviews on QuickTrade — New Zealand's trusted services marketplace.`
-  const canonical = `${BASE}/services/${serviceSlug}/nz/${regionSlug}/${citySlug}`
+  const canonical = `${SITE_URL}/services/${service.slug}/nz/${location.regionSlug}/${location.citySlug}`
 
   return {
     title,
     description,
     alternates: { canonical },
-    openGraph: { title, description, url: canonical, type: 'website' },
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+      type: 'website',
+    },
   }
 }
 
-export default async function ServiceLocationPage({ params }: Props) {
+export default async function ServiceCityPage({ params }: Props) {
   const { service: serviceSlug, region: regionSlug, city: citySlug } = await params
   const service = getServiceBySlug(serviceSlug)
   const location = getLocation(regionSlug, citySlug)
 
   if (!service || !location) notFound()
 
-  const canonical = `${BASE}/services/${serviceSlug}/nz/${regionSlug}/${citySlug}`
-  const meshKey = `${regionSlug}/${citySlug}`
-  const nearbyKeys = NEARBY_MESH[meshKey] ?? []
-
-  const nearbyLocations = nearbyKeys
-    .map((k) => {
-      const [r, c] = k.split('/')
-      return getLocation(r, c)
-    })
-    .filter((l): l is NonNullable<typeof l> => l != null)
-
+  const canonical = `${SITE_URL}/services/${service.slug}/nz/${location.regionSlug}/${location.citySlug}`
+  const nearbyLocations = getNearbyLocations(location.regionSlug, location.citySlug)
   const otherLocations = LOCATIONS.filter(
-    (l) => !(l.regionSlug === regionSlug && l.citySlug === citySlug),
+    (l) => !(l.regionSlug === location.regionSlug && l.citySlug === location.citySlug),
   )
+  const otherServices = SERVICES.filter((s) => s.slug !== service.slug)
 
-  const otherServices = SERVICES.filter((s) => s.slug !== serviceSlug)
-
-  const isHeatPumps = serviceSlug === 'heat-pumps-air-conditioning'
+  const isHeatPumps = service.slug === 'heat-pumps-air-conditioning'
 
   const introExtra = isHeatPumps
-    ? ` Whether you need air conditioning installed or an aircon system serviced,`
+    ? ` Whether you need a new heat pump, air conditioning system, or aircon servicing,`
     : ''
 
-  const jsonLd = [
-    {
-      '@context': 'https://schema.org',
-      '@type': 'Service',
-      name: `${service.namePlural} in ${location.cityName}`,
-      description: `Find trusted ${service.namePlural} in ${location.cityName}, ${location.regionName} on QuickTrade.`,
-      areaServed: {
-        '@type': 'City',
+  const serviceJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Service',
+    name: service.name,
+    description: `${service.description}${introExtra}`,
+    areaServed: {
+      '@type': 'City',
+      name: location.cityName,
+      containedInPlace: {
+        '@type': 'AdministrativeArea',
+        name: location.regionName,
+      },
+    },
+    provider: {
+      '@type': 'Organization',
+      name: 'QuickTrade',
+      url: SITE_URL,
+    },
+  }
+
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: SITE_URL,
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Services',
+        item: `${SITE_URL}/services`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: service.name,
+        item: `${SITE_URL}/services/${service.slug}`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 4,
         name: location.cityName,
-        containedInPlace: {
-          '@type': 'AdministrativeArea',
-          name: location.regionName,
-          containedInPlace: {
-            '@type': 'Country',
-            name: 'New Zealand',
-          },
-        },
+        item: canonical,
       },
-      provider: {
-        '@type': 'Organization',
-        name: 'QuickTrade',
-        url: BASE,
-      },
-      url: canonical,
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: BASE },
-        { '@type': 'ListItem', position: 2, name: 'Services', item: `${BASE}/services` },
-        {
-          '@type': 'ListItem',
-          position: 3,
-          name: service.name,
-          item: `${BASE}/services/${serviceSlug}`,
-        },
-        {
-          '@type': 'ListItem',
-          position: 4,
-          name: location.cityName,
-          item: canonical,
-        },
-      ],
-    },
-  ]
+    ],
+  }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="flex flex-col min-h-screen luxury-bg">
       <Script
-        id="jsonld-service-location"
+        id="jsonld-service"
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceJsonLd) }}
+      />
+      <Script
+        id="jsonld-breadcrumb"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
 
       <Navbar />
 
       <main className="flex-1">
         {/* Hero */}
-        <section className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 py-12 px-4">
+        <section
+          className="relative overflow-hidden py-20 px-4"
+          style={{ background: 'linear-gradient(135deg, #0a0f1e 0%, #111827 60%, #0a0f1e 100%)' }}
+        >
           <div className="max-w-4xl mx-auto">
             {/* Breadcrumb */}
-            <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-sm text-gray-500 mb-6 flex-wrap">
-              <Link href="/" className="hover:text-primary-600 transition-colors">Home</Link>
-              <span aria-hidden="true">&gt;</span>
-              <Link href="/services" className="hover:text-primary-600 transition-colors">Services</Link>
-              <span aria-hidden="true">&gt;</span>
-              <Link href={`/services/${serviceSlug}`} className="hover:text-primary-600 transition-colors">
-                {service.name}
-              </Link>
-              <span aria-hidden="true">&gt;</span>
-              <span className="text-gray-900 dark:text-white">{location.cityName}</span>
+            <nav className="flex items-center gap-2 text-sm text-slate-400 mb-6 flex-wrap">
+              <Link href="/" className="hover:text-white transition-colors">Home</Link>
+              <span>›</span>
+              <Link href="/services" className="hover:text-white transition-colors">Services</Link>
+              <span>›</span>
+              <Link href={`/services/${service.slug}`} className="hover:text-white transition-colors">{service.name}</Link>
+              <span>›</span>
+              <span className="text-slate-300">{location.cityName}</span>
             </nav>
 
-            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              {service.namePlural} in {location.cityName}
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 text-sm font-medium mb-6">
+              <span>🇳🇿</span>
+              <span>{location.cityName}, {location.regionName}</span>
+            </div>
+            <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4 tracking-tight">
+              {service.namePlural} in{' '}
+              <span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
+                {location.cityName}
+              </span>
             </h1>
-            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl">
-              Looking for trusted {service.namePlural} in {location.cityName}?{introExtra} QuickTrade
-              connects you with verified local {service.namePlural} across {location.regionName}. Get
-              quotes, compare reviews, and hire with confidence.
+            <p className="text-lg text-slate-400 max-w-2xl">
+              Looking for trusted {service.namePlural} in {location.cityName}? QuickTrade connects
+              you with verified local {service.namePlural} across {location.regionName}.
+              {isHeatPumps
+                ? ' Whether you need a heat pump, air conditioning, or aircon servicing, we have you covered.'
+                : ''}{' '}
+              Get quotes, compare reviews, and hire with confidence.
             </p>
           </div>
         </section>
 
-        <div className="max-w-4xl mx-auto px-4 py-10 space-y-12">
-          {/* CTA */}
-          <Card>
-            <CardContent>
-              <p className="text-gray-700 dark:text-gray-300 mb-4">
-                Post a job and receive quotes from local {service.namePlural} in {location.cityName}{' '}
-                today.
-              </p>
-              <Link href="/auth/register">
-                <Button>Get Free Quotes</Button>
-              </Link>
-            </CardContent>
-          </Card>
+        {/* CTA */}
+        <section className="py-10 px-4 bg-indigo-600/10 border-y border-indigo-500/20">
+          <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
+            <p className="text-slate-300 text-lg">
+              Post a job on QuickTrade and receive quotes from local{' '}
+              <strong className="text-white">{service.namePlural}</strong> in {location.cityName} today.
+            </p>
+            <Link
+              href="/auth/register"
+              className="shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-3 rounded-xl transition-colors"
+            >
+              Get Free Quotes
+            </Link>
+          </div>
+        </section>
 
-          {/* Other locations for this service */}
-          <section>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-              Other locations for {service.name}
-            </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {otherLocations.map((loc) => (
-                <Link
-                  key={`${loc.regionSlug}/${loc.citySlug}`}
-                  href={`/services/${serviceSlug}/nz/${loc.regionSlug}/${loc.citySlug}`}
-                  className="block p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-primary-500 hover:shadow-sm transition-all text-sm text-gray-700 dark:text-gray-300"
-                >
-                  {loc.cityName}
-                  <span className="block text-xs text-gray-400 dark:text-gray-500">
-                    {loc.regionName}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </section>
-
-          {/* Nearby areas */}
-          {nearbyLocations.length > 0 && (
-            <section>
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                Nearby areas
+        {/* Nearby areas */}
+        {nearbyLocations.length > 0 && (
+          <section className="py-12 px-4">
+            <div className="max-w-5xl mx-auto">
+              <h2 className="text-xl font-bold text-white mb-6">
+                Nearby areas for {service.name}
               </h2>
               <div className="flex flex-wrap gap-3">
-                {nearbyLocations.map((loc) => (
+                {nearbyLocations.map((nearby) => (
                   <Link
-                    key={`${loc.regionSlug}/${loc.citySlug}`}
-                    href={`/services/${serviceSlug}/nz/${loc.regionSlug}/${loc.citySlug}`}
-                    className="px-4 py-2 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-primary-500 hover:shadow-sm transition-all text-sm text-gray-700 dark:text-gray-300"
+                    key={`${nearby.regionSlug}/${nearby.citySlug}`}
+                    href={`/services/${service.slug}/nz/${nearby.regionSlug}/${nearby.citySlug}`}
+                    className="px-4 py-2 rounded-full bg-slate-800 border border-slate-700 text-slate-300 text-sm hover:border-indigo-500/50 hover:text-white transition-all"
                   >
-                    {service.namePlural} in {loc.cityName}
+                    {service.namePlural} in {nearby.cityName}
                   </Link>
                 ))}
               </div>
-            </section>
-          )}
+            </div>
+          </section>
+        )}
 
-          {/* Other services in this city */}
-          <section>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-              Other services in {location.cityName}
+        {/* Other locations for this service */}
+        <section className="py-12 px-4 border-t border-slate-800">
+          <div className="max-w-5xl mx-auto">
+            <h2 className="text-xl font-bold text-white mb-6">
+              Other locations for {service.name}
             </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {otherServices.map((svc) => (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+              {otherLocations.map((loc) => (
                 <Link
-                  key={svc.slug}
-                  href={`/services/${svc.slug}/nz/${regionSlug}/${citySlug}`}
-                  className="block p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-primary-500 hover:shadow-sm transition-all text-sm text-gray-700 dark:text-gray-300"
+                  key={`${loc.regionSlug}/${loc.citySlug}`}
+                  href={`/services/${service.slug}/nz/${loc.regionSlug}/${loc.citySlug}`}
+                  className="p-3 rounded-xl bg-slate-900/70 border border-slate-700/50 hover:border-indigo-500/40 hover:shadow-[0_0_16px_rgba(99,102,241,0.1)] transition-all duration-200 text-center"
                 >
-                  {svc.name}
+                  <p className="text-sm font-medium text-slate-200">{loc.cityName}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{loc.regionName}</p>
                 </Link>
               ))}
             </div>
-          </section>
-        </div>
+          </div>
+        </section>
+
+        {/* Other services in this city */}
+        <section className="py-12 px-4 border-t border-slate-800">
+          <div className="max-w-5xl mx-auto">
+            <h2 className="text-xl font-bold text-white mb-6">
+              Other services in {location.cityName}
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              {otherServices.map((svc) => (
+                <Link
+                  key={svc.slug}
+                  href={`/services/${svc.slug}/nz/${location.regionSlug}/${location.citySlug}`}
+                  className="p-3 rounded-xl bg-slate-900/70 border border-slate-700/50 hover:border-indigo-500/40 hover:shadow-[0_0_16px_rgba(99,102,241,0.1)] transition-all duration-200"
+                >
+                  <p className="text-sm font-medium text-slate-200">{svc.name}</p>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
       </main>
 
       <Footer />

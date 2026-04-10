@@ -2,159 +2,158 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
-import Button from '@/components/ui/Button'
-import { CheckCircle, Award, RefreshCw } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Partner with QuickTrade | QuickTrade NZ',
   description:
     "Become a QuickTrade partner. Get listed on New Zealand's trusted services marketplace and earn a verified partner badge for your website.",
-  alternates: { canonical: 'https://quicktrade.co.nz/partners' },
+  alternates: {
+    canonical: 'https://quicktrade.co.nz/partners',
+  },
 }
 
 export default function PartnersPage() {
+  const embedCode = `<a href="https://quicktrade.co.nz">
+  <img src="https://quicktrade.co.nz/partner-badge.png" alt="QuickTrade Verified Partner">
+</a>`
+
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="flex flex-col min-h-screen luxury-bg">
       <Navbar />
 
       <main className="flex-1">
         {/* Hero */}
-        <section className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 py-16 px-4">
-          <div className="max-w-3xl mx-auto text-center">
-            <p className="text-sm font-semibold text-primary-600 uppercase tracking-widest mb-3">
-              Partners
-            </p>
-            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              Become a QuickTrade Partner
+        <section
+          className="relative overflow-hidden py-20 px-4"
+          style={{ background: 'linear-gradient(135deg, #0a0f1e 0%, #111827 60%, #0a0f1e 100%)' }}
+        >
+          <div className="max-w-4xl mx-auto text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 text-sm font-medium mb-6">
+              <span>🤝</span>
+              <span>Partner Programme</span>
+            </div>
+            <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4 tracking-tight">
+              Become a{' '}
+              <span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
+                QuickTrade Partner
+              </span>
             </h1>
-            <p className="text-lg text-gray-600 dark:text-gray-300">
-              Join New Zealand&rsquo;s trusted services network. We partner with property managers,
-              trade suppliers, and local businesses across Marlborough, Nelson, Wellington, and
-              beyond.
+            <p className="text-lg text-slate-400 max-w-2xl mx-auto">
+              Join New Zealand&apos;s trusted services marketplace and grow your business through
+              mutual referrals and verified exposure.
             </p>
           </div>
         </section>
 
-        <div className="max-w-3xl mx-auto px-4 py-12 space-y-10">
-          {/* Benefits */}
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-              Partner Benefits
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {[
-                {
-                  icon: CheckCircle,
-                  title: 'Free Partner Listing',
-                  desc: 'Get your business listed on QuickTrade at no cost — visible to thousands of homeowners and businesses across NZ.',
-                },
-                {
-                  icon: Award,
-                  title: 'Verified Partner Badge',
-                  desc: "Display the QuickTrade Verified Partner badge on your website, email signature, and marketing materials.",
-                },
-                {
-                  icon: RefreshCw,
-                  title: 'Mutual Referrals',
-                  desc: 'We send job leads your way; you refer your clients to QuickTrade for services outside your scope.',
-                },
-              ].map((b) => (
-                <Card key={b.title} padding="sm">
-                  <CardHeader>
-                    <div className="flex items-center gap-2 mb-1">
-                      <b.icon className="h-5 w-5 text-primary-600" />
-                      <CardTitle className="text-sm">{b.title}</CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">{b.desc}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-
-          {/* How it works */}
-          <Card>
-            <CardHeader>
-              <CardTitle>How It Works</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ol className="space-y-4">
-                {[
-                  { step: '1', text: 'Apply via email — tell us about your business and the services or referrals you can offer.' },
-                  { step: '2', text: "We review your application and set up a free listing on QuickTrade within 5 business days." },
-                  { step: '3', text: 'Once approved, download your Verified Partner Badge and embed it on your website.' },
-                ].map((item) => (
-                  <li key={item.step} className="flex gap-3">
-                    <span className="flex-shrink-0 w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 flex items-center justify-center text-sm font-bold">
-                      {item.step}
-                    </span>
-                    <p className="text-gray-700 dark:text-gray-300 text-sm pt-1">{item.text}</p>
-                  </li>
-                ))}
-              </ol>
-            </CardContent>
-          </Card>
-
-          {/* Badge preview */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Partner Badge Preview</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="inline-flex items-center gap-3 px-5 py-3 rounded-xl border-2 border-primary-600 bg-white dark:bg-gray-900 shadow-sm mb-4">
-                <Award className="h-7 w-7 text-primary-600" />
-                <div>
-                  <p className="text-xs font-bold text-primary-600 uppercase tracking-wide">
-                    Verified Partner
+        <section className="py-16 px-4">
+          <div className="max-w-5xl mx-auto space-y-12">
+            {/* Benefits */}
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-6">Partnership Benefits</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <div className="rounded-2xl bg-slate-900/70 border border-slate-700/50 p-6">
+                  <div className="text-3xl mb-3">📋</div>
+                  <h3 className="text-lg font-semibold text-white mb-2">Free Partner Listing</h3>
+                  <p className="text-slate-400 text-sm">
+                    Your business featured on the QuickTrade partners page — visible to thousands
+                    of NZ homeowners and businesses.
                   </p>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white">QuickTrade NZ</p>
+                </div>
+                <div className="rounded-2xl bg-slate-900/70 border border-slate-700/50 p-6">
+                  <div className="text-3xl mb-3">🛡️</div>
+                  <h3 className="text-lg font-semibold text-white mb-2">Verified Partner Badge</h3>
+                  <p className="text-slate-400 text-sm">
+                    Embed our badge on your website to show customers you&apos;re a verified
+                    QuickTrade partner.
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-slate-900/70 border border-slate-700/50 p-6">
+                  <div className="text-3xl mb-3">🔄</div>
+                  <h3 className="text-lg font-semibold text-white mb-2">Mutual Referrals</h3>
+                  <p className="text-slate-400 text-sm">
+                    We refer customers your way, and you refer customers to us. A simple win-win
+                    for both businesses.
+                  </p>
                 </div>
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
-                Embed code for your website:
+            </div>
+
+            {/* How it works */}
+            <div className="rounded-2xl bg-slate-900/70 border border-slate-700/50 p-8">
+              <h2 className="text-2xl font-bold text-white mb-6">How It Works</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                {[
+                  { step: '1', title: 'Apply', desc: 'Email partners@quicktrade.co.nz with your business details.' },
+                  { step: '2', title: 'Get Listed', desc: "We'll review your application and add you to our partners page." },
+                  { step: '3', title: 'Embed Badge', desc: 'Download the partner badge and add it to your website.' },
+                ].map(({ step, title, desc }) => (
+                  <div key={step} className="flex items-start gap-4">
+                    <div className="shrink-0 w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold">
+                      {step}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-white">{title}</p>
+                      <p className="text-slate-400 text-sm mt-1">{desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Badge preview */}
+            <div className="rounded-2xl bg-slate-900/70 border border-slate-700/50 p-8">
+              <h2 className="text-2xl font-bold text-white mb-6">Partner Badge Preview</h2>
+              <div className="flex flex-col sm:flex-row items-start gap-8">
+                <div className="inline-flex items-center gap-3 px-6 py-4 rounded-xl border-2 border-indigo-500 bg-indigo-500/10">
+                  <span className="text-2xl">🛡️</span>
+                  <div>
+                    <p className="font-bold text-white text-sm">QuickTrade</p>
+                    <p className="text-indigo-400 text-xs font-semibold tracking-wide uppercase">
+                      Verified Partner
+                    </p>
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-slate-400 mb-2">Embed code (copy &amp; paste):</p>
+                  <pre className="bg-slate-800 border border-slate-700 rounded-lg p-4 text-xs text-slate-300 overflow-x-auto whitespace-pre-wrap break-all">
+                    {embedCode}
+                  </pre>
+                </div>
+              </div>
+            </div>
+
+            {/* Target partners */}
+            <div className="rounded-2xl bg-indigo-500/10 border border-indigo-500/30 p-8">
+              <p className="text-slate-300">
+                <span className="font-semibold text-white">Who we&apos;re looking for: </span>
+                We&apos;re especially looking for property managers, trade suppliers, and local
+                businesses in Marlborough, Nelson, and Wellington.
               </p>
-              <pre className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 text-xs text-gray-700 dark:text-gray-300 overflow-x-auto whitespace-pre-wrap">
-                {`<!-- QuickTrade Verified Partner Badge -->
-<a href="https://quicktrade.co.nz/partners" target="_blank" rel="noopener">
-  <img src="https://quicktrade.co.nz/badge-partner.png"
-       alt="QuickTrade Verified Partner"
-       width="200" height="60" />
-</a>`}
-              </pre>
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Target partners note */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Who We Partner With</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                <li>🏠 Property managers and real estate agencies (especially Marlborough &amp; Nelson)</li>
-                <li>🔨 Trade suppliers, hardware stores, and building merchants</li>
-                <li>🏢 Local businesses that regularly need home or commercial services</li>
-                <li>🌿 Lifestyle block owners and rural property managers in NZ</li>
-              </ul>
-            </CardContent>
-          </Card>
-
-          {/* CTA */}
-          <div className="text-center space-y-3">
-            <a href="mailto:partners@quicktrade.co.nz">
-              <Button size="lg">Apply to Become a Partner</Button>
-            </a>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Email:{' '}
-              <a href="mailto:partners@quicktrade.co.nz" className="text-primary-600 hover:underline">
-                partners@quicktrade.co.nz
+            {/* CTA */}
+            <div className="text-center">
+              <a
+                href="mailto:partners@quicktrade.co.nz"
+                className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-lg transition-colors"
+              >
+                Apply to Become a Partner
               </a>
-            </p>
+              <p className="text-slate-500 text-sm mt-3">
+                Email us at{' '}
+                <a href="mailto:partners@quicktrade.co.nz" className="text-indigo-400 hover:text-indigo-300 transition-colors">
+                  partners@quicktrade.co.nz
+                </a>
+              </p>
+            </div>
+
+            <div className="text-center">
+              <Link href="/services" className="text-slate-400 hover:text-white transition-colors text-sm">
+                ← Browse all services
+              </Link>
+            </div>
           </div>
-        </div>
+        </section>
       </main>
 
       <Footer />

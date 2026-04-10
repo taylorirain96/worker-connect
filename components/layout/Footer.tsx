@@ -33,6 +33,11 @@ export default function Footer() {
             <h4 className="font-semibold text-gray-900 dark:text-white mb-4">Platform</h4>
             <ul className="space-y-2 text-sm text-gray-500 dark:text-gray-400">
               <li>
+                <Link href="/services" className="hover:text-primary-600 transition-colors">
+                  Services
+                </Link>
+              </li>
+              <li>
                 <Link href="/jobs" className="hover:text-primary-600 transition-colors">
                   Browse Jobs
                 </Link>
@@ -60,8 +65,23 @@ export default function Footer() {
             </ul>
           </div>
           <div>
-            <h4 className="font-semibold text-gray-900 dark:text-white mb-4">Support</h4>
+            <h4 className="font-semibold text-gray-900 dark:text-white mb-4">Company</h4>
             <ul className="space-y-2 text-sm text-gray-500 dark:text-gray-400">
+              <li>
+                <Link href="/press" className="hover:text-primary-600 transition-colors">
+                  Press &amp; Media
+                </Link>
+              </li>
+              <li>
+                <Link href="/partners" className="hover:text-primary-600 transition-colors">
+                  Partners
+                </Link>
+              </li>
+              <li>
+                <Link href="/reports/nz-home-services-price-index" className="hover:text-primary-600 transition-colors">
+                  Price Index
+                </Link>
+              </li>
               <li>
                 <Link href="/help" className="hover:text-primary-600 transition-colors">
                   Help Center

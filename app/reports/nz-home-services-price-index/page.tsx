@@ -3,26 +3,17 @@ import Link from 'next/link'
 import Script from 'next/script'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
-
-const BASE = 'https://quicktrade.co.nz'
-const PAGE_URL = `${BASE}/reports/nz-home-services-price-index`
 
 export const metadata: Metadata = {
   title: 'NZ Home Services Price Index 2026 | QuickTrade',
   description:
     'New Zealand home services pricing data for 2026. Average costs for plumbing, electrical, cleaning, and more — based on QuickTrade platform data.',
-  alternates: { canonical: PAGE_URL },
-  openGraph: {
-    title: 'NZ Home Services Price Index 2026 | QuickTrade',
-    description:
-      'New Zealand home services pricing data for 2026. Average costs for plumbing, electrical, cleaning, and more.',
-    url: PAGE_URL,
-    type: 'article',
+  alternates: {
+    canonical: 'https://quicktrade.co.nz/reports/nz-home-services-price-index',
   },
 }
 
-const PRICE_DATA = [
+const priceData = [
   {
     service: 'Plumbing (hourly)',
     nzAvg: '$90–$150/hr',
@@ -38,7 +29,7 @@ const PRICE_DATA = [
     wellington: '$100–$165/hr',
   },
   {
-    service: 'House Cleaning',
+    service: 'House Cleaning (per session)',
     nzAvg: '$80–$180',
     blenheim: '$75–$150',
     auckland: '$90–$200',
@@ -81,158 +72,165 @@ const PRICE_DATA = [
   },
 ]
 
-export default function NZPriceIndexPage() {
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Article',
-    headline: 'NZ Home Services Price Index 2026',
-    description:
-      'New Zealand home services pricing data for 2026. Average costs for plumbing, electrical, cleaning, and more — based on QuickTrade platform data.',
-    url: PAGE_URL,
-    author: {
-      '@type': 'Organization',
-      name: 'QuickTrade',
-      url: BASE,
-    },
-    publisher: {
-      '@type': 'Organization',
-      name: 'QuickTrade',
-      url: BASE,
-    },
-    datePublished: '2026-04-01',
-    dateModified: '2026-04-10',
-    about: {
-      '@type': 'Thing',
-      name: 'Home Services Pricing in New Zealand',
-    },
-  }
+const articleJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Report',
+  name: 'NZ Home Services Price Index 2026',
+  description:
+    'New Zealand home services pricing data for 2026. Average costs for plumbing, electrical, cleaning, and more — based on QuickTrade platform data.',
+  url: 'https://quicktrade.co.nz/reports/nz-home-services-price-index',
+  datePublished: '2026-04-01',
+  publisher: {
+    '@type': 'Organization',
+    name: 'QuickTrade',
+    url: 'https://quicktrade.co.nz',
+  },
+}
+
+export default function PriceIndexPage() {
+  const shareUrl = 'https://quicktrade.co.nz/reports/nz-home-services-price-index'
+  const shareText = 'NZ Home Services Price Index 2026 — average costs for plumbing, electrical, cleaning and more from QuickTrade'
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="flex flex-col min-h-screen luxury-bg">
       <Script
-        id="jsonld-price-index"
+        id="jsonld-report"
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
       />
 
       <Navbar />
 
       <main className="flex-1">
-        {/* Header */}
-        <section className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 py-16 px-4">
-          <div className="max-w-3xl mx-auto">
-            <p className="text-sm font-semibold text-primary-600 uppercase tracking-widest mb-3">
-              Reports
-            </p>
-            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-              NZ Home Services Price Index 2026
+        {/* Hero */}
+        <section
+          className="relative overflow-hidden py-20 px-4"
+          style={{ background: 'linear-gradient(135deg, #0a0f1e 0%, #111827 60%, #0a0f1e 100%)' }}
+        >
+          <div className="max-w-4xl mx-auto text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 text-sm font-medium mb-6">
+              <span>📊</span>
+              <span>QuickTrade Research</span>
+            </div>
+            <h1 className="text-4xl sm:text-5xl font-bold text-white mb-3 tracking-tight">
+              NZ Home Services{' '}
+              <span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
+                Price Index 2026
+              </span>
             </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-              Early Edition — April 2026
-            </p>
-            <p className="text-lg text-gray-600 dark:text-gray-300">
-              This index provides indicative pricing ranges for common home services across New
-              Zealand, compiled from QuickTrade platform data and market research. Use it as a
-              starting point when budgeting for home maintenance, repairs, or improvements.
+            <p className="text-slate-400 text-lg">
+              Early Edition — based on QuickTrade platform data as at April 2026
             </p>
           </div>
         </section>
 
-        <div className="max-w-3xl mx-auto px-4 py-12 space-y-10">
-          {/* Methodology note */}
-          <Card className="border-amber-300 dark:border-amber-600 bg-amber-50 dark:bg-amber-900/20">
-            <CardHeader>
-              <CardTitle className="text-amber-800 dark:text-amber-300">
-                ⚠ Methodology &amp; Disclaimer
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-amber-700 dark:text-amber-300">
-                Prices shown are <strong>indicative ranges only</strong> based on early QuickTrade
-                platform data and publicly available market information as at April 2026. Actual
-                costs vary based on job complexity, materials, access, and individual provider
-                rates. Always request quotes from multiple providers before committing.
+        <section className="py-16 px-4">
+          <div className="max-w-5xl mx-auto space-y-10">
+            {/* Intro */}
+            <div className="rounded-2xl bg-slate-900/70 border border-slate-700/50 p-8">
+              <p className="text-slate-300 leading-relaxed">
+                Understanding what home services cost in New Zealand can be difficult. QuickTrade
+                has compiled this early price index from jobs posted and quoted on our platform to
+                give homeowners a transparent starting point. Prices vary by region, job complexity,
+                and urgency — always get multiple quotes before committing.
               </p>
-            </CardContent>
-          </Card>
-
-          {/* Price table */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Price Ranges by City</CardTitle>
-            </CardHeader>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
-                    <th className="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-300">
-                      Service
-                    </th>
-                    <th className="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-300">
-                      NZ Average
-                    </th>
-                    <th className="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-300">
-                      Blenheim
-                    </th>
-                    <th className="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-300">
-                      Auckland
-                    </th>
-                    <th className="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-300">
-                      Wellington
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {PRICE_DATA.map((row, i) => (
-                    <tr
-                      key={row.service}
-                      className={`border-b border-gray-100 dark:border-gray-800 ${
-                        i % 2 === 0 ? '' : 'bg-gray-50/50 dark:bg-gray-800/30'
-                      }`}
-                    >
-                      <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">
-                        {row.service}
-                      </td>
-                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{row.nzAvg}</td>
-                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{row.blenheim}</td>
-                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{row.auckland}</td>
-                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{row.wellington}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
             </div>
-          </Card>
 
-          {/* Share */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Share This Report</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                Found this useful? Share it with homeowners, property managers, or anyone budgeting
-                for home services in New Zealand.
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-500 font-mono break-all">
-                {PAGE_URL}
-              </p>
-            </CardContent>
-          </Card>
+            {/* Methodology */}
+            <div className="rounded-2xl bg-amber-500/10 border border-amber-500/30 p-6">
+              <div className="flex items-start gap-3">
+                <span className="text-xl shrink-0">⚠️</span>
+                <div>
+                  <p className="font-semibold text-amber-300 mb-1">Methodology Note</p>
+                  <p className="text-slate-400 text-sm leading-relaxed">
+                    This is an early-stage index based on a limited sample of QuickTrade platform
+                    data. Figures represent indicative ranges only and will be updated as more data
+                    is collected. Always get multiple quotes.
+                  </p>
+                </div>
+              </div>
+            </div>
 
-          {/* CTA */}
-          <div className="text-center">
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
-              Ready to get real quotes? Find trusted service providers on QuickTrade.
-            </p>
-            <Link
-              href="/services"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-semibold transition-colors"
-            >
-              Find Trusted Service Providers
-            </Link>
+            {/* Price table */}
+            <div className="rounded-2xl bg-slate-900/70 border border-slate-700/50 overflow-hidden">
+              <div className="p-6 border-b border-slate-700/50">
+                <h2 className="text-xl font-bold text-white">Indicative Price Ranges</h2>
+                <p className="text-slate-500 text-sm mt-1">
+                  All figures are indicative only. Actual prices may vary.
+                </p>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-700/50">
+                      <th className="text-left p-4 text-slate-300 font-semibold whitespace-nowrap">Service</th>
+                      <th className="text-left p-4 text-slate-300 font-semibold whitespace-nowrap">NZ Average</th>
+                      <th className="text-left p-4 text-slate-300 font-semibold whitespace-nowrap">Blenheim/Marlborough</th>
+                      <th className="text-left p-4 text-slate-300 font-semibold whitespace-nowrap">Auckland</th>
+                      <th className="text-left p-4 text-slate-300 font-semibold whitespace-nowrap">Wellington</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {priceData.map((row, i) => (
+                      <tr
+                        key={row.service}
+                        className={`border-b border-slate-800/50 ${i % 2 === 0 ? 'bg-slate-900/30' : ''}`}
+                      >
+                        <td className="p-4 text-slate-200 font-medium whitespace-nowrap">{row.service}</td>
+                        <td className="p-4 text-slate-300">{row.nzAvg}</td>
+                        <td className="p-4 text-slate-400">{row.blenheim}</td>
+                        <td className="p-4 text-slate-400">{row.auckland}</td>
+                        <td className="p-4 text-slate-400">{row.wellington}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Share */}
+            <div className="rounded-2xl bg-slate-900/70 border border-slate-700/50 p-6">
+              <h2 className="text-lg font-bold text-white mb-4">Share this report</h2>
+              <div className="flex flex-wrap gap-3">
+                <a
+                  href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 text-sm hover:border-indigo-500/50 hover:text-white transition-all"
+                >
+                  Share on X (Twitter)
+                </a>
+                <a
+                  href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 text-sm hover:border-indigo-500/50 hover:text-white transition-all"
+                >
+                  Share on LinkedIn
+                </a>
+                <a
+                  href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 text-sm hover:border-indigo-500/50 hover:text-white transition-all"
+                >
+                  Share on Facebook
+                </a>
+              </div>
+            </div>
+
+            {/* CTA */}
+            <div className="text-center">
+              <p className="text-slate-400 mb-4">Find trusted service providers on QuickTrade</p>
+              <Link
+                href="/services"
+                className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-lg transition-colors"
+              >
+                Browse All Services
+              </Link>
+            </div>
           </div>
-        </div>
+        </section>
       </main>
 
       <Footer />
