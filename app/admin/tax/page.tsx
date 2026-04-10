@@ -14,7 +14,7 @@ import {
   FileText, DollarSign, CheckCircle, Clock,
   Download, RefreshCw, Search, Send,
   LayoutDashboard, AlertTriangle, Users, Briefcase,
-  Activity, Settings, BarChart2, Menu, X,
+  Activity, Settings, BarChart2, Menu, X, BookOpen,
 } from 'lucide-react'
 import type { TaxForm1099NEC } from '@/types'
 
@@ -29,6 +29,7 @@ const NAV_ITEMS = [
   { label: 'System Health',        href: '/admin/monitoring',icon: Activity },
   { label: 'Analytics',            href: '/admin/analytics', icon: BarChart2 },
   { label: 'Tax & 1099s',          href: '/admin/tax',       icon: FileText },
+  { label: 'Master Playbook',      href: '/admin/playbook',  icon: BookOpen },
   { label: 'Settings',             href: '/admin',           icon: Settings },
 ]
 
