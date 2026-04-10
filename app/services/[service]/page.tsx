@@ -4,28 +4,26 @@ import Link from 'next/link'
 import Script from 'next/script'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
-import { SERVICES, getService } from '@/lib/seo/services'
-import { NZ_REGIONS } from '@/lib/seo/regions'
-import { buildServicePageJsonLd } from '@/lib/seo/jsonld'
+import { SERVICES, LOCATIONS, getServiceBySlug } from '@/lib/seo/servicesData'
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://worker-connect.vercel.app'
+const SITE_URL = 'https://quicktrade.co.nz'
 
 interface Props {
   params: Promise<{ service: string }>
 }
 
 export async function generateStaticParams() {
-  return SERVICES.map((s) => ({ service: s.id }))
+  return SERVICES.map((s) => ({ service: s.slug }))
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { service: serviceId } = await params
-  const service = getService(serviceId)
+  const { service: serviceSlug } = await params
+  const service = getServiceBySlug(serviceSlug)
   if (!service) return {}
 
-  const title = `${service.label} Services | QuickTrade New Zealand`
-  const description = `Looking for a trusted ${service.label.toLowerCase()} professional? Browse vetted ${service.label.toLowerCase()} workers across New Zealand on QuickTrade. Compare profiles, read real reviews, and hire with confidence.`
-  const canonical = `${SITE_URL}/services/${service.id}`
+  const title = `${service.name} in New Zealand | QuickTrade`
+  const description = `Find trusted ${service.namePlural} across New Zealand on QuickTrade. Get quotes, compare reviews, and hire local ${service.namePlural} today.`
+  const canonical = `${SITE_URL}/services/${service.slug}`
 
   return {
     title,
@@ -41,12 +39,29 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function ServicePage({ params }: Props) {
-  const { service: serviceId } = await params
-  const service = getService(serviceId)
+  const { service: serviceSlug } = await params
+  const service = getServiceBySlug(serviceSlug)
   if (!service) notFound()
 
-  const canonical = `${SITE_URL}/services/${service.id}`
-  const jsonLd = buildServicePageJsonLd(service, canonical)
+  const canonical = `${SITE_URL}/services/${service.slug}`
+  const isHeatPumps = service.slug === 'heat-pumps-air-conditioning'
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Service',
+    name: service.name,
+    description: service.description,
+    areaServed: {
+      '@type': 'Country',
+      name: 'New Zealand',
+    },
+    provider: {
+      '@type': 'Organization',
+      name: 'QuickTrade',
+      url: SITE_URL,
+    },
+    url: canonical,
+  }
 
   return (
     <div className="flex flex-col min-h-screen luxury-bg">
@@ -70,63 +85,54 @@ export default async function ServicePage({ params }: Props) {
               <span>/</span>
               <Link href="/services" className="hover:text-slate-300 transition-colors">Services</Link>
               <span>/</span>
-              <span className="text-slate-300">{service.label}</span>
+              <span className="text-slate-300">{service.name}</span>
             </nav>
 
-            <div className="flex items-center gap-4 mb-4">
-              <span className="text-4xl" aria-hidden="true">{service.icon}</span>
-              <span className="inline-flex items-center px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-xs font-medium">
-                {service.group}
-              </span>
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 text-sm font-medium mb-6">
+              <span>🇳🇿</span>
+              <span>New Zealand</span>
             </div>
 
             <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4 tracking-tight">
-              {service.label}{' '}
+              {service.name}{' '}
               <span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
-                Services
+                in New Zealand
               </span>
             </h1>
 
             <p className="text-lg text-slate-400 max-w-2xl mb-8">
-              {service.description} Browse verified {service.label.toLowerCase()} professionals
-              across New Zealand — real reviews, transparent pricing, and secure payments.
+              {service.description}{' '}
+              {isHeatPumps
+                ? 'Whether you need air conditioning, aircon servicing, or a new heat pump installation, our verified professionals are ready to help. '
+                : ''}
+              Browse verified {service.namePlural} across New Zealand — real reviews, transparent
+              pricing, and secure payments.
             </p>
-
-            <div className="flex flex-wrap gap-2">
-              {service.keywords.map((kw) => (
-                <span
-                  key={kw}
-                  className="px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-400 text-xs"
-                >
-                  {kw}
-                </span>
-              ))}
-            </div>
           </div>
         </section>
 
-        {/* NZ city links */}
+        {/* Available locations */}
         <section className="py-14 px-4">
           <div className="max-w-5xl mx-auto">
             <h2 className="text-2xl font-bold text-white mb-2">
-              Find {service.label} Professionals Near You
+              Available in these locations
             </h2>
             <p className="text-slate-400 mb-8">
-              Select your city to see {service.label.toLowerCase()} workers available in your area.
+              Select your city to find {service.namePlural} near you.
             </p>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              {NZ_REGIONS.map((region) => (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+              {LOCATIONS.map((loc) => (
                 <Link
-                  key={region.slug}
-                  href={`/services/${service.id}/nz/${region.slug}`}
+                  key={`${loc.regionSlug}/${loc.citySlug}`}
+                  href={`/services/${service.slug}/nz/${loc.regionSlug}/${loc.citySlug}`}
                   className="group flex flex-col p-4 rounded-xl bg-slate-900/70 border border-slate-700/50 hover:border-indigo-500/40 hover:shadow-[0_0_20px_rgba(99,102,241,0.12)] transition-all duration-300"
                 >
                   <span className="font-semibold text-slate-200 group-hover:text-white transition-colors text-sm">
-                    {region.city}
+                    {loc.cityName}
                   </span>
                   <span className="text-xs text-slate-500 group-hover:text-slate-400 transition-colors mt-0.5">
-                    {region.region}
+                    {loc.regionName}
                   </span>
                 </Link>
               ))}
@@ -134,26 +140,21 @@ export default async function ServicePage({ params }: Props) {
           </div>
         </section>
 
-        {/* Empty state / placeholder listings */}
+        {/* CTA */}
         <section className="pb-16 px-4">
           <div className="max-w-5xl mx-auto">
-            <h2 className="text-xl font-bold text-white mb-6">
-              Available {service.label} Workers
-            </h2>
             <div className="rounded-2xl border border-slate-700/50 bg-slate-900/50 p-10 text-center">
-              <span className="text-4xl mb-4 block" aria-hidden="true">{service.icon}</span>
               <p className="text-slate-300 font-semibold mb-2">
-                Workers are joining QuickTrade every day
+                Ready to hire a {service.name} professional?
               </p>
               <p className="text-slate-500 text-sm mb-6 max-w-sm mx-auto">
-                Be the first in your area to connect. Post a job and qualified{' '}
-                {service.label.toLowerCase()} professionals will reach out to you.
+                Post a job and qualified {service.namePlural} will reach out with quotes.
               </p>
               <Link
-                href="/jobs/new"
+                href="/auth/register"
                 className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition-colors"
               >
-                Post a Job
+                Get Free Quotes
               </Link>
             </div>
           </div>

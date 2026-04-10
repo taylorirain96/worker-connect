@@ -49,6 +49,9 @@ export default function Navbar() {
           </Link>
 
           <div className="hidden md:flex items-center space-x-8">
+            <Link href="/services" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
+              Services
+            </Link>
             <Link href="/jobs" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
               Find Jobs
             </Link>
@@ -185,6 +188,9 @@ export default function Navbar() {
         {menuOpen && (
           <div className="md:hidden py-4 border-t border-gray-200 dark:border-gray-700">
             <div className="flex flex-col space-y-1">
+              <Link href="/services" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 px-3 py-2 rounded-lg transition-colors" onClick={() => setMenuOpen(false)}>
+                Services
+              </Link>
               <Link href="/jobs" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 px-3 py-2 rounded-lg transition-colors" onClick={() => setMenuOpen(false)}>
                 Find Jobs
               </Link>
