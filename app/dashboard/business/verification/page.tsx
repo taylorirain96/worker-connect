@@ -431,7 +431,7 @@ function ExternalRatingsForm({
       </div>
       <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          BBB Profile Link
+          Business Verification Link
         </label>
         <Input
           placeholder="https://www.google.com/maps/place/your-business"
