@@ -17,7 +17,7 @@ import { formatCurrency } from '@/lib/utils'
 import {
   LayoutDashboard, DollarSign, AlertTriangle, Users, Briefcase,
   Activity, Settings, Download, RefreshCw, TrendingUp,
-  CheckCircle, Shield, BarChart2, Menu, X, Server, FileText, BookOpen,
+  CheckCircle, Shield, BarChart2, Menu, X, Server, FileText, BookOpen, Globe,
 } from 'lucide-react'
 
 // ─── Sidebar navigation ───────────────────────────────────────────────────────
@@ -32,6 +32,7 @@ const NAV_ITEMS = [
   { label: 'Analytics',            href: '/admin/analytics', icon: BarChart2 },
   { label: 'Tax & 1099s',          href: '/admin/tax',       icon: FileText },
   { label: 'Master Playbook',      href: '/admin/playbook',  icon: BookOpen },
+  { label: 'SEO Operations',       href: '/admin/seo',       icon: Globe },
   { label: 'Settings',             href: '/admin',           icon: Settings },
 ]
 
