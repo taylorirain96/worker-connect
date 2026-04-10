@@ -1,44 +1,39 @@
 import type { MetadataRoute } from 'next'
-import { SERVICES } from '@/lib/seo/services'
-import { NZ_REGIONS } from '@/lib/seo/regions'
+import { SERVICES, LOCATIONS } from '@/lib/seo/servicesData'
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://worker-connect.vercel.app'
+const BASE = 'https://quicktrade.co.nz'
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const now = new Date()
-
-  const staticRoutes: MetadataRoute.Sitemap = [
+  const now = new Date().toISOString()
+  const entries: MetadataRoute.Sitemap = [
+    { url: `${BASE}/`, lastModified: now, changeFrequency: 'daily', priority: 1.0 },
+    { url: `${BASE}/services`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
+    { url: `${BASE}/press`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${BASE}/partners`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
     {
-      url: SITE_URL,
+      url: `${BASE}/reports/nz-home-services-price-index`,
       lastModified: now,
-      changeFrequency: 'weekly',
-      priority: 1.0,
-    },
-    {
-      url: `${SITE_URL}/services`,
-      lastModified: now,
-      changeFrequency: 'weekly',
-      priority: 0.9,
+      changeFrequency: 'monthly',
+      priority: 0.7,
     },
   ]
 
-  // /services/[service]
-  const serviceRoutes: MetadataRoute.Sitemap = SERVICES.map((service) => ({
-    url: `${SITE_URL}/services/${service.id}`,
-    lastModified: now,
-    changeFrequency: 'weekly' as const,
-    priority: 0.8,
-  }))
-
-  // /services/[service]/nz/[region]
-  const locationRoutes: MetadataRoute.Sitemap = SERVICES.flatMap((service) =>
-    NZ_REGIONS.map((region) => ({
-      url: `${SITE_URL}/services/${service.id}/nz/${region.slug}`,
+  for (const s of SERVICES) {
+    entries.push({
+      url: `${BASE}/services/${s.slug}`,
       lastModified: now,
-      changeFrequency: 'weekly' as const,
-      priority: 0.7,
-    })),
-  )
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    })
+    for (const l of LOCATIONS) {
+      entries.push({
+        url: `${BASE}/services/${s.slug}/nz/${l.regionSlug}/${l.citySlug}`,
+        lastModified: now,
+        changeFrequency: 'weekly',
+        priority: 0.7,
+      })
+    }
+  }
 
-  return [...staticRoutes, ...serviceRoutes, ...locationRoutes]
+  return entries
 }

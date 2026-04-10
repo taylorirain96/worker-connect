@@ -43,6 +43,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/services" className="hover:text-primary-600 transition-colors">
+                  Services
+                </Link>
+              </li>
+              <li>
                 <Link href="/how-it-works" className="hover:text-primary-600 transition-colors">
                   How It Works
                 </Link>
@@ -65,6 +70,16 @@ export default function Footer() {
               <li>
                 <Link href="/contact" className="hover:text-primary-600 transition-colors">
                   Contact Us
+                </Link>
+              </li>
+              <li>
+                <Link href="/press" className="hover:text-primary-600 transition-colors">
+                  Press
+                </Link>
+              </li>
+              <li>
+                <Link href="/partners" className="hover:text-primary-600 transition-colors">
+                  Partners
                 </Link>
               </li>
               <li>
