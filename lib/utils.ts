@@ -102,19 +102,19 @@ export const CATEGORY_GRADIENTS: Record<CategoryId, string> = {
 }
 
 export const URGENCY_LABELS: Record<string, { label: string; color: string }> = {
-  low: { label: 'Low Priority', color: 'bg-gray-100 text-gray-600' },
-  medium: { label: 'Medium Priority', color: 'bg-blue-100 text-blue-600' },
-  high: { label: 'High Priority', color: 'bg-orange-100 text-orange-600' },
-  emergency: { label: 'Emergency', color: 'bg-red-100 text-red-600' },
+  low: { label: 'Low Priority', color: 'bg-slate-700/50 text-slate-400' },
+  medium: { label: 'Medium Priority', color: 'bg-slate-500/20 text-slate-300' },
+  high: { label: 'High Priority', color: 'bg-indigo-500/10 text-indigo-300' },
+  emergency: { label: 'Emergency', color: 'bg-indigo-500/15 text-indigo-300' },
 }
 
 export const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  open: { label: 'Open', color: 'bg-green-100 text-green-600' },
-  in_progress: { label: 'In Progress', color: 'bg-blue-100 text-blue-600' },
-  completed: { label: 'Completed', color: 'bg-gray-100 text-gray-600' },
-  cancelled: { label: 'Cancelled', color: 'bg-red-100 text-red-600' },
-  pending: { label: 'Pending', color: 'bg-yellow-100 text-yellow-600' },
-  accepted: { label: 'Accepted', color: 'bg-green-100 text-green-600' },
-  rejected: { label: 'Rejected', color: 'bg-red-100 text-red-600' },
-  withdrawn: { label: 'Withdrawn', color: 'bg-gray-100 text-gray-600' },
+  open: { label: 'Open', color: 'bg-indigo-500/15 text-indigo-300' },
+  in_progress: { label: 'In Progress', color: 'bg-slate-500/20 text-slate-300' },
+  completed: { label: 'Completed', color: 'bg-slate-700/50 text-slate-400' },
+  cancelled: { label: 'Cancelled', color: 'bg-slate-700/50 text-slate-400' },
+  pending: { label: 'Pending', color: 'bg-slate-500/20 text-slate-300' },
+  accepted: { label: 'Accepted', color: 'bg-indigo-500/15 text-indigo-300' },
+  rejected: { label: 'Rejected', color: 'bg-slate-700/50 text-slate-400' },
+  withdrawn: { label: 'Withdrawn', color: 'bg-slate-700/50 text-slate-400' },
 }
