@@ -289,7 +289,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10">
             <h2 className="text-3xl font-bold text-white mb-3">
-              Why Choose WorkerConnect?
+              Why Choose QuickTrade?
             </h2>
           </div>
           <div className="grid md:grid-cols-3 gap-8">
@@ -337,7 +337,7 @@ export default function HomePage() {
             Ready to Get Started?
           </h2>
           <p className="text-slate-400 mb-8 text-lg">
-            Join thousands of workers and employers already using WorkerConnect
+            Join thousands of workers and employers already using QuickTrade
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <GlowButton href="/auth/register?role=employer" variant="violet" pulse>
