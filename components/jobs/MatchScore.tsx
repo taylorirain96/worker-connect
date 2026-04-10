@@ -11,16 +11,12 @@ interface MatchScoreProps {
 }
 
 function getScoreColor(score: number): string {
-  if (score >= 67) return 'text-green-600 dark:text-green-400'
-  if (score >= 34) return 'text-yellow-600 dark:text-yellow-400'
-  return 'text-red-600 dark:text-red-400'
+  if (score >= 67) return 'text-indigo-300 dark:text-indigo-300'
+  if (score >= 34) return 'text-indigo-400 dark:text-indigo-400'
+  return 'text-slate-400 dark:text-slate-400'
 }
 
-function getScoreBgColor(score: number): string {
-  if (score >= 67) return 'bg-green-100 dark:bg-green-900/30 border-green-200 dark:border-green-800'
-  if (score >= 34) return 'bg-yellow-100 dark:bg-yellow-900/30 border-yellow-200 dark:border-yellow-800'
-  return 'bg-red-100 dark:bg-red-900/30 border-red-200 dark:border-red-800'
-}
+const SCORE_BG = 'bg-indigo-500/15 dark:bg-indigo-500/15 border-indigo-500/30 dark:border-indigo-500/30'
 
 function getScoreLabel(score: number): string {
   if (score >= 90) return 'Excellent Match'
@@ -46,7 +42,6 @@ export default function MatchScore({
   showReasons = false,
 }: MatchScoreProps) {
   const scoreColor = useMemo(() => getScoreColor(score), [score])
-  const scoreBg = useMemo(() => getScoreBgColor(score), [score])
   const label = useMemo(() => getScoreLabel(score), [score])
 
   const sizeClasses = {
@@ -60,7 +55,7 @@ export default function MatchScore({
   return (
     <div className="space-y-2">
       {/* Score Badge */}
-      <div className={`inline-flex flex-col items-center rounded-lg border ${scoreBg} ${cls.container}`}>
+      <div className={`inline-flex flex-col items-center rounded-lg border ${SCORE_BG} ${cls.container}`}>
         <span className={`${cls.score} ${scoreColor} leading-tight`}>{score}</span>
         <span className={`${cls.label} font-medium ${scoreColor}`}>{label}</span>
       </div>
@@ -70,10 +65,10 @@ export default function MatchScore({
         <div
           className={`${cls.bar} rounded-full transition-all duration-500 ${
             score >= 67
-              ? 'bg-green-500'
+              ? 'bg-indigo-400'
               : score >= 34
-              ? 'bg-yellow-500'
-              : 'bg-red-500'
+              ? 'bg-indigo-500'
+              : 'bg-slate-500'
           }`}
           style={{ width: `${score}%` }}
         />
