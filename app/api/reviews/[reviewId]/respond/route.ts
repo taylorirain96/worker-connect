@@ -4,8 +4,9 @@ import { addReviewResponse } from '@/lib/reviews/firebase'
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { reviewId: string } }
+  context: { params: Promise<{ reviewId: string }> }
 ) {
+  const params = await context.params
   try {
     const { reviewId } = params
     const body = await request.json()

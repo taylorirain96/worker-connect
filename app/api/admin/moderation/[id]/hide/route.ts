@@ -4,8 +4,9 @@ import { moderateReview, getReviewById } from '@/lib/reviews/firebase'
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const params = await context.params
   try {
     const { id } = params
     const body = await request.json()

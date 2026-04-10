@@ -9,8 +9,9 @@ export const dynamic = 'force-dynamic'
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { jobId: string } }
+  context: { params: Promise<{ jobId: string }> }
 ) {
+  const params = await context.params
   try {
     const { jobId } = params
     const { searchParams } = new URL(request.url)

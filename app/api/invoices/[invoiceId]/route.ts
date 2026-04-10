@@ -21,8 +21,9 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
  */
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { invoiceId: string } }
+  context: { params: Promise<{ invoiceId: string }> }
 ) {
+  const params = await context.params
   try {
     const { invoiceId } = params
 
@@ -67,8 +68,9 @@ export async function GET(
 
 async function handleUpdate(
   req: NextRequest,
-  { params }: { params: { invoiceId: string } }
+  context: { params: Promise<{ invoiceId: string }> }
 ) {
+  const params = await context.params
   try {
     const { invoiceId } = params
     const body = await req.json() as { status?: string; [key: string]: unknown }

@@ -7,8 +7,9 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { workerId: string } },
+  context: { params: Promise<{ workerId: string }> },
 ) {
+  const params = await context.params
   try {
     if (!db) {
       return NextResponse.json({ portfolio: null })
@@ -27,8 +28,9 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { workerId: string } },
+  context: { params: Promise<{ workerId: string }> },
 ) {
+  const params = await context.params
   try {
     if (!db) {
       return NextResponse.json({ error: 'Database unavailable' }, { status: 503 })

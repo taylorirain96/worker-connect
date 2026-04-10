@@ -5,8 +5,9 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(
   request: Request,
-  { params }: { params: { year: string; month: string } }
+  context: { params: Promise<{ year: string; month: string }> }
 ) {
+  const params = await context.params
   try {
     const year = parseInt(params.year)
     const month = parseInt(params.month)

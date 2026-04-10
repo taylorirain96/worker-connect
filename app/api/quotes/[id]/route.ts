@@ -11,8 +11,9 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const params = await context.params
   try {
     const { getQuote } = await import('@/lib/services/quoteService')
     const quote = await getQuote(params.id)
@@ -28,8 +29,9 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const params = await context.params
   try {
     const userId = req.headers.get('x-user-id')
     if (!userId) {
@@ -111,8 +113,9 @@ export async function PUT(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const params = await context.params
   try {
     const userId = req.headers.get('x-user-id')
     if (!userId) {

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/request'
+import type { NextRequest } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
 import { FieldValue } from 'firebase-admin/firestore'
 
@@ -7,8 +7,9 @@ export const dynamic = 'force-dynamic'
 
 export async function PUT(
   _request: NextRequest,
-  { params }: { params: { userId: string } }
+  context: { params: Promise<{ userId: string }> }
 ) {
+  const params = await context.params
   try {
     const { userId } = params
     if (!userId) {

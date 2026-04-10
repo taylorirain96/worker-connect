@@ -6,8 +6,9 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { jobId: string } }
+  context: { params: Promise<{ jobId: string }> }
 ) {
+  const params = await context.params
   try {
     const proposals = await getProposalsForJob(params.jobId)
     return NextResponse.json({ proposals })

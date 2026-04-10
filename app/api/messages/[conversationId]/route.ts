@@ -5,7 +5,7 @@ import { getConversation } from '@/lib/services/messagingService'
 export const dynamic = 'force-dynamic'
 
 interface RouteParams {
-  params: { conversationId: string }
+  params: Promise<{ conversationId: string }>
 }
 
 /**
@@ -13,7 +13,8 @@ interface RouteParams {
  * Returns conversation metadata. Messages are fetched client-side
  * via the real-time Firestore listener (subscribeToMessages).
  */
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(request: NextRequest, context: RouteParams) {
+  const params = await context.params
   try {
     const userId = request.headers.get('x-user-id')
     if (!userId) {

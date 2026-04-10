@@ -9,8 +9,9 @@ export const dynamic = 'force-dynamic'
  */
 export async function GET(
   _request: Request,
-  { params }: { params: { paymentId: string } }
+  context: { params: Promise<{ paymentId: string }> }
 ) {
+  const params = await context.params
   try {
     const { paymentId } = params
     if (!paymentId) {

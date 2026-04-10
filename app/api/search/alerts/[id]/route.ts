@@ -6,8 +6,9 @@ export const dynamic = 'force-dynamic'
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const params = await context.params
   try {
     const userId = request.headers.get('x-user-id')
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

@@ -6,8 +6,9 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const params = await context.params
   try {
     const job = await getLearningJob(params.id)
     if (!job) {
@@ -22,8 +23,9 @@ export async function GET(
 
 export async function PUT(
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const params = await context.params
   try {
     await completeLearningJob(params.id)
     return NextResponse.json({ success: true })

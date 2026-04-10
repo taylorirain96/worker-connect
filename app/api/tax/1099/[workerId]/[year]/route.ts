@@ -11,8 +11,9 @@ export const dynamic = 'force-dynamic'
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { workerId: string; year: string } }
+  context: { params: Promise<{ workerId: string; year: string }> }
 ) {
+  const params = await context.params
   try {
     const userId = req.headers.get('x-user-id')
     if (!userId) {

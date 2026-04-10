@@ -3,8 +3,9 @@ import { getTaxRules, getCountryByCode } from '@/lib/services/countryConfigServi
 
 export async function POST(
   _request: Request,
-  { params }: { params: { country: string } }
+  context: { params: Promise<{ country: string }> }
 ) {
+  const params = await context.params
   const country = params.country.toUpperCase()
   const rules = getTaxRules(country)
   const countryInfo = getCountryByCode(country)
