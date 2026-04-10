@@ -31,6 +31,7 @@
     -webkit-line-clamp: 3;
   }
 }
+
 /* --- MISSION DIRECTIVE: MOODY GLOW ENGINE --- */
 :root {
   --moody-gradient: linear-gradient(90deg, #b822e4, #e97be4);
@@ -66,3 +67,97 @@
 .breathing-glow {
   animation: breathing-glow 4s ease-in-out infinite;
 }
+
+/* --- LUXURY GOLD DESIGN SYSTEM --- */
+
+/* Gold gradient text */
+.text-gold-gradient {
+  background: linear-gradient(135deg, #f3c969 0%, #d4af37 50%, #b8860b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glass morphism card */
+.glass-card {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(212, 175, 55, 0.15);
+}
+
+.glass-card:hover {
+  border-color: rgba(212, 175, 55, 0.35);
+  box-shadow: 0 0 30px rgba(212, 175, 55, 0.15);
+}
+
+/* Luxury dark section background */
+.luxury-bg {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+}
+
+/* Gold shimmer effect on text */
+.gold-shimmer {
+  background: linear-gradient(
+    90deg,
+    #b8860b 0%,
+    #d4af37 25%,
+    #f3c969 50%,
+    #d4af37 75%,
+    #b8860b 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 2.5s linear infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+/* Pulsing gold glow on CTAs */
+@keyframes pulse-gold {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.3), 0 4px 15px rgba(212, 175, 55, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 35px rgba(212, 175, 55, 0.65), 0 4px 20px rgba(212, 175, 55, 0.4);
+  }
+}
+
+.animate-pulse-gold {
+  animation: pulse-gold 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-pulse-gold-slow {
+  animation: pulse-gold 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Category card icon glow on hover */
+.category-icon-glow:hover svg {
+  filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.7));
+}
+
+/* Gold border gradient */
+.border-gold-gradient {
+  border: 1px solid transparent;
+  background-clip: padding-box;
+  position: relative;
+}
+
+.border-gold-gradient::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.5), rgba(212, 175, 55, 0.1));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
