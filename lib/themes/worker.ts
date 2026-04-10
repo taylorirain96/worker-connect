@@ -1,39 +1,39 @@
 export const WORKER_THEME = {
-  // Primary palette
+  // Primary palette — cool deep navy
   background: {
-    primary: '#0f172a',   // Deep navy (professional)
-    secondary: '#1e293b', // Charcoal slate
-    card: '#1e293b',      // Dark cards
-    hover: '#334155',     // Hover state
+    primary: '#0a0f1e',    // Ultra deep navy (authority, trust)
+    secondary: '#111827',  // Rich dark (sophistication)
+    card: '#111827',       // Dark cards
+    hover: '#1e2a3a',      // Deep blue-slate hover
   },
 
-  // Accent colors (cooler, bold)
+  // Accent colors — precision & intelligence
   accent: {
-    primary: '#ff6b35',   // Bold orange (action)
-    secondary: '#0066cc', // Trust blue
-    gold: '#c5a05a',      // 24K gold (achievement)
-    goldLight: '#ffd700', // Bright gold (highlights)
+    primary: '#6366f1',    // Electric indigo (premium tech, forward-thinking)
+    secondary: '#38bdf8',  // Ice blue (precision, skill, expertise)
+    platinum: '#c8d6e5',   // Platinum shimmer (ranks above gold in luxury perception)
+    platinumLight: '#e8f0f9', // Bright platinum highlight
   },
 
-  // Text
+  // Text — blue-tinted whites
   text: {
-    primary: '#f8fafc',  // Crisp white
-    secondary: '#cbd5e1', // Light gray
-    muted: '#64748b',    // Muted gray
+    primary: '#f0f4ff',    // Blue-tinted crisp white
+    secondary: '#94a3b8',  // Cool slate gray
+    muted: '#475569',      // Muted slate
   },
 
-  // CTAs (bolder, more aggressive)
+  // CTAs — indigo gradient, bold
   cta: {
-    background: 'linear-gradient(135deg, #ff6b35 0%, #ff8555 100%)',
-    hover: 'linear-gradient(135deg, #ff8555 0%, #ff9f75 100%)',
-    shadow: '0 0 30px rgba(255, 107, 53, 0.4)',
+    background: 'linear-gradient(135deg, #6366f1 0%, #818cf8 100%)',
+    hover: 'linear-gradient(135deg, #818cf8 0%, #a5b4fc 100%)',
+    shadow: '0 0 30px rgba(99, 102, 241, 0.5)',
   },
 
-  // Borders (sharper, cooler tones)
+  // Borders — cool indigo/platinum tones
   border: {
-    default: '#334155',
-    gold: '#c5a05a',
-    glow: 'rgba(197, 160, 90, 0.3)',
+    default: '#1e2a3a',
+    platinum: '#c8d6e5',
+    glow: 'rgba(99, 102, 241, 0.3)',
   },
 } as const
 

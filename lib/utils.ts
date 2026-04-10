@@ -1,6 +1,11 @@
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 import { format, formatDistanceToNow } from 'date-fns'
+import {
+  Droplet, Zap, Hammer, Wind, Home, Trees,
+  Paintbrush, Layers, Sparkles, Package, Wrench,
+  type LucideIcon,
+} from 'lucide-react'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -65,6 +70,36 @@ export const JOB_CATEGORIES = [
   { id: 'moving', label: 'Moving', icon: '📦', description: 'Packing, loading, transport', color: 'bg-indigo-100 text-indigo-700' },
   { id: 'general', label: 'General', icon: '🛠️', description: 'Handyman, misc repairs', color: 'bg-gray-100 text-gray-700' },
 ] as const
+
+export type CategoryId = (typeof JOB_CATEGORIES)[number]['id']
+
+export const CATEGORY_ICONS: Record<CategoryId, LucideIcon> = {
+  plumbing: Droplet,
+  electrical: Zap,
+  carpentry: Hammer,
+  hvac: Wind,
+  roofing: Home,
+  landscaping: Trees,
+  painting: Paintbrush,
+  flooring: Layers,
+  cleaning: Sparkles,
+  moving: Package,
+  general: Wrench,
+}
+
+export const CATEGORY_GRADIENTS: Record<CategoryId, string> = {
+  plumbing: 'from-blue-500 to-cyan-500',
+  electrical: 'from-indigo-400 to-blue-500',
+  carpentry: 'from-slate-400 to-slate-500',
+  hvac: 'from-cyan-500 to-blue-500',
+  roofing: 'from-slate-500 to-slate-600',
+  landscaping: 'from-teal-500 to-cyan-600',
+  painting: 'from-violet-500 to-indigo-500',
+  flooring: 'from-slate-400 to-slate-500',
+  cleaning: 'from-sky-400 to-cyan-500',
+  moving: 'from-indigo-500 to-violet-500',
+  general: 'from-slate-500 to-slate-600',
+}
 
 export const URGENCY_LABELS: Record<string, { label: string; color: string }> = {
   low: { label: 'Low Priority', color: 'bg-gray-100 text-gray-600' },

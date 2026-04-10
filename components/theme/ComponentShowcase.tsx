@@ -117,8 +117,8 @@ export default function ComponentShowcase({ theme }: Props) {
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 hover:scale-105"
             style={{
               backgroundColor: 'transparent',
-              border: `2px solid ${t.accent.gold}`,
-              color: t.accent.gold,
+              border: `2px solid ${t.accent.platinum}`,
+              color: t.accent.platinum,
               boxShadow: `0 0 15px ${t.border.glow}`,
             }}
           >
@@ -154,7 +154,7 @@ export default function ComponentShowcase({ theme }: Props) {
             <div
               className="h-14 w-14 rounded-full flex items-center justify-center text-lg font-bold flex-shrink-0"
               style={{
-                background: `linear-gradient(135deg, ${t.accent.gold} 0%, ${t.accent.primary} 100%)`,
+                background: `linear-gradient(135deg, ${t.accent.platinum} 0%, ${t.accent.primary} 100%)`,
                 color: t.background.primary,
               }}
             >
@@ -170,9 +170,9 @@ export default function ComponentShowcase({ theme }: Props) {
                 <span
                   className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold"
                   style={{
-                    backgroundColor: `${t.accent.gold}22`,
-                    color: t.accent.gold,
-                    border: `1px solid ${t.accent.gold}60`,
+                    backgroundColor: `${t.accent.platinum}22`,
+                    color: t.accent.platinum,
+                    border: `1px solid ${t.accent.platinum}60`,
                     boxShadow: `0 0 ${isWorker ? '14px' : '10px'} ${t.border.glow}`,
                   }}
                 >
@@ -191,8 +191,8 @@ export default function ComponentShowcase({ theme }: Props) {
                     <Star
                       key={i}
                       className="h-3 w-3"
-                      style={{ color: i < 5 ? t.accent.gold : t.border.default }}
-                      fill={i < 5 ? t.accent.gold : 'none'}
+                      style={{ color: i < 5 ? t.accent.platinum : t.border.default }}
+                      fill={i < 5 ? t.accent.platinum : 'none'}
                       strokeWidth={1.5}
                     />
                   ))}
@@ -209,7 +209,7 @@ export default function ComponentShowcase({ theme }: Props) {
             </div>
 
             <div className="text-right flex-shrink-0">
-              <p className="font-bold text-lg" style={{ color: t.accent.gold }}>
+              <p className="font-bold text-lg" style={{ color: t.accent.platinum }}>
                 $85/hr
               </p>
               <div className="flex items-center gap-1 text-[10px] mt-1" style={{ color: t.text.muted }}>
@@ -232,7 +232,7 @@ export default function ComponentShowcase({ theme }: Props) {
           }}
           onMouseEnter={(e) => {
             const el = e.currentTarget as HTMLDivElement
-            el.style.borderColor = t.accent.gold
+            el.style.borderColor = t.accent.platinum
             el.style.boxShadow = `0 0 20px ${t.border.glow}`
           }}
           onMouseLeave={(e) => {
@@ -266,7 +266,7 @@ export default function ComponentShowcase({ theme }: Props) {
           </p>
 
           <div className="flex items-center gap-4 flex-wrap">
-            <div className="flex items-center gap-1 text-sm" style={{ color: t.accent.gold }}>
+            <div className="flex items-center gap-1 text-sm" style={{ color: t.accent.platinum }}>
               <span className="font-bold">$120–$200</span>
             </div>
             <div className="flex items-center gap-1 text-xs" style={{ color: t.text.muted }}>
@@ -301,7 +301,7 @@ export default function ComponentShowcase({ theme }: Props) {
             >
               <p
                 className="text-2xl font-extrabold"
-                style={{ color: t.accent.gold }}
+                style={{ color: t.accent.platinum }}
               >
                 {value}
               </p>
@@ -328,7 +328,7 @@ export default function ComponentShowcase({ theme }: Props) {
         >
           <span
             className="font-extrabold text-base tracking-tight"
-            style={{ color: t.accent.gold }}
+            style={{ color: t.accent.platinum }}
           >
             QuickTrade
           </span>
@@ -348,7 +348,7 @@ export default function ComponentShowcase({ theme }: Props) {
             <div
               className="h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold"
               style={{
-                background: `linear-gradient(135deg, ${t.accent.gold} 0%, ${t.accent.primary} 100%)`,
+                background: `linear-gradient(135deg, ${t.accent.platinum} 0%, ${t.accent.primary} 100%)`,
                 color: t.background.primary,
               }}
             >
@@ -406,12 +406,12 @@ export default function ComponentShowcase({ theme }: Props) {
           <span
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold"
             style={{
-              backgroundColor: `${t.accent.gold}18`,
-              color: t.accent.gold,
-              border: `1px solid ${t.accent.gold}70`,
+              backgroundColor: `${t.accent.platinum}18`,
+              color: t.accent.platinum,
+              border: `1px solid ${t.accent.platinum}70`,
               boxShadow: isWorker
-                ? `0 0 20px rgba(197,160,90,0.5), 0 0 40px rgba(197,160,90,0.3)`
-                : `0 0 15px rgba(212,175,55,0.3), 0 0 30px rgba(212,175,55,0.2)`,
+                ? `0 0 20px rgba(99,102,241,0.5), 0 0 40px rgba(99,102,241,0.3)`
+                : `0 0 15px rgba(139,92,246,0.3), 0 0 30px rgba(139,92,246,0.2)`,
             }}
           >
             <Trophy className="h-3 w-3" strokeWidth={2} />
@@ -439,27 +439,27 @@ export default function ComponentShowcase({ theme }: Props) {
         <ColorSwatches theme={theme} />
       </section>
 
-      {/* ── Gold Glow Comparison ── */}
+      {/* ── Platinum Glow Comparison ── */}
       <section>
-        {sectionTitle('Gold Glow (Premium Element)')}
+        {sectionTitle('Platinum Glow (Premium Element)')}
         <div className="flex flex-wrap gap-6 items-center">
           <div className="text-center">
             <div
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold mb-2"
               style={{
-                backgroundColor: `${t.accent.gold}18`,
-                color: t.accent.gold,
-                border: `1px solid ${t.accent.gold}80`,
+                backgroundColor: `${t.accent.platinum}18`,
+                color: t.accent.platinum,
+                border: `1px solid ${t.accent.platinum}80`,
                 boxShadow: isWorker
-                  ? `0 0 20px rgba(197,160,90,0.5), 0 0 40px rgba(197,160,90,0.3)`
-                  : `0 0 15px rgba(212,175,55,0.3), 0 0 30px rgba(212,175,55,0.2)`,
+                  ? `0 0 20px rgba(99,102,241,0.5), 0 0 40px rgba(99,102,241,0.3)`
+                  : `0 0 15px rgba(139,92,246,0.3), 0 0 30px rgba(139,92,246,0.2)`,
               }}
             >
               <Trophy className="h-4 w-4" strokeWidth={2} />
               TOP PRO
             </div>
             <p className="text-[10px]" style={{ color: t.text.muted }}>
-              {isWorker ? 'Worker: Bolder glow' : 'Employer: Softer glow'}
+              {isWorker ? 'Worker: Bolder indigo glow' : 'Employer: Softer violet glow'}
             </p>
           </div>
         </div>
