@@ -70,81 +70,192 @@
 /* ── Role-Based Theme System ── */
 
 [data-role-theme="worker"] {
-  --rt-bg-primary: #0f172a;
-  --rt-bg-secondary: #1e293b;
-  --rt-bg-card: #1e293b;
-  --rt-bg-hover: #334155;
-  --rt-accent-primary: #ff6b35;
-  --rt-accent-secondary: #0066cc;
-  --rt-accent-gold: #c5a05a;
-  --rt-accent-gold-light: #ffd700;
-  --rt-text-primary: #f8fafc;
-  --rt-text-secondary: #cbd5e1;
-  --rt-text-muted: #64748b;
-  --rt-cta-bg: linear-gradient(135deg, #ff6b35 0%, #ff8555 100%);
-  --rt-cta-shadow: 0 0 30px rgba(255, 107, 53, 0.4);
-  --rt-border-default: #334155;
-  --rt-border-gold: #c5a05a;
-  --rt-border-glow: rgba(197, 160, 90, 0.3);
+  --rt-bg-primary: #0a0f1e;
+  --rt-bg-secondary: #111827;
+  --rt-bg-card: #111827;
+  --rt-bg-hover: #1e2a3a;
+  --rt-accent-primary: #6366f1;
+  --rt-accent-secondary: #38bdf8;
+  --rt-accent-platinum: #c8d6e5;
+  --rt-accent-platinum-light: #e8f0f9;
+  --rt-text-primary: #f0f4ff;
+  --rt-text-secondary: #94a3b8;
+  --rt-text-muted: #475569;
+  --rt-cta-bg: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);
+  --rt-cta-shadow: 0 0 30px rgba(99, 102, 241, 0.5);
+  --rt-border-default: #1e2a3a;
+  --rt-border-platinum: #c8d6e5;
+  --rt-border-glow: rgba(99, 102, 241, 0.3);
   --rt-glow-intensity: 0.5;
 }
 
 [data-role-theme="employer"] {
-  --rt-bg-primary: #1a1a2e;
-  --rt-bg-secondary: #252540;
-  --rt-bg-card: #2d2d44;
-  --rt-bg-hover: #3a3a5c;
-  --rt-accent-primary: #f59e0b;
-  --rt-accent-secondary: #3b82f6;
-  --rt-accent-gold: #d4af37;
-  --rt-accent-gold-light: #f3c969;
-  --rt-text-primary: #fef3c7;
-  --rt-text-secondary: #d4d4d8;
-  --rt-text-muted: #71717a;
-  --rt-cta-bg: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
-  --rt-cta-shadow: 0 0 30px rgba(245, 158, 11, 0.3);
-  --rt-border-default: #3a3a5c;
-  --rt-border-gold: #d4af37;
-  --rt-border-glow: rgba(212, 175, 55, 0.3);
+  --rt-bg-primary: #0d1117;
+  --rt-bg-secondary: #161b22;
+  --rt-bg-card: #1c2333;
+  --rt-bg-hover: #1f2937;
+  --rt-accent-primary: #8b5cf6;
+  --rt-accent-secondary: #06b6d4;
+  --rt-accent-platinum: #dde6f0;
+  --rt-accent-platinum-light: #f0f5ff;
+  --rt-text-primary: #f8faff;
+  --rt-text-secondary: #a0aec0;
+  --rt-text-muted: #64748b;
+  --rt-cta-bg: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
+  --rt-cta-shadow: 0 0 30px rgba(139, 92, 246, 0.4);
+  --rt-border-default: #1f2937;
+  --rt-border-platinum: #dde6f0;
+  --rt-border-glow: rgba(139, 92, 246, 0.3);
   --rt-glow-intensity: 0.3;
 }
 
-/* Premium badge gold glow — worker (bolder) */
+/* Worker premium badge — bold indigo glow */
 [data-role-theme="worker"] .premium-badge {
   box-shadow:
-    0 0 20px rgba(197, 160, 90, 0.5),
-    0 0 40px rgba(197, 160, 90, 0.3);
-  animation: pulse-gold-worker 2s ease-in-out infinite;
+    0 0 20px rgba(99, 102, 241, 0.5),
+    0 0 40px rgba(99, 102, 241, 0.3);
+  animation: pulse-indigo-worker 2s ease-in-out infinite;
 }
 
-/* Premium badge gold glow — employer (softer) */
+/* Employer premium badge — soft violet glow */
 [data-role-theme="employer"] .premium-badge {
   box-shadow:
-    0 0 15px rgba(212, 175, 55, 0.3),
-    0 0 30px rgba(212, 175, 55, 0.2);
-  animation: pulse-gold-employer 3s ease-in-out infinite;
+    0 0 15px rgba(139, 92, 246, 0.3),
+    0 0 30px rgba(139, 92, 246, 0.2);
+  animation: pulse-violet-employer 3s ease-in-out infinite;
 }
 
-@keyframes pulse-gold-worker {
-  0%, 100% { box-shadow: 0 0 20px rgba(197, 160, 90, 0.5), 0 0 40px rgba(197, 160, 90, 0.3); }
-  50% { box-shadow: 0 0 30px rgba(197, 160, 90, 0.7), 0 0 60px rgba(197, 160, 90, 0.45); }
+@keyframes pulse-indigo-worker {
+  0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.5), 0 0 40px rgba(99, 102, 241, 0.3); }
+  50% { box-shadow: 0 0 30px rgba(99, 102, 241, 0.7), 0 0 60px rgba(99, 102, 241, 0.45); }
 }
 
-@keyframes pulse-gold-employer {
-  0%, 100% { box-shadow: 0 0 15px rgba(212, 175, 55, 0.3), 0 0 30px rgba(212, 175, 55, 0.2); }
-  50% { box-shadow: 0 0 22px rgba(212, 175, 55, 0.45), 0 0 45px rgba(212, 175, 55, 0.3); }
+@keyframes pulse-violet-employer {
+  0%, 100% { box-shadow: 0 0 15px rgba(139, 92, 246, 0.3), 0 0 30px rgba(139, 92, 246, 0.2); }
+  50% { box-shadow: 0 0 22px rgba(139, 92, 246, 0.45), 0 0 45px rgba(139, 92, 246, 0.3); }
 }
 
-/* Priority job card animated gold border */
+/* Priority job card animated platinum/indigo border */
 .priority-job-border {
   border: 2px solid transparent;
   background:
-    linear-gradient(var(--rt-bg-card, #1e293b), var(--rt-bg-card, #1e293b)) padding-box,
-    linear-gradient(135deg, var(--rt-border-gold, #c5a05a), var(--rt-accent-gold-light, #ffd700), var(--rt-border-gold, #c5a05a)) border-box;
+    linear-gradient(var(--rt-bg-card, #111827), var(--rt-bg-card, #111827)) padding-box,
+    linear-gradient(135deg, var(--rt-border-platinum, #c8d6e5), var(--rt-accent-platinum-light, #e8f0f9), var(--rt-border-platinum, #c8d6e5)) border-box;
   animation: priority-pulse 2.5s ease-in-out infinite;
 }
 
 @keyframes priority-pulse {
-  0%, 100% { box-shadow: 0 0 30px var(--rt-border-glow, rgba(197, 160, 90, 0.3)); }
-  50% { box-shadow: 0 0 45px var(--rt-border-glow, rgba(197, 160, 90, 0.3)); }
+  0%, 100% { box-shadow: 0 0 30px var(--rt-border-glow, rgba(99, 102, 241, 0.3)); }
+  50% { box-shadow: 0 0 45px var(--rt-border-glow, rgba(99, 102, 241, 0.3)); }
+}
+
+/* --- LUXURY PLATINUM + INDIGO DESIGN SYSTEM --- */
+
+/* Platinum gradient text */
+.text-platinum-gradient {
+  background: linear-gradient(135deg, #e8f0f9 0%, #c8d6e5 50%, #94a3b8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glass morphism card */
+.glass-card {
+  background: linear-gradient(135deg, rgba(17, 24, 39, 0.9) 0%, rgba(10, 15, 30, 0.95) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+}
+
+.glass-card:hover {
+  border-color: rgba(99, 102, 241, 0.35);
+  box-shadow: 0 0 30px rgba(99, 102, 241, 0.12);
+}
+
+/* Luxury dark section background */
+.luxury-bg {
+  background: linear-gradient(135deg, #0a0f1e 0%, #111827 50%, #0a0f1e 100%);
+}
+
+/* Platinum shimmer effect on text */
+.platinum-shimmer {
+  background: linear-gradient(
+    90deg,
+    #94a3b8 0%,
+    #c8d6e5 25%,
+    #e8f0f9 50%,
+    #c8d6e5 75%,
+    #94a3b8 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 2.5s linear infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+/* Pulsing indigo glow on CTAs — Worker theme */
+@keyframes pulse-indigo {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.3), 0 4px 15px rgba(99, 102, 241, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 35px rgba(99, 102, 241, 0.65), 0 4px 20px rgba(99, 102, 241, 0.4);
+  }
+}
+
+/* Pulsing violet glow — Employer theme */
+@keyframes pulse-violet {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.3), 0 4px 15px rgba(139, 92, 246, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 35px rgba(139, 92, 246, 0.65), 0 4px 20px rgba(139, 92, 246, 0.4);
+  }
+}
+
+.animate-pulse-indigo {
+  animation: pulse-indigo 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-pulse-indigo-slow {
+  animation: pulse-indigo 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-pulse-violet {
+  animation: pulse-violet 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-pulse-violet-slow {
+  animation: pulse-violet 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Category card icon glow on hover */
+.category-icon-glow:hover svg {
+  filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.7));
+}
+
+/* Platinum border gradient */
+.border-platinum-gradient {
+  border: 1px solid transparent;
+  background-clip: padding-box;
+  position: relative;
+}
+
+.border-platinum-gradient::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.5), rgba(200, 214, 229, 0.2));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
 }

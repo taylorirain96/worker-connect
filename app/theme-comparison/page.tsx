@@ -46,7 +46,7 @@ export default function ThemeComparisonPage() {
       <div className="max-w-7xl mx-auto text-center mb-8">
         <h1
           className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-2"
-          style={{ color: WORKER_THEME.accent.gold }}
+          style={{ color: WORKER_THEME.accent.platinum }}
         >
           Theme Comparison Centre
         </h1>
