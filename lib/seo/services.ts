@@ -141,6 +141,11 @@ export const SERVICES: ServiceDefinition[] = [
   },
 ]
 
+/**
+ * Complete planned taxonomy of service groups.
+ * Not all groups have services defined yet — use getServicesGrouped() which
+ * only returns groups that currently have at least one service entry.
+ */
 export const SERVICE_GROUPS: ServiceGroup[] = [
   'Trades & Repairs',
   'Home Improvement',

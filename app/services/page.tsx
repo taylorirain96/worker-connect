@@ -2,7 +2,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
-import { SERVICES, SERVICE_GROUPS, getServicesGrouped, type ServiceGroup } from '@/lib/seo/services'
+import { getServicesGrouped, type ServiceGroup } from '@/lib/seo/services'
+import { NZ_REGIONS } from '@/lib/seo/regions'
 
 export const metadata: Metadata = {
   title: 'Local Services Directory | QuickTrade New Zealand',
@@ -115,23 +116,13 @@ export default function ServicesPage() {
               available professionals near you.
             </p>
             <div className="flex flex-wrap justify-center gap-3">
-              {[
-                { slug: 'blenheim', label: 'Blenheim' },
-                { slug: 'auckland', label: 'Auckland' },
-                { slug: 'wellington', label: 'Wellington' },
-                { slug: 'christchurch', label: 'Christchurch' },
-                { slug: 'hamilton', label: 'Hamilton' },
-                { slug: 'tauranga', label: 'Tauranga' },
-                { slug: 'dunedin', label: 'Dunedin' },
-                { slug: 'nelson', label: 'Nelson' },
-                { slug: 'queenstown', label: 'Queenstown' },
-              ].map(({ slug, label }) => (
+              {NZ_REGIONS.map((region) => (
                 <Link
-                  key={slug}
-                  href={`/services/plumbing/nz/${slug}`}
+                  key={region.slug}
+                  href={`/services/plumbing/nz/${region.slug}`}
                   className="px-4 py-2 rounded-full bg-slate-800 border border-slate-700 text-slate-300 text-sm hover:border-indigo-500/50 hover:text-white hover:bg-slate-700/60 transition-all duration-200"
                 >
-                  {label}
+                  {region.city}
                 </Link>
               ))}
             </div>
