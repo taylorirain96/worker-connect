@@ -127,6 +127,7 @@ export default function ProfilePage() {
 
                 <Input
                   label="Full Name"
+                  placeholder="e.g., Sam Wilson"
                   leftIcon={<User className="h-4 w-4" />}
                   error={errors.displayName?.message}
                   required
@@ -149,13 +150,13 @@ export default function ProfilePage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Input
                     label="Location"
-                    placeholder="e.g., New York, NY"
+                    placeholder="e.g., Blenheim, Marlborough"
                     leftIcon={<MapPin className="h-4 w-4" />}
                     {...register('location')}
                   />
                   <Input
                     label="Phone"
-                    placeholder="e.g., +1 (555) 000-0000"
+                    placeholder="e.g., +64 21 000 0000"
                     type="tel"
                     {...register('phone')}
                   />
@@ -184,7 +185,7 @@ export default function ProfilePage() {
                     label="Hourly Rate ($)"
                     type="number"
                     min="0"
-                    placeholder="e.g., 75"
+                    placeholder="e.g., 65"
                     leftIcon={<DollarSign className="h-4 w-4" />}
                     helperText="Your rate per hour"
                     error={errors.hourlyRate?.message}

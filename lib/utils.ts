@@ -58,17 +58,17 @@ export function getInitials(name: string): string {
 }
 
 export const JOB_CATEGORIES = [
-  { id: 'plumbing', label: 'Plumbing', icon: '🔧', description: 'Pipes, fixtures, water systems', color: 'bg-blue-100 text-blue-700' },
-  { id: 'electrical', label: 'Electrical', icon: '⚡', description: 'Wiring, panels, lighting', color: 'bg-yellow-100 text-yellow-700' },
-  { id: 'carpentry', label: 'Carpentry', icon: '🪚', description: 'Woodwork, furniture, framing', color: 'bg-orange-100 text-orange-700' },
-  { id: 'hvac', label: 'HVAC', icon: '❄️', description: 'Heating, cooling, ventilation', color: 'bg-cyan-100 text-cyan-700' },
-  { id: 'roofing', label: 'Roofing', icon: '🏠', description: 'Repair, replacement, gutters', color: 'bg-red-100 text-red-700' },
-  { id: 'landscaping', label: 'Landscaping', icon: '🌿', description: 'Lawn care, gardens, trees', color: 'bg-green-100 text-green-700' },
-  { id: 'painting', label: 'Painting', icon: '🎨', description: 'Interior, exterior, finishing', color: 'bg-purple-100 text-purple-700' },
-  { id: 'flooring', label: 'Flooring', icon: '🪵', description: 'Hardwood, tile, carpet', color: 'bg-amber-100 text-amber-700' },
-  { id: 'cleaning', label: 'Cleaning', icon: '🧹', description: 'Deep clean, regular maintenance', color: 'bg-teal-100 text-teal-700' },
-  { id: 'moving', label: 'Moving', icon: '📦', description: 'Packing, loading, transport', color: 'bg-indigo-100 text-indigo-700' },
-  { id: 'general', label: 'General', icon: '🛠️', description: 'Handyman, misc repairs', color: 'bg-gray-100 text-gray-700' },
+  { id: 'plumbing', label: 'Plumbing', icon: '🔧', description: 'Pipes, fixtures, water systems', color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' },
+  { id: 'electrical', label: 'Electrical', icon: '⚡', description: 'Wiring, panels, lighting', color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' },
+  { id: 'carpentry', label: 'Carpentry', icon: '🪚', description: 'Woodwork, furniture, framing', color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' },
+  { id: 'hvac', label: 'HVAC', icon: '❄️', description: 'Heating, cooling, ventilation', color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' },
+  { id: 'roofing', label: 'Roofing', icon: '🏠', description: 'Repair, replacement, gutters', color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' },
+  { id: 'landscaping', label: 'Landscaping', icon: '🌿', description: 'Lawn care, gardens, trees', color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' },
+  { id: 'painting', label: 'Painting', icon: '🎨', description: 'Interior, exterior, finishing', color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' },
+  { id: 'flooring', label: 'Flooring', icon: '🪵', description: 'Hardwood, tile, carpet', color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' },
+  { id: 'cleaning', label: 'Cleaning', icon: '🧹', description: 'Deep clean, regular maintenance', color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' },
+  { id: 'moving', label: 'Moving', icon: '📦', description: 'Packing, loading, transport', color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' },
+  { id: 'general', label: 'General', icon: '🛠️', description: 'Handyman, misc repairs', color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' },
 ] as const
 
 export type CategoryId = (typeof JOB_CATEGORIES)[number]['id']
@@ -88,17 +88,17 @@ export const CATEGORY_ICONS: Record<CategoryId, LucideIcon> = {
 }
 
 export const CATEGORY_GRADIENTS: Record<CategoryId, string> = {
-  plumbing: 'from-blue-500 to-cyan-500',
-  electrical: 'from-indigo-400 to-blue-500',
-  carpentry: 'from-slate-400 to-slate-500',
-  hvac: 'from-cyan-500 to-blue-500',
-  roofing: 'from-slate-500 to-slate-600',
-  landscaping: 'from-teal-500 to-cyan-600',
-  painting: 'from-violet-500 to-indigo-500',
-  flooring: 'from-slate-400 to-slate-500',
-  cleaning: 'from-sky-400 to-cyan-500',
-  moving: 'from-indigo-500 to-violet-500',
-  general: 'from-slate-500 to-slate-600',
+  plumbing: 'from-indigo-600 to-violet-600',
+  electrical: 'from-indigo-600 to-violet-600',
+  carpentry: 'from-indigo-600 to-violet-600',
+  hvac: 'from-indigo-600 to-violet-600',
+  roofing: 'from-indigo-600 to-violet-600',
+  landscaping: 'from-indigo-600 to-violet-600',
+  painting: 'from-indigo-600 to-violet-600',
+  flooring: 'from-indigo-600 to-violet-600',
+  cleaning: 'from-indigo-600 to-violet-600',
+  moving: 'from-indigo-600 to-violet-600',
+  general: 'from-indigo-600 to-violet-600',
 }
 
 export const URGENCY_LABELS: Record<string, { label: string; color: string }> = {
