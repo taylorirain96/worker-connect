@@ -15,7 +15,7 @@ import Button from '@/components/ui/Button'
 function formatWeekRange(date: Date = new Date()): string {
   const { start, end } = getWeekBounds(date)
   const fmt = (d: Date) =>
-    d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    d.toLocaleDateString('en-NZ', { month: 'short', day: 'numeric' })
   return `${fmt(start)} – ${fmt(end)}`
 }
 

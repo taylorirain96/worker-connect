@@ -287,7 +287,7 @@ function OnboardingContent() {
                 type="text"
                 value={form.name}
                 onChange={update('name')}
-                placeholder="John Doe"
+                placeholder="e.g., Sam Wilson"
                 className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
               />
             </div>
@@ -320,7 +320,7 @@ function OnboardingContent() {
                   type="tel"
                   value={form.phone}
                   onChange={update('phone')}
-                  placeholder="+1 (555) 000-0000"
+                  placeholder="+64 21 000 0000"
                   className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                 />
               </div>
@@ -336,7 +336,7 @@ function OnboardingContent() {
                   type="text"
                   value={form.location}
                   onChange={update('location')}
-                  placeholder="New York, NY"
+                  placeholder="e.g., Blenheim, Marlborough"
                   className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                 />
               </div>
@@ -368,7 +368,7 @@ function OnboardingContent() {
                 htmlFor="hourlyRate"
                 className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
-                Hourly Rate (USD)
+                Hourly Rate (NZD)
               </label>
               <input
                 id="hourlyRate"
@@ -377,7 +377,7 @@ function OnboardingContent() {
                 step="5"
                 value={form.hourlyRate}
                 onChange={update('hourlyRate')}
-                placeholder="75"
+                placeholder="65"
                 className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
               />
             </div>

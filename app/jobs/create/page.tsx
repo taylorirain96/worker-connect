@@ -154,7 +154,7 @@ export default function CreateJobPage() {
 
                 <Input
                   label="Location"
-                  placeholder="e.g., New York, NY"
+                  placeholder="e.g., Blenheim, Marlborough"
                   error={errors.location?.message}
                   required
                   {...register('location')}
