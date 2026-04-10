@@ -8,7 +8,7 @@ import Button from '@/components/ui/Button'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import Badge from '@/components/ui/Badge'
-import { Users, Briefcase, DollarSign, TrendingUp, AlertTriangle, CheckCircle, Clock } from 'lucide-react'
+import { Users, Briefcase, DollarSign, TrendingUp, AlertTriangle, CheckCircle, Clock, BookOpen } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 
 const MOCK_ADMIN_STATS = {
@@ -77,12 +77,20 @@ export default function AdminPage() {
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
               <p className="text-gray-500 mt-1">Platform overview and management</p>
             </div>
-            <Link href="/admin/analytics">
-              <Button variant="outline" className="flex items-center gap-2">
-                <TrendingUp className="h-4 w-4" />
-                Platform Analytics
-              </Button>
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link href="/admin/master-playbook">
+                <Button variant="outline" className="flex items-center gap-2">
+                  <BookOpen className="h-4 w-4" />
+                  Master Playbook
+                </Button>
+              </Link>
+              <Link href="/admin/analytics">
+                <Button variant="outline" className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4" />
+                  Platform Analytics
+                </Button>
+              </Link>
+            </div>
           </div>
 
           {/* Stats */}
