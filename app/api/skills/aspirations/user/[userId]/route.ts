@@ -6,8 +6,9 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { userId: string } }
+  context: { params: Promise<{ userId: string }> }
 ) {
+  const params = await context.params
   try {
     const aspirations = await getSkillAspirations(params.userId)
     return NextResponse.json({ aspirations })

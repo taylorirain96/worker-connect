@@ -12,8 +12,9 @@ export async function GET() {
 
 export async function PUT(
   request: Request,
-  { params }: { params: { jobId: string } }
+  context: { params: Promise<{ jobId: string }> }
 ) {
+  const params = await context.params
   try {
     const { jobId } = params
     const body = await request.json()
@@ -27,8 +28,9 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { jobId: string } }
+  context: { params: Promise<{ jobId: string }> }
 ) {
+  const params = await context.params
   try {
     const { jobId } = params
     // In production, delete from Firestore

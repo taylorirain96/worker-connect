@@ -8,8 +8,9 @@ const VALID_TYPES: VerificationType[] = ['government_id', 'background_check', 'i
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { type: string } },
+  context: { params: Promise<{ type: string }> },
 ) {
+  const params = await context.params
   try {
     const type = params.type as VerificationType
     if (!VALID_TYPES.includes(type)) {

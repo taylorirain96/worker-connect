@@ -17,8 +17,9 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
 
 export async function GET(
   _request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const params = await context.params
   try {
     const { id } = params
     if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
@@ -40,8 +41,9 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const params = await context.params
   try {
     const { id } = params
     const body = await request.json() as {
@@ -109,8 +111,8 @@ export async function PUT(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  return PUT(request, { params })
+  return PUT(request, context)
 }
 

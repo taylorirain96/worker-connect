@@ -4,8 +4,9 @@ import { FieldValue } from 'firebase-admin/firestore'
 
 export async function PUT(
   request: Request,
-  { params }: { params: { applicationId: string } }
+  context: { params: Promise<{ applicationId: string }> }
 ) {
+  const params = await context.params
   try {
     const { applicationId } = params
     const body = await request.json()

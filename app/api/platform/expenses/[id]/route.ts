@@ -3,7 +3,8 @@ import { platformFinancialService } from '@/lib/services/platformFinancialServic
 import { db } from '@/lib/firebase'
 import { doc, updateDoc, getDoc } from 'firebase/firestore'
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, context: { params: Promise<{ id: string }> }) {
+  const params = await context.params
   try {
     const body = await request.json()
     const { approve, ...updates } = body

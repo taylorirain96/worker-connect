@@ -8,8 +8,9 @@ import type { NextRequest } from 'next/server'
  */
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { subscriptionId: string } }
+  context: { params: Promise<{ subscriptionId: string }> }
 ) {
+  const params = await context.params
   try {
     const { subscriptionId } = params
 
@@ -46,8 +47,9 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { subscriptionId: string } }
+  context: { params: Promise<{ subscriptionId: string }> }
 ) {
+  const params = await context.params
   try {
     const { subscriptionId } = params
     const body = await req.json() as {
@@ -81,8 +83,9 @@ export async function PUT(
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { subscriptionId: string } }
+  context: { params: Promise<{ subscriptionId: string }> }
 ) {
+  const params = await context.params
   try {
     const { subscriptionId } = params
 

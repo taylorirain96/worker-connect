@@ -24,8 +24,8 @@ export default function ThemeSwitcher({ activeTheme, onThemeChange }: ThemeSwitc
           className={[
             'flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200',
             activeTheme === key
-              ? 'bg-[#c5a05a] text-[#0f172a] shadow-[0_0_20px_rgba(197,160,90,0.4)] scale-105'
-              : 'bg-[#1e293b] text-[#cbd5e1] border border-[#334155] hover:border-[#c5a05a] hover:text-[#c5a05a]',
+              ? 'bg-[#6366f1] text-white shadow-[0_0_20px_rgba(99,102,241,0.4)] scale-105'
+              : 'bg-[#1e293b] text-[#cbd5e1] border border-[#334155] hover:border-[#6366f1] hover:text-[#818cf8]',
           ].join(' ')}
         >
           <Icon className="h-4 w-4" strokeWidth={1.5} />

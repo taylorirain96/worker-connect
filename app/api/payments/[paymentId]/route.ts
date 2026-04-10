@@ -7,8 +7,9 @@ import type { NextRequest } from 'next/server'
  */
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { paymentId: string } }
+  context: { params: Promise<{ paymentId: string }> }
 ) {
+  const params = await context.params
   try {
     const { paymentId } = params
 
@@ -40,8 +41,9 @@ export async function GET(
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { paymentId: string } }
+  context: { params: Promise<{ paymentId: string }> }
 ) {
+  const params = await context.params
   try {
     const { paymentId } = params
     const body = await req.json() as { action?: string; paymentMethodId?: string }

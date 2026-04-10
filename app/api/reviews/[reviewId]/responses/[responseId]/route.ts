@@ -8,8 +8,9 @@ import { updateReviewResponse, deleteReviewResponse } from '@/lib/reviews/fireba
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { reviewId: string; responseId: string } }
+  context: { params: Promise<{ reviewId: string; responseId: string }> }
 ) {
+  const params = await context.params
   try {
     const { reviewId } = params
     const body = await request.json()
@@ -33,8 +34,9 @@ export async function PUT(
 
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: { reviewId: string; responseId: string } }
+  context: { params: Promise<{ reviewId: string; responseId: string }> }
 ) {
+  const params = await context.params
   try {
     const { reviewId } = params
     await deleteReviewResponse(reviewId)

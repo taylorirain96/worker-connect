@@ -6,8 +6,9 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { skillA: string; skillB: string } }
+  context: { params: Promise<{ skillA: string; skillB: string }> }
 ) {
+  const params = await context.params
   try {
     const path = await getCareerPath(
       decodeURIComponent(params.skillA),

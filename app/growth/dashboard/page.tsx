@@ -80,7 +80,7 @@ export default function GrowthDashboardPage() {
   />
 </div>
         <div className="mb-6">
-          <QuickInsightsPanel growthScore={growthScore} churnRisk={churnRisk} lifecycle={lifecycle} />
+          <QuickInsightsPanel growthScore={growthScore.score} growthTrend={growthScore.trend} churnRisk={churnRisk.score} lifecycleStage={lifecycle.stage} />
         </div>
 
         <div className="mb-6">

@@ -4,8 +4,9 @@ import { getReviewById, deleteReview, moderateReview } from '@/lib/reviews/fireb
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { reviewId: string } }
+  context: { params: Promise<{ reviewId: string }> }
 ) {
+  const params = await context.params
   try {
     const { reviewId } = params
     const review = await getReviewById(reviewId)
@@ -21,8 +22,9 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { reviewId: string } }
+  context: { params: Promise<{ reviewId: string }> }
 ) {
+  const params = await context.params
   try {
     const { reviewId } = params
     const body = await request.json()
@@ -57,8 +59,9 @@ export async function PUT(
 
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: { reviewId: string } }
+  context: { params: Promise<{ reviewId: string }> }
 ) {
+  const params = await context.params
   try {
     const { reviewId } = params
     await deleteReview(reviewId)

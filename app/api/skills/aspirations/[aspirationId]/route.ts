@@ -9,8 +9,9 @@ export const dynamic = 'force-dynamic'
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { aspirationId: string } }
+  context: { params: Promise<{ aspirationId: string }> }
 ) {
+  const params = await context.params
   try {
     const body = await request.json()
     await updateSkillAspiration(params.aspirationId, body)
@@ -23,8 +24,9 @@ export async function PUT(
 
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: { aspirationId: string } }
+  context: { params: Promise<{ aspirationId: string }> }
 ) {
+  const params = await context.params
   try {
     await deleteSkillAspiration(params.aspirationId)
     return NextResponse.json({ success: true })

@@ -17,8 +17,9 @@ function getBadges(tier: ReputationTier, shields: number): string[] {
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { userId: string } },
+  context: { params: Promise<{ userId: string }> },
 ) {
+  const params = await context.params
   try {
     const score = await getReputationScore(params.userId)
     if (!score) {

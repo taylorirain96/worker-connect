@@ -8,14 +8,15 @@ import {
 export const dynamic = 'force-dynamic'
 
 interface RouteParams {
-  params: { notificationId: string }
+  params: Promise<{ notificationId: string }>
 }
 
 /**
  * PUT /api/notifications/[notificationId]
  * Mark a single notification as read.
  */
-export async function PUT(request: NextRequest, { params }: RouteParams) {
+export async function PUT(request: NextRequest, context: RouteParams) {
+  const params = await context.params
   try {
     const userId = request.headers.get('x-user-id')
     if (!userId) {
@@ -39,7 +40,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
  * PATCH /api/notifications/[notificationId]
  * Mark a single notification as read (alias for PUT to match spec).
  */
-export async function PATCH(request: NextRequest, { params }: RouteParams) {
+export async function PATCH(request: NextRequest, context: RouteParams) {
+  const params = await context.params
   try {
     const userId = request.headers.get('x-user-id')
     if (!userId) {
@@ -63,7 +65,8 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
  * DELETE /api/notifications/[notificationId]
  * Soft-delete a notification.
  */
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+export async function DELETE(request: NextRequest, context: RouteParams) {
+  const params = await context.params
   try {
     const userId = request.headers.get('x-user-id')
     if (!userId) {

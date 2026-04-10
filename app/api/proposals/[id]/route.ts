@@ -6,8 +6,9 @@ export const dynamic = 'force-dynamic'
 
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const params = await context.params
   try {
     await rejectProposal(params.id)
     return NextResponse.json({ success: true })
