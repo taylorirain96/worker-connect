@@ -66,3 +66,85 @@
 .breathing-glow {
   animation: breathing-glow 4s ease-in-out infinite;
 }
+
+/* ── Role-Based Theme System ── */
+
+[data-role-theme="worker"] {
+  --rt-bg-primary: #0f172a;
+  --rt-bg-secondary: #1e293b;
+  --rt-bg-card: #1e293b;
+  --rt-bg-hover: #334155;
+  --rt-accent-primary: #ff6b35;
+  --rt-accent-secondary: #0066cc;
+  --rt-accent-gold: #c5a05a;
+  --rt-accent-gold-light: #ffd700;
+  --rt-text-primary: #f8fafc;
+  --rt-text-secondary: #cbd5e1;
+  --rt-text-muted: #64748b;
+  --rt-cta-bg: linear-gradient(135deg, #ff6b35 0%, #ff8555 100%);
+  --rt-cta-shadow: 0 0 30px rgba(255, 107, 53, 0.4);
+  --rt-border-default: #334155;
+  --rt-border-gold: #c5a05a;
+  --rt-border-glow: rgba(197, 160, 90, 0.3);
+  --rt-glow-intensity: 0.5;
+}
+
+[data-role-theme="employer"] {
+  --rt-bg-primary: #1a1a2e;
+  --rt-bg-secondary: #252540;
+  --rt-bg-card: #2d2d44;
+  --rt-bg-hover: #3a3a5c;
+  --rt-accent-primary: #f59e0b;
+  --rt-accent-secondary: #3b82f6;
+  --rt-accent-gold: #d4af37;
+  --rt-accent-gold-light: #f3c969;
+  --rt-text-primary: #fef3c7;
+  --rt-text-secondary: #d4d4d8;
+  --rt-text-muted: #71717a;
+  --rt-cta-bg: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+  --rt-cta-shadow: 0 0 30px rgba(245, 158, 11, 0.3);
+  --rt-border-default: #3a3a5c;
+  --rt-border-gold: #d4af37;
+  --rt-border-glow: rgba(212, 175, 55, 0.3);
+  --rt-glow-intensity: 0.3;
+}
+
+/* Premium badge gold glow — worker (bolder) */
+[data-role-theme="worker"] .premium-badge {
+  box-shadow:
+    0 0 20px rgba(197, 160, 90, 0.5),
+    0 0 40px rgba(197, 160, 90, 0.3);
+  animation: pulse-gold-worker 2s ease-in-out infinite;
+}
+
+/* Premium badge gold glow — employer (softer) */
+[data-role-theme="employer"] .premium-badge {
+  box-shadow:
+    0 0 15px rgba(212, 175, 55, 0.3),
+    0 0 30px rgba(212, 175, 55, 0.2);
+  animation: pulse-gold-employer 3s ease-in-out infinite;
+}
+
+@keyframes pulse-gold-worker {
+  0%, 100% { box-shadow: 0 0 20px rgba(197, 160, 90, 0.5), 0 0 40px rgba(197, 160, 90, 0.3); }
+  50% { box-shadow: 0 0 30px rgba(197, 160, 90, 0.7), 0 0 60px rgba(197, 160, 90, 0.45); }
+}
+
+@keyframes pulse-gold-employer {
+  0%, 100% { box-shadow: 0 0 15px rgba(212, 175, 55, 0.3), 0 0 30px rgba(212, 175, 55, 0.2); }
+  50% { box-shadow: 0 0 22px rgba(212, 175, 55, 0.45), 0 0 45px rgba(212, 175, 55, 0.3); }
+}
+
+/* Priority job card animated gold border */
+.priority-job-border {
+  border: 2px solid transparent;
+  background:
+    linear-gradient(var(--rt-bg-card, #1e293b), var(--rt-bg-card, #1e293b)) padding-box,
+    linear-gradient(135deg, var(--rt-border-gold, #c5a05a), var(--rt-accent-gold-light, #ffd700), var(--rt-border-gold, #c5a05a)) border-box;
+  animation: priority-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes priority-pulse {
+  0%, 100% { box-shadow: 0 0 30px var(--rt-border-glow, rgba(197, 160, 90, 0.3)); }
+  50% { box-shadow: 0 0 45px var(--rt-border-glow, rgba(197, 160, 90, 0.3)); }
+}
