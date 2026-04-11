@@ -4,6 +4,9 @@ import { ThemeProvider } from '@/components/providers/ThemeProvider'
 import { AuthProvider } from '@/components/providers/AuthProvider'
 import { RoleProvider } from '@/context/RoleContext'
 import { Toaster } from 'react-hot-toast'
+import dynamic from 'next/dynamic'
+
+const SupportChatbot = dynamic(() => import('@/components/chat/SupportChatbot'), { ssr: false })
 
 export const metadata: Metadata = {
   title: 'QuickTrade | Find Trusted Trade Workers in New Zealand',
@@ -24,6 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <RoleProvider>
               {children}
               <Toaster position="top-right" />
+              <SupportChatbot />
             </RoleProvider>
           </AuthProvider>
         </ThemeProvider>

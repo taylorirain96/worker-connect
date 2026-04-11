@@ -191,6 +191,26 @@ export async function POST(req: NextRequest) {
             })
           }
         }
+
+        // Send invoice receipt email (non-blocking) if we have the user's email in metadata
+        const userEmail = pi.metadata?.userEmail
+        if (userEmail) {
+          const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://quicktrade.co.nz'
+          fetch(`${appUrl}/api/emails/invoice`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: userEmail,
+              name: pi.metadata?.userName ?? 'Customer',
+              amount: pi.amount,
+              jobTitle: pi.metadata?.jobTitle,
+              date: new Date().toISOString(),
+              stripePaymentId: pi.id,
+              invoiceNumber: `QT-${Date.now()}`,
+            }),
+          }).catch(() => {})
+        }
+
         break
       }
 

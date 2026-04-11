@@ -1,9 +1,6 @@
 import { NextResponse } from 'next/server'
-import { Resend } from 'resend'
 
 export const dynamic = 'force-dynamic'
-
-const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function GET(request: Request) {
   // Verify cron secret to prevent unauthorized calls
@@ -13,6 +10,8 @@ export async function GET(request: Request) {
   }
 
   try {
+    const { Resend } = await import('resend')
+    const resend = new Resend(process.env.RESEND_API_KEY)
     const { adminDb } = await import('@/lib/firebase-admin')
 
     // Get all workers with email notifications enabled (or all workers)
