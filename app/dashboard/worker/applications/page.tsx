@@ -24,7 +24,7 @@ function statusBadgeVariant(status: JobApplication['status']) {
 }
 
 function statusLabel(status: JobApplication['status']): string {
-  return STATUS_LABELS[status]?.label ?? (status.charAt(0).toUpperCase() + status.slice(1))
+  return STATUS_LABELS[status]?.label ?? status
 }
 
 export default function MyApplicationsPage() {

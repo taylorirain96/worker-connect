@@ -71,8 +71,12 @@ export async function applyToJob(
     updatedAt: now,
   })
 
-  // Increment the job's applicant count
-  await updateDoc(doc(db, 'jobs', jobId), { applicantsCount: increment(1) })
+  // Increment the job's applicant count (guards against non-existent job doc)
+  const jobRef = doc(db, 'jobs', jobId)
+  const jobSnap = await getDoc(jobRef)
+  if (jobSnap.exists()) {
+    await updateDoc(jobRef, { applicantsCount: increment(1) })
+  }
 
   return docRef.id
 }
