@@ -9,10 +9,13 @@ import { useRouter } from 'next/navigation'
 import { getInitials } from '@/lib/utils'
 import NotificationCenter from '@/components/notifications/NotificationCenter'
 import { subscribeToTotalUnread } from '@/lib/services/messagingService'
+import DualRoleToggle from '@/components/ui/DualRoleToggle'
+import { useRole } from '@/context/RoleContext'
 
 export default function Navbar() {
   const { theme, setTheme } = useTheme()
   const { user, profile } = useAuth()
+  const { activeRole, isWorker, isEmployer } = useRole()
   const [menuOpen, setMenuOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const [unreadMessages, setUnreadMessages] = useState(0)
@@ -48,16 +51,33 @@ export default function Navbar() {
             </span>
           </Link>
 
-          <div className="hidden md:flex items-center space-x-8">
-            <Link href="/services" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
-              Services
-            </Link>
-            <Link href="/jobs" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
-              Find Jobs
-            </Link>
-            <Link href="/workers" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
-              Find Workers
-            </Link>
+          <div className="hidden md:flex items-center space-x-6">
+            {isWorker && (
+              <>
+                <Link href="/jobs" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
+                  Find Jobs
+                </Link>
+                <Link href="/jobs/matched" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
+                  My Matches
+                </Link>
+                <Link href="/timesheets" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
+                  Timesheets
+                </Link>
+              </>
+            )}
+            {isEmployer && (
+              <>
+                <Link href="/jobs/create" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
+                  Post a Job
+                </Link>
+                <Link href="/workers" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
+                  Find Workers
+                </Link>
+                <Link href="/jobs" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
+                  Manage Listings
+                </Link>
+              </>
+            )}
             <Link href="/services" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
               Services
             </Link>
@@ -77,6 +97,8 @@ export default function Navbar() {
             >
               {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </button>
+
+            {user && <DualRoleToggle />}
 
             {user ? (
               <div className="flex items-center space-x-2">
@@ -100,11 +122,13 @@ export default function Navbar() {
                         <div className="p-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
                           <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{user.displayName || 'User'}</p>
                           <p className="text-xs text-gray-500 truncate">{user.email}</p>
-                          {profile?.role && (
-                            <span className="text-xs bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400 px-2 py-0.5 rounded-full mt-1 inline-block capitalize">
-                              {profile.role}
-                            </span>
-                          )}
+                          <span className={`text-xs px-2 py-0.5 rounded-full mt-1 inline-block capitalize ${
+                            activeRole === 'worker'
+                              ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400'
+                              : 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400'
+                          }`}>
+                            {activeRole} view
+                          </span>
                         </div>
                         <div className="py-1">
                           <Link href="/dashboard" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" onClick={() => setProfileOpen(false)}>
@@ -113,9 +137,14 @@ export default function Navbar() {
                           <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" onClick={() => setProfileOpen(false)}>
                             Profile
                           </Link>
-                          {profile?.role === 'employer' && (
+                          {isEmployer && (
                             <Link href="/dashboard/business/profile" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" onClick={() => setProfileOpen(false)}>
                               Business Profile
+                            </Link>
+                          )}
+                          {isWorker && (
+                            <Link href="/analytics" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" onClick={() => setProfileOpen(false)}>
+                              📊 Analytics
                             </Link>
                           )}
                           <Link href="/notifications" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" onClick={() => setProfileOpen(false)}>
@@ -132,12 +161,9 @@ export default function Navbar() {
                           <Link href="/payments" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" onClick={() => setProfileOpen(false)}>
                             Payments
                           </Link>
-                          <Link href="/earnings" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" onClick={() => setProfileOpen(false)}>
-                            Earnings
-                          </Link>
-                          {profile?.role === 'worker' && (
-                            <Link href="/analytics" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" onClick={() => setProfileOpen(false)}>
-                              📊 Analytics
+                          {isWorker && (
+                            <Link href="/earnings" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" onClick={() => setProfileOpen(false)}>
+                              Earnings
                             </Link>
                           )}
                           {profile?.role === 'admin' && (
@@ -191,14 +217,34 @@ export default function Navbar() {
         {menuOpen && (
           <div className="md:hidden py-4 border-t border-gray-200 dark:border-gray-700">
             <div className="flex flex-col space-y-1">
+              {isWorker && (
+                <>
+                  <Link href="/jobs" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 px-3 py-2 rounded-lg transition-colors" onClick={() => setMenuOpen(false)}>
+                    Find Jobs
+                  </Link>
+                  <Link href="/jobs/matched" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 px-3 py-2 rounded-lg transition-colors" onClick={() => setMenuOpen(false)}>
+                    My Matches
+                  </Link>
+                  <Link href="/timesheets" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 px-3 py-2 rounded-lg transition-colors" onClick={() => setMenuOpen(false)}>
+                    Timesheets
+                  </Link>
+                </>
+              )}
+              {isEmployer && (
+                <>
+                  <Link href="/jobs/create" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 px-3 py-2 rounded-lg transition-colors" onClick={() => setMenuOpen(false)}>
+                    Post a Job
+                  </Link>
+                  <Link href="/workers" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 px-3 py-2 rounded-lg transition-colors" onClick={() => setMenuOpen(false)}>
+                    Find Workers
+                  </Link>
+                  <Link href="/jobs" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 px-3 py-2 rounded-lg transition-colors" onClick={() => setMenuOpen(false)}>
+                    Manage Listings
+                  </Link>
+                </>
+              )}
               <Link href="/services" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 px-3 py-2 rounded-lg transition-colors" onClick={() => setMenuOpen(false)}>
                 Services
-              </Link>
-              <Link href="/jobs" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 px-3 py-2 rounded-lg transition-colors" onClick={() => setMenuOpen(false)}>
-                Find Jobs
-              </Link>
-              <Link href="/workers" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 px-3 py-2 rounded-lg transition-colors" onClick={() => setMenuOpen(false)}>
-                Find Workers
               </Link>
               <Link href="/leaderboard" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 px-3 py-2 rounded-lg transition-colors" onClick={() => setMenuOpen(false)}>
                 🏆 Leaderboard
@@ -218,6 +264,9 @@ export default function Navbar() {
               )}
               {user && (
                 <div className="pt-3 border-t border-gray-200 dark:border-gray-700 space-y-1">
+                  <div className="px-3 pb-2">
+                    <DualRoleToggle />
+                  </div>
                   <Link href="/dashboard" className="block px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg" onClick={() => setMenuOpen(false)}>Dashboard</Link>
                   <Link href="/messages" className="flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg" onClick={() => setMenuOpen(false)}>
                     Messages
@@ -227,7 +276,7 @@ export default function Navbar() {
                       </span>
                     )}
                   </Link>
-                  {profile?.role === 'worker' && (
+                  {isWorker && (
                     <Link href="/analytics" className="block px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg" onClick={() => setMenuOpen(false)}>
                       📊 Analytics
                     </Link>
