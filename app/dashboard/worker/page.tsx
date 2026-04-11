@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { useAuth } from '@/components/providers/AuthProvider'
@@ -26,12 +27,6 @@ interface RecentApplication {
   budgetType: 'fixed' | 'hourly'
 }
 
-const MOCK_APPLIED_JOBS: RecentApplication[] = [
-  { id: '1', title: 'Fix Leaking Bathroom Pipe', employer: 'John Smith', status: 'pending', appliedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), budget: 150, budgetType: 'fixed' },
-  { id: '2', title: 'Install New Electrical Panel', employer: 'Sarah Johnson', status: 'accepted', appliedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), budget: 2500, budgetType: 'fixed' },
-  { id: '3', title: 'HVAC System Maintenance', employer: 'Mike Williams', status: 'rejected', appliedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), budget: 200, budgetType: 'fixed' },
-]
-
 function docToApplication(id: string, data: DocumentData): Application {
   const toISO = (v: unknown) =>
     v && typeof v === 'object' && 'toDate' in v
@@ -43,13 +38,19 @@ function docToApplication(id: string, data: DocumentData): Application {
 }
 
 export default function WorkerDashboardPage() {
-  const { user, profile } = useAuth()
+  const { user, profile, loading } = useAuth()
+  const router = useRouter()
   const [applications, setApplications] = useState<RecentApplication[]>([])
   const [loadingApps, setLoadingApps] = useState(true)
 
   useEffect(() => {
+    if (!loading && !user) {
+      router.push('/auth/login')
+    }
+  }, [loading, user, router])
+
+  useEffect(() => {
     if (!user?.uid || !db) {
-      setApplications(MOCK_APPLIED_JOBS)
       setLoadingApps(false)
       return
     }
@@ -59,29 +60,48 @@ export default function WorkerDashboardPage() {
         const q = query(appsRef, where('workerId', '==', user!.uid), orderBy('createdAt', 'desc'))
         const snapshot = await getDocs(q)
         const apps = snapshot.docs.map((d) => docToApplication(d.id, d.data()))
-        if (apps.length === 0) {
-          setApplications(MOCK_APPLIED_JOBS)
-        } else {
-          setApplications(
-            apps.slice(0, 5).map((a) => ({
-              id: a.id,
-              title: a.jobTitle,
-              employer: a.employerId, // employerName is not stored on Application; field is present for future use but not currently rendered in the UI
-              status: a.status,
-              appliedAt: a.createdAt,
-              budget: a.proposedRate,
-              budgetType: 'fixed' as const,
-            }))
-          )
-        }
+        setApplications(
+          apps.slice(0, 5).map((a) => ({
+            id: a.id,
+            title: a.jobTitle,
+            employer: a.employerId,
+            status: a.status,
+            appliedAt: a.createdAt,
+            budget: a.proposedRate,
+            budgetType: 'fixed' as const,
+          }))
+        )
       } catch {
-        setApplications(MOCK_APPLIED_JOBS)
+        setApplications([])
       } finally {
         setLoadingApps(false)
       }
     }
     fetchApplications()
   }, [user])
+
+  if (loading) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Navbar />
+        <main className="flex-1 bg-gray-50 dark:bg-gray-900">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="animate-pulse space-y-6">
+              <div className="h-8 w-64 bg-gray-200 dark:bg-gray-700 rounded" />
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="h-20 bg-gray-200 dark:bg-gray-700 rounded-xl" />
+                ))}
+              </div>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    )
+  }
+
+  if (!user) return null
 
   const totalApplied = applications.length
   const activeJobs = applications.filter((a) => a.status === 'accepted').length
@@ -104,7 +124,7 @@ export default function WorkerDashboardPage() {
           <div className="flex items-center justify-between mb-8">
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Welcome back, {user?.displayName?.split(' ')[0] || 'Worker'}! 👋
+                Welcome back, {profile?.displayName?.split(' ')[0] || user?.displayName?.split(' ')[0] || 'Worker'}! 👋
               </h1>
               <p className="text-gray-500 dark:text-gray-400 mt-1">
                 {profile?.availability === 'available' ? '🟢 You are visible to employers' : '🔴 Update your availability to get more jobs'}

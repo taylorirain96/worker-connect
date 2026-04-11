@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { useAuth } from '@/components/providers/AuthProvider'
@@ -16,6 +17,8 @@ import { formatCurrency, formatRelativeDate, STATUS_LABELS } from '@/lib/utils'
 import { collection, query, where, orderBy, getDocs, type DocumentData } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import type { Job } from '@/types'
+import { getWeeklyLeaderboard } from '@/lib/leaderboard/firebase'
+import type { LeaderboardEntry } from '@/lib/leaderboard/rankingLogic'
 
 interface PostedJob {
   id: string
@@ -33,12 +36,6 @@ const MOCK_POSTED_JOBS: PostedJob[] = [
   { id: '1', title: 'Fix Leaking Bathroom Pipe', status: 'completed', budget: 150, budgetType: 'fixed', applicants: 4, createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), hasPhotos: true, photoCount: 2 },
   { id: '2', title: 'Paint Living Room', status: 'in_progress', budget: 800, budgetType: 'fixed', applicants: 9, createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), hasPhotos: false, photoCount: 0 },
   { id: '3', title: 'Landscaping & Yard Cleanup', status: 'completed', budget: 350, budgetType: 'fixed', applicants: 6, createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(), hasPhotos: false, photoCount: 0 },
-]
-
-const MOCK_TOP_PERFORMERS = [
-  { id: 'w1', name: 'Marcus Johnson', category: 'Electrical', rank: 1, weeklyPoints: 420, rating: 4.9, jobs: 8, trend: '↑' },
-  { id: 'w2', name: 'Sarah Williams', category: 'Plumbing', rank: 2, weeklyPoints: 380, rating: 4.8, jobs: 7, trend: '↑' },
-  { id: 'w3', name: 'James Rodriguez', category: 'HVAC', rank: 3, weeklyPoints: 350, rating: 4.7, jobs: 6, trend: '→' },
 ]
 
 function docToPostedJob(id: string, data: DocumentData): PostedJob {
@@ -61,10 +58,19 @@ function docToPostedJob(id: string, data: DocumentData): PostedJob {
 }
 
 export default function EmployerDashboardPage() {
-  const { user } = useAuth()
+  const { user, profile, loading } = useAuth()
+  const router = useRouter()
   const [postedJobs, setPostedJobs] = useState<PostedJob[]>([])
   const [loadingJobs, setLoadingJobs] = useState(true)
   const [photoFilter, setPhotoFilter] = useState<'all' | 'with_photos' | 'no_photos'>('all')
+  const [topPerformers, setTopPerformers] = useState<LeaderboardEntry[]>([])
+  const [loadingLeaderboard, setLoadingLeaderboard] = useState(true)
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/auth/login')
+    }
+  }, [loading, user, router])
 
   useEffect(() => {
     if (!user?.uid || !db) {
@@ -87,6 +93,43 @@ export default function EmployerDashboardPage() {
     }
     fetchJobs()
   }, [user])
+
+  useEffect(() => {
+    async function fetchLeaderboard() {
+      try {
+        const entries = await getWeeklyLeaderboard('all', 5)
+        setTopPerformers(entries)
+      } catch {
+        setTopPerformers([])
+      } finally {
+        setLoadingLeaderboard(false)
+      }
+    }
+    fetchLeaderboard()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Navbar />
+        <main className="flex-1 bg-gray-50 dark:bg-gray-900">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="animate-pulse space-y-6">
+              <div className="h-8 w-64 bg-gray-200 dark:bg-gray-700 rounded" />
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="h-20 bg-gray-200 dark:bg-gray-700 rounded-xl" />
+                ))}
+              </div>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    )
+  }
+
+  if (!user) return null
 
   const filteredJobs = postedJobs.filter((job) => {
     if (photoFilter === 'with_photos') return job.hasPhotos
@@ -117,7 +160,7 @@ export default function EmployerDashboardPage() {
           <div className="flex items-center justify-between mb-8">
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Welcome back, {user?.displayName?.split(' ')[0] || 'Employer'}! 👋
+                Welcome back, {profile?.displayName?.split(' ')[0] || user?.displayName?.split(' ')[0] || 'Employer'}! 👋
               </h1>
               <p className="text-gray-500 dark:text-gray-400 mt-1">
                 Manage your job postings and find the right workers
@@ -284,24 +327,43 @@ export default function EmployerDashboardPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
-                    {MOCK_TOP_PERFORMERS.map((worker) => (
-                      <div key={worker.id} className="flex items-center gap-3">
-                        <span className="text-lg w-6 flex-shrink-0 text-center">
-                          {worker.rank === 1 ? '🥇' : worker.rank === 2 ? '🥈' : '🥉'}
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{worker.name}</p>
-                          <p className="text-xs text-gray-500">{worker.category} · {worker.weeklyPoints} pts</p>
+                  {loadingLeaderboard ? (
+                    <div className="space-y-3">
+                      {[...Array(3)].map((_, i) => (
+                        <div key={i} className="flex items-center gap-3 animate-pulse">
+                          <div className="h-6 w-6 bg-gray-200 dark:bg-gray-700 rounded" />
+                          <div className="flex-1 space-y-1">
+                            <div className="h-3 w-24 bg-gray-200 dark:bg-gray-700 rounded" />
+                            <div className="h-3 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1 text-xs text-gray-500 flex-shrink-0">
-                          <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                          {worker.rating}
-                          <span className="ml-1 text-xs">{worker.trend}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  ) : topPerformers.length === 0 ? (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">No leaderboard data yet this week.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {topPerformers.map((worker) => (
+                        <Link key={worker.userId} href={`/workers/${worker.userId}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                          <span className="text-lg w-6 flex-shrink-0 text-center">
+                            {worker.rank === 1 ? '🥇' : worker.rank === 2 ? '🥈' : worker.rank === 3 ? '🥉' : `#${worker.rank}`}
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{worker.displayName}</p>
+                            <p className="text-xs text-gray-500">{worker.category ?? 'All'} · {worker.weeklyPoints} pts</p>
+                          </div>
+                          <div className="flex items-center gap-1 text-xs text-gray-500 flex-shrink-0">
+                            {worker.rating != null && (
+                              <>
+                                <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                                {worker.rating.toFixed(1)}
+                              </>
+                            )}
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
                   <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700">
                     <Link href="/leaderboard">
                       <Button variant="outline" size="sm" className="w-full justify-center text-yellow-700 border-yellow-300 hover:bg-yellow-50 dark:text-yellow-400 dark:border-yellow-700 dark:hover:bg-yellow-900/20">
