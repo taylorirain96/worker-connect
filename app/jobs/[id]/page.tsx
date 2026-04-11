@@ -15,9 +15,7 @@ import {
 import { formatCurrency, formatRelativeDate, JOB_CATEGORIES, URGENCY_LABELS } from '@/lib/utils'
 import type { Job, JobPhoto } from '@/types'
 import Link from 'next/link'
-import { applyToJob, getApplicationId, withdrawApplication } from '@/lib/applications'
-import { db } from '@/lib/firebase'
-import { getJobApplications } from '@/lib/services/applicationService'
+import { applyToJob, getApplicationId, withdrawApplication, getJobApplications } from '@/lib/applications'
 
 const MOCK_JOBS: Record<string, Job & { employerRating?: number; employerJobs?: number }> = {
   '1': {
