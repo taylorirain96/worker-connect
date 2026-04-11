@@ -123,19 +123,7 @@ export async function withdrawApplication(applicationId: string): Promise<void> 
  * Check if a worker has already applied to a job.
  */
 export async function hasApplied(jobId: string, workerId: string): Promise<boolean> {
-  if (!db) return false
-
-  try {
-    const q = query(
-      collection(db, 'applications'),
-      where('jobId', '==', jobId),
-      where('workerId', '==', workerId)
-    )
-    const snapshot = await getDocs(q)
-    return !snapshot.empty
-  } catch {
-    return false
-  }
+  return (await getApplicationId(jobId, workerId)) !== null
 }
 
 /**

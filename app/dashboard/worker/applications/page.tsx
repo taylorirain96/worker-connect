@@ -11,6 +11,7 @@ import Link from 'next/link'
 import { Briefcase, ArrowLeft, Calendar } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { getWorkerApplications, withdrawApplication } from '@/lib/applications'
+import { STATUS_LABELS } from '@/lib/utils'
 import type { JobApplication } from '@/types'
 
 function statusBadgeVariant(status: JobApplication['status']) {
@@ -20,6 +21,10 @@ function statusBadgeVariant(status: JobApplication['status']) {
     case 'withdrawn': return 'default' as const
     default: return 'warning' as const
   }
+}
+
+function statusLabel(status: JobApplication['status']): string {
+  return STATUS_LABELS[status]?.label ?? (status.charAt(0).toUpperCase() + status.slice(1))
 }
 
 export default function MyApplicationsPage() {
@@ -127,7 +132,7 @@ export default function MyApplicationsPage() {
                       </div>
                       <div className="flex items-center gap-3 flex-shrink-0">
                         <Badge variant={statusBadgeVariant(app.status)}>
-                          {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
+                          {statusLabel(app.status)}
                         </Badge>
                         {app.status === 'pending' && (
                           <Button
