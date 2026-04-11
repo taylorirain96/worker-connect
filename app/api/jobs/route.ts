@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { categoriseJob } from '@/lib/ai/categorise-job'
 
 export async function GET(request: NextRequest) {
   try {
@@ -66,6 +67,17 @@ export async function POST(request: NextRequest) {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }
+
+    const jobId = job.id
+
+    // Auto-categorise in the background (non-blocking).
+    // In production when this route saves to Firestore, uncomment the adminDb update below.
+    categoriseJob(title, description).then(async (aiCategory) => {
+      // Update the job document with the AI-assigned category:
+      // const { adminDb } = await import('@/lib/firebase-admin')
+      // await adminDb.collection('jobs').doc(jobId).update({ category: aiCategory, categorisedAt: new Date().toISOString() })
+      console.log(`Job ${jobId} auto-categorised as: ${aiCategory}`)
+    }).catch(() => {}) // silently ignore
 
     return NextResponse.json(job, { status: 201 })
   } catch (error) {

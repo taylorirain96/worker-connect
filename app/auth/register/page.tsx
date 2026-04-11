@@ -102,6 +102,12 @@ function RegisterForm() {
       const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password)
       await updateProfile(userCredential.user, { displayName: data.displayName })
       await createUserProfile(userCredential.user.uid, data.email, data.displayName, data.role)
+      // Fire welcome email (non-blocking)
+      fetch('/api/emails/welcome', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: data.email, name: data.displayName, role: data.role }),
+      }).catch(() => {}) // silently ignore if email fails
       toast.success('Account created successfully!')
       router.push(data.role === 'employer' ? '/dashboard/employer' : '/dashboard/worker')
     } catch (error: unknown) {
@@ -132,6 +138,12 @@ function RegisterForm() {
         user.displayName || 'User',
         selectedRole
       )
+      // Fire welcome email (non-blocking)
+      fetch('/api/emails/welcome', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.email, name: user.displayName || 'User', role: selectedRole }),
+      }).catch(() => {}) // silently ignore if email fails
       toast.success('Account created successfully!')
       router.push(selectedRole === 'employer' ? '/dashboard/employer' : '/dashboard/worker')
     } catch (error: unknown) {
