@@ -190,6 +190,12 @@ export default function JobDetailPage() {
     }
   }
 
+  const handleCancelReview = () => {
+    setShowReviewForm(false)
+    setReviewRating(0)
+    setReviewComment('')
+  }
+
   const handleApply = async () => {
     if (!user) {
       toast.error('Please sign in to apply')
@@ -443,7 +449,7 @@ export default function JobDetailPage() {
                       <div className="flex gap-3">
                         <Button
                           variant="outline"
-                          onClick={() => { setShowReviewForm(false); setReviewRating(0); setReviewComment('') }}
+                          onClick={handleCancelReview}
                           className="flex-1"
                         >
                           Cancel

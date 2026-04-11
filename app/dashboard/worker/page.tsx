@@ -146,6 +146,16 @@ export default function WorkerDashboardPage() {
     }
   }
 
+  const handleStartResponse = (reviewId: string) => {
+    setRespondingId(reviewId)
+    setResponseText('')
+  }
+
+  const handleCancelResponse = () => {
+    setRespondingId(null)
+    setResponseText('')
+  }
+
   if (loading) {
     return (
       <div className="flex flex-col min-h-screen">
@@ -329,7 +339,7 @@ export default function WorkerDashboardPage() {
                               variant="outline"
                               size="sm"
                               className="mt-3"
-                              onClick={() => { setRespondingId(review.id); setResponseText('') }}
+                              onClick={() => handleStartResponse(review.id)}
                             >
                               <MessageSquare className="h-3.5 w-3.5" />
                               Respond
@@ -349,7 +359,7 @@ export default function WorkerDashboardPage() {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => { setRespondingId(null); setResponseText('') }}
+                                  onClick={handleCancelResponse}
                                 >
                                   Cancel
                                 </Button>
