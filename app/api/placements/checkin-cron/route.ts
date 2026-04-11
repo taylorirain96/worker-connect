@@ -4,6 +4,13 @@ import { getPlacementsNeedingCheckIn, markCheckInSent } from '@/lib/placements/f
 
 export const dynamic = 'force-dynamic'
 
+/** Resolve the internal app base URL from environment variables to avoid SSRF. */
+function getAppBaseUrl(): string {
+  if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`
+  return 'http://localhost:3000'
+}
+
 /**
  * POST /api/placements/checkin-cron
  *
@@ -21,14 +28,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
   }
 
-  const baseUrl = request.nextUrl.origin
+  const baseUrl = getAppBaseUrl()
   const results: Record<string, number> = { day30: 0, day60: 0, day90: 0 }
 
   for (const dayMark of [30, 60, 90] as const) {
     const placements = await getPlacementsNeedingCheckIn(dayMark)
 
     for (const placement of placements) {
-      const emailPromises = [
+      // Confirmation links point to the GET handler which handles email click-throughs
+      const confirmYesWorkerUrl = `${baseUrl}/api/placements/confirm?id=${placement.id}&by=worker&still=true`
+      const confirmNoWorkerUrl = `${baseUrl}/api/placements/confirm?id=${placement.id}&by=worker&still=false`
+      const confirmYesEmployerUrl = `${baseUrl}/api/placements/confirm?id=${placement.id}&by=employer&still=true`
+      const confirmNoEmployerUrl = `${baseUrl}/api/placements/confirm?id=${placement.id}&by=employer&still=false`
+
+      await Promise.allSettled([
         // Email to worker
         fetch(`${baseUrl}/api/notifications/email`, {
           method: 'POST',
@@ -41,12 +54,14 @@ export async function POST(request: NextRequest) {
               employerName: placement.employerName,
               jobTitle: placement.jobTitle,
               dayMark: String(dayMark),
-              confirmYesUrl: `${baseUrl}/api/placements/confirm?id=${placement.id}&by=worker&still=true`,
-              confirmNoUrl: `${baseUrl}/api/placements/confirm?id=${placement.id}&by=worker&still=false`,
+              confirmYesUrl: confirmYesWorkerUrl,
+              confirmNoUrl: confirmNoWorkerUrl,
               jobsUrl: `${baseUrl}/jobs`,
             },
           }),
-        }).catch((err) => console.error(`Worker check-in email failed for ${placement.id}:`, err)),
+        }).catch((err) =>
+          console.error(`Worker check-in email failed for ${placement.id}:`, err)
+        ),
 
         // Email to employer
         fetch(`${baseUrl}/api/notifications/email`, {
@@ -60,17 +75,16 @@ export async function POST(request: NextRequest) {
               workerName: placement.workerName,
               jobTitle: placement.jobTitle,
               dayMark: String(dayMark),
-              confirmYesUrl: `${baseUrl}/api/placements/confirm?id=${placement.id}&by=employer&still=true`,
-              confirmNoUrl: `${baseUrl}/api/placements/confirm?id=${placement.id}&by=employer&still=false`,
+              confirmYesUrl: confirmYesEmployerUrl,
+              confirmNoUrl: confirmNoEmployerUrl,
               postJobUrl: `${baseUrl}/jobs/create`,
             },
           }),
         }).catch((err) =>
           console.error(`Employer check-in email failed for ${placement.id}:`, err)
         ),
-      ]
+      ])
 
-      await Promise.allSettled(emailPromises)
       await markCheckInSent(placement.id, dayMark)
       results[`day${dayMark}`]++
     }
