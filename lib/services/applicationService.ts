@@ -15,6 +15,7 @@ import {
   Timestamp,
 } from 'firebase/firestore'
 import type { JobApplication } from '@/types'
+import { createNotification } from '@/lib/notifications/index'
 
 function docToApplication(id: string, data: Record<string, unknown>): JobApplication {
   return {
@@ -293,6 +294,21 @@ export async function acceptApplication(
   })
 
   await batch.commit()
+
+  // Notify the accepted worker
+  try {
+    await createNotification(workerId, {
+      userId: workerId,
+      type: 'application_accepted',
+      title: '🎉 Application accepted!',
+      message: `🎉 Your application for ${appData.jobTitle ?? 'a job'} was accepted!`,
+      link: '/dashboard/worker/applications',
+      relatedJobId: jobId,
+      relatedApplicationId: applicationId,
+    })
+  } catch {
+    // Non-fatal
+  }
 }
 
 /**
@@ -305,7 +321,24 @@ export async function rejectApplication(applicationId: string): Promise<void> {
   const snap = await getDoc(appRef)
   if (!snap.exists()) throw new Error('Application not found')
 
+  const appData = snap.data()
   await updateDoc(appRef, { status: 'rejected', updatedAt: serverTimestamp() })
+
+  // Notify the worker
+  try {
+    const workerId = appData.workerId
+    await createNotification(workerId, {
+      userId: workerId,
+      type: 'application_rejected',
+      title: 'Application update',
+      message: `Your application for ${appData.jobTitle ?? 'a job'} was not successful`,
+      link: '/dashboard/worker/applications',
+      relatedJobId: appData.jobId,
+      relatedApplicationId: applicationId,
+    })
+  } catch {
+    // Non-fatal
+  }
 }
 
 /**

@@ -6,6 +6,7 @@ import {
   getDoc,
   getDocs,
   updateDoc,
+  writeBatch,
   query,
   where,
   orderBy,
@@ -14,6 +15,7 @@ import {
   increment,
 } from 'firebase/firestore'
 import type { JobApplication } from '@/types'
+import { createNotification } from '@/lib/notifications/index'
 
 function tsToIso(value: unknown): string {
   if (value instanceof Timestamp) return value.toDate().toISOString()
@@ -76,6 +78,21 @@ export async function applyToJob(
   const jobSnap = await getDoc(jobRef)
   if (jobSnap.exists()) {
     await updateDoc(jobRef, { applicantsCount: increment(1) })
+  }
+
+  // Notify the employer about the new application
+  try {
+    await createNotification(job.employerId, {
+      userId: job.employerId,
+      type: 'application_received',
+      title: 'New application received',
+      message: `New application from ${worker.displayName} for ${job.title}`,
+      link: `/jobs/${jobId}/applicants`,
+      relatedJobId: jobId,
+      relatedApplicationId: docRef.id,
+    })
+  } catch {
+    // Non-fatal — don't block the apply flow
   }
 
   return docRef.id
@@ -148,4 +165,125 @@ export async function getApplicationId(jobId: string, workerId: string): Promise
   } catch {
     return null
   }
+}
+
+// ─── Employer-side functions ──────────────────────────────────────────────────
+
+/**
+ * Get all applications for a specific job.
+ */
+export async function getJobApplications(jobId: string): Promise<JobApplication[]> {
+  if (!db) return []
+
+  try {
+    const q = query(
+      collection(db, 'applications'),
+      where('jobId', '==', jobId),
+      orderBy('appliedAt', 'desc')
+    )
+    const snapshot = await getDocs(q)
+    return snapshot.docs.map((d) =>
+      docToApplication(d.id, d.data() as Record<string, unknown>)
+    )
+  } catch {
+    return []
+  }
+}
+
+/**
+ * Get all applications across all jobs posted by an employer.
+ */
+export async function getEmployerApplications(employerId: string): Promise<JobApplication[]> {
+  if (!db) return []
+
+  try {
+    const q = query(
+      collection(db, 'applications'),
+      where('employerId', '==', employerId),
+      orderBy('appliedAt', 'desc')
+    )
+    const snapshot = await getDocs(q)
+    return snapshot.docs.map((d) =>
+      docToApplication(d.id, d.data() as Record<string, unknown>)
+    )
+  } catch {
+    return []
+  }
+}
+
+/**
+ * Accept an application:
+ * 1. Sets the accepted application status to 'accepted'
+ * 2. Updates the job to 'in_progress' and assigns the worker
+ * 3. Batch-rejects all other pending applications for the same job
+ * All in a single Firestore batch write.
+ */
+export async function acceptApplication(
+  applicationId: string,
+  jobId: string,
+  workerId: string
+): Promise<void> {
+  if (!db) throw new Error('Feature not available')
+
+  // Validate the application exists and is still pending
+  const appRef = doc(db, 'applications', applicationId)
+  const appSnap = await getDoc(appRef)
+  if (!appSnap.exists()) throw new Error('Application not found')
+  if (appSnap.data().status !== 'pending') throw new Error('Application is no longer pending')
+
+  // Validate the job exists and is still open
+  const jobRef = doc(db, 'jobs', jobId)
+  const jobSnap = await getDoc(jobRef)
+  if (!jobSnap.exists()) throw new Error('Job not found')
+  if (jobSnap.data().status === 'in_progress') throw new Error('Job already has an assigned worker')
+  if (jobSnap.data().status === 'completed') throw new Error('Job is already completed')
+
+  // Get all pending applications for this job (to batch-reject the others)
+  const pendingQuery = query(
+    collection(db, 'applications'),
+    where('jobId', '==', jobId),
+    where('status', '==', 'pending')
+  )
+  const pendingSnap = await getDocs(pendingQuery)
+
+  const batch = writeBatch(db)
+  const now = serverTimestamp()
+
+  // Accept the chosen application
+  batch.update(appRef, {
+    status: 'accepted',
+    updatedAt: now,
+  })
+
+  // Update the job to in_progress and assign the worker
+  batch.update(jobRef, {
+    status: 'in_progress',
+    assignedWorkerId: workerId,
+    updatedAt: now,
+  })
+
+  // Batch-reject all other pending applications
+  pendingSnap.docs.forEach((d) => {
+    if (d.id !== applicationId) {
+      batch.update(d.ref, { status: 'rejected', updatedAt: now })
+    }
+  })
+
+  await batch.commit()
+}
+
+/**
+ * Reject a specific application (sets status to 'rejected').
+ */
+export async function rejectApplication(applicationId: string): Promise<void> {
+  if (!db) throw new Error('Feature not available')
+
+  const appRef = doc(db, 'applications', applicationId)
+  const snap = await getDoc(appRef)
+  if (!snap.exists()) throw new Error('Application not found')
+
+  await updateDoc(appRef, {
+    status: 'rejected',
+    updatedAt: serverTimestamp(),
+  })
 }

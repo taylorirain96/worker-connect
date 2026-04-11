@@ -71,11 +71,12 @@ export default function MyApplicationsPage() {
       const convId = await getOrCreateConversation(
         user.uid,
         profile?.displayName || user.displayName || 'Worker',
+        profile?.photoURL || user.photoURL || null,
         app.employerId,
         app.employerName || 'Employer',
+        null,
         app.jobId,
-        app.jobTitle,
-        profile?.photoURL || user.photoURL || undefined
+        app.jobTitle
       )
       router.push(`/messages/${convId}`)
     } catch {
