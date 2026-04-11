@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   title: 'QuickTrade | Find Trusted Trade Workers in New Zealand',
   description:
     'QuickTrade connects Marlborough, Nelson and Wellington businesses with verified, reviewed trade workers. Hire electricians, plumbers, builders and more — fast.',
-  metadataBase: new URL('https://quicktrade.co.nz'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'https://quicktrade-pi.vercel.app'),
   alternates: {
     canonical: '/',
   },
