@@ -1,33 +1,50 @@
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import Link from 'next/link'
-import { CheckCircle, Shield, Star, ArrowRight, Wrench } from 'lucide-react'
+import {
+  UserPlus,
+  Briefcase,
+  Users,
+  ShieldCheck,
+  Star,
+  User,
+  BadgeCheck,
+  Search,
+  FileText,
+  DollarSign,
+  Shield,
+} from 'lucide-react'
 
 const STEPS_EMPLOYER = [
   {
     step: 1,
     title: 'Create an Account',
-    description: 'Sign up as an employer in under 2 minutes. No credit card required to get started.',
+    description: 'Sign up as an employer in under 2 minutes. No credit card required.',
+    icon: UserPlus,
   },
   {
     step: 2,
     title: 'Post Your Job',
-    description: 'Describe the work needed, set your budget, location, and timeline. Be specific to attract the right workers.',
+    description: 'Describe the work, set your budget, location, and timeline.',
+    icon: Briefcase,
   },
   {
     step: 3,
     title: 'Review Applications',
-    description: 'Workers will apply to your job. Review their profiles, ratings, and proposed rates.',
+    description: 'Browse worker profiles, ratings, and proposed rates.',
+    icon: Users,
   },
   {
     step: 4,
     title: 'Hire with Confidence',
-    description: 'Accept your preferred worker. Funds are held in escrow until the work is completed to your satisfaction.',
+    description: 'Funds held in escrow until work is completed to your satisfaction.',
+    icon: ShieldCheck,
   },
   {
     step: 5,
     title: 'Rate & Review',
-    description: 'Once the job is done, release payment and leave a review to help the community.',
+    description: 'Release payment and leave a review to help the community.',
+    icon: Star,
   },
 ]
 
@@ -35,147 +52,216 @@ const STEPS_WORKER = [
   {
     step: 1,
     title: 'Build Your Profile',
-    description: 'Create a compelling profile with your skills, certifications, experience, and portfolio.',
+    description: 'Skills, certifications, experience, and portfolio.',
+    icon: User,
   },
   {
     step: 2,
     title: 'Get Verified',
-    description: 'Complete our verification process to earn the trusted badge and stand out from the competition.',
+    description: 'Earn the trusted badge and stand out from the competition.',
+    icon: BadgeCheck,
   },
   {
     step: 3,
     title: 'Browse Jobs',
-    description: 'Search and filter available jobs by category, location, budget, and urgency.',
+    description: 'Filter by category, location, budget, and urgency.',
+    icon: Search,
   },
   {
     step: 4,
     title: 'Submit Proposals',
-    description: 'Apply to jobs with a personalized cover letter and your proposed rate.',
+    description: 'Apply with a cover letter and your proposed rate.',
+    icon: FileText,
   },
   {
     step: 5,
     title: 'Get Paid Securely',
-    description: 'Complete the work and receive payment through our secure escrow system.',
+    description: 'Receive payment through our secure escrow system.',
+    icon: DollarSign,
   },
 ]
 
 export default function HowItWorksPage() {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen luxury-bg">
       <Navbar />
       <main className="flex-1">
         {/* Hero */}
-        <section className="bg-gradient-to-br from-primary-900 to-primary-700 text-white py-16">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 text-sm mb-4">
-              <Wrench className="h-4 w-4 text-accent-500" />
+        <section
+          className="relative overflow-hidden py-20 px-4"
+          style={{ background: 'linear-gradient(135deg, #0a0f1e 0%, #111827 60%, #0a0f1e 100%)' }}
+        >
+          <div className="max-w-4xl mx-auto text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 text-sm font-medium mb-6">
               Simple. Secure. Trusted.
             </div>
-            <h1 className="text-4xl font-bold mb-4">How QuickTrade Works</h1>
-            <p className="text-primary-100 text-lg max-w-2xl mx-auto">
+            <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4 tracking-tight">
+              How QuickTrade Works
+            </h1>
+            <p className="text-lg text-slate-400 max-w-2xl mx-auto mb-10">
               Whether you need work done or looking for work, our platform makes it easy and safe for
               everyone.
             </p>
+            <div className="flex flex-wrap items-center justify-center gap-6 text-slate-300 text-sm font-medium">
+              <span>12,000+ Workers</span>
+              <span className="text-slate-600">·</span>
+              <span>45,000+ Jobs Completed</span>
+              <span className="text-slate-600">·</span>
+              <span>4.8★ Avg Rating</span>
+            </div>
           </div>
         </section>
 
-        {/* How It Works - Employers */}
-        <section className="py-16">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* For Employers */}
+        <section className="py-16 px-4">
+          <div className="max-w-4xl mx-auto">
             <div className="text-center mb-10">
-              <span className="bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 px-4 py-1.5 rounded-full text-sm font-medium">
+              <span className="border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 rounded-full px-4 py-1.5 text-sm font-medium">
                 For Employers
               </span>
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mt-3 mb-2">
-                Find the Right Worker
-              </h2>
-              <p className="text-gray-500 dark:text-gray-400">
+              <h2 className="text-3xl font-bold text-white mt-4 mb-2">Find the Right Worker</h2>
+              <p className="text-slate-400">
                 Post a job and hire skilled tradespeople in just a few steps
               </p>
             </div>
 
-            <div className="space-y-6">
-              {STEPS_EMPLOYER.map(({ step, title, description }) => (
-                <div key={step} className="flex gap-5 bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700">
-                  <div className="flex-shrink-0 h-10 w-10 rounded-full bg-primary-600 text-white flex items-center justify-center font-bold text-lg">
+            <div className="space-y-4">
+              {STEPS_EMPLOYER.map(({ step, title, description, icon: Icon }) => (
+                <div
+                  key={step}
+                  className="flex items-center gap-5 bg-slate-900/70 border border-slate-700/50 rounded-2xl p-5 hover:border-indigo-500/40 hover:shadow-[0_0_24px_rgba(99,102,241,0.15)] transition-all"
+                >
+                  <div className="h-10 w-10 rounded-full bg-indigo-600/20 border border-indigo-500/40 text-indigo-300 font-bold text-lg flex items-center justify-center flex-shrink-0">
                     {step}
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 dark:text-white mb-1">{title}</h3>
-                    <p className="text-gray-500 dark:text-gray-400 text-sm">{description}</p>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-white mb-1">{title}</h3>
+                    <p className="text-slate-400 text-sm">{description}</p>
+                  </div>
+                  <div className="h-10 w-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center flex-shrink-0">
+                    <Icon className="h-5 w-5 text-indigo-400" />
                   </div>
                 </div>
               ))}
             </div>
 
             <div className="text-center mt-8">
-              <Link href="/auth/register?role=employer" className="inline-flex items-center gap-2 bg-primary-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-primary-700 transition-colors">
-                Post a Job Today <ArrowRight className="h-4 w-4" />
+              <Link
+                href="/jobs/create"
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-indigo-600 hover:to-indigo-700 transition-all"
+              >
+                Post a Job Today →
               </Link>
             </div>
           </div>
         </section>
 
-        {/* How It Works - Workers */}
-        <section className="py-16 bg-gray-50 dark:bg-gray-900/50">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* For Workers */}
+        <section className="py-16 px-4 bg-slate-800/30">
+          <div className="max-w-4xl mx-auto">
             <div className="text-center mb-10">
-              <span className="bg-accent-500/10 text-accent-600 px-4 py-1.5 rounded-full text-sm font-medium">
+              <span className="border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 rounded-full px-4 py-1.5 text-sm font-medium">
                 For Workers
               </span>
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mt-3 mb-2">
-                Start Earning Today
-              </h2>
-              <p className="text-gray-500 dark:text-gray-400">
+              <h2 className="text-3xl font-bold text-white mt-4 mb-2">Start Earning Today</h2>
+              <p className="text-slate-400">
                 Join thousands of skilled tradespeople already earning on QuickTrade
               </p>
             </div>
 
-            <div className="space-y-6">
-              {STEPS_WORKER.map(({ step, title, description }) => (
-                <div key={step} className="flex gap-5 bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700">
-                  <div className="flex-shrink-0 h-10 w-10 rounded-full bg-accent-500 text-white flex items-center justify-center font-bold text-lg">
+            <div className="space-y-4">
+              {STEPS_WORKER.map(({ step, title, description, icon: Icon }) => (
+                <div
+                  key={step}
+                  className="flex items-center gap-5 bg-slate-900/70 border border-slate-700/50 rounded-2xl p-5 hover:border-indigo-500/40 hover:shadow-[0_0_24px_rgba(99,102,241,0.15)] transition-all"
+                >
+                  <div className="h-10 w-10 rounded-full bg-indigo-600/20 border border-indigo-500/40 text-indigo-300 font-bold text-lg flex items-center justify-center flex-shrink-0">
                     {step}
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 dark:text-white mb-1">{title}</h3>
-                    <p className="text-gray-500 dark:text-gray-400 text-sm">{description}</p>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-white mb-1">{title}</h3>
+                    <p className="text-slate-400 text-sm">{description}</p>
+                  </div>
+                  <div className="h-10 w-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center flex-shrink-0">
+                    <Icon className="h-5 w-5 text-indigo-400" />
                   </div>
                 </div>
               ))}
             </div>
 
             <div className="text-center mt-8">
-              <Link href="/auth/register?role=worker" className="inline-flex items-center gap-2 bg-accent-500 text-white px-6 py-3 rounded-xl font-medium hover:bg-accent-600 transition-colors">
-                Join as a Worker <ArrowRight className="h-4 w-4" />
+              <Link
+                href="/auth/register?role=worker"
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-indigo-600 hover:to-indigo-700 transition-all"
+              >
+                Join as a Worker →
               </Link>
             </div>
           </div>
         </section>
 
         {/* Trust & Safety */}
-        <section className="py-16">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section className="py-16 px-4">
+          <div className="max-w-4xl mx-auto">
             <div className="text-center mb-10">
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">Trust & Safety</h2>
-              <p className="text-gray-500 dark:text-gray-400">
-                Your safety is our top priority
-              </p>
+              <h2 className="text-3xl font-bold text-white mb-3">Trust &amp; Safety</h2>
+              <p className="text-slate-400">Your safety is our top priority</p>
             </div>
             <div className="grid md:grid-cols-3 gap-6">
               {[
-                { icon: <Shield className="h-8 w-8 text-primary-600" />, title: 'Background Checks', description: 'All workers go through comprehensive background verification.' },
-                { icon: <CheckCircle className="h-8 w-8 text-green-600" />, title: 'License Verification', description: 'We verify professional licenses and certifications.' },
-                { icon: <Star className="h-8 w-8 text-yellow-500" />, title: 'Review System', description: 'Transparent ratings and reviews from verified customers.' },
+                {
+                  icon: <Shield className="h-7 w-7 text-indigo-400" />,
+                  title: 'Background Checks',
+                  description: 'All workers go through comprehensive background verification.',
+                },
+                {
+                  icon: <BadgeCheck className="h-7 w-7 text-emerald-400" />,
+                  title: 'License Verification',
+                  description: 'We verify professional licenses and certifications.',
+                },
+                {
+                  icon: <Star className="h-7 w-7 text-indigo-400" />,
+                  title: 'Review System',
+                  description: 'Transparent ratings and reviews from verified customers.',
+                },
               ].map(({ icon, title, description }) => (
-                <div key={title} className="text-center p-6 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-                  <div className="inline-flex items-center justify-center h-16 w-16 bg-gray-50 dark:bg-gray-700 rounded-2xl mb-4">
+                <div
+                  key={title}
+                  className="text-center p-6 bg-slate-900/70 border border-slate-700/50 rounded-2xl hover:border-indigo-500/40 hover:shadow-[0_0_24px_rgba(99,102,241,0.15)] transition-all"
+                >
+                  <div className="h-14 w-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-4 mx-auto">
                     {icon}
                   </div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white mb-2">{title}</h3>
-                  <p className="text-gray-500 text-sm">{description}</p>
+                  <h3 className="font-semibold text-white mb-2">{title}</h3>
+                  <p className="text-slate-400 text-sm">{description}</p>
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Final CTA */}
+        <section className="py-16 px-4">
+          <div className="max-w-4xl mx-auto">
+            <div className="rounded-2xl bg-slate-900/70 border border-indigo-500/30 shadow-[0_0_40px_rgba(99,102,241,0.1)] p-10 text-center">
+              <h2 className="text-3xl font-bold text-white mb-3">Ready to get started?</h2>
+              <p className="text-slate-400 mb-8">
+                Join thousands of employers and workers already using QuickTrade.
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Link
+                  href="/jobs/create"
+                  className="inline-flex items-center justify-center px-8 py-4 rounded-xl bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white font-semibold text-lg transition-all"
+                >
+                  Post a Job
+                </Link>
+                <Link
+                  href="/auth/register?role=worker"
+                  className="inline-flex items-center justify-center px-8 py-4 rounded-xl border border-slate-600 hover:border-indigo-500/60 text-slate-300 hover:text-white font-semibold text-lg transition-all"
+                >
+                  Find Work
+                </Link>
+              </div>
             </div>
           </div>
         </section>
