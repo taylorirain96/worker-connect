@@ -32,6 +32,7 @@ export interface UserProfile {
   verificationLevel?: 'unverified' | 'basic' | 'trusted'
   stripeCustomerId?: string
   stripeAccountId?: string
+  companyName?: string
 }
 
 export interface Job {
