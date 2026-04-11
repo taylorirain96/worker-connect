@@ -5,7 +5,7 @@
  * - Job posting fee payments (checkout.session.completed, payment_intent.succeeded)
  * - Escrow payment intents (payment_intent.succeeded, payment_intent.amount_capturable_updated)
  * - Payment failures (payment_intent.payment_failed)
- * - Worker payout transfers (transfer.created)
+ * - Worker payment releases / payout transfers (transfer.created)
  *
  * TODO: Set STRIPE_WEBHOOK_SECRET in your environment variables.
  * Configure this endpoint URL in your Stripe dashboard under Webhooks.
@@ -135,7 +135,7 @@ export async function POST(req: NextRequest) {
         }
 
         if (type === 'escrow' && jobId) {
-          // Update escrow record via escrow service (legacy flow)
+          // Update escrow record via escrow service
           const escrow = await getEscrowByPaymentIntent(pi.id)
           if (escrow && (escrow.status === 'pending' || escrow.status === 'pending_deposit')) {
             await updateEscrowStatus(escrow.id, 'held')
@@ -166,7 +166,7 @@ export async function POST(req: NextRequest) {
               metadata: { escrowId: escrow.id, jobId: escrow.jobId },
             })
           } else if (workerId) {
-            // New escrow flow: update via Firestore query
+            // Fallback: update via Firestore query (legacy escrow collection)
             const snapshot = await adminDb
               .collection('escrows')
               .where('jobId', '==', jobId)
@@ -241,7 +241,6 @@ export async function POST(req: NextRequest) {
         }
 
         if (type === 'escrow') {
-          // Legacy escrow service flow
           const escrow = await getEscrowByPaymentIntent(pi.id)
           if (escrow && adminDb) {
             await adminDb.collection('escrowPayments').doc(escrow.id).update({

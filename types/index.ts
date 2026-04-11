@@ -456,6 +456,7 @@ export type NotificationType =
   | 'invoice_created'
   | 'payout_processed'
   | 'payment_failed'
+  | 'dispute_opened'
   // Review alerts
   | 'review_received'
   | 'review_response_needed'
@@ -1647,7 +1648,14 @@ export type JobPostingFeeTier = 'small' | 'medium' | 'large' | 'commercial'
 /** Payment status for a job listing */
 export type JobPaymentStatus = 'draft' | 'active' | 'expired'
 
-/** Status of an escrow payment — supports both legacy and current status names */
+/**
+ * Status of an escrow payment — covers both escrow system variants.
+ * - 'pending' / 'pending_deposit': awaiting employer deposit (new vs legacy naming)
+ * - 'held' / 'in_escrow': funds are captured and held securely (new vs legacy naming)
+ * - 'released': funds transferred to worker after commission deduction
+ * - 'disputed': funds frozen pending admin resolution
+ * - 'refunded': funds returned to employer
+ */
 export type EscrowStatus =
   | 'pending'
   | 'held'
@@ -1759,8 +1767,8 @@ export interface WorkerEarningsSummary {
   currency: 'nzd'
 }
 
-/** A single transaction entry for the earnings table */
-export interface EarningsTransaction {
+/** A single escrow transaction entry for the worker earnings dashboard */
+export interface EscrowEarningsTransaction {
   id: string
   jobId: string
   jobTitle: string
@@ -1861,3 +1869,4 @@ export interface EscrowRecord {
   releasedAt?: string
   autoReleaseAt?: string
 }
+

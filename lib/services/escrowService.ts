@@ -21,7 +21,7 @@ import type {
   EscrowStatus,
   JobPostingPayment,
   WorkerEarningsSummary,
-  EarningsTransaction,
+  EscrowEarningsTransaction,
   CommissionTier,
 } from '@/types'
 import { COMMISSION_TIERS as TIERS, JOB_POSTING_FEES } from '@/types'
@@ -299,13 +299,13 @@ export async function getWorkerEarningsSummary(
  * Callers that need these fields should enrich each record by fetching the
  * corresponding job document from Firestore.
  */
-export async function getWorkerEarningsTransactions(workerId: string): Promise<EarningsTransaction[]> {
+export async function getWorkerEarningsTransactions(workerId: string): Promise<EscrowEarningsTransaction[]> {
   const escrows = await getWorkerEscrows(workerId, 100)
   return escrows.map((e) => ({
     id: e.id,
     jobId: e.jobId,
     jobTitle: `Job #${e.jobId.slice(-6)}`,
-    employerName: '',
+    employerName: '', // TODO: enrich by fetching employer profile from Firestore
     grossAmount: e.amount,
     commissionAmount: e.commissionAmount,
     commissionRate: e.commissionRate,
