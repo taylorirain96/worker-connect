@@ -5,6 +5,7 @@ import { AuthProvider } from '@/components/providers/AuthProvider'
 import { RoleProvider } from '@/context/RoleContext'
 import { Toaster } from 'react-hot-toast'
 import dynamic from 'next/dynamic'
+import { GoogleAnalytics } from '@next/third-parties/google'
 
 const SupportChatbot = dynamic(() => import('@/components/chat/SupportChatbot'), { ssr: false })
 
@@ -35,6 +36,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </AuthProvider>
         </ThemeProvider>
       </body>
+      <GoogleAnalytics gaId="G-VNY47FMBTR" />
     </html>
   )
 }
