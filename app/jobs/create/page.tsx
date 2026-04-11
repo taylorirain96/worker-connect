@@ -49,6 +49,7 @@ export default function CreateJobPage() {
   })
 
   const budgetType = watch('budgetType')
+  const selectedCategory = watch('category')
 
   const handleAIJobPost = async () => {
     if (!user || !aiInputs.task.trim()) return
@@ -65,6 +66,7 @@ export default function CreateJobPage() {
             task: aiInputs.task,
             size: aiInputs.size,
             requirements: aiInputs.requirements,
+            category: selectedCategory || '',
           },
         }),
       })
