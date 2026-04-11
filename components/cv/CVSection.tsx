@@ -84,7 +84,6 @@ export default function CVSection({ userId, profile, hasAI }: CVSectionProps) {
         await saveCV(userId, {
           fileName: existingCV.fileName,
           fileUrl: existingCV.fileUrl,
-          fileSize: 0,
           source: 'upload',
           visibility: newVisibility,
         })
@@ -253,7 +252,7 @@ export default function CVSection({ userId, profile, hasAI }: CVSectionProps) {
                 </button>
                 <button
                   type="button"
-                  onClick={() => !hasAI ? undefined : handleVisibilityChange('public')}
+                  onClick={() => handleVisibilityChange('public')}
                   disabled={!hasAI}
                   className={`flex-1 text-xs py-2 rounded-lg border transition-colors relative ${visibility === 'public' ? 'bg-primary-600 border-primary-600 text-white' : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300'} ${!hasAI ? 'opacity-60 cursor-not-allowed' : 'hover:border-primary-400'}`}
                 >
@@ -398,7 +397,7 @@ export default function CVSection({ userId, profile, hasAI }: CVSectionProps) {
             {/* Step 4 — Review & save */}
             {aiStep === 4 && (
               <div className="space-y-3">
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">Step 3 — Review & save</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">Step 4 — Review & save</p>
                 <div className="cv-print-area">
                   <style>{`@media print { body > * { display: none; } .cv-print-area { display: block !important; } }`}</style>
                   <textarea
