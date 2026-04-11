@@ -1,11 +1,11 @@
 /**
  * POST /api/stripe/webhook
  *
- * Unified Stripe webhook handler for:
+ * Unified Stripe webhook handler for QuickTrade:
  * - Job posting fee payments (checkout.session.completed, payment_intent.succeeded)
  * - Escrow payment intents (payment_intent.succeeded, payment_intent.amount_capturable_updated)
  * - Payment failures (payment_intent.payment_failed)
- * - Worker payment releases (transfer.created)
+ * - Worker payment releases / payout transfers (transfer.created)
  *
  * TODO: Set STRIPE_WEBHOOK_SECRET in your environment variables.
  * Configure this endpoint URL in your Stripe dashboard under Webhooks.
@@ -108,13 +108,13 @@ export async function POST(req: NextRequest) {
         break
       }
 
-      // ── Payment Intent succeeded ───────────────────────────────────────────
+      // ── PaymentIntent succeeded ────────────────────────────────────────────
       case 'payment_intent.succeeded': {
         const pi = event.data.object as Stripe.PaymentIntent
         const { type, jobId, employerId, workerId } = pi.metadata ?? {}
 
         if (type === 'posting_fee' && jobId) {
-          // Mark job as published after posting fee is paid
+          // Mark job as published after posting fee is paid (PaymentIntent flow)
           await adminDb.collection('jobs').doc(jobId).update({
             status: 'open',
             postingFeePaid: true,
@@ -135,7 +135,7 @@ export async function POST(req: NextRequest) {
         }
 
         if (type === 'escrow' && jobId) {
-          // Use escrowService to update status to 'held'
+          // Update escrow record via escrow service
           const escrow = await getEscrowByPaymentIntent(pi.id)
           if (escrow && (escrow.status === 'pending' || escrow.status === 'pending_deposit')) {
             await updateEscrowStatus(escrow.id, 'held')
@@ -144,6 +144,12 @@ export async function POST(req: NextRequest) {
                 escrowStatus: 'held',
                 updatedAt: new Date().toISOString(),
               })
+              if ('quoteId' in escrow && escrow.quoteId) {
+                await adminDb.collection('quotes').doc(escrow.quoteId).update({
+                  escrowStatus: 'held',
+                  updatedAt: new Date().toISOString(),
+                })
+              }
             }
             await sendNotification({
               userId: escrow.employerId,
@@ -159,8 +165,8 @@ export async function POST(req: NextRequest) {
               message: `The employer has placed NZ$${escrow.amount.toFixed(2)} in escrow for job #${escrow.jobId}. Your payment is secured and will be released when the job is complete.`,
               metadata: { escrowId: escrow.id, jobId: escrow.jobId },
             })
-          } else if (!escrow && workerId) {
-            // Fallback: update via Firestore query
+          } else if (workerId) {
+            // Fallback: update via Firestore query (legacy escrow collection)
             const snapshot = await adminDb
               .collection('escrows')
               .where('jobId', '==', jobId)
@@ -176,15 +182,13 @@ export async function POST(req: NextRequest) {
               })
             }
 
-            if (workerId) {
-              await sendNotification({
-                userId: workerId,
-                type: 'payment_received',
-                title: 'Escrow Funded — Start Work',
-                message: `The employer has deposited payment into escrow. You can begin the job.`,
-                metadata: { jobId, stripePaymentIntentId: pi.id },
-              })
-            }
+            await sendNotification({
+              userId: workerId,
+              type: 'payment_received',
+              title: 'Escrow Funded — Start Work',
+              message: `The employer has deposited payment into escrow. You can begin the job.`,
+              metadata: { jobId, stripePaymentIntentId: pi.id },
+            })
           }
         }
         break
@@ -223,7 +227,7 @@ export async function POST(req: NextRequest) {
         break
       }
 
-      // ── Payment failed ─────────────────────────────────────────────────────
+      // ── PaymentIntent failed ───────────────────────────────────────────────
       case 'payment_intent.payment_failed': {
         const pi = event.data.object as Stripe.PaymentIntent
         const { type, jobId, employerId } = pi.metadata ?? {}
@@ -258,7 +262,7 @@ export async function POST(req: NextRequest) {
         break
       }
 
-      // ── Worker payment released via Stripe Transfer ────────────────────────
+      // ── Worker payout transfer created ────────────────────────────────────
       case 'transfer.created': {
         const transfer = event.data.object as Stripe.Transfer
         const { jobId, workerId, paymentIntentId } = transfer.metadata ?? {}

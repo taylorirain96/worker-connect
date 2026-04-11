@@ -1648,7 +1648,6 @@ export type JobPostingFeeTier = 'small' | 'medium' | 'large' | 'commercial'
 /** Payment status for a job listing */
 export type JobPaymentStatus = 'draft' | 'active' | 'expired'
 
-/** Status of an escrow payment — covers both escrow system variants */
 /**
  * Status of an escrow payment — covers both escrow system variants.
  * - 'pending' / 'pending_deposit': awaiting employer deposit (new vs legacy naming)
@@ -1657,7 +1656,14 @@ export type JobPaymentStatus = 'draft' | 'active' | 'expired'
  * - 'disputed': funds frozen pending admin resolution
  * - 'refunded': funds returned to employer
  */
-export type EscrowStatus = 'pending' | 'pending_deposit' | 'held' | 'in_escrow' | 'released' | 'disputed' | 'refunded'
+export type EscrowStatus =
+  | 'pending'
+  | 'held'
+  | 'pending_deposit'
+  | 'in_escrow'
+  | 'released'
+  | 'disputed'
+  | 'refunded'
 
 /** Worker commission tier based on completed jobs */
 export type CommissionTier = 'new' | 'established' | 'pro' | 'elite'
