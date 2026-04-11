@@ -136,6 +136,13 @@ export async function confirmStillEmployed(
   })
 }
 
+// Shared mapping from day-mark to the corresponding Firestore field name
+const CHECK_IN_FIELD_MAP: Record<30 | 60 | 90, keyof Placement> = {
+  30: 'checkInDay30Sent',
+  60: 'checkInDay60Sent',
+  90: 'checkInDay90Sent',
+}
+
 /**
  * Returns all active placements where the specified day-mark check-in has not
  * yet been sent and the required number of days have elapsed since hiring.
@@ -145,12 +152,7 @@ export async function getPlacementsNeedingCheckIn(
 ): Promise<Placement[]> {
   if (!db) return []
 
-  const fieldMap: Record<30 | 60 | 90, keyof Placement> = {
-    30: 'checkInDay30Sent',
-    60: 'checkInDay60Sent',
-    90: 'checkInDay90Sent',
-  }
-  const sentField = fieldMap[dayMark]
+  const sentField = CHECK_IN_FIELD_MAP[dayMark]
 
   const q = query(
     collection(db, 'placements'),
@@ -175,14 +177,9 @@ export async function markCheckInSent(
   dayMark: 30 | 60 | 90
 ): Promise<void> {
   if (!db) throw new Error('Firestore not initialised')
-  const fieldMap: Record<30 | 60 | 90, string> = {
-    30: 'checkInDay30Sent',
-    60: 'checkInDay60Sent',
-    90: 'checkInDay90Sent',
-  }
   const ref = doc(db, 'placements', placementId)
   await updateDoc(ref, {
-    [fieldMap[dayMark]]: true,
+    [CHECK_IN_FIELD_MAP[dayMark]]: true,
     updatedAt: serverTimestamp(),
   })
 }

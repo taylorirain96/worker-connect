@@ -177,7 +177,7 @@ export function buildEmailTemplate(type: NotificationType, vars: TemplateVars): 
              <p style="margin:6px 0 0;color:#166534;font-size:14px;">Employers can find you right now. Update your availability to get matched faster.</p>
            </div>
            <p style="color:#374151;line-height:1.6;">Here are jobs near you that match your skills — don't let them go to someone else:</p>`,
-          vars.actionUrl as string ?? '/jobs',
+          vars.actionUrl as string | undefined ?? '/jobs',
           'Find My Next Job →'
         ),
         text: `Welcome back, ${vars.workerName ?? 'there'}!\n\nWe heard you've moved on from ${vars.employerName ?? 'your last employer'}. Your profile is still live and there are jobs waiting for you.\n\nFind your next job: ${vars.actionUrl ?? '/jobs'}`,
@@ -196,7 +196,7 @@ export function buildEmailTemplate(type: NotificationType, vars: TemplateVars): 
              <p style="margin:6px 0 0;color:#1e40af;font-size:14px;">Use code <strong>COMEBACK50</strong> when you post</p>
            </div>
            <p style="color:#374151;line-height:1.6;">We'll match you with vetted workers who are ready to start right away. Re-listing takes less than 2 minutes.</p>`,
-          vars.actionUrl as string ?? '/jobs/create',
+          vars.actionUrl as string | undefined ?? '/jobs/create',
           'Post a New Job →'
         ),
         text: `Need a replacement worker?\n\nHi ${vars.employerName ?? 'there'}, sorry to hear ${vars.workerName ?? 'your worker'} has moved on. Use code COMEBACK50 for 50% off your next job listing.\n\nPost a new job: ${vars.actionUrl ?? '/jobs/create'}`,

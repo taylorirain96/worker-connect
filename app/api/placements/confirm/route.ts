@@ -53,7 +53,7 @@ async function processConfirmation(
           actionUrl: `${baseUrl}/jobs`,
         },
       }),
-    }).catch((err) => console.error('Failed to send worker re-engagement email:', err)),
+    }).catch((err) => console.error(`Failed to send worker re-engagement email for placement ${placementId}:`, err)),
 
     fetch(`${baseUrl}/api/notifications/email`, {
       method: 'POST',
@@ -68,7 +68,7 @@ async function processConfirmation(
           actionUrl: `${baseUrl}/jobs/create`,
         },
       }),
-    }).catch((err) => console.error('Failed to send employer re-engagement email:', err)),
+    }).catch((err) => console.error(`Failed to send employer re-engagement email for placement ${placementId}:`, err)),
   ])
 
   await markReEngagementSent(placementId)

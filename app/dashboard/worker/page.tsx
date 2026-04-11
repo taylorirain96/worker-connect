@@ -22,6 +22,7 @@ import { getWorkerActivePlacement, type Placement } from '@/lib/placements/fireb
 import toast from 'react-hot-toast'
 
 const MAX_DISPLAYED_REVIEWS = 10
+const MS_PER_DAY = 86_400_000
 
 interface RecentApplication {
   id: string
@@ -278,7 +279,7 @@ export default function WorkerDashboardPage() {
                 <div>
                   <h3 className="font-semibold text-white">Still working at {placement.employerName}?</h3>
                   <p className="text-sm text-indigo-300">
-                    Placed by QuickTrade · {Math.floor((Date.now() - new Date(placement.hiredAt).getTime()) / 86_400_000)} days ago
+                    Placed by QuickTrade · {Math.floor((Date.now() - new Date(placement.hiredAt).getTime()) / MS_PER_DAY)} days ago
                   </p>
                 </div>
               </div>
