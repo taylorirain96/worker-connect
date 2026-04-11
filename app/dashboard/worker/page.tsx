@@ -7,15 +7,18 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
+import RatingStars from '@/components/reviews/RatingStars'
 import Link from 'next/link'
 import {
   Briefcase, DollarSign, Star, Clock, TrendingUp,
-  CheckCircle, AlertCircle, Search, Settings, FileText
+  CheckCircle, AlertCircle, Search, Settings, FileText, MessageSquare, Send
 } from 'lucide-react'
 import { formatCurrency, STATUS_LABELS, formatRelativeDate } from '@/lib/utils'
 import { collection, query, where, orderBy, getDocs, type DocumentData } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
-import type { Application } from '@/types'
+import type { Application, DetailedReview } from '@/types'
+import { getWorkerReviews, respondToReview } from '@/lib/reviews/index'
+import toast from 'react-hot-toast'
 
 interface RecentApplication {
   id: string
@@ -42,6 +45,11 @@ export default function WorkerDashboardPage() {
   const router = useRouter()
   const [applications, setApplications] = useState<RecentApplication[]>([])
   const [loadingApps, setLoadingApps] = useState(true)
+  const [reviews, setReviews] = useState<DetailedReview[]>([])
+  const [loadingReviews, setLoadingReviews] = useState(true)
+  const [respondingId, setRespondingId] = useState<string | null>(null)
+  const [responseText, setResponseText] = useState('')
+  const [submittingResponse, setSubmittingResponse] = useState(false)
 
   useEffect(() => {
     if (!loading && !user) {
@@ -79,6 +87,60 @@ export default function WorkerDashboardPage() {
     }
     fetchApplications()
   }, [user])
+
+  // Fetch reviews received by this worker
+  useEffect(() => {
+    if (!user?.uid) {
+      setLoadingReviews(false)
+      return
+    }
+    getWorkerReviews(user.uid)
+      .then((fetched) => setReviews(fetched.slice(0, 10)))
+      .catch(() => setReviews([]))
+      .finally(() => setLoadingReviews(false))
+  }, [user])
+
+  const handleSubmitResponse = async (reviewId: string) => {
+    if (!user || !profile) return
+    if (!responseText.trim()) {
+      toast.error('Response cannot be empty')
+      return
+    }
+    setSubmittingResponse(true)
+    try {
+      await respondToReview(
+        reviewId,
+        user.uid,
+        profile.displayName ?? user.displayName ?? 'Worker',
+        responseText
+      )
+      setReviews((prev) =>
+        prev.map((r) =>
+          r.id === reviewId
+            ? {
+                ...r,
+                response: {
+                  id: reviewId,
+                  reviewId,
+                  authorId: user.uid,
+                  authorName: profile.displayName ?? user.displayName ?? 'Worker',
+                  text: responseText,
+                  createdAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString(),
+                },
+              }
+            : r
+        )
+      )
+      setRespondingId(null)
+      setResponseText('')
+      toast.success('Response posted!')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to post response')
+    } finally {
+      setSubmittingResponse(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -171,7 +233,7 @@ export default function WorkerDashboardPage() {
 
           <div className="grid lg:grid-cols-3 gap-6">
             {/* Applied Jobs */}
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 space-y-6">
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -208,6 +270,98 @@ export default function WorkerDashboardPage() {
                           </div>
                         )
                       })}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Reviews Received */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Star className="h-4 w-4 text-yellow-500 fill-yellow-400" />
+                    <CardTitle>Reviews Received</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {loadingReviews ? (
+                    <div className="space-y-3">
+                      {[...Array(2)].map((_, i) => (
+                        <div key={i} className="h-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                      ))}
+                    </div>
+                  ) : reviews.length === 0 ? (
+                    <div className="text-center py-6">
+                      <MessageSquare className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                      <p className="text-sm text-gray-500">No reviews yet</p>
+                      <p className="text-xs text-gray-400 mt-1">Complete jobs to start receiving reviews.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {reviews.map((review) => (
+                        <div key={review.id} className="border border-gray-100 dark:border-gray-700 rounded-lg p-4">
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <div>
+                              <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                {review.isAnonymous ? 'Anonymous' : review.reviewerName}
+                              </p>
+                              <p className="text-xs text-gray-500">{review.jobTitle} · {formatRelativeDate(review.createdAt)}</p>
+                            </div>
+                            <RatingStars rating={review.rating} size="sm" />
+                          </div>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">{review.comment}</p>
+
+                          {/* Existing response */}
+                          {review.response && (
+                            <div className="mt-3 pl-3 border-l-2 border-primary-200 dark:border-primary-800">
+                              <p className="text-xs font-medium text-primary-700 dark:text-primary-400 mb-1">Your response:</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">{review.response.text}</p>
+                            </div>
+                          )}
+
+                          {/* Respond button / form */}
+                          {!review.response && respondingId !== review.id && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="mt-3"
+                              onClick={() => { setRespondingId(review.id); setResponseText('') }}
+                            >
+                              <MessageSquare className="h-3.5 w-3.5" />
+                              Respond
+                            </Button>
+                          )}
+
+                          {!review.response && respondingId === review.id && (
+                            <div className="mt-3 space-y-2">
+                              <textarea
+                                rows={3}
+                                value={responseText}
+                                onChange={(e) => setResponseText(e.target.value)}
+                                placeholder="Write your response..."
+                                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                              />
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => { setRespondingId(null); setResponseText('') }}
+                                >
+                                  Cancel
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  loading={submittingResponse}
+                                  onClick={() => handleSubmitResponse(review.id)}
+                                >
+                                  <Send className="h-3.5 w-3.5" />
+                                  Post Response
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   )}
                 </CardContent>

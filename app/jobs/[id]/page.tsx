@@ -7,15 +7,18 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import PhotoGallery from '@/components/jobs/PhotoGallery'
+import RatingStars from '@/components/reviews/RatingStars'
 import toast from 'react-hot-toast'
 import {
   MapPin, Clock, DollarSign, Users, AlertCircle, ArrowLeft,
-  Calendar, Star, CheckCircle, Send, Camera, ClipboardList, Eye
+  Calendar, Star, CheckCircle, Send, Camera, ClipboardList, Eye, MessageSquare
 } from 'lucide-react'
 import { formatCurrency, formatRelativeDate, JOB_CATEGORIES, URGENCY_LABELS } from '@/lib/utils'
 import type { Job, JobPhoto } from '@/types'
 import Link from 'next/link'
 import { applyToJob, getApplicationId, withdrawApplication, getJobApplications } from '@/lib/applications'
+import { hasReviewed, submitWorkerReview } from '@/lib/reviews/index'
+import { db } from '@/lib/firebase'
 
 const MOCK_JOBS: Record<string, Job & { employerRating?: number; employerJobs?: number }> = {
   '1': {
@@ -88,6 +91,14 @@ export default function JobDetailPage() {
   const [appliedAppId, setAppliedAppId] = useState<string | null>(null)
   const [applicantsCount, setApplicantsCount] = useState<number | null>(null)
 
+  // Review state
+  const [alreadyReviewed, setAlreadyReviewed] = useState(false)
+  const [checkingReview, setCheckingReview] = useState(false)
+  const [showReviewForm, setShowReviewForm] = useState(false)
+  const [reviewRating, setReviewRating] = useState(0)
+  const [reviewComment, setReviewComment] = useState('')
+  const [submittingReview, setSubmittingReview] = useState(false)
+
   const job = MOCK_JOBS[params.id as string] || MOCK_JOBS['1']
   const jobPhotos = MOCK_JOB_PHOTOS.filter((p) => p.jobId === (params.id as string) || p.jobId === '1')
   const category = JOB_CATEGORIES.find((c) => c.id === job.category)
@@ -112,6 +123,50 @@ export default function JobDetailPage() {
       }
     })
   }, [user, profile, params.id])
+
+  // Check if the employer has already reviewed this job
+  useEffect(() => {
+    if (!user?.uid || profile?.role !== 'employer') return
+    if (!isEmployer) return
+    setCheckingReview(true)
+    hasReviewed(params.id as string, user.uid)
+      .then((reviewed) => setAlreadyReviewed(reviewed))
+      .catch(() => {})
+      .finally(() => setCheckingReview(false))
+  }, [user, profile, params.id, isEmployer])
+
+  const handleSubmitReview = async () => {
+    if (!user || !profile) return
+    if (reviewRating === 0) {
+      toast.error('Please select a star rating')
+      return
+    }
+    if (reviewComment.trim().length < 10) {
+      toast.error('Comment must be at least 10 characters')
+      return
+    }
+    setSubmittingReview(true)
+    try {
+      await submitWorkerReview({
+        jobId: params.id as string,
+        jobTitle: job.title,
+        workerId: job.assignedWorkerId!,
+        workerName: job.assignedWorkerId ?? 'Worker',
+        employerId: user.uid,
+        employerName: profile.displayName ?? user.displayName ?? 'Employer',
+        employerPhotoURL: profile.photoURL ?? user.photoURL ?? undefined,
+        rating: reviewRating,
+        comment: reviewComment,
+      })
+      setAlreadyReviewed(true)
+      setShowReviewForm(false)
+      toast.success('Review submitted!')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to submit review')
+    } finally {
+      setSubmittingReview(false)
+    }
+  }
 
   const handleApply = async () => {
     if (!user) {
@@ -300,6 +355,88 @@ export default function JobDetailPage() {
                       </Button>
                     </div>
                   </div>
+                </div>
+              )}
+
+              {/* Leave a Review — shown to employer when job has an assigned worker */}
+              {isEmployer && job.assignedWorkerId && (job.status === 'in_progress' || job.status === 'completed') && !checkingReview && (
+                <div id="review" className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Star className="h-5 w-5 text-yellow-500 fill-yellow-400" />
+                    <h2 className="font-semibold text-gray-900 dark:text-white">Leave a Review</h2>
+                  </div>
+
+                  {alreadyReviewed ? (
+                    <div className="flex items-center gap-2 text-green-600 dark:text-green-400 text-sm font-medium">
+                      <CheckCircle className="h-4 w-4" />
+                      You&apos;ve reviewed this job ✓
+                    </div>
+                  ) : !showReviewForm ? (
+                    <div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                        How did the worker do? Your feedback helps build trust in the community.
+                      </p>
+                      <Button
+                        size="sm"
+                        onClick={() => setShowReviewForm(true)}
+                        className="flex items-center gap-2"
+                      >
+                        <MessageSquare className="h-4 w-4" />
+                        Write a Review
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Star Rating
+                        </label>
+                        <RatingStars
+                          rating={reviewRating}
+                          interactive
+                          size="lg"
+                          onRate={setReviewRating}
+                        />
+                        {reviewRating > 0 && (
+                          <p className="mt-1 text-xs text-gray-500">
+                            {reviewRating === 5 ? 'Excellent' : reviewRating === 4 ? 'Very Good' : reviewRating === 3 ? 'Good' : reviewRating === 2 ? 'Fair' : 'Poor'}
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Your Review
+                          <span className="text-gray-400 font-normal"> (10–500 characters)</span>
+                        </label>
+                        <textarea
+                          rows={4}
+                          value={reviewComment}
+                          onChange={(e) => setReviewComment(e.target.value)}
+                          placeholder="Describe your experience working with this worker..."
+                          maxLength={500}
+                          className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        />
+                        <p className="text-xs text-gray-400 mt-1 text-right">{reviewComment.length}/500</p>
+                      </div>
+                      <div className="flex gap-3">
+                        <Button
+                          variant="outline"
+                          onClick={() => { setShowReviewForm(false); setReviewRating(0); setReviewComment('') }}
+                          className="flex-1"
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          onClick={handleSubmitReview}
+                          loading={submittingReview}
+                          className="flex-1"
+                        >
+                          <Send className="h-4 w-4" />
+                          Submit Review
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
