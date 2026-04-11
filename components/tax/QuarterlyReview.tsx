@@ -152,7 +152,7 @@ export default function QuarterlyReview({ workerId, year, quarter }: QuarterlyRe
               <p className="font-medium">Tax Planning Reminder</p>
               <p>
                 As a self-employed worker, you may need to make estimated quarterly tax payments to the IRS.
-                This is for informational purposes only — worker-connect does not calculate your tax liability.
+                This is for informational purposes only — QuickTrade does not calculate your tax liability.
               </p>
               <p>
                 <strong>Recommendation:</strong> Consult a CPA or tax professional to understand your obligations.

@@ -1,114 +1,103 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import {
-  Shield,
-  FileText,
-  AlertCircle,
-  Star,
-  Lock,
-  Umbrella,
-  Zap,
-  TrendingUp,
-  CheckCircle2,
-  ArrowRight,
-} from 'lucide-react'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
+import {
+  Briefcase,
+  HardHat,
+  Shield,
+  CheckCircle,
+  Star,
+  TrendingUp,
+  Zap,
+  FileText,
+} from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Pricing | QuickTrade NZ',
   description:
-    'Simple, transparent pricing for workers and employers on QuickTrade. Workers are always free. Employers pay a small posting fee. You only pay when you win.',
+    'Simple, fair pricing for workers and employers. Workers are always free — you only pay a small commission when you get paid. Employers pay a tiny fee to post jobs.',
   alternates: {
     canonical: 'https://quicktrade.co.nz/pricing',
   },
 }
 
-const employerPostingTiers = [
+const EMPLOYER_TIERS = [
   {
     label: 'Small Job',
-    range: 'Under $500 NZD',
-    price: '$9.99',
-    description: 'Perfect for quick tasks and small repairs',
+    value: 'Under $500 NZD',
+    fee: '$9.99',
+    description: 'Minor repairs, small installations, quick fixes',
   },
   {
     label: 'Medium Job',
-    range: '$500 – $2,000 NZD',
-    price: '$19.99',
-    description: 'Renovations, installations, and mid-size projects',
+    value: '$500–$2,000 NZD',
+    fee: '$19.99',
+    description: 'Bathroom renos, deck builds, major repairs',
+    popular: true,
   },
   {
     label: 'Large Job',
-    range: '$2,000 – $10,000 NZD',
-    price: '$34.99',
-    description: 'Major home improvements and complex trade work',
+    value: '$2,000–$10,000 NZD',
+    fee: '$34.99',
+    description: 'Full renovations, large landscaping, new builds',
   },
   {
-    label: 'Commercial / Major',
-    range: '$10,000+ NZD',
-    price: '$59.99',
-    description: 'Commercial contracts and large-scale projects',
-  },
-]
-
-const employerAddOns = [
-  {
-    label: 'Featured Job Listing',
-    price: '+$9.99',
-    description: 'Appear at the top of search results',
-  },
-  {
-    label: 'Urgent Job Badge',
-    price: '+$4.99',
-    description: '"Need it done today" — attracts fast responders',
-  },
-  {
-    label: 'Premium Employer Account',
-    price: '$49/month',
-    description: 'Unlimited job posts — great for businesses that hire regularly',
+    label: 'Commercial',
+    value: '$10,000+ NZD',
+    fee: '$59.99',
+    description: 'Commercial fit-outs, major construction projects',
   },
 ]
 
-const workerCommissionTiers = [
-  { tier: 'New Worker', range: '0 – 5 jobs', commission: '10%', color: 'text-slate-300' },
-  { tier: 'Established', range: '6 – 20 jobs', commission: '8%', color: 'text-indigo-300' },
-  { tier: 'Pro Worker', range: '21 – 50 jobs', commission: '6%', color: 'text-violet-300' },
-  { tier: 'Elite Worker', range: '50+ jobs', commission: '5%', color: 'text-emerald-400' },
+const EMPLOYER_INCLUDES = [
+  'Access to vetted, reviewed workers',
+  'Quote management dashboard',
+  'Escrow payment protection',
+  'Auto-generated legal contract',
+  'Dispute resolution service',
+  'QuickTrade Guarantee',
 ]
 
-const commissionCovers = [
-  { icon: Lock, label: 'Secure escrow payment protection' },
-  { icon: FileText, label: 'Auto-generated legal contract' },
-  { icon: AlertCircle, label: 'Dispute resolution' },
-  { icon: Shield, label: 'QuickTrade Guarantee' },
-  { icon: Star, label: 'Verified review on profile' },
-  { icon: Umbrella, label: 'Payment insurance' },
+const WORKER_COMMISSION_TIERS = [
+  { tier: 'New Worker', jobs: '0–5 jobs', commission: '10%', color: 'text-slate-300' },
+  { tier: 'Established', jobs: '6–20 jobs', commission: '8%', color: 'text-emerald-300' },
+  { tier: 'Pro Worker', jobs: '21–50 jobs', commission: '6%', color: 'text-emerald-400' },
+  { tier: 'Elite Worker', jobs: '51+ jobs', commission: '5%', color: 'text-emerald-300' },
 ]
 
-const faqs = [
+const COMMISSION_COVERS = [
+  { icon: Shield, label: 'Secure escrow payment protection' },
+  { icon: FileText, label: 'Auto-generated legal contract (~$200+ from a lawyer)' },
+  { icon: Zap, label: 'Dispute resolution service' },
+  { icon: Star, label: 'QuickTrade Guarantee' },
+  { icon: TrendingUp, label: 'Verified review on your profile (worth future earnings)' },
+  { icon: CheckCircle, label: 'Payment insurance' },
+]
+
+const ADD_ONS = [
+  { feature: 'Featured job listing', who: 'Employer', cost: '+$9.99 per post' },
+  { feature: 'Urgent job badge', who: 'Employer', cost: '+$4.99 per post' },
+  { feature: 'Worker profile boost', who: 'Worker', cost: '$4.99/week' },
+  { feature: 'Premium employer account', who: 'Employer', cost: '$49/month (unlimited posts)' },
+]
+
+const FAQS = [
   {
-    q: 'Why do workers pay a commission?',
-    a: "The commission is taken from money you've already earned — never from your pocket upfront. It covers your payment protection, legal contract, dispute resolution, and the QuickTrade Guarantee. Think of it as getting all of that for a small percentage of a completed job. You're not paying a fee — you're getting a full safety net.",
+    q: 'Can I get a refund if I don\'t find a worker?',
+    a: "Yes. If your job receives no expressions of interest within 14 days, you're entitled to a full refund of your posting fee. Our team will also work with you to relist or adjust the job to attract more responses.",
   },
   {
-    q: 'What if the employer doesn\'t pay?',
-    a: "Because all payments are held in secure escrow before work begins, employers can't walk away without paying. The money is already locked in. If a dispute arises, our team steps in to resolve it and, where appropriate, release funds to the worker.",
-  },
-  {
-    q: 'Can I cancel a job after posting?',
-    a: "Employers can cancel a job post before any worker is hired with no charge. Once a job is accepted and work has started, cancellation policies apply as set out in the auto-generated contract. Posting fees are non-refundable once the job is live.",
+    q: 'When exactly does QuickTrade take commission?',
+    a: "QuickTrade's commission is only deducted when the employer releases payment from escrow after the job is completed. You never pay anything upfront — the commission comes from earnings you've already received.",
   },
   {
     q: 'What is the QuickTrade Guarantee?',
-    a: "The QuickTrade Guarantee means that if something goes seriously wrong on a job conducted through the platform — such as non-payment or significant disputes — QuickTrade will investigate and, where eligible, compensate the worker or employer. It only applies to jobs posted and transacted through QuickTrade.",
+    a: "The QuickTrade Guarantee means that if a job goes wrong and the worker was at fault, QuickTrade will step in to mediate and, where appropriate, facilitate a resolution. It only applies to jobs posted and paid through the platform.",
   },
   {
-    q: 'How does escrow work?',
-    a: "When a quote is accepted, the employer deposits the agreed payment into QuickTrade's secure escrow. The worker knows the money is there before they start work. Once the job is completed and the employer approves it, the funds are released to the worker (minus the platform commission). Neither party can access the funds mid-job.",
-  },
-  {
-    q: 'When do I receive my money as a worker?',
-    a: "Once the employer marks the job as complete and approves the work, payment is released immediately. Funds typically arrive in your account within 1–3 business days depending on your bank. You can track your earnings in your worker dashboard at any time.",
+    q: 'Can I post multiple jobs?',
+    a: 'Yes — each job post is priced individually by size, so you only pay for what you post. If you post frequently, our Premium Employer Account ($49/month) gives you unlimited posts and is the best value for regular hirers.',
   },
 ]
 
@@ -118,294 +107,306 @@ export default function PricingPage() {
       <Navbar />
 
       <main className="flex-1">
-        {/* Hero */}
+        {/* ── Hero ── */}
         <section
-          className="relative overflow-hidden py-24 px-4"
+          className="relative overflow-hidden py-20 px-4"
           style={{ background: 'linear-gradient(135deg, #0a0f1e 0%, #111827 60%, #0a0f1e 100%)' }}
         >
           <div className="max-w-4xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 text-sm font-medium mb-6">
-              <span>💰</span>
-              <span>Transparent Pricing</span>
+              <Zap className="h-4 w-4" />
+              <span>Simple, Fair Pricing</span>
             </div>
-            <h1 className="text-4xl sm:text-5xl font-bold text-white mb-6 tracking-tight">
-              Simple, transparent pricing.{' '}
+            <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4 tracking-tight">
+              You only pay when{' '}
               <span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
-                You only pay when you win.
+                value is delivered
               </span>
             </h1>
-            <p className="text-lg text-slate-400 max-w-2xl mx-auto">
-              Workers are always free to join, browse, and quote. Employers pay a small posting fee
-              to access vetted professionals. No surprises, ever.
+            <p className="text-lg text-slate-400 max-w-2xl mx-auto mb-10">
+              Employers pay a small fee to post a job — tiny compared to the value they receive.
+              Workers are always free and only share a small commission from completed earnings.
             </p>
+            <div className="flex flex-wrap items-center justify-center gap-6 text-slate-300 text-sm font-medium">
+              <span className="flex items-center gap-1.5">
+                <HardHat className="h-4 w-4 text-emerald-400" /> Workers always free
+              </span>
+              <span className="text-slate-600">·</span>
+              <span className="flex items-center gap-1.5">
+                <Briefcase className="h-4 w-4 text-indigo-400" /> Employers pay to post
+              </span>
+              <span className="text-slate-600">·</span>
+              <span className="flex items-center gap-1.5">
+                <Shield className="h-4 w-4 text-indigo-400" /> Protected by escrow
+              </span>
+            </div>
           </div>
         </section>
 
+        {/* ── Employer Pricing Cards ── */}
         <section className="py-16 px-4">
-          <div className="max-w-6xl mx-auto space-y-20">
-
-            {/* Two-column split: Employers | Workers */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Employers column */}
-              <div className="space-y-6">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="h-10 w-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
-                    <span className="text-xl">🏢</span>
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-white">For Employers</h2>
-                    <p className="text-slate-400 text-sm">Pay a small fee to reach vetted professionals</p>
-                  </div>
-                </div>
-
-                {/* Job posting tiers */}
-                <div className="space-y-3">
-                  {employerPostingTiers.map((tier) => (
-                    <div
-                      key={tier.label}
-                      className="rounded-xl bg-slate-900/70 border border-slate-700/50 p-5 hover:border-indigo-500/40 transition-all"
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-white font-semibold">{tier.label}</span>
-                        <span className="text-indigo-400 font-bold text-lg">{tier.price}</span>
-                      </div>
-                      <p className="text-slate-500 text-xs mb-1">{tier.range}</p>
-                      <p className="text-slate-400 text-sm">{tier.description}</p>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Add-ons */}
-                <div>
-                  <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
-                    <Zap className="h-4 w-4 text-indigo-400" />
-                    Optional Add-ons
-                  </h3>
-                  <div className="space-y-3">
-                    {employerAddOns.map((addon) => (
-                      <div
-                        key={addon.label}
-                        className="rounded-xl bg-slate-900/50 border border-slate-700/30 p-4 flex items-center justify-between gap-4"
-                      >
-                        <div>
-                          <p className="text-white text-sm font-medium">{addon.label}</p>
-                          <p className="text-slate-500 text-xs">{addon.description}</p>
-                        </div>
-                        <span className="text-indigo-300 font-semibold text-sm whitespace-nowrap">
-                          {addon.price}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <Link
-                  href="/auth/register"
-                  className="inline-flex items-center justify-center w-full py-3 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition-colors gap-2"
-                >
-                  Post a Job <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-
-              {/* Workers column */}
-              <div className="space-y-6">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="h-10 w-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                    <span className="text-xl">👷</span>
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-white">For Workers</h2>
-                    <p className="text-slate-400 text-sm">Always free to join and find work</p>
-                  </div>
-                </div>
-
-                {/* Free features */}
-                <div className="rounded-2xl bg-emerald-500/5 border border-emerald-500/20 p-6">
-                  <p className="text-emerald-400 font-bold text-lg mb-4">Always Free for Workers</p>
-                  <ul className="space-y-3">
-                    {[
-                      'Browsing jobs',
-                      'Expressing interest',
-                      'Submitting quotes',
-                      'Getting paid through the platform',
-                      'Building reviews and reputation',
-                    ].map((item) => (
-                      <li key={item} className="flex items-center gap-3 text-slate-300 text-sm">
-                        <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="mt-4 pt-4 border-t border-emerald-500/20">
-                    <p className="text-slate-400 text-sm">
-                      <span className="text-white font-medium">Only cost:</span> QuickTrade takes a
-                      small commission <span className="text-emerald-400 font-medium">from completed job payments</span> — never upfront.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Commission tiers */}
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <TrendingUp className="h-4 w-4 text-indigo-400" />
-                    <h3 className="text-white font-semibold">Commission Tiers</h3>
-                  </div>
-                  <div className="rounded-xl bg-slate-900/70 border border-slate-700/50 overflow-hidden">
-                    <div className="grid grid-cols-3 bg-slate-800/50 px-4 py-2 text-xs text-slate-500 font-medium uppercase tracking-wide">
-                      <span>Tier</span>
-                      <span>Jobs Completed</span>
-                      <span className="text-right">Commission</span>
-                    </div>
-                    {workerCommissionTiers.map((row, i) => (
-                      <div
-                        key={row.tier}
-                        className={`grid grid-cols-3 px-4 py-3 text-sm ${
-                          i < workerCommissionTiers.length - 1
-                            ? 'border-b border-slate-700/50'
-                            : ''
-                        }`}
-                      >
-                        <span className={`font-medium ${row.color}`}>{row.tier}</span>
-                        <span className="text-slate-400">{row.range}</span>
-                        <span className={`text-right font-bold ${row.color}`}>{row.commission}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <p className="text-slate-500 text-xs mt-3 flex items-center gap-1.5">
-                    <TrendingUp className="h-3.5 w-3.5 text-emerald-400" />
-                    You only pay when you get paid. Your commission rate drops as you grow.
-                  </p>
-                </div>
-
-                <Link
-                  href="/auth/register"
-                  className="inline-flex items-center justify-center w-full py-3 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition-colors gap-2"
-                >
-                  Join Free as a Worker <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-            </div>
-
-            {/* What's included section */}
-            <div>
-              <div className="text-center mb-8">
-                <h2 className="text-2xl font-bold text-white mb-2">What your commission covers</h2>
-                <p className="text-slate-400 text-sm max-w-xl mx-auto">
-                  Your small commission on earnings isn&apos;t a cost — it&apos;s a comprehensive protection
-                  package included in every completed job.
-                </p>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {commissionCovers.map(({ icon: Icon, label }) => (
-                  <div
-                    key={label}
-                    className="rounded-xl bg-slate-900/70 border border-slate-700/50 p-5 hover:border-indigo-500/40 hover:shadow-[0_0_20px_rgba(99,102,241,0.1)] transition-all"
-                  >
-                    <div className="h-10 w-10 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-3">
-                      <Icon className="h-5 w-5 text-indigo-400" />
-                    </div>
-                    <p className="text-slate-300 text-sm font-medium">{label}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Example calculation */}
-            <div className="rounded-2xl bg-slate-900/70 border border-indigo-500/30 p-8">
-              <h2 className="text-2xl font-bold text-white mb-2">See how it works</h2>
-              <p className="text-slate-400 text-sm mb-8">An example $2,000 bathroom renovation</p>
-
-              <div className="space-y-0 divide-y divide-slate-700/50">
-                <div className="flex flex-wrap justify-between items-center py-4">
-                  <span className="text-slate-300 font-medium">Job value agreed</span>
-                  <span className="text-white font-bold text-lg">$2,000 NZD</span>
-                </div>
-                <div className="flex flex-wrap justify-between items-center py-4">
-                  <div>
-                    <span className="text-slate-300 font-medium">Employer posts job</span>
-                    <p className="text-slate-500 text-xs mt-0.5">Medium job posting fee</p>
-                  </div>
-                  <span className="text-indigo-300 font-semibold">$19.99 posting fee</span>
-                </div>
-                <div className="flex flex-wrap justify-between items-center py-4">
-                  <div>
-                    <span className="text-emerald-400 font-medium">Worker earns</span>
-                    <p className="text-slate-500 text-xs mt-0.5">After 8% commission on earnings (Established tier)</p>
-                  </div>
-                  <span className="text-emerald-400 font-bold text-xl">$1,840 NZD</span>
-                </div>
-                <div className="flex flex-wrap justify-between items-center py-4">
-                  <div>
-                    <span className="text-indigo-400 font-medium">QuickTrade earns</span>
-                    <p className="text-slate-500 text-xs mt-0.5">Platform commission</p>
-                  </div>
-                  <span className="text-indigo-400 font-semibold">$160</span>
-                </div>
-              </div>
-
-              <div className="mt-6 rounded-xl bg-indigo-500/10 border border-indigo-500/20 p-4">
-                <p className="text-indigo-200 text-sm font-medium mb-2">You get for that $160:</p>
-                <div className="flex flex-wrap gap-2">
-                  {['Legal contract', 'Escrow protection', 'QuickTrade Guarantee', 'Verified review'].map(
-                    (item) => (
-                      <span
-                        key={item}
-                        className="inline-flex items-center gap-1 bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs px-3 py-1 rounded-full"
-                      >
-                        <CheckCircle2 className="h-3 w-3" />
-                        {item}
-                      </span>
-                    )
-                  )}
-                </div>
-              </div>
-              <p className="text-slate-500 text-xs mt-4">
-                *Example uses the Established worker tier (8% commission). Commission rate varies by
-                tier. Employer posting fee based on the Medium job tier.
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-10">
+              <span className="border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 rounded-full px-4 py-1.5 text-sm font-medium inline-flex items-center gap-2">
+                <Briefcase className="h-4 w-4" /> For Employers — Pay to Post
+              </span>
+              <h2 className="text-3xl font-bold text-white mt-4 mb-2">Post a Job</h2>
+              <p className="text-slate-400 max-w-xl mx-auto">
+                One small fee to reach hundreds of vetted workers. Tiny compared to what you&apos;re
+                about to spend.
               </p>
             </div>
 
-            {/* FAQ */}
-            <div>
-              <h2 className="text-2xl font-bold text-white mb-6">Frequently asked questions</h2>
-              <div className="space-y-4">
-                {faqs.map(({ q, a }) => (
-                  <div
-                    key={q}
-                    className="rounded-xl bg-slate-900/70 border border-slate-700/50 p-6"
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+              {EMPLOYER_TIERS.map((tier) => (
+                <div
+                  key={tier.label}
+                  className={`relative rounded-2xl p-6 flex flex-col border transition-all hover:shadow-[0_0_24px_rgba(99,102,241,0.2)] ${
+                    tier.popular
+                      ? 'bg-indigo-900/40 border-indigo-500 shadow-[0_0_24px_rgba(99,102,241,0.15)]'
+                      : 'bg-slate-900/70 border-slate-700/50 hover:border-indigo-500/40'
+                  }`}
+                >
+                  {tier.popular && (
+                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-indigo-600 text-white text-xs font-bold whitespace-nowrap">
+                      Most Popular
+                    </span>
+                  )}
+                  <p className="text-indigo-300 text-sm font-semibold mb-1">{tier.label}</p>
+                  <p className="text-slate-400 text-xs mb-4">{tier.value}</p>
+                  <p className="text-4xl font-bold text-white mb-1">{tier.fee}</p>
+                  <p className="text-slate-500 text-xs mb-4">one-off posting fee</p>
+                  <p className="text-slate-400 text-sm flex-1">{tier.description}</p>
+                  <Link
+                    href="/auth/register"
+                    className="mt-6 block text-center py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors"
                   >
-                    <h3 className="text-white font-semibold mb-2">{q}</h3>
-                    <p className="text-slate-400 text-sm leading-relaxed">{a}</p>
-                  </div>
-                ))}
-              </div>
+                    Post This Job
+                  </Link>
+                </div>
+              ))}
             </div>
 
-            {/* CTA section */}
-            <div className="rounded-2xl bg-gradient-to-br from-indigo-500/10 to-violet-500/10 border border-indigo-500/20 p-10 text-center">
+            {/* What employers get */}
+            <div className="rounded-2xl bg-slate-900/70 border border-slate-700/50 p-6 sm:p-8">
+              <h3 className="text-white font-semibold mb-4">Every job post includes:</h3>
+              <ul className="grid sm:grid-cols-2 gap-3">
+                {EMPLOYER_INCLUDES.map((item) => (
+                  <li key={item} className="flex items-center gap-2 text-sm text-slate-300">
+                    <CheckCircle className="h-4 w-4 text-indigo-400 flex-shrink-0" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Worker Section ── */}
+        <section className="py-16 px-4 bg-slate-800/30">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-10">
+              <span className="border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 rounded-full px-4 py-1.5 text-sm font-medium inline-flex items-center gap-2">
+                <HardHat className="h-4 w-4" /> For Workers — Always Free
+              </span>
+              <h2 className="text-3xl font-bold text-white mt-4 mb-2">
+                Workers are always free
+              </h2>
+              <p className="text-slate-400 max-w-xl mx-auto">
+                Browse jobs, express interest, submit quotes after site visits, and receive
+                payment — all free. A small commission comes from your earnings, never your
+                pocket.
+              </p>
+            </div>
+
+            {/* Free features */}
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
+              {[
+                { icon: CheckCircle, label: 'Free to browse all jobs' },
+                { icon: CheckCircle, label: 'Free to express interest' },
+                { icon: CheckCircle, label: 'Free to submit quotes after site visit' },
+                { icon: CheckCircle, label: 'Free to receive payment' },
+              ].map(({ icon: Icon, label }) => (
+                <div
+                  key={label}
+                  className="flex items-start gap-3 p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/20"
+                >
+                  <Icon className="h-5 w-5 text-emerald-400 flex-shrink-0 mt-0.5" />
+                  <span className="text-slate-300 text-sm">{label}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Commission tier ladder */}
+            <div className="rounded-2xl bg-slate-900/70 border border-slate-700/50 p-6 sm:p-8 mb-6">
+              <div className="flex items-center gap-3 mb-2">
+                <TrendingUp className="h-5 w-5 text-emerald-400" />
+                <h3 className="text-white font-bold text-lg">Commission Tier Ladder</h3>
+              </div>
+              <p className="text-slate-400 text-sm mb-6">
+                The more jobs you complete on QuickTrade, the lower your commission. You only pay
+                when you get paid.
+              </p>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-700/50">
+                      <th className="text-left py-3 pr-4 text-slate-400 font-medium">Tier</th>
+                      <th className="text-left py-3 pr-4 text-slate-400 font-medium">Jobs Completed</th>
+                      <th className="text-right py-3 text-slate-400 font-medium">Commission from earnings</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-700/30">
+                    {WORKER_COMMISSION_TIERS.map((row, i) => (
+                      <tr key={row.tier} className={i === 0 ? '' : 'opacity-90'}>
+                        <td className={`py-3 pr-4 font-semibold ${row.color}`}>{row.tier}</td>
+                        <td className="py-3 pr-4 text-slate-400">{row.jobs}</td>
+                        <td className={`py-3 text-right font-bold text-xl ${row.color}`}>
+                          {row.commission}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="mt-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                <p className="text-emerald-300 text-sm font-medium text-center">
+                  &quot;You only pay when you get paid. The more you earn on QuickTrade, the less
+                  commission you pay.&quot;
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── What commission covers ── */}
+        <section className="py-16 px-4">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-10">
+              <h2 className="text-3xl font-bold text-white mb-3">
+                What your commission covers
+              </h2>
+              <p className="text-slate-400 max-w-xl mx-auto">
+                You&apos;re not paying commission — you&apos;re getting all of this for a small
+                percentage of a job you&apos;ve already completed.
+              </p>
+            </div>
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {COMMISSION_COVERS.map(({ icon: Icon, label }) => (
+                <div
+                  key={label}
+                  className="flex items-start gap-4 p-5 rounded-2xl bg-slate-900/70 border border-slate-700/50 hover:border-indigo-500/40 hover:shadow-[0_0_24px_rgba(99,102,241,0.1)] transition-all"
+                >
+                  <div className="h-10 w-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center flex-shrink-0">
+                    <Icon className="h-5 w-5 text-indigo-400" />
+                  </div>
+                  <p className="text-slate-300 text-sm leading-relaxed">{label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── Optional Add-ons ── */}
+        <section className="py-16 px-4 bg-slate-800/30">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-10">
+              <span className="border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 rounded-full px-4 py-1.5 text-sm font-medium">
+                Optional Add-ons
+              </span>
+              <h2 className="text-3xl font-bold text-white mt-4 mb-2">Boost your results</h2>
+              <p className="text-slate-400">Never required — the platform works great without them.</p>
+            </div>
+
+            <div className="rounded-2xl bg-slate-900/70 border border-slate-700/50 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-700/50 bg-slate-800/50">
+                      <th className="text-left py-3 px-6 text-slate-400 font-medium">Feature</th>
+                      <th className="text-left py-3 px-4 text-slate-400 font-medium">Who</th>
+                      <th className="text-right py-3 px-6 text-slate-400 font-medium">Cost</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-700/30">
+                    {ADD_ONS.map((row) => (
+                      <tr key={row.feature} className="hover:bg-slate-800/30 transition-colors">
+                        <td className="py-4 px-6 text-slate-300 font-medium">{row.feature}</td>
+                        <td className="py-4 px-4">
+                          <span
+                            className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                              row.who === 'Employer'
+                                ? 'bg-indigo-500/10 text-indigo-300 border border-indigo-500/20'
+                                : 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20'
+                            }`}
+                          >
+                            {row.who}
+                          </span>
+                        </td>
+                        <td className="py-4 px-6 text-right text-white font-semibold">{row.cost}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── FAQ ── */}
+        <section className="py-16 px-4">
+          <div className="max-w-3xl mx-auto">
+            <div className="text-center mb-10">
+              <h2 className="text-3xl font-bold text-white mb-3">Frequently asked questions</h2>
+              <p className="text-slate-400">Everything you need to know about how pricing works.</p>
+            </div>
+
+            <div className="space-y-4">
+              {FAQS.map(({ q, a }) => (
+                <div
+                  key={q}
+                  className="rounded-xl bg-slate-900/70 border border-slate-700/50 p-6 hover:border-indigo-500/30 transition-all"
+                >
+                  <h3 className="text-white font-semibold mb-2">{q}</h3>
+                  <p className="text-slate-400 text-sm leading-relaxed">{a}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── Final CTA ── */}
+        <section className="py-16 px-4">
+          <div className="max-w-4xl mx-auto">
+            <div className="rounded-2xl bg-slate-900/70 border border-indigo-500/30 shadow-[0_0_40px_rgba(99,102,241,0.1)] p-10 text-center">
               <h2 className="text-3xl font-bold text-white mb-3">Ready to get started?</h2>
-              <p className="text-slate-400 mb-8 text-lg">
-                It&apos;s free for workers — always. Employers pay only when they post.
+              <p className="text-slate-400 mb-8 max-w-lg mx-auto">
+                Post your first job and reach hundreds of vetted workers — or find work near you
+                with zero upfront cost.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Link
-                  href="/auth/register"
-                  className="inline-flex items-center justify-center px-8 py-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-lg transition-colors gap-2"
+                  href="/jobs/create"
+                  className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white font-semibold text-lg transition-all"
                 >
-                  Sign Up Free <ArrowRight className="h-5 w-5" />
+                  <Briefcase className="h-5 w-5" />
+                  Post your first job
                 </Link>
                 <Link
-                  href="/how-it-works"
-                  className="inline-flex items-center justify-center px-8 py-4 rounded-xl border border-slate-600 hover:border-indigo-500/60 text-slate-300 hover:text-white font-semibold text-lg transition-all"
+                  href="/auth/register?role=worker"
+                  className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl border border-slate-600 hover:border-indigo-500/60 text-slate-300 hover:text-white font-semibold text-lg transition-all"
                 >
-                  How It Works
+                  <HardHat className="h-5 w-5" />
+                  Find work near you
                 </Link>
               </div>
-              <p className="text-slate-500 text-sm mt-4">
-                No credit card required. Get started in minutes.
+              <p className="text-slate-500 text-sm mt-6">
+                No credit card required. Workers join 100% free.
               </p>
             </div>
-
           </div>
         </section>
       </main>
