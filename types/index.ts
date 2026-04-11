@@ -495,6 +495,11 @@ export type NotificationType =
   | 'badge_unlocked'
   | 'milestone_reached'
   | 'leaderboard_change'
+  // Placement / employment check-in alerts
+  | 'placement_checkin_worker'
+  | 'placement_checkin_employer'
+  | 'placement_ended_worker'
+  | 'placement_ended_employer'
 
 export type NotificationChannel = 'push' | 'email' | 'sms' | 'in_app'
 
