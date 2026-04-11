@@ -472,6 +472,11 @@ export type NotificationType =
   | 'account_update'
   | 'security_alert'
   | 'maintenance'
+  // Application alerts
+  | 'application_accepted'
+  | 'application_rejected'
+  | 'job_posted'
+  | 'general'
   // Gamification alerts
   | 'points_earned'
   | 'badge_unlocked'
@@ -507,6 +512,20 @@ export interface Notification {
   deliveryStatus?: NotificationDeliveryStatus
   createdAt: string
   readAt?: string
+}
+
+/** Simplified notification type for the in-app notification system (Lot 6). */
+export interface AppNotification {
+  id: string
+  userId: string
+  type: 'application_received' | 'application_accepted' | 'application_rejected' | 'job_posted' | 'general'
+  title: string
+  message: string
+  read: boolean
+  link?: string
+  createdAt: string
+  relatedJobId?: string
+  relatedApplicationId?: string
 }
 
 export interface NotificationDeliveryStatus {
