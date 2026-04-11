@@ -15,6 +15,7 @@ import {
   increment,
 } from 'firebase/firestore'
 import type { JobApplication } from '@/types'
+import { createNotification } from '@/lib/notifications/index'
 
 function tsToIso(value: unknown): string {
   if (value instanceof Timestamp) return value.toDate().toISOString()
@@ -77,6 +78,21 @@ export async function applyToJob(
   const jobSnap = await getDoc(jobRef)
   if (jobSnap.exists()) {
     await updateDoc(jobRef, { applicantsCount: increment(1) })
+  }
+
+  // Notify the employer about the new application
+  try {
+    await createNotification(job.employerId, {
+      userId: job.employerId,
+      type: 'application_received',
+      title: 'New application received',
+      message: `New application from ${worker.displayName} for ${job.title}`,
+      link: `/jobs/${jobId}/applicants`,
+      relatedJobId: jobId,
+      relatedApplicationId: docRef.id,
+    })
+  } catch {
+    // Non-fatal — don't block the apply flow
   }
 
   return docRef.id
