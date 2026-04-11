@@ -11,7 +11,7 @@ import type { AdminUser } from '@/types'
 const MOCK_ADMIN_USERS: AdminUser[] = [
   {
     id: 'admin1',
-    email: 'superadmin@workerconnect.com',
+    email: 'superadmin@quicktrade.com',
     role: 'super_admin',
     permissions: ['view', 'edit', 'delete', 'manage_users', 'manage_payments', 'manage_disputes', 'system_settings'],
     createdAt: new Date(Date.now() - 365 * 86400000).toISOString(),
@@ -19,7 +19,7 @@ const MOCK_ADMIN_USERS: AdminUser[] = [
   },
   {
     id: 'admin2',
-    email: 'moderator@workerconnect.com',
+    email: 'moderator@quicktrade.com',
     role: 'moderator',
     permissions: ['view', 'edit', 'manage_disputes'],
     createdAt: new Date(Date.now() - 180 * 86400000).toISOString(),
@@ -27,7 +27,7 @@ const MOCK_ADMIN_USERS: AdminUser[] = [
   },
   {
     id: 'admin3',
-    email: 'analyst@workerconnect.com',
+    email: 'analyst@quicktrade.com',
     role: 'analyst',
     permissions: ['view'],
     createdAt: new Date(Date.now() - 90 * 86400000).toISOString(),
