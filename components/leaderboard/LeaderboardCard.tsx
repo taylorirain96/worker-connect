@@ -38,7 +38,7 @@ export default function LeaderboardCard({ entry, isCurrentUser = false }: Leader
           isCurrentUser
             ? 'border-primary-400 bg-primary-50 dark:bg-primary-900/20 dark:border-primary-600'
             : isTopThree
-            ? 'border-fuchsia-800/60 bg-fuchsia-950/30 hover:shadow-fuchsia-900/20'
+            ? 'border-fuchsia-800/60 bg-fuchsia-950/30 hover:shadow-md hover:shadow-fuchsia-900/20'
             : 'border-gray-200 bg-white dark:bg-gray-900 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-600',
         ].join(' ')}
       >
