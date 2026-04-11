@@ -10,7 +10,7 @@ import Button from '@/components/ui/Button'
 import Link from 'next/link'
 import {
   Briefcase, DollarSign, Star, Clock, TrendingUp,
-  CheckCircle, AlertCircle, Search, Settings
+  CheckCircle, AlertCircle, Search, Settings, FileText
 } from 'lucide-react'
 import { formatCurrency, STATUS_LABELS, formatRelativeDate } from '@/lib/utils'
 import { collection, query, where, orderBy, getDocs, type DocumentData } from 'firebase/firestore'
@@ -176,7 +176,7 @@ export default function WorkerDashboardPage() {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle>Recent Applications</CardTitle>
-                    <Link href="/jobs" className="text-sm text-primary-600 hover:text-primary-700">Browse more jobs</Link>
+                    <Link href="/dashboard/worker/applications" className="text-sm text-primary-600 hover:text-primary-700">View all</Link>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -260,6 +260,22 @@ export default function WorkerDashboardPage() {
                   <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                     <TrendingUp className="h-4 w-4 text-primary-600" />
                     View Earnings & Withdraw
+                  </div>
+                  <span className="text-xs text-primary-600">→</span>
+                </div>
+              </Link>
+
+              {/* My Applications link */}
+              <Link href="/dashboard/worker/applications">
+                <div className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
+                  <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <FileText className="h-4 w-4 text-primary-600" />
+                    My Applications
+                    {applications.filter((a) => a.status === 'pending').length > 0 && (
+                      <span className="ml-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-medium px-1.5 py-0.5 rounded-full">
+                        {applications.filter((a) => a.status === 'pending').length} pending
+                      </span>
+                    )}
                   </div>
                   <span className="text-xs text-primary-600">→</span>
                 </div>

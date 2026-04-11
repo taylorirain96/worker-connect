@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
@@ -15,6 +15,8 @@ import {
 import { formatCurrency, formatRelativeDate, JOB_CATEGORIES, URGENCY_LABELS } from '@/lib/utils'
 import type { Job, JobPhoto } from '@/types'
 import Link from 'next/link'
+import { applyToJob, getApplicationId, withdrawApplication } from '@/lib/applications'
+import { db } from '@/lib/firebase'
 
 const MOCK_JOBS: Record<string, Job & { employerRating?: number; employerJobs?: number }> = {
   '1': {
@@ -82,12 +84,25 @@ export default function JobDetailPage() {
   const [applying, setApplying] = useState(false)
   const [showApplyForm, setShowApplyForm] = useState(false)
   const [coverLetter, setCoverLetter] = useState('')
-  const [proposedRate, setProposedRate] = useState('')
+  const [alreadyApplied, setAlreadyApplied] = useState(false)
+  const [withdrawing, setWithdrawing] = useState(false)
+  const [appliedAppId, setAppliedAppId] = useState<string | null>(null)
 
   const job = MOCK_JOBS[params.id as string] || MOCK_JOBS['1']
   const jobPhotos = MOCK_JOB_PHOTOS.filter((p) => p.jobId === (params.id as string) || p.jobId === '1')
   const category = JOB_CATEGORIES.find((c) => c.id === job.category)
   const urgency = URGENCY_LABELS[job.urgency]
+
+  // Check if the worker has already applied
+  useEffect(() => {
+    if (!user?.uid || profile?.role !== 'worker' || !db) return
+    getApplicationId(params.id as string, user.uid).then((appId) => {
+      if (appId) {
+        setAlreadyApplied(true)
+        setAppliedAppId(appId)
+      }
+    })
+  }, [user, profile, params.id])
 
   const handleApply = async () => {
     if (!user) {
@@ -99,17 +114,51 @@ export default function JobDetailPage() {
       toast.error('Only workers can apply to jobs')
       return
     }
+    if (!db) {
+      toast.error('Feature not available')
+      return
+    }
 
     setApplying(true)
     try {
-      await new Promise((r) => setTimeout(r, 1000))
+      const appId = await applyToJob(
+        params.id as string,
+        {
+          title: job.title,
+          employerId: job.employerId,
+          employerName: job.employerName,
+        },
+        {
+          uid: user.uid,
+          displayName: profile?.displayName ?? user.displayName ?? 'Worker',
+          photoURL: profile?.photoURL ?? user.photoURL ?? undefined,
+          rating: profile?.rating,
+        },
+        coverLetter || undefined
+      )
+      setAppliedAppId(appId)
+      setAlreadyApplied(true)
       toast.success('Application submitted successfully!')
       setShowApplyForm(false)
-      router.push('/dashboard/worker')
-    } catch {
-      toast.error('Failed to submit application')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to submit application')
     } finally {
       setApplying(false)
+    }
+  }
+
+  const handleWithdraw = async () => {
+    if (!appliedAppId) return
+    setWithdrawing(true)
+    try {
+      await withdrawApplication(appliedAppId)
+      setAlreadyApplied(false)
+      setAppliedAppId(null)
+      toast.success('Application withdrawn')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to withdraw application')
+    } finally {
+      setWithdrawing(false)
     }
   }
 
@@ -218,25 +267,13 @@ export default function JobDetailPage() {
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Cover Letter <span className="text-red-500">*</span>
+                        Cover Letter <span className="text-gray-400 font-normal">(optional)</span>
                       </label>
                       <textarea
                         rows={4}
                         value={coverLetter}
                         onChange={(e) => setCoverLetter(e.target.value)}
                         placeholder="Introduce yourself, describe your relevant experience, and explain why you're the best fit for this job..."
-                        className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Proposed {job.budgetType === 'hourly' ? 'Hourly Rate' : 'Price'} ($) <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="number"
-                        value={proposedRate}
-                        onChange={(e) => setProposedRate(e.target.value)}
-                        placeholder={`Employer's budget: ${formatCurrency(job.budget)}`}
                         className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                       />
                     </div>
@@ -247,7 +284,6 @@ export default function JobDetailPage() {
                       <Button
                         onClick={handleApply}
                         loading={applying}
-                        disabled={!coverLetter || !proposedRate}
                         className="flex-1"
                       >
                         <Send className="h-4 w-4" />
@@ -284,7 +320,7 @@ export default function JobDetailPage() {
                   </div>
                 )}
 
-                {job.status === 'open' && !showApplyForm && (
+                {job.status === 'open' && profile?.role !== 'employer' && !showApplyForm && !alreadyApplied && (
                   <Button
                     className="w-full mt-4"
                     onClick={() => {
@@ -292,11 +328,35 @@ export default function JobDetailPage() {
                         router.push('/auth/login')
                         return
                       }
+                      if (!db) {
+                        toast.error('Feature not available')
+                        return
+                      }
                       setShowApplyForm(true)
                     }}
                   >
                     Apply Now
                   </Button>
+                )}
+
+                {job.status === 'open' && profile?.role === 'worker' && alreadyApplied && (
+                  <div className="mt-4 space-y-2">
+                    <div className="flex items-center gap-2 text-green-600 dark:text-green-400 text-sm font-medium">
+                      <CheckCircle className="h-4 w-4" />
+                      Applied ✓
+                    </div>
+                    {appliedAppId && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={handleWithdraw}
+                        loading={withdrawing}
+                      >
+                        Withdraw Application
+                      </Button>
+                    )}
+                  </div>
                 )}
 
                 {profile?.role === 'worker' && (job.status === 'in_progress' || job.status === 'completed') && (
