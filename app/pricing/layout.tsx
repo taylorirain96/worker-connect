@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Pricing | QuickTrade NZ',
+  title: 'Pricing | QuickTrade — Transparent Trade Platform Pricing',
   description:
-    'Simple, fair pricing for workers and employers. Gig work, recruitment track, employer subscriptions, worker pro tiers, add-ons, and rewards — all in one place.',
+    'Simple, transparent pricing for employers and workers. Free to browse, no hidden fees. See QuickTrade subscription plans and add-ons.',
   alternates: {
     canonical: 'https://quicktrade.co.nz/pricing',
   },

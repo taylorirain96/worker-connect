@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
@@ -20,6 +21,22 @@ import {
   Zap,
   FileText,
 } from 'lucide-react'
+
+export const metadata: Metadata = {
+  title: 'QuickTrade | Find Trusted Trade Workers in New Zealand',
+  description:
+    'QuickTrade connects Marlborough, Nelson and Wellington businesses with verified, reviewed trade workers. Hire electricians, plumbers, builders and more — fast.',
+  keywords:
+    'trade workers NZ, hire tradesperson Marlborough, find electrician Nelson, plumber Blenheim, builder Wellington, QuickTrade',
+  openGraph: {
+    title: 'QuickTrade | Find Trusted Trade Workers in New Zealand',
+    description:
+      'Connect with verified trade workers across Marlborough, Nelson and Wellington. Post a job in 2 minutes.',
+    url: 'https://quicktrade.co.nz',
+    siteName: 'QuickTrade',
+    type: 'website',
+  },
+}
 
 const STATS = [
   { label: 'Active Workers', value: '12,000+', icon: Users },
@@ -137,6 +154,66 @@ export default function HomePage() {
                   <div className="text-sm text-slate-400">{label}</div>
                 </div>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* SEO Content Section */}
+      <section className="py-20 bg-gray-950">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold text-white mb-4">
+              New Zealand&apos;s Trade Platform — Built for the South Island
+            </h2>
+            <p className="text-gray-400 max-w-2xl mx-auto text-lg">
+              Connecting businesses and homeowners in Marlborough, Nelson, Blenheim and Wellington
+              with verified, reviewed trade professionals.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+            <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800">
+              <h3 className="text-xl font-bold text-white mb-3">Hire in Marlborough & Blenheim</h3>
+              <p className="text-gray-400 leading-relaxed">
+                Find electricians, plumbers, builders and general labourers across the Marlborough region.
+                All workers are verified and reviewed by real employers. Post a job and get applicants the same day.
+              </p>
+            </div>
+            <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800">
+              <h3 className="text-xl font-bold text-white mb-3">Trade Work in Nelson & Tasman</h3>
+              <p className="text-gray-400 leading-relaxed">
+                Browse trade job listings across Nelson City and Tasman District. From residential renovations
+                to commercial construction — QuickTrade matches you with the right opportunities.
+              </p>
+            </div>
+            <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800">
+              <h3 className="text-xl font-bold text-white mb-3">Wellington Tradespeople</h3>
+              <p className="text-gray-400 leading-relaxed">
+                Wellington&apos;s fastest-growing trade platform. Find work or hire workers across the Wellington
+                region. Vetted professionals, transparent pricing, and escrow payment protection.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {[
+              { label: 'Electricians', href: '/workers?category=Electrical' },
+              { label: 'Plumbers', href: '/workers?category=Plumbing' },
+              { label: 'Builders', href: '/workers?category=Carpentry+%26+Joinery' },
+              { label: 'Painters', href: '/workers?category=Painting+%26+Decorating' },
+              { label: 'Landscapers', href: '/workers?category=Landscaping+%26+Gardening' },
+              { label: 'Roofers', href: '/workers?category=Roofing' },
+              { label: 'Tilers', href: '/workers?category=Tiling+%26+Flooring' },
+              { label: 'Labourers', href: '/workers?category=General+Labourer' },
+            ].map(({ label, href }) => (
+              <a
+                key={label}
+                href={href}
+                className="bg-gray-900 border border-gray-800 hover:border-indigo-500/50 rounded-xl p-4 text-center text-gray-300 hover:text-white font-medium transition-all text-sm"
+              >
+                {label} →
+              </a>
             ))}
           </div>
         </div>

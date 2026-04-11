@@ -6,14 +6,18 @@ import { RoleProvider } from '@/context/RoleContext'
 import { Toaster } from 'react-hot-toast'
 
 export const metadata: Metadata = {
-  title: 'QuickTrade - Find Skilled Trades Workers',
+  title: 'QuickTrade | Find Trusted Trade Workers in New Zealand',
   description:
-    'Connect with skilled trades workers for plumbing, electrical, carpentry, HVAC, roofing, and more.',
+    'QuickTrade connects Marlborough, Nelson and Wellington businesses with verified, reviewed trade workers. Hire electricians, plumbers, builders and more — fast.',
+  metadataBase: new URL('https://quicktrade.co.nz'),
+  alternates: {
+    canonical: '/',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en-NZ" suppressHydrationWarning>
       <body className="font-sans bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <AuthProvider>

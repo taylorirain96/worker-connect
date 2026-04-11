@@ -5,7 +5,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: ['/api/', '/admin/', '/auth/'],
+      disallow: ['/dashboard/', '/api/', '/admin/'],
     },
     sitemap: 'https://quicktrade.co.nz/sitemap.xml',
   }
