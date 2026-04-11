@@ -6,9 +6,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import toast from 'react-hot-toast'
-import { Wrench, Mail, Lock, User, Eye, EyeOff } from 'lucide-react'
-import Button from '@/components/ui/Button'
-import Input from '@/components/ui/Input'
+import { Mail, Lock, User, Eye, EyeOff } from 'lucide-react'
 import { Suspense } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { getDashboardPath } from '@/lib/auth/redirects'
@@ -152,30 +150,34 @@ function RegisterForm() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+    <div className="min-h-screen bg-[#0a0f1e] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      {/* Radial glow backdrop */}
+      <div
+        className="fixed inset-0 pointer-events-none"
+        style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(99,102,241,0.12) 0%, transparent 70%)' }}
+      />
+      <div className="relative sm:mx-auto sm:w-full sm:max-w-md">
         <Link href="/" className="flex items-center justify-center space-x-2 mb-6">
-          <Wrench className="h-8 w-8 text-primary-600" />
-          <span className="text-2xl font-bold text-primary-600">
-            Quick<span className="text-accent-500">Trade</span>
+          <span className="text-2xl font-bold text-white">
+            ⚡ QuickTrade
           </span>
         </Link>
-        <h2 className="text-center text-2xl font-bold text-gray-900 dark:text-white">
+        <h2 className="text-center text-2xl font-bold text-white">
           Create your account
         </h2>
-        <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
+        <p className="mt-2 text-center text-sm text-gray-400">
           Already have an account?{' '}
-          <Link href="/auth/login" className="font-medium text-primary-600 hover:text-primary-500">
+          <Link href="/auth/login" className="font-medium text-indigo-400 hover:text-indigo-300 transition-colors">
             Sign in
           </Link>
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white dark:bg-gray-800 py-8 px-4 shadow-sm rounded-xl sm:px-10 border border-gray-200 dark:border-gray-700">
+      <div className="relative mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-2xl shadow-2xl py-8 px-4 sm:px-10">
           {/* Role Selector */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-gray-300 mb-2">
               I want to...
             </label>
             <div className="grid grid-cols-2 gap-3">
@@ -189,13 +191,13 @@ function RegisterForm() {
                   onClick={() => setValue('role', value as 'worker' | 'employer')}
                   className={`p-4 rounded-xl border-2 text-left transition-all ${
                     selectedRole === value
-                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                      : 'border-gray-200 dark:border-gray-600 hover:border-gray-300'
+                      ? 'border-indigo-500 bg-indigo-500/10'
+                      : 'border-gray-700 hover:border-gray-600'
                   }`}
                 >
                   <div className="text-2xl mb-1">{emoji}</div>
-                  <div className="font-semibold text-sm text-gray-900 dark:text-white">{label}</div>
-                  <div className="text-xs text-gray-500 mt-0.5">{desc}</div>
+                  <div className="font-semibold text-sm text-white">{label}</div>
+                  <div className="text-xs text-gray-400 mt-0.5">{desc}</div>
                 </button>
               ))}
             </div>
@@ -205,7 +207,7 @@ function RegisterForm() {
             type="button"
             onClick={handleGoogleSignIn}
             disabled={googleLoading}
-            className="w-full flex items-center justify-center gap-3 px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 mb-6"
+            className="w-full flex items-center justify-center gap-3 px-4 py-2.5 border border-gray-700 rounded-lg text-sm font-medium text-gray-200 bg-gray-800 hover:bg-gray-700 transition-colors disabled:opacity-50 mb-6"
           >
             {googleLoading ? (
               <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
@@ -225,79 +227,109 @@ function RegisterForm() {
 
           <div className="relative mb-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200 dark:border-gray-700" />
+              <div className="w-full border-t border-gray-700" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white dark:bg-gray-800 text-gray-500">Or continue with email</span>
+              <span className="px-2 bg-gray-900 text-gray-500">Or continue with email</span>
             </div>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <Input
-              label="Full Name"
-              type="text"
-              id="displayName"
-              autoComplete="name"
-              leftIcon={<User className="h-4 w-4" />}
-              error={errors.displayName?.message}
-              {...register('displayName')}
-            />
+            <div>
+              <label htmlFor="displayName" className="block text-sm font-medium text-gray-300 mb-1">
+                Full Name
+              </label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
+                <input
+                  id="displayName"
+                  type="text"
+                  autoComplete="name"
+                  className="w-full pl-10 pr-4 py-2.5 bg-gray-800 border border-gray-700 text-white placeholder:text-gray-500 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+                  {...register('displayName')}
+                />
+              </div>
+              {errors.displayName && <p className="mt-1 text-sm text-red-400">{errors.displayName.message}</p>}
+            </div>
 
-            <Input
-              label="Email address"
-              type="email"
-              id="email"
-              autoComplete="email"
-              leftIcon={<Mail className="h-4 w-4" />}
-              error={errors.email?.message}
-              {...register('email')}
-            />
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
+                Email address
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
+                <input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  className="w-full pl-10 pr-4 py-2.5 bg-gray-800 border border-gray-700 text-white placeholder:text-gray-500 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+                  {...register('email')}
+                />
+              </div>
+              {errors.email && <p className="mt-1 text-sm text-red-400">{errors.email.message}</p>}
+            </div>
 
-            <Input
-              label="Password"
-              type={showPassword ? 'text' : 'password'}
-              id="password"
-              autoComplete="new-password"
-              leftIcon={<Lock className="h-4 w-4" />}
-              rightIcon={
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1">
+                Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
+                <input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  className="w-full pl-10 pr-10 py-2.5 bg-gray-800 border border-gray-700 text-white placeholder:text-gray-500 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+                  {...register('password')}
+                />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="pointer-events-auto text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
-              }
-              helperText="At least 8 characters"
-              error={errors.password?.message}
-              {...register('password')}
-            />
+              </div>
+              <p className="mt-1 text-xs text-gray-500">At least 8 characters</p>
+              {errors.password && <p className="mt-1 text-sm text-red-400">{errors.password.message}</p>}
+            </div>
 
-            <Input
-              label="Confirm Password"
-              type={showPassword ? 'text' : 'password'}
-              id="confirmPassword"
-              autoComplete="new-password"
-              leftIcon={<Lock className="h-4 w-4" />}
-              error={errors.confirmPassword?.message}
-              {...register('confirmPassword')}
-            />
+            <div>
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-1">
+                Confirm Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
+                <input
+                  id="confirmPassword"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  className="w-full pl-10 pr-4 py-2.5 bg-gray-800 border border-gray-700 text-white placeholder:text-gray-500 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+                  {...register('confirmPassword')}
+                />
+              </div>
+              {errors.confirmPassword && <p className="mt-1 text-sm text-red-400">{errors.confirmPassword.message}</p>}
+            </div>
 
             <p className="text-xs text-gray-500">
               By creating an account, you agree to our{' '}
-              <Link href="/terms" className="text-primary-600 hover:underline">
+              <Link href="/terms" className="text-indigo-400 hover:text-indigo-300 transition-colors">
                 Terms of Service
               </Link>{' '}
               and{' '}
-              <Link href="/privacy" className="text-primary-600 hover:underline">
+              <Link href="/privacy" className="text-indigo-400 hover:text-indigo-300 transition-colors">
                 Privacy Policy
               </Link>
               .
             </p>
 
-            <Button type="submit" loading={isSubmitting} className="w-full" size="lg">
-              Create Account
-            </Button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full py-2.5 px-4 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+            >
+              {isSubmitting ? 'Creating account…' : 'Create Account'}
+            </button>
           </form>
         </div>
       </div>

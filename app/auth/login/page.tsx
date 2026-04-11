@@ -6,9 +6,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import toast from 'react-hot-toast'
-import { Wrench, Mail, Lock, Eye, EyeOff } from 'lucide-react'
-import Button from '@/components/ui/Button'
-import Input from '@/components/ui/Input'
+import { Mail, Lock, Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { getDashboardPath } from '@/lib/auth/redirects'
 import type { UserProfile } from '@/types'
@@ -123,32 +121,36 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+    <div className="min-h-screen bg-[#0a0f1e] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      {/* Radial glow backdrop */}
+      <div
+        className="fixed inset-0 pointer-events-none"
+        style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(99,102,241,0.12) 0%, transparent 70%)' }}
+      />
+      <div className="relative sm:mx-auto sm:w-full sm:max-w-md">
         <Link href="/" className="flex items-center justify-center space-x-2 mb-6">
-          <Wrench className="h-8 w-8 text-primary-600" />
-          <span className="text-2xl font-bold text-primary-600">
-            Quick<span className="text-accent-500">Trade</span>
+          <span className="text-2xl font-bold text-white">
+            ⚡ QuickTrade
           </span>
         </Link>
-        <h2 className="text-center text-2xl font-bold text-gray-900 dark:text-white">
+        <h2 className="text-center text-2xl font-bold text-white">
           Sign in to your account
         </h2>
-        <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
+        <p className="mt-2 text-center text-sm text-gray-400">
           Don&apos;t have an account?{' '}
-          <Link href="/auth/register" className="font-medium text-primary-600 hover:text-primary-500">
+          <Link href="/auth/register" className="font-medium text-indigo-400 hover:text-indigo-300 transition-colors">
             Get started for free
           </Link>
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white dark:bg-gray-800 py-8 px-4 shadow-sm rounded-xl sm:px-10 border border-gray-200 dark:border-gray-700">
+      <div className="relative mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-2xl shadow-2xl py-8 px-4 sm:px-10">
           <button
             type="button"
             onClick={handleGoogleSignIn}
             disabled={googleLoading}
-            className="w-full flex items-center justify-center gap-3 px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mb-6"
+            className="w-full flex items-center justify-center gap-3 px-4 py-2.5 border border-gray-700 rounded-lg text-sm font-medium text-gray-200 bg-gray-800 hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mb-6"
           >
             {googleLoading ? (
               <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
@@ -168,56 +170,70 @@ export default function LoginPage() {
 
           <div className="relative mb-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200 dark:border-gray-700" />
+              <div className="w-full border-t border-gray-700" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white dark:bg-gray-800 text-gray-500">Or continue with email</span>
+              <span className="px-2 bg-gray-900 text-gray-500">Or continue with email</span>
             </div>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <Input
-              label="Email address"
-              type="email"
-              id="email"
-              autoComplete="email"
-              leftIcon={<Mail className="h-4 w-4" />}
-              error={errors.email?.message}
-              {...register('email')}
-            />
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
+                Email address
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
+                <input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  className="w-full pl-10 pr-4 py-2.5 bg-gray-800 border border-gray-700 text-white placeholder:text-gray-500 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+                  {...register('email')}
+                />
+              </div>
+              {errors.email && <p className="mt-1 text-sm text-red-400">{errors.email.message}</p>}
+            </div>
 
             <div>
-              <Input
-                label="Password"
-                type={showPassword ? 'text' : 'password'}
-                id="password"
-                autoComplete="current-password"
-                leftIcon={<Lock className="h-4 w-4" />}
-                rightIcon={
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="pointer-events-auto text-gray-400 hover:text-gray-600"
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                }
-                error={errors.password?.message}
-                {...register('password')}
-              />
+              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1">
+                Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
+                <input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  className="w-full pl-10 pr-10 py-2.5 bg-gray-800 border border-gray-700 text-white placeholder:text-gray-500 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+                  {...register('password')}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {errors.password && <p className="mt-1 text-sm text-red-400">{errors.password.message}</p>}
               <div className="flex justify-end mt-1">
                 <Link
                   href="/auth/forgot-password"
-                  className="text-xs text-primary-600 hover:text-primary-500"
+                  className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
                 >
                   Forgot your password?
                 </Link>
               </div>
             </div>
 
-            <Button type="submit" loading={isSubmitting} className="w-full" size="lg">
-              Sign In
-            </Button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full py-2.5 px-4 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+            >
+              {isSubmitting ? 'Signing in…' : 'Sign In'}
+            </button>
           </form>
         </div>
       </div>

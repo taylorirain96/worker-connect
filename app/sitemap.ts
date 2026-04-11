@@ -6,8 +6,15 @@ const BASE = 'https://quicktrade.co.nz'
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date().toISOString()
   const entries: MetadataRoute.Sitemap = [
-    { url: `${BASE}/`, lastModified: now, changeFrequency: 'daily', priority: 1.0 },
+    { url: `${BASE}/`, lastModified: now, changeFrequency: 'weekly', priority: 1.0 },
+    { url: `${BASE}/jobs`, lastModified: now, changeFrequency: 'daily', priority: 0.9 },
+    { url: `${BASE}/workers`, lastModified: now, changeFrequency: 'daily', priority: 0.9 },
     { url: `${BASE}/services`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
+    { url: `${BASE}/pricing`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${BASE}/auth/register`, lastModified: now, changeFrequency: 'yearly', priority: 0.7 },
+    { url: `${BASE}/auth/login`, lastModified: now, changeFrequency: 'yearly', priority: 0.5 },
+    { url: `${BASE}/about`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${BASE}/contact`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${BASE}/press`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${BASE}/partners`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
     {
