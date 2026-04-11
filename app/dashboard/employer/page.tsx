@@ -32,6 +32,7 @@ interface PostedJob {
   createdAt: string
   hasPhotos: boolean
   photoCount: number
+  assignedWorkerId?: string
 }
 
 const MOCK_POSTED_JOBS: PostedJob[] = [
@@ -56,6 +57,7 @@ function docToPostedJob(id: string, data: DocumentData): PostedJob {
     createdAt: toISO(data.createdAt),
     hasPhotos: Array.isArray(job.images) && job.images.length > 0,
     photoCount: Array.isArray(job.images) ? job.images.length : 0,
+    assignedWorkerId: job.assignedWorkerId,
   }
 }
 
@@ -370,6 +372,47 @@ export default function EmployerDashboardPage() {
                   )}
                 </CardContent>
               </Card>
+
+              {/* Leave a Review Prompt */}
+              {(() => {
+                const reviewableJobs = postedJobs.filter(
+                  (j) => (j.status === 'in_progress' || j.status === 'completed') && j.assignedWorkerId
+                )
+                if (reviewableJobs.length === 0) return null
+                return (
+                  <Card className="border-yellow-200 dark:border-yellow-800">
+                    <CardHeader>
+                      <div className="flex items-center gap-2">
+                        <Star className="h-4 w-4 text-yellow-500 fill-yellow-400" />
+                        <CardTitle>Leave a Review</CardTitle>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                        Rate the workers on your active or completed jobs.
+                      </p>
+                      <div className="space-y-2">
+                        {reviewableJobs.slice(0, 3).map((job) => (
+                          <Link
+                            key={job.id}
+                            href={`/jobs/${job.id}#review`}
+                            className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                          >
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{job.title}</p>
+                              <p className="text-xs text-gray-500">{job.status === 'in_progress' ? 'In progress' : 'Completed'}</p>
+                            </div>
+                            <Star className="h-3.5 w-3.5 text-yellow-400 flex-shrink-0 ml-2" />
+                          </Link>
+                        ))}
+                        {reviewableJobs.length > 3 && (
+                          <p className="text-xs text-gray-500 text-center pt-1">+{reviewableJobs.length - 3} more</p>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
+              })()}
 
               {/* Business Profile Card */}
               <Card className="border-primary-200 dark:border-primary-800 bg-primary-50/50 dark:bg-primary-900/10">
