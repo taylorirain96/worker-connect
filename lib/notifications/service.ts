@@ -23,6 +23,7 @@ const TYPE_CATEGORY_MAP: Record<NotificationType, NotificationCategory> = {
   invoice_created: 'payments',
   payout_processed: 'payments',
   payment_failed: 'payments',
+  dispute_opened: 'payments',
   review_received: 'reviews',
   review_response_needed: 'reviews',
   rating_changed: 'reviews',

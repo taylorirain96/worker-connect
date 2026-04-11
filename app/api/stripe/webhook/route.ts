@@ -1,8 +1,11 @@
 /**
  * POST /api/stripe/webhook
  *
- * Handles Stripe webhook events for the QuickTrade escrow and payment system.
- * Processes: posting fee payments, escrow deposits, and payment releases.
+ * Unified Stripe webhook handler for:
+ * - Job posting fee payments (checkout.session.completed, payment_intent.succeeded)
+ * - Escrow payment intents (payment_intent.succeeded, payment_intent.amount_capturable_updated)
+ * - Payment failures (payment_intent.payment_failed)
+ * - Worker payment releases (transfer.created)
  *
  * TODO: Set STRIPE_WEBHOOK_SECRET in your environment variables.
  * Configure this endpoint URL in your Stripe dashboard under Webhooks.
@@ -12,6 +15,14 @@ import type Stripe from 'stripe'
 import { constructWebhookEvent } from '@/lib/stripe'
 import { adminDb } from '@/lib/firebase-admin'
 import { sendNotification } from '@/lib/notificationService'
+import {
+  getEscrowByPaymentIntent,
+  updateEscrowStatus,
+  getJobPostingPaymentBySession,
+  updateJobPostingPayment,
+} from '@/lib/services/escrowService'
+
+export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
@@ -41,6 +52,63 @@ export async function POST(req: NextRequest) {
 
   try {
     switch (event.type) {
+      // ── Job Posting: Checkout Session completed ────────────────────────────
+      case 'checkout.session.completed': {
+        const session = event.data.object as Stripe.Checkout.Session
+        const { jobId, employerId, recordId, featuredListing, urgentBadge } = session.metadata ?? {}
+
+        if (session.metadata?.type === 'job_posting' || jobId) {
+          // Activate the job
+          if (adminDb && jobId) {
+            await adminDb.collection('jobs').doc(jobId).update({
+              paymentStatus: 'active',
+              postingPaymentId: recordId ?? null,
+              featuredListing: featuredListing === 'true',
+              urgentBadge: urgentBadge === 'true',
+              activatedAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            })
+          }
+
+          // Update the payment record
+          if (recordId) {
+            const paymentRecord = await getJobPostingPaymentBySession(session.id)
+            if (paymentRecord) {
+              await updateJobPostingPayment(paymentRecord.id, {
+                status: 'completed',
+                stripePaymentIntentId: typeof session.payment_intent === 'string'
+                  ? session.payment_intent
+                  : undefined,
+                completedAt: new Date().toISOString(),
+              })
+            } else if (adminDb) {
+              await adminDb.collection('jobPostingPayments').doc(recordId).update({
+                status: 'completed',
+                stripeCheckoutSessionId: session.id,
+                stripePaymentIntentId: typeof session.payment_intent === 'string'
+                  ? session.payment_intent
+                  : null,
+                completedAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+              })
+            }
+          }
+
+          // Notify employer
+          if (employerId) {
+            await sendNotification({
+              userId: employerId,
+              type: 'payment_received',
+              title: 'Job Posted Successfully! 🎉',
+              message: 'Your job has been activated and is now live. Workers can now see and respond to it.',
+              metadata: { jobId: jobId ?? '', sessionId: session.id },
+            })
+          }
+        }
+        break
+      }
+
+      // ── Payment Intent succeeded ───────────────────────────────────────────
       case 'payment_intent.succeeded': {
         const pi = event.data.object as Stripe.PaymentIntent
         const { type, jobId, employerId, workerId } = pi.metadata ?? {}
@@ -66,38 +134,64 @@ export async function POST(req: NextRequest) {
           }
         }
 
-        if (type === 'escrow' && jobId && workerId) {
-          // Update escrow record to in_escrow when employer deposits
-          const snapshot = await adminDb
-            .collection('escrows')
-            .where('jobId', '==', jobId)
-            .where('workerId', '==', workerId)
-            .limit(1)
-            .get()
-
-          if (!snapshot.empty) {
-            await snapshot.docs[0].ref.update({
-              status: 'in_escrow',
-              stripePaymentIntentId: pi.id,
-              updatedAt: new Date().toISOString(),
-            })
-          }
-
-          if (workerId) {
+        if (type === 'escrow' && jobId) {
+          // Use escrowService to update status to 'held'
+          const escrow = await getEscrowByPaymentIntent(pi.id)
+          if (escrow && (escrow.status === 'pending' || escrow.status === 'pending_deposit')) {
+            await updateEscrowStatus(escrow.id, 'held')
+            if (adminDb) {
+              await adminDb.collection('jobs').doc(escrow.jobId).update({
+                escrowStatus: 'held',
+                updatedAt: new Date().toISOString(),
+              })
+            }
             await sendNotification({
-              userId: workerId,
+              userId: escrow.employerId,
               type: 'payment_received',
-              title: 'Escrow Funded — Start Work',
-              message: `The employer has deposited payment into escrow. You can begin the job.`,
-              metadata: { jobId, stripePaymentIntentId: pi.id },
+              title: 'Payment Held in Escrow',
+              message: `NZ$${escrow.amount.toFixed(2)} is safely held in escrow for job #${escrow.jobId}. Release payment once the work is complete.`,
+              metadata: { escrowId: escrow.id, jobId: escrow.jobId },
             })
+            await sendNotification({
+              userId: escrow.workerId,
+              type: 'payment_received',
+              title: 'Escrow Funded — You\'re Protected',
+              message: `The employer has placed NZ$${escrow.amount.toFixed(2)} in escrow for job #${escrow.jobId}. Your payment is secured and will be released when the job is complete.`,
+              metadata: { escrowId: escrow.id, jobId: escrow.jobId },
+            })
+          } else if (!escrow && workerId) {
+            // Fallback: update via Firestore query
+            const snapshot = await adminDb
+              .collection('escrows')
+              .where('jobId', '==', jobId)
+              .where('workerId', '==', workerId)
+              .limit(1)
+              .get()
+
+            if (!snapshot.empty) {
+              await snapshot.docs[0].ref.update({
+                status: 'in_escrow',
+                stripePaymentIntentId: pi.id,
+                updatedAt: new Date().toISOString(),
+              })
+            }
+
+            if (workerId) {
+              await sendNotification({
+                userId: workerId,
+                type: 'payment_received',
+                title: 'Escrow Funded — Start Work',
+                message: `The employer has deposited payment into escrow. You can begin the job.`,
+                metadata: { jobId, stripePaymentIntentId: pi.id },
+              })
+            }
           }
         }
         break
       }
 
+      // ── Escrow: Funds authorised and held ─────────────────────────────────
       case 'payment_intent.amount_capturable_updated': {
-        // Funds are authorised and held — update escrow to awaiting capture
         const pi = event.data.object as Stripe.PaymentIntent
         const { type, jobId, workerId } = pi.metadata ?? {}
 
@@ -129,6 +223,7 @@ export async function POST(req: NextRequest) {
         break
       }
 
+      // ── Payment failed ─────────────────────────────────────────────────────
       case 'payment_intent.payment_failed': {
         const pi = event.data.object as Stripe.PaymentIntent
         const { type, jobId, employerId } = pi.metadata ?? {}
@@ -139,6 +234,16 @@ export async function POST(req: NextRequest) {
             postingFeePaid: false,
             updatedAt: new Date().toISOString(),
           })
+        }
+
+        if (type === 'escrow') {
+          const escrow = await getEscrowByPaymentIntent(pi.id)
+          if (escrow && adminDb) {
+            await adminDb.collection('escrowPayments').doc(escrow.id).update({
+              paymentError: pi.last_payment_error?.message ?? 'Payment failed',
+              updatedAt: new Date().toISOString(),
+            })
+          }
         }
 
         if (employerId) {
@@ -153,8 +258,8 @@ export async function POST(req: NextRequest) {
         break
       }
 
+      // ── Worker payment released via Stripe Transfer ────────────────────────
       case 'transfer.created': {
-        // Worker received their payment — update escrow status to released
         const transfer = event.data.object as Stripe.Transfer
         const { jobId, workerId, paymentIntentId } = transfer.metadata ?? {}
 
@@ -197,7 +302,7 @@ export async function POST(req: NextRequest) {
       }
 
       default:
-        // Ignore unhandled event types
+        // Unhandled event types are silently ignored
         break
     }
   } catch (err) {

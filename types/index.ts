@@ -57,6 +57,20 @@ export interface Job {
   deadline?: string
   assignedWorkerId?: string
   images?: string[]
+  /** Whether the job posting fee has been paid (draft = unpaid, active = live, expired = listing period ended) */
+  paymentStatus?: 'draft' | 'active' | 'expired'
+  /** Reference to the job posting payment record */
+  postingPaymentId?: string
+  /** Whether the job has a featured listing upsell */
+  featuredListing?: boolean
+  /** Whether the job has an urgent badge upsell */
+  urgentBadge?: boolean
+  /** ISO timestamp when the job was activated (posting fee paid) */
+  activatedAt?: string
+  /** ID of the current escrow payment record */
+  escrowId?: string
+  /** Current escrow status */
+  escrowStatus?: 'pending' | 'held' | 'released' | 'disputed' | 'refunded'
 }
 
 export type JobCategory =
@@ -442,6 +456,7 @@ export type NotificationType =
   | 'invoice_created'
   | 'payout_processed'
   | 'payment_failed'
+  | 'dispute_opened'
   // Review alerts
   | 'review_received'
   | 'review_response_needed'
@@ -1625,6 +1640,134 @@ export interface EngagementScore {
   period: string
 }
 
+// ─── Stripe / Escrow Payment System ──────────────────────────────────────────
+
+/** Posting fee tier based on estimated job value (in NZD) */
+export type JobPostingFeeTier = 'small' | 'medium' | 'large' | 'commercial'
+
+/** Payment status for a job listing */
+export type JobPaymentStatus = 'draft' | 'active' | 'expired'
+
+/** Status of an escrow payment — covers both escrow system variants */
+export type EscrowStatus = 'pending' | 'pending_deposit' | 'held' | 'in_escrow' | 'released' | 'disputed' | 'refunded'
+
+/** Worker commission tier based on completed jobs */
+export type CommissionTier = 'new' | 'established' | 'pro' | 'elite'
+
+export interface JobPostingFee {
+  tier: JobPostingFeeTier
+  label: string
+  /** Minimum job value for this tier (NZD) */
+  minValue: number
+  /** Maximum job value for this tier (NZD). null = no upper bound */
+  maxValue: number | null
+  /** Posting fee in NZD */
+  fee: number
+}
+
+export const JOB_POSTING_FEES: JobPostingFee[] = [
+  { tier: 'small',      label: 'Small Job',       minValue: 0,      maxValue: 499.99,  fee: 9.99  },
+  { tier: 'medium',     label: 'Medium Job',       minValue: 500,    maxValue: 1999.99, fee: 19.99 },
+  { tier: 'large',      label: 'Large Job',        minValue: 2000,   maxValue: 9999.99, fee: 34.99 },
+  { tier: 'commercial', label: 'Commercial / Major', minValue: 10000, maxValue: null,    fee: 59.99 },
+]
+
+export interface CommissionTierConfig {
+  tier: CommissionTier
+  label: string
+  /** Minimum completed jobs (inclusive) */
+  minJobs: number
+  /** Maximum completed jobs (inclusive). null = no upper bound */
+  maxJobs: number | null
+  /** Commission percentage (0–1) */
+  rate: number
+  /** Next tier for display purposes */
+  nextTier?: CommissionTier
+}
+
+export const COMMISSION_TIERS: CommissionTierConfig[] = [
+  { tier: 'new',         label: 'New Worker',   minJobs: 0,  maxJobs: 5,  rate: 0.10, nextTier: 'established' },
+  { tier: 'established', label: 'Established',  minJobs: 6,  maxJobs: 20, rate: 0.08, nextTier: 'pro'         },
+  { tier: 'pro',         label: 'Pro Worker',   minJobs: 21, maxJobs: 50, rate: 0.06, nextTier: 'elite'       },
+  { tier: 'elite',       label: 'Elite Worker', minJobs: 51, maxJobs: null, rate: 0.05 },
+]
+
+/** An escrow record stored in Firestore */
+export interface EscrowPayment {
+  id: string
+  jobId: string
+  quoteId: string
+  employerId: string
+  workerId: string
+  /** Total amount held in escrow (NZD) */
+  amount: number
+  currency: 'nzd'
+  status: EscrowStatus
+  stripePaymentIntentId?: string
+  /** Platform commission percentage applied on release */
+  commissionRate: number
+  /** Commission amount (NZD) */
+  commissionAmount: number
+  /** Amount worker will receive (NZD) */
+  workerAmount: number
+  /** Stripe Connect transfer ID after release */
+  stripeTransferId?: string
+  /** Reason for dispute */
+  disputeReason?: string
+  createdAt: string
+  updatedAt: string
+  releasedAt?: string
+  disputedAt?: string
+  refundedAt?: string
+}
+
+/** A job posting payment record stored in Firestore */
+export interface JobPostingPayment {
+  id: string
+  jobId: string
+  employerId: string
+  tier: JobPostingFeeTier
+  amount: number
+  currency: 'nzd'
+  status: 'pending' | 'completed' | 'failed'
+  stripeCheckoutSessionId?: string
+  stripePaymentIntentId?: string
+  /** Optional upsells */
+  featuredListing?: boolean
+  urgentBadge?: boolean
+  createdAt: string
+  updatedAt: string
+  completedAt?: string
+}
+
+/** Worker earnings summary for the earnings dashboard */
+export interface WorkerEarningsSummary {
+  workerId: string
+  totalEarned: number
+  pendingEscrow: number
+  commissionTier: CommissionTier
+  commissionRate: number
+  completedJobs: number
+  jobsToNextTier: number | null
+  nextTierRate: number | null
+  currency: 'nzd'
+}
+
+/** A single escrow transaction entry for the worker earnings dashboard */
+export interface EscrowEarningsTransaction {
+  id: string
+  jobId: string
+  jobTitle: string
+  employerName: string
+  grossAmount: number
+  commissionAmount: number
+  commissionRate: number
+  netAmount: number
+  status: EscrowStatus
+  createdAt: string
+  releasedAt?: string
+}
+
 // ─── QuickTrade Escrow & Posting Fee Types ────────────────────────────────────
 
 export type WorkerTier = 'new' | 'established' | 'pro' | 'elite'
@@ -1677,8 +1820,6 @@ export function getPostingFee(estimatedBudgetNZD: number): PostingFeeInfo {
   )
 }
 
-export type EscrowStatus = 'pending_deposit' | 'in_escrow' | 'released' | 'disputed' | 'refunded'
-
 export type JobPaymentType = 'posting_fee' | 'escrow' | 'release'
 
 export interface JobPaymentRecord {
@@ -1714,3 +1855,4 @@ export interface EscrowRecord {
   releasedAt?: string
   autoReleaseAt?: string
 }
+
