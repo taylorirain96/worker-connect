@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
@@ -9,6 +9,9 @@ import toast from 'react-hot-toast'
 import { Wrench, Mail, Lock, Eye, EyeOff } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
+import { useAuth } from '@/components/providers/AuthProvider'
+import { getDashboardPath } from '@/lib/auth/redirects'
+import type { UserProfile } from '@/types'
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email'),
@@ -19,8 +22,16 @@ type LoginFormData = z.infer<typeof loginSchema>
 
 export default function LoginPage() {
   const router = useRouter()
+  const { user, profile, loading } = useAuth()
   const [showPassword, setShowPassword] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
+
+  // Redirect away if already logged in
+  useEffect(() => {
+    if (!loading && user) {
+      router.replace(getDashboardPath(profile))
+    }
+  }, [user, profile, loading, router])
 
   const {
     register,
@@ -33,18 +44,34 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormData) => {
     try {
       const { signInWithEmailAndPassword } = await import('firebase/auth')
-      const { auth } = await import('@/lib/firebase')
+      const { auth, db } = await import('@/lib/firebase')
       if (!auth) {
         toast.error('Authentication service not available. Please configure Firebase.')
         return
       }
-      await signInWithEmailAndPassword(auth, data.email, data.password)
+      const credential = await signInWithEmailAndPassword(auth, data.email, data.password)
       toast.success('Welcome back!')
-      router.push('/dashboard')
+      // Fetch profile to determine role-based redirect
+      let dashboardPath = '/dashboard'
+      if (db) {
+        try {
+          const { doc, getDoc } = await import('firebase/firestore')
+          const docSnap = await getDoc(doc(db, 'users', credential.user.uid))
+          if (docSnap.exists()) {
+            const userProfile = docSnap.data() as UserProfile
+            dashboardPath = getDashboardPath(userProfile)
+          }
+        } catch {
+          // Fall back to generic dashboard if profile fetch fails
+        }
+      }
+      router.push(dashboardPath)
     } catch (error: unknown) {
       const err = error as { code?: string }
       if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
         toast.error('Invalid email or password')
+      } else if (err.code === 'auth/too-many-requests') {
+        toast.error('Too many failed attempts. Please try again later or reset your password.')
       } else {
         toast.error('An error occurred. Please try again.')
       }
@@ -55,15 +82,29 @@ export default function LoginPage() {
     setGoogleLoading(true)
     try {
       const { signInWithPopup, GoogleAuthProvider } = await import('firebase/auth')
-      const { auth } = await import('@/lib/firebase')
+      const { auth, db } = await import('@/lib/firebase')
       if (!auth) {
         toast.error('Authentication service not available. Please configure Firebase.')
         return
       }
       const provider = new GoogleAuthProvider()
-      await signInWithPopup(auth, provider)
+      const result = await signInWithPopup(auth, provider)
       toast.success('Welcome back!')
-      router.push('/dashboard')
+      // Fetch profile to determine role-based redirect
+      let dashboardPath = '/dashboard'
+      if (db) {
+        try {
+          const { doc, getDoc } = await import('firebase/firestore')
+          const docSnap = await getDoc(doc(db, 'users', result.user.uid))
+          if (docSnap.exists()) {
+            const userProfile = docSnap.data() as UserProfile
+            dashboardPath = getDashboardPath(userProfile)
+          }
+        } catch {
+          // Fall back to generic dashboard if profile fetch fails
+        }
+      }
+      router.push(dashboardPath)
     } catch (error: unknown) {
       const err = error as { code?: string }
       console.error('Google sign-in error:', error)

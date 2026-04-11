@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
@@ -10,6 +10,8 @@ import { Wrench, Mail, Lock, User, Eye, EyeOff } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import { Suspense } from 'react'
+import { useAuth } from '@/components/providers/AuthProvider'
+import { getDashboardPath } from '@/lib/auth/redirects'
 
 const registerSchema = z
   .object({
@@ -30,6 +32,14 @@ function RegisterForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const defaultRole = (searchParams.get('role') as 'worker' | 'employer') || 'worker'
+  const { user, profile, loading } = useAuth()
+
+  // Redirect away if already logged in
+  useEffect(() => {
+    if (!loading && user) {
+      router.replace(getDashboardPath(profile))
+    }
+  }, [user, profile, loading, router])
 
   const [showPassword, setShowPassword] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
@@ -47,28 +57,38 @@ function RegisterForm() {
 
   const selectedRole = watch('role')
 
-  const createUserProfile = async (uid: string, email: string | null, displayName: string, role: string) => {
-    const { doc, setDoc } = await import('firebase/firestore')
+  const createUserProfile = async (uid: string, email: string | null, displayName: string, role: 'worker' | 'employer') => {
+    const { doc, setDoc, serverTimestamp } = await import('firebase/firestore')
     const { db } = await import('@/lib/firebase')
     if (!db) {
       console.warn('Firestore not initialized')
       return
     }
-    await setDoc(doc(db, 'users', uid), {
+    const now = serverTimestamp()
+    const baseFields = {
       uid,
       email,
       displayName,
       photoURL: null,
       role,
-      createdAt: new Date().toISOString(),
+      createdAt: now,
+      updatedAt: now,
       profileComplete: false,
-      availability: 'available',
-      skills: [],
-      rating: 0,
-      reviewCount: 0,
-      completedJobs: 0,
       verified: false,
-    })
+    }
+    const workerFields = role === 'worker'
+      ? {
+          availability: 'available' as const,
+          skills: [],
+          bio: '',
+          location: '',
+          rating: 0,
+          reviewCount: 0,
+          completedJobs: 0,
+          weeklyPoints: 0,
+        }
+      : {}
+    await setDoc(doc(db, 'users', uid), { ...baseFields, ...workerFields })
   }
 
   const onSubmit = async (data: RegisterFormData) => {
@@ -83,7 +103,7 @@ function RegisterForm() {
       await updateProfile(userCredential.user, { displayName: data.displayName })
       await createUserProfile(userCredential.user.uid, data.email, data.displayName, data.role)
       toast.success('Account created successfully!')
-      router.push('/dashboard')
+      router.push(data.role === 'employer' ? '/dashboard/employer' : '/dashboard/worker')
     } catch (error: unknown) {
       const err = error as { code?: string }
       if (err.code === 'auth/email-already-in-use') {
@@ -113,7 +133,7 @@ function RegisterForm() {
         selectedRole
       )
       toast.success('Account created successfully!')
-      router.push('/dashboard')
+      router.push(selectedRole === 'employer' ? '/dashboard/employer' : '/dashboard/worker')
     } catch (error: unknown) {
       const err = error as { code?: string }
       console.error('Google sign-up error:', error)
