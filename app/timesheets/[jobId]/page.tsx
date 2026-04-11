@@ -342,7 +342,7 @@ export default function JobTimesheetPage() {
                       <input type="number" min="0" value={timeHours} onChange={(e) => setTimeHours(e.target.value)} placeholder="0" className={inputClass} />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Minutes (0–59)</label>
+                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Minutes (0-59)</label>
                       <input type="number" min="0" max="59" value={timeMinutes} onChange={(e) => setTimeMinutes(e.target.value)} placeholder="0" className={inputClass} />
                     </div>
                   </div>

@@ -47,7 +47,7 @@ export default function TimesheetSharePage() {
     dates.length > 0
       ? dates[0] === dates[dates.length - 1]
         ? new Date(dates[0] + 'T00:00:00').toLocaleDateString()
-        : `${new Date(dates[0] + 'T00:00:00').toLocaleDateString()} – ${new Date(dates[dates.length - 1] + 'T00:00:00').toLocaleDateString()}`
+        : `${new Date(dates[0] + 'T00:00:00').toLocaleDateString()} - ${new Date(dates[dates.length - 1] + 'T00:00:00').toLocaleDateString()}`
       : 'No entries yet'
 
   if (loading) {
