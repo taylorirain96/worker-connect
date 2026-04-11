@@ -33,6 +33,8 @@ export interface UserProfile {
   stripeCustomerId?: string
   stripeAccountId?: string
   companyName?: string
+  workerSubscriptionTier?: string
+  employerSubscriptionTier?: string
 }
 
 export interface Job {

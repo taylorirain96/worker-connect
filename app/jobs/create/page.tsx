@@ -1,4 +1,5 @@
 'use client'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -10,7 +11,9 @@ import Input from '@/components/ui/Input'
 import { useAuth } from '@/components/providers/AuthProvider'
 import toast from 'react-hot-toast'
 import { JOB_CATEGORIES } from '@/lib/utils'
-import { Briefcase } from 'lucide-react'
+import { Briefcase, Sparkles } from 'lucide-react'
+import { hasEmployerAI } from '@/lib/subscriptions'
+import AIUpgradePrompt from '@/components/ui/AIUpgradePrompt'
 
 const jobSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters').max(100),
@@ -30,10 +33,15 @@ export default function CreateJobPage() {
   const { user, profile } = useAuth()
   const router = useRouter()
 
+  const [showAIPanel, setShowAIPanel] = useState(false)
+  const [aiLoading, setAILoading] = useState(false)
+  const [aiInputs, setAIInputs] = useState({ task: '', size: 'half_day', requirements: '' })
+
   const {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<JobFormData>({
     resolver: zodResolver(jobSchema),
@@ -41,6 +49,39 @@ export default function CreateJobPage() {
   })
 
   const budgetType = watch('budgetType')
+
+  const handleAIJobPost = async () => {
+    if (!user || !aiInputs.task.trim()) return
+    setAILoading(true)
+    try {
+      const res = await fetch('/api/ai/write', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'job_post',
+          userId: user.uid,
+          userRole: 'employer',
+          inputs: {
+            task: aiInputs.task,
+            size: aiInputs.size,
+            requirements: aiInputs.requirements,
+          },
+        }),
+      })
+      const data = await res.json() as { text?: string; error?: string }
+      if (!res.ok || !data.text) {
+        toast.error(data.error ?? 'AI generation failed')
+        return
+      }
+      setValue('description', data.text)
+      setShowAIPanel(false)
+      toast.success('Description generated!')
+    } catch {
+      toast.error('Failed to generate description')
+    } finally {
+      setAILoading(false)
+    }
+  }
 
   const onSubmit = async (data: JobFormData) => {
     if (!user || !profile) {
@@ -126,6 +167,78 @@ export default function CreateJobPage() {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Description <span className="text-red-500">*</span>
                 </label>
+
+                {hasEmployerAI(profile) && (
+                  <div className="mb-3">
+                    {!showAIPanel ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowAIPanel(true)}
+                        className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 border border-indigo-200 dark:border-indigo-800 rounded-lg px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/20 transition-colors"
+                      >
+                        <Sparkles className="h-3.5 w-3.5" />
+                        Write with AI
+                      </button>
+                    ) : (
+                      <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700 rounded-xl p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-semibold text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5">
+                            <Sparkles className="h-4 w-4" /> AI Job Post Writer
+                          </p>
+                          <button type="button" onClick={() => setShowAIPanel(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">What needs to be done?</label>
+                          <input
+                            type="text"
+                            value={aiInputs.task}
+                            onChange={(e) => setAIInputs(p => ({ ...p, task: e.target.value }))}
+                            placeholder="e.g. Bathroom tap is dripping and needs replacing"
+                            className="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">How big is the job?</label>
+                          <div className="flex gap-2">
+                            {[
+                              { value: 'quick', label: '⚡ Quick (under 2hrs)' },
+                              { value: 'half_day', label: '🕐 Half day' },
+                              { value: 'full_day', label: '📅 Full day+' },
+                            ].map(opt => (
+                              <button
+                                key={opt.value}
+                                type="button"
+                                onClick={() => setAIInputs(p => ({ ...p, size: opt.value }))}
+                                className={`flex-1 text-xs py-1.5 rounded-lg border transition-colors ${aiInputs.size === opt.value ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-indigo-400'}`}
+                              >
+                                {opt.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Any special requirements? <span className="text-gray-400">(optional)</span></label>
+                          <input
+                            type="text"
+                            value={aiInputs.requirements}
+                            onChange={(e) => setAIInputs(p => ({ ...p, requirements: e.target.value }))}
+                            placeholder="e.g. Must be licensed, need own tools"
+                            className="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          disabled={!aiInputs.task.trim() || aiLoading}
+                          onClick={handleAIJobPost}
+                          className="w-full py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-semibold flex items-center justify-center gap-2 transition-colors"
+                        >
+                          {aiLoading ? <><div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Generating...</> : <><Sparkles className="h-4 w-4" /> Generate Description</>}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <textarea
                   rows={5}
                   placeholder="Describe the job in detail - what needs to be done, any special requirements, tools needed, etc."
@@ -133,6 +246,7 @@ export default function CreateJobPage() {
                   {...register('description')}
                 />
                 {errors.description && <p className="mt-1 text-sm text-red-600">{errors.description.message}</p>}
+                {!hasEmployerAI(profile) && <AIUpgradePrompt role="employer" />}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

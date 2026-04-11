@@ -11,11 +11,14 @@ import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import toast from 'react-hot-toast'
-import { Camera, User, MapPin, DollarSign, Globe, Phone, Building2, X } from 'lucide-react'
+import { Camera, User, MapPin, DollarSign, Globe, Phone, Building2, X, Sparkles } from 'lucide-react'
 import Image from 'next/image'
 import { JOB_CATEGORIES } from '@/lib/utils'
 import { updateUserProfile } from '@/lib/users/updateProfile'
 import { getInitials } from '@/lib/utils'
+import { hasWorkerAI } from '@/lib/subscriptions'
+import AIUpgradePrompt from '@/components/ui/AIUpgradePrompt'
+import CVSection from '@/components/cv/CVSection'
 
 const MAX_AVATAR_SIZE = 5 * 1024 * 1024 // 5 MB
 
@@ -66,6 +69,11 @@ export default function EditProfilePage() {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   const [selectedSkills, setSelectedSkills] = useState<string[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Bio AI state
+  const [showBioAI, setShowBioAI] = useState(false)
+  const [bioAILoading, setBioAILoading] = useState(false)
+  const [bioAIInputs, setBioAIInputs] = useState({ trade: '', years: '', strengths: '', extra: '' })
 
   // Auth guard
   useEffect(() => {
@@ -250,6 +258,36 @@ export default function EditProfilePage() {
     )
   }
 
+  // ── Bio AI handler ────────────────────────────────────────────────────────────
+  const handleBioAI = async () => {
+    if (!user || !bioAIInputs.trade.trim() || !bioAIInputs.strengths.trim()) return
+    setBioAILoading(true)
+    try {
+      const res = await fetch('/api/ai/write', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'worker_bio',
+          userId: user.uid,
+          userRole: 'worker',
+          inputs: bioAIInputs,
+        }),
+      })
+      const data = await res.json() as { text?: string; error?: string }
+      if (!res.ok || !data.text) {
+        toast.error(data.error ?? 'AI generation failed')
+        return
+      }
+      workerForm.setValue('bio', data.text)
+      setShowBioAI(false)
+      toast.success('Bio generated!')
+    } catch {
+      toast.error('Failed to generate bio')
+    } finally {
+      setBioAILoading(false)
+    }
+  }
+
   // ── Loading skeleton ──────────────────────────────────────────────────────────
   if (authLoading) {
     return (
@@ -376,6 +414,79 @@ export default function EditProfilePage() {
                       {...register('bio')}
                     />
                     {errors.bio && <p className="mt-1 text-sm text-red-600">{errors.bio.message}</p>}
+
+                    {hasWorkerAI(profile) && (
+                      <div className="mt-2">
+                        {!showBioAI ? (
+                          <button
+                            type="button"
+                            onClick={() => setShowBioAI(true)}
+                            className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 border border-indigo-200 dark:border-indigo-800 rounded-lg px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/20 transition-colors"
+                          >
+                            <Sparkles className="h-3.5 w-3.5" />
+                            Improve my bio with AI
+                          </button>
+                        ) : (
+                          <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700 rounded-xl p-4 space-y-3">
+                            <div className="flex items-center justify-between">
+                              <p className="text-sm font-semibold text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5">
+                                <Sparkles className="h-4 w-4" /> AI Bio Writer
+                              </p>
+                              <button type="button" onClick={() => setShowBioAI(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">What&apos;s your trade or main skill?</label>
+                              <input
+                                type="text"
+                                value={bioAIInputs.trade}
+                                onChange={(e) => setBioAIInputs(p => ({ ...p, trade: e.target.value }))}
+                                placeholder="e.g. Licensed Plumber, Electrician"
+                                className="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">How many years experience?</label>
+                              <input
+                                type="text"
+                                value={bioAIInputs.years}
+                                onChange={(e) => setBioAIInputs(p => ({ ...p, years: e.target.value }))}
+                                placeholder="e.g. 8"
+                                className="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">What are you best known for or most proud of?</label>
+                              <textarea
+                                rows={2}
+                                value={bioAIInputs.strengths}
+                                onChange={(e) => setBioAIInputs(p => ({ ...p, strengths: e.target.value }))}
+                                placeholder="e.g. Always on time, tidy work, great reviews for bathroom renovations"
+                                className="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Anything else you want to mention? <span className="text-gray-400">(optional)</span></label>
+                              <input
+                                type="text"
+                                value={bioAIInputs.extra}
+                                onChange={(e) => setBioAIInputs(p => ({ ...p, extra: e.target.value }))}
+                                placeholder="e.g. Available weekends, own van and tools"
+                                className="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              disabled={!bioAIInputs.trade.trim() || !bioAIInputs.strengths.trim() || bioAILoading}
+                              onClick={handleBioAI}
+                              className="w-full py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-semibold flex items-center justify-center gap-2 transition-colors"
+                            >
+                              {bioAILoading ? <><div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Generating...</> : <>Write my bio →</>}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {!hasWorkerAI(profile) && <AIUpgradePrompt role="worker" />}
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -480,6 +591,8 @@ export default function EditProfilePage() {
                   </div>
                 </CardContent>
               </Card>
+
+              <CVSection userId={user.uid} profile={profile} hasAI={hasWorkerAI(profile)} />
 
               <div className="flex gap-3">
                 <Button type="button" variant="outline" onClick={() => router.back()} className="flex-1">
