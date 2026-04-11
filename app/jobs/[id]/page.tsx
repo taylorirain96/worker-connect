@@ -11,7 +11,7 @@ import RatingStars from '@/components/reviews/RatingStars'
 import toast from 'react-hot-toast'
 import {
   MapPin, Clock, DollarSign, Users, AlertCircle, ArrowLeft,
-  Calendar, Star, CheckCircle, Send, Camera, ClipboardList, Eye, MessageSquare
+  Calendar, Star, CheckCircle, Send, Camera, ClipboardList, Eye, MessageSquare, Sparkles
 } from 'lucide-react'
 import { formatCurrency, formatRelativeDate, JOB_CATEGORIES, URGENCY_LABELS } from '@/lib/utils'
 import type { Job, JobPhoto } from '@/types'
@@ -20,6 +20,7 @@ import { applyToJob, getApplicationId, withdrawApplication, getJobApplications }
 import { hasReviewed, submitWorkerReview } from '@/lib/reviews/index'
 import { db } from '@/lib/firebase'
 import { getUserProfile } from '@/lib/users/getProfile'
+import { hasWorkerAI } from '@/lib/subscriptions'
 
 const MOCK_JOBS: Record<string, Job & { employerRating?: number; employerJobs?: number }> = {
   '1': {
@@ -95,6 +96,7 @@ export default function JobDetailPage() {
   const [applying, setApplying] = useState(false)
   const [showApplyForm, setShowApplyForm] = useState(false)
   const [coverLetter, setCoverLetter] = useState('')
+  const [coverLetterAILoading, setCoverLetterAILoading] = useState(false)
   const [alreadyApplied, setAlreadyApplied] = useState(false)
   const [withdrawing, setWithdrawing] = useState(false)
   const [appliedAppId, setAppliedAppId] = useState<string | null>(null)
@@ -254,6 +256,40 @@ export default function JobDetailPage() {
     }
   }
 
+  const handleAICoverLetter = async () => {
+    if (!user || !profile || !job) return
+    setCoverLetterAILoading(true)
+    try {
+      const res = await fetch('/api/ai/write', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'cover_letter',
+          userId: user.uid,
+          userRole: 'worker',
+          inputs: {
+            workerName: profile.displayName ?? user.displayName ?? 'Worker',
+            skills: profile.skills?.join(', ') ?? '',
+            experience: profile.bio ?? '',
+            jobTitle: job.title,
+            jobDescription: job.description,
+          },
+        }),
+      })
+      const data = await res.json() as { text?: string }
+      if (data.text) {
+        setCoverLetter(data.text)
+        toast.success('Cover letter generated! Feel free to edit it.')
+      } else {
+        toast.error('Failed to generate cover letter')
+      }
+    } catch {
+      toast.error('AI generation failed')
+    } finally {
+      setCoverLetterAILoading(false)
+    }
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
@@ -368,6 +404,19 @@ export default function JobDetailPage() {
                         placeholder="Introduce yourself, describe your relevant experience, and explain why you're the best fit for this job..."
                         className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                       />
+                      {hasWorkerAI(profile) && (
+                        <button
+                          type="button"
+                          disabled={coverLetterAILoading}
+                          onClick={handleAICoverLetter}
+                          className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 border border-indigo-200 dark:border-indigo-800 rounded-lg px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/20 transition-colors disabled:opacity-50"
+                        >
+                          {coverLetterAILoading
+                            ? <><div className="h-3 w-3 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" /> Generating...</>
+                            : <><Sparkles className="h-3.5 w-3.5" /> Write cover letter with AI</>
+                          }
+                        </button>
+                      )}
                     </div>
                     <div className="flex gap-3">
                       <Button variant="outline" onClick={() => setShowApplyForm(false)} className="flex-1">
