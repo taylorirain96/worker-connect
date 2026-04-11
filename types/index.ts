@@ -1007,11 +1007,18 @@ export interface MatchedJob extends Job {
 
 export interface JobApplication {
   id: string
-  workerId: string
   jobId: string
-  status: 'pending' | 'accepted' | 'rejected' | 'withdrawn'
+  jobTitle?: string
+  employerId?: string
+  employerName?: string
+  workerId: string
+  workerName?: string
+  workerPhotoURL?: string
+  workerRating?: number
   coverLetter?: string
+  status: 'pending' | 'accepted' | 'rejected' | 'withdrawn'
   appliedAt: string
+  updatedAt?: string
   respondedAt?: string
   rejectionReason?: string
 }
