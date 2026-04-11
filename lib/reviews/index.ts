@@ -47,17 +47,23 @@ export async function submitWorkerReview(
 ): Promise<DetailedReview> {
   if (!db) throw new Error('Firestore is not configured')
 
+  const trimmedComment = input.comment?.trim() ?? ''
+
   if (input.rating < 1 || input.rating > 5) {
     throw new Error('Rating must be between 1 and 5.')
   }
-  if (!input.comment || input.comment.trim().length < 10) {
+  if (trimmedComment.length < 10) {
     throw new Error('Comment must be at least 10 characters.')
   }
-  if (input.comment.length > 500) {
+  if (trimmedComment.length > 500) {
     throw new Error('Comment must be 500 characters or fewer.')
   }
 
-  // Write review to Firestore `reviews` collection
+  // Write review to Firestore `reviews` collection.
+  // The underlying DetailedReview requires per-category ratings; since this
+  // simplified Lot-8 form collects a single overall rating, each category
+  // mirrors that value. Employers who want independent category scores can
+  // use the full ReviewForm component (components/reviews/ReviewForm.tsx).
   const review = await createReview({
     jobId: input.jobId,
     jobTitle: input.jobTitle,
@@ -75,7 +81,7 @@ export async function submitWorkerReview(
       timeliness: input.rating,
       professionalism: input.rating,
     },
-    comment: input.comment,
+    comment: trimmedComment,
     photos: [],
     photoStoragePaths: [],
     isAnonymous: false,

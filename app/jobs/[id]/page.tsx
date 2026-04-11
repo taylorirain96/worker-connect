@@ -80,6 +80,14 @@ const MOCK_JOB_PHOTOS: JobPhoto[] = [
   },
 ]
 
+const RATING_LABELS: Record<number, string> = {
+  5: 'Excellent',
+  4: 'Very Good',
+  3: 'Good',
+  2: 'Fair',
+  1: 'Poor',
+}
+
 export default function JobDetailPage() {
   const params = useParams()
   const router = useRouter()
@@ -413,7 +421,7 @@ export default function JobDetailPage() {
                         />
                         {reviewRating > 0 && (
                           <p className="mt-1 text-xs text-gray-500">
-                            {reviewRating === 5 ? 'Excellent' : reviewRating === 4 ? 'Very Good' : reviewRating === 3 ? 'Good' : reviewRating === 2 ? 'Fair' : 'Poor'}
+                            {RATING_LABELS[reviewRating] ?? ''}
                           </p>
                         )}
                       </div>

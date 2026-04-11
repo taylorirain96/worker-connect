@@ -122,7 +122,9 @@ export default function WorkerDashboardPage() {
             ? {
                 ...r,
                 response: {
-                  id: reviewId,
+                  // Use a client-generated temp ID for the optimistic update;
+                  // the real ID lives server-side inside the review document.
+                  id: `${reviewId}_response`,
                   reviewId,
                   authorId: user.uid,
                   authorName: profile.displayName ?? user.displayName ?? 'Worker',
