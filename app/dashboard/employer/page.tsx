@@ -19,7 +19,7 @@ import { db } from '@/lib/firebase'
 import type { Job } from '@/types'
 import { getWeeklyLeaderboard } from '@/lib/leaderboard/firebase'
 import type { LeaderboardEntry } from '@/lib/leaderboard/rankingLogic'
-import { getEmployerApplications } from '@/lib/services/applicationService'
+import { getEmployerApplications } from '@/lib/applications'
 import type { JobApplication } from '@/types'
 
 interface PostedJob {
@@ -295,6 +295,14 @@ export default function EmployerDashboardPage() {
                               >
                                 {status?.label ?? job.status}
                               </Badge>
+                              {job.applicants > 0 && (
+                                <Link href={`/jobs/${job.id}/applicants`} aria-label={`View ${job.applicants} applicant${job.applicants !== 1 ? 's' : ''}`}>
+                                  <Badge variant="warning" className="flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity">
+                                    <Users className="h-3 w-3" />
+                                    {job.applicants}
+                                  </Badge>
+                                </Link>
+                              )}
                               <Link href={`/jobs/${job.id}`}>
                                 <button className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
                                   <Eye className="h-4 w-4" />

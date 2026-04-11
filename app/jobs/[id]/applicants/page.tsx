@@ -11,7 +11,7 @@ import Button from '@/components/ui/Button'
 import toast from 'react-hot-toast'
 import { ArrowLeft, Star, ChevronDown, ChevronUp, Users } from 'lucide-react'
 import { formatRelativeDate } from '@/lib/utils'
-import { getJobApplications, acceptApplication, rejectApplication } from '@/lib/services/applicationService'
+import { getJobApplications, acceptApplication, rejectApplication } from '@/lib/applications'
 import { db } from '@/lib/firebase'
 import { doc, getDoc, Timestamp } from 'firebase/firestore'
 import type { Job, JobApplication } from '@/types'
@@ -108,7 +108,7 @@ export default function ApplicantsPage() {
   const handleAccept = async (app: JobApplication) => {
     setActionInProgress(app.id)
     try {
-      await acceptApplication(app.id, jobId)
+      await acceptApplication(app.id, jobId, app.workerId)
       setApplications((prev) =>
         prev.map((a) => {
           if (a.id === app.id) return { ...a, status: 'accepted' }
