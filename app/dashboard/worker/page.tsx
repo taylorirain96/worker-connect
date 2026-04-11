@@ -18,9 +18,11 @@ import { collection, query, where, orderBy, getDocs, type DocumentData } from 'f
 import { db } from '@/lib/firebase'
 import type { Application, DetailedReview } from '@/types'
 import { getWorkerReviews, respondToReview } from '@/lib/reviews/index'
+import { getWorkerActivePlacement, type Placement } from '@/lib/placements/firebase'
 import toast from 'react-hot-toast'
 
 const MAX_DISPLAYED_REVIEWS = 10
+const MS_PER_DAY = 86_400_000
 
 interface RecentApplication {
   id: string
@@ -52,6 +54,10 @@ export default function WorkerDashboardPage() {
   const [respondingId, setRespondingId] = useState<string | null>(null)
   const [responseText, setResponseText] = useState('')
   const [submittingResponse, setSubmittingResponse] = useState(false)
+  const [placement, setPlacement] = useState<Placement | null>(null)
+  const [placementConfirmed, setPlacementConfirmed] = useState(false)
+  const [placementEnded, setPlacementEnded] = useState(false)
+  const [confirmingPlacement, setConfirmingPlacement] = useState(false)
 
   useEffect(() => {
     if (!loading && !user) {
@@ -101,6 +107,43 @@ export default function WorkerDashboardPage() {
       .catch(() => setReviews([]))
       .finally(() => setLoadingReviews(false))
   }, [user])
+
+  // Fetch active placement for this worker
+  useEffect(() => {
+    if (!user?.uid) return
+    getWorkerActivePlacement(user.uid)
+      .then((p) => setPlacement(p))
+      .catch(() => setPlacement(null))
+  }, [user])
+
+  const confirmEmployment = async (stillEmployed: boolean) => {
+    if (!placement) return
+    setConfirmingPlacement(true)
+    try {
+      const res = await fetch('/api/placements/confirm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          placementId: placement.id,
+          confirmedBy: 'worker',
+          stillEmployed,
+        }),
+      })
+      if (!res.ok) throw new Error('Request failed')
+      if (stillEmployed) {
+        setPlacementConfirmed(true)
+        toast.success('Great! Thanks for confirming. 👍')
+      } else {
+        setPlacementEnded(true)
+        setPlacement(null)
+        toast.success('Got it! Welcome back — let\'s find your next job.')
+      }
+    } catch {
+      toast.error('Something went wrong. Please try again.')
+    } finally {
+      setConfirmingPlacement(false)
+    }
+  }
 
   const handleSubmitResponse = async (reviewId: string) => {
     if (!user || !profile) return
@@ -227,6 +270,52 @@ export default function WorkerDashboardPage() {
               </Link>
             </div>
           </div>
+
+          {/* Active Placement Check-in Card */}
+          {placement && !placementConfirmed && (
+            <div className="bg-indigo-900/40 border border-indigo-500 rounded-xl p-5 mb-6">
+              <div className="flex items-center gap-3 mb-3">
+                <Briefcase className="h-5 w-5 text-indigo-400 flex-shrink-0" />
+                <div>
+                  <h3 className="font-semibold text-white">Still working at {placement.employerName}?</h3>
+                  <p className="text-sm text-indigo-300">
+                    Placed by QuickTrade · {Math.floor((Date.now() - new Date(placement.hiredAt).getTime()) / MS_PER_DAY)} days ago
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => confirmEmployment(true)}
+                  disabled={confirmingPlacement}
+                  className="flex-1 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-semibold transition-colors"
+                >
+                  ✅ Yes, still there
+                </button>
+                <button
+                  onClick={() => confirmEmployment(false)}
+                  disabled={confirmingPlacement}
+                  className="flex-1 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 disabled:opacity-60 text-white text-sm font-semibold transition-colors"
+                >
+                  👋 I&apos;ve moved on
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Re-engagement message shown after worker says they've moved on */}
+          {placementEnded && (
+            <div className="bg-emerald-900/30 border border-emerald-500/50 rounded-xl p-5 mb-6">
+              <h3 className="font-semibold text-white mb-1">Welcome back! Here are jobs matching your skills 👇</h3>
+              <p className="text-sm text-emerald-300 mb-4">Your profile is still live and employers can find you right now.</p>
+              <Link
+                href="/jobs"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold transition-colors"
+              >
+                <Search className="h-4 w-4" />
+                Find My Next Job →
+              </Link>
+            </div>
+          )}
 
           {/* Stats */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

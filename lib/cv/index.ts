@@ -8,17 +8,19 @@ export interface WorkerCV {
   fileUrl: string
   fileSize?: number
   source: 'upload' | 'ai_generated'
-  visibility: 'private' | 'public'
+  visibility: 'private' | 'public'  // public = shown on profile (Pro only)
   createdAt: string
   updatedAt: string
 }
 
 export async function saveCV(workerId: string, cv: Omit<WorkerCV, 'workerId' | 'createdAt' | 'updatedAt'>): Promise<void> {
   if (!db) throw new Error('Firestore not available')
-  await setDoc(doc(db, 'workerCVs', workerId), {
+  const docRef = doc(db, 'workerCVs', workerId)
+  const existing = await getDoc(docRef)
+  await setDoc(docRef, {
     ...cv,
     workerId,
-    createdAt: serverTimestamp(),
+    ...(existing.exists() ? {} : { createdAt: serverTimestamp() }),
     updatedAt: serverTimestamp(),
   }, { merge: true })
 }

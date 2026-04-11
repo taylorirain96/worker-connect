@@ -4,10 +4,10 @@ import type { NextRequest } from 'next/server'
 export const dynamic = 'force-dynamic'
 
 type WriteType =
-  | 'job_post'
-  | 'worker_bio'
-  | 'cover_letter'
-  | 'cv'
+  | 'job_post'         // employer writes a job description
+  | 'worker_bio'       // worker writes their profile bio
+  | 'cover_letter'     // worker writes a cover letter for a specific job
+  | 'cv'               // worker builds a full CV
 
 interface WriteRequest {
   type: WriteType
@@ -85,6 +85,7 @@ export async function POST(request: NextRequest) {
     // TODO: Verify the Firebase ID token from the Authorization header to authenticate
     // the user server-side and enforce subscription tier checks via adminDb before
     // calling OpenAI. For now, subscription gating is enforced on the client.
+
     const apiKey = process.env.OPENAI_API_KEY
     if (!apiKey) {
       return NextResponse.json({ error: 'AI service not configured' }, { status: 503 })
