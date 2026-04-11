@@ -1624,3 +1624,93 @@ export interface EngagementScore {
   }
   period: string
 }
+
+// ─── QuickTrade Escrow & Posting Fee Types ────────────────────────────────────
+
+export type WorkerTier = 'new' | 'established' | 'pro' | 'elite'
+
+export interface WorkerTierInfo {
+  tier: WorkerTier
+  label: string
+  minJobs: number
+  maxJobs: number | null
+  commissionRate: number
+  description: string
+}
+
+export const WORKER_TIERS: WorkerTierInfo[] = [
+  { tier: 'new',         label: 'New Worker',    minJobs: 0,  maxJobs: 5,  commissionRate: 0.10, description: '0–5 jobs completed' },
+  { tier: 'established', label: 'Established',   minJobs: 6,  maxJobs: 20, commissionRate: 0.08, description: '6–20 jobs completed' },
+  { tier: 'pro',         label: 'Pro Worker',    minJobs: 21, maxJobs: 50, commissionRate: 0.06, description: '21–50 jobs completed' },
+  { tier: 'elite',       label: 'Elite Worker',  minJobs: 51, maxJobs: null, commissionRate: 0.05, description: '50+ jobs completed' },
+]
+
+export function getWorkerTier(completedJobs: number): WorkerTierInfo {
+  return (
+    WORKER_TIERS.slice().reverse().find((t) => completedJobs >= t.minJobs) ??
+    WORKER_TIERS[0]
+  )
+}
+
+export type PostingFeeSize = 'small' | 'medium' | 'large' | 'commercial'
+
+export interface PostingFeeInfo {
+  size: PostingFeeSize
+  label: string
+  minBudget: number
+  maxBudget: number | null
+  fee: number
+  description: string
+}
+
+export const POSTING_FEES: PostingFeeInfo[] = [
+  { size: 'small',      label: 'Small Job',         minBudget: 0,     maxBudget: 499,   fee: 9.99,  description: 'Under $500 NZD' },
+  { size: 'medium',     label: 'Medium Job',         minBudget: 500,   maxBudget: 1999,  fee: 19.99, description: '$500–$2,000 NZD' },
+  { size: 'large',      label: 'Large Job',          minBudget: 2000,  maxBudget: 9999,  fee: 34.99, description: '$2,000–$10,000 NZD' },
+  { size: 'commercial', label: 'Commercial / Major', minBudget: 10000, maxBudget: null,  fee: 59.99, description: '$10,000+ NZD' },
+]
+
+export function getPostingFee(estimatedBudgetNZD: number): PostingFeeInfo {
+  return (
+    POSTING_FEES.slice().reverse().find((f) => estimatedBudgetNZD >= f.minBudget) ??
+    POSTING_FEES[0]
+  )
+}
+
+export type EscrowStatus = 'pending_deposit' | 'in_escrow' | 'released' | 'disputed' | 'refunded'
+
+export type JobPaymentType = 'posting_fee' | 'escrow' | 'release'
+
+export interface JobPaymentRecord {
+  id: string
+  jobId: string
+  employerId: string
+  workerId?: string
+  amount: number
+  currency: string
+  stripePaymentIntentId: string
+  status: 'pending' | 'processing' | 'completed' | 'refunded' | 'failed'
+  type: JobPaymentType
+  createdAt: string
+  updatedAt: string
+}
+
+export interface EscrowRecord {
+  id: string
+  jobId: string
+  jobTitle: string
+  workerId: string
+  employerId: string
+  amount: number
+  commission: number
+  commissionRate: number
+  workerReceives: number
+  currency: string
+  status: EscrowStatus
+  stripePaymentIntentId?: string
+  workerTier: WorkerTier
+  createdAt: string
+  updatedAt: string
+  releasedAt?: string
+  autoReleaseAt?: string
+}
