@@ -2,13 +2,13 @@
 import Link from 'next/link'
 import { useTheme } from 'next-themes'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { Sun, Moon, Menu, X, Wrench, ChevronDown, ClipboardList } from 'lucide-react'
+import { Sun, Moon, Menu, X, Wrench, ChevronDown, ClipboardList, MessageSquare } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import { useRouter } from 'next/navigation'
 import { getInitials } from '@/lib/utils'
 import NotificationCenter from '@/components/notifications/NotificationCenter'
-import { subscribeToTotalUnread } from '@/lib/services/messagingService'
+import { onUnreadMessagesCount } from '@/lib/messaging'
 import DualRoleToggle from '@/components/ui/DualRoleToggle'
 import { useRole } from '@/context/RoleContext'
 
@@ -23,7 +23,7 @@ export default function Navbar() {
 
   useEffect(() => {
     if (!user) return
-    const unsub = subscribeToTotalUnread(user.uid, setUnreadMessages)
+    const unsub = onUnreadMessagesCount(user.uid, setUnreadMessages)
     return () => unsub()
   }, [user])
 
@@ -107,6 +107,20 @@ export default function Navbar() {
             {user ? (
               <div className="flex items-center space-x-2">
                 <NotificationCenter />
+
+                {/* Messages icon with unread badge */}
+                <Link
+                  href="/messages"
+                  className="relative p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  aria-label={unreadMessages > 0 ? `Messages — ${unreadMessages} unread` : 'Messages'}
+                >
+                  <MessageSquare className="h-5 w-5" />
+                  {unreadMessages > 0 && (
+                    <span className="absolute top-1 right-1 h-4 w-4 bg-red-500 rounded-full text-white text-[10px] font-bold flex items-center justify-center">
+                      {unreadMessages > 9 ? '9+' : unreadMessages}
+                    </span>
+                  )}
+                </Link>
 
                 <div className="relative">
                   <button

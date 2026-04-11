@@ -9,11 +9,12 @@ import { Card, CardContent } from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import toast from 'react-hot-toast'
-import { ArrowLeft, Star, ChevronDown, ChevronUp, Users } from 'lucide-react'
+import { ArrowLeft, Star, ChevronDown, ChevronUp, Users, MessageSquare, Loader2 } from 'lucide-react'
 import { formatRelativeDate } from '@/lib/utils'
 import { getJobApplications, acceptApplication, rejectApplication } from '@/lib/services/applicationService'
 import { db } from '@/lib/firebase'
 import { doc, getDoc, Timestamp } from 'firebase/firestore'
+import { getOrCreateConversation } from '@/lib/messaging'
 import type { Job, JobApplication } from '@/types'
 
 function getInitials(name?: string | null): string {
@@ -51,12 +52,13 @@ export default function ApplicantsPage() {
   const params = useParams()
   const router = useRouter()
   const jobId = params.id as string
-  const { user, loading } = useAuth()
+  const { user, profile, loading } = useAuth()
 
   const [job, setJob] = useState<Job | null>(null)
   const [applications, setApplications] = useState<JobApplication[]>([])
   const [loadingData, setLoadingData] = useState(true)
   const [actionInProgress, setActionInProgress] = useState<string | null>(null)
+  const [messagingId, setMessagingId] = useState<string | null>(null)
 
   // Redirect if not logged in
   useEffect(() => {
@@ -136,6 +138,28 @@ export default function ApplicantsPage() {
       toast.error(err instanceof Error ? err.message : 'Failed to reject application')
     } finally {
       setActionInProgress(null)
+    }
+  }
+
+  const handleMessage = async (app: JobApplication) => {
+    if (!user || !app.workerId) return
+    setMessagingId(app.id)
+    try {
+      const conversationId = await getOrCreateConversation(
+        user.uid,
+        profile?.displayName || user.displayName || user.email || 'Employer',
+        profile?.photoURL || user.photoURL || null,
+        app.workerId,
+        app.workerName || 'Worker',
+        null,
+        jobId,
+        job?.title
+      )
+      router.push(`/messages/${conversationId}`)
+    } catch {
+      toast.error('Could not start conversation. Please try again.')
+    } finally {
+      setMessagingId(null)
     }
   }
 
@@ -316,7 +340,7 @@ export default function ApplicantsPage() {
                         <CoverLetterCell text={app.coverLetter} />
 
                         {/* Actions */}
-                        <div className="mt-4 flex items-center gap-2">
+                        <div className="mt-4 flex items-center gap-2 flex-wrap">
                           {app.status === 'pending' && !positionFilled && (
                             <>
                               <Button
@@ -340,6 +364,21 @@ export default function ApplicantsPage() {
                           )}
                           {app.status === 'pending' && positionFilled && (
                             <span className="text-xs text-gray-500 italic">Position filled</span>
+                          )}
+                          {app.workerId && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleMessage(app)}
+                              disabled={messagingId === app.id}
+                            >
+                              {messagingId === app.id ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <MessageSquare className="h-3.5 w-3.5" />
+                              )}
+                              Message
+                            </Button>
                           )}
                         </div>
                       </div>

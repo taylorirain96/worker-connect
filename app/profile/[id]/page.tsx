@@ -1,29 +1,35 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import Button from '@/components/ui/Button'
 import Link from 'next/link'
-import { ArrowLeft, Star, CheckCircle, MapPin, Briefcase, MessageSquare, Trophy } from 'lucide-react'
+import { ArrowLeft, Star, CheckCircle, MapPin, Briefcase, MessageSquare, Trophy, Loader2 } from 'lucide-react'
 import { getInitials } from '@/lib/utils'
 import { LEADERBOARD_BADGE_DEFINITIONS } from '@/lib/leaderboard/rankingLogic'
 import { getWeeklyLeaderboard } from '@/lib/leaderboard/firebase'
 import type { LeaderboardEntry } from '@/lib/leaderboard/rankingLogic'
 import ReviewSummary from '@/components/reviews/ReviewSummary'
 import { getUserProfile } from '@/lib/users/getProfile'
+import { useAuth } from '@/components/providers/AuthProvider'
+import { getOrCreateConversation } from '@/lib/messaging'
 import type { UserProfile } from '@/types'
+import toast from 'react-hot-toast'
 
 export default function UserProfilePage() {
   const params = useParams()
+  const router = useRouter()
   const id = Array.isArray(params?.id) ? params.id[0] : (params?.id as string)
+  const { user, profile: currentUserProfile } = useAuth()
 
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [leaderboardEntry, setLeaderboardEntry] = useState<LeaderboardEntry | null>(null)
   const [totalEntries, setTotalEntries] = useState(0)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
+  const [startingChat, setStartingChat] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -45,6 +51,30 @@ export default function UserProfilePage() {
     }
     fetchData()
   }, [id])
+
+  const handleMessage = async () => {
+    if (!user) {
+      router.push('/auth/login')
+      return
+    }
+    if (!profile) return
+    setStartingChat(true)
+    try {
+      const conversationId = await getOrCreateConversation(
+        user.uid,
+        currentUserProfile?.displayName || user.displayName || user.email || 'User',
+        currentUserProfile?.photoURL || user.photoURL || null,
+        profile.uid,
+        profile.displayName || 'Worker',
+        profile.photoURL || null
+      )
+      router.push(`/messages/${conversationId}`)
+    } catch {
+      toast.error('Could not start conversation. Please try again.')
+    } finally {
+      setStartingChat(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -243,12 +273,16 @@ export default function UserProfilePage() {
             </div>
 
             <div className="mt-6 flex gap-3">
-              <Link href="/messages">
-                <Button>
-                  <MessageSquare className="h-4 w-4" />
-                  Send Message
+              {user && user.uid !== id && (
+                <Button onClick={handleMessage} disabled={startingChat}>
+                  {startingChat ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <MessageSquare className="h-4 w-4" />
+                  )}
+                  Message
                 </Button>
-              </Link>
+              )}
             </div>
 
             {/* Review Summary */}

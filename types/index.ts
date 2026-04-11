@@ -128,6 +128,19 @@ export interface Conversation {
   createdAt: string
 }
 
+export interface ChatConversation {
+  id: string
+  participants: Record<string, true>
+  participantNames: Record<string, string>
+  participantAvatars?: Record<string, string | null>
+  lastMessage?: string
+  lastMessageAt?: number
+  jobId?: string
+  jobTitle?: string
+  unreadCount?: Record<string, number>
+  createdAt: number
+}
+
 export interface Review {
   id: string
   jobId: string
