@@ -3,7 +3,7 @@ import Link from 'next/link'
 
 export default function TrustSignalBar() {
   return (
-    <div className="flex items-center gap-4 sm:gap-6 px-4 sm:px-8 py-3.5 bg-slate-900/80 border-b border-slate-800/80 backdrop-blur-sm overflow-x-auto">
+    <div className="flex items-center gap-4 sm:gap-6 px-4 sm:px-8 py-3.5 bg-slate-900/80 border-b border-slate-800/80 backdrop-blur-sm overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       <div className="flex items-center gap-2 flex-shrink-0">
         <Users className="h-4 w-4 text-indigo-400 flex-shrink-0" />
         <span className="text-white font-bold text-sm whitespace-nowrap">12,847+</span>
