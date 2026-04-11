@@ -19,7 +19,7 @@ const MOCK_EMAIL = 'demo@example.com'
 
 // ─── Step definitions ────────────────────────────────────────────────────────
 const STEPS = [
-  { id: 'welcome', title: 'Welcome to Worker Connect', description: 'Let\'s get your profile set up so clients can find you.' },
+  { id: 'welcome', title: 'Welcome to QuickTrade', description: 'Let\'s get your profile set up so clients can find you.' },
   { id: 'stripe', title: 'Connect Payment Account', description: 'Link your Stripe account to receive payments from clients.' },
   { id: 'verification', title: 'ID Verification', description: 'Verify your identity to build trust with clients.' },
   { id: 'profile_info', title: 'Profile Information', description: 'Tell clients about yourself.' },

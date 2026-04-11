@@ -87,6 +87,9 @@ export default function Navbar() {
             <Link href="/how-it-works" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
               How It Works
             </Link>
+            <Link href="/pricing" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
+              Pricing
+            </Link>
           </div>
 
           <div className="flex items-center space-x-2">
@@ -251,6 +254,9 @@ export default function Navbar() {
               </Link>
               <Link href="/how-it-works" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 px-3 py-2 rounded-lg transition-colors" onClick={() => setMenuOpen(false)}>
                 How It Works
+              </Link>
+              <Link href="/pricing" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 px-3 py-2 rounded-lg transition-colors" onClick={() => setMenuOpen(false)}>
+                Pricing
               </Link>
               {!user && (
                 <div className="pt-3 border-t border-gray-200 dark:border-gray-700 space-y-2">
