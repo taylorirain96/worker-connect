@@ -31,6 +31,11 @@ export async function PATCH(request: NextRequest) {
         { activeRole: validRole, updatedAt: FieldValue.serverTimestamp() },
         { merge: true },
       )
+    } else {
+      return NextResponse.json(
+        { error: 'Database unavailable. Configure Firebase Admin environment variables.' },
+        { status: 503 },
+      )
     }
 
     return NextResponse.json({ success: true, activeRole: validRole })

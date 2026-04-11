@@ -30,6 +30,7 @@ export default function DashboardPage() {
     )
   }
 
+  // Redirect is handled by useEffect above; show spinner while it processes
   if (!user || profile?.role === 'admin') {
     return (
       <div className="min-h-screen flex items-center justify-center">

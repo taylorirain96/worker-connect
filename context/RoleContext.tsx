@@ -30,23 +30,32 @@ const RoleContext = createContext<RoleContextValue>({
 
 const STORAGE_KEY = 'activeRole'
 
+function getInitialRole(): ActiveRole {
+  if (typeof window === 'undefined') return 'worker'
+  const stored = localStorage.getItem(STORAGE_KEY) as ActiveRole | null
+  if (stored === 'worker' || stored === 'employer') return stored
+  return 'worker'
+}
+
 export function RoleProvider({ children }: { children: ReactNode }) {
   const { user, profile } = useAuth()
-  const [activeRole, setActiveRoleState] = useState<ActiveRole>('worker')
+  const [activeRole, setActiveRoleState] = useState<ActiveRole>(getInitialRole)
+  const [explicitlySet, setExplicitlySet] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return localStorage.getItem(STORAGE_KEY) !== null
+  })
 
-  // Initialize from localStorage, then fall back to profile role
+  // Only infer from profile if the user has never explicitly toggled
   useEffect(() => {
-    if (typeof window === 'undefined') return
-    const stored = localStorage.getItem(STORAGE_KEY) as ActiveRole | null
-    if (stored === 'worker' || stored === 'employer') {
-      setActiveRoleState(stored)
-    } else if (profile?.role === 'employer') {
+    if (explicitlySet) return
+    if (profile?.role === 'employer') {
       setActiveRoleState('employer')
     }
-  }, [profile])
+  }, [profile, explicitlySet])
 
   const setActiveRole = useCallback(
     (role: ActiveRole) => {
+      setExplicitlySet(true)
       setActiveRoleState(role)
       if (typeof window !== 'undefined') {
         localStorage.setItem(STORAGE_KEY, role)
