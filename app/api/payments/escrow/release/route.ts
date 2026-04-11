@@ -54,35 +54,33 @@ export async function POST(request: NextRequest) {
     const releasedAt = new Date().toISOString()
     let stripeTransferId: string | undefined
 
-    if (!isStripeConfigured() || !escrow.stripePaymentIntentId?.startsWith('pi_mock_')) {
-      // Real Stripe flow
-      if (isStripeConfigured() && escrow.stripePaymentIntentId) {
-        const stripe = getStripe()
+    if (isStripeConfigured() && escrow.stripePaymentIntentId && !escrow.stripePaymentIntentId.startsWith('pi_mock_')) {
+      // Real Stripe flow: capture the held funds then transfer to worker
+      const stripe = getStripe()
 
-        // Capture the held funds
-        await stripe.paymentIntents.capture(escrow.stripePaymentIntentId)
+      // Capture the held funds
+      await stripe.paymentIntents.capture(escrow.stripePaymentIntentId)
 
-        // Attempt worker transfer if they have a Stripe Connect account
-        let workerStripeAccountId: string | undefined
-        if (adminDb) {
-          const workerSnap = await adminDb.collection('users').doc(escrow.workerId).get()
-          workerStripeAccountId = workerSnap.data()?.stripeAccountId as string | undefined
-        }
+      // Attempt worker transfer if they have a Stripe Connect account
+      let workerStripeAccountId: string | undefined
+      if (adminDb) {
+        const workerSnap = await adminDb.collection('users').doc(escrow.workerId).get()
+        workerStripeAccountId = workerSnap.data()?.stripeAccountId as string | undefined
+      }
 
-        if (workerStripeAccountId) {
-          const transfer = await stripe.transfers.create({
-            amount: toCents(escrow.workerAmount),
-            currency: 'nzd',
-            destination: workerStripeAccountId,
-            transfer_group: escrow.jobId,
-            metadata: {
-              escrowId,
-              jobId: escrow.jobId,
-              workerId: escrow.workerId,
-            },
-          })
-          stripeTransferId = transfer.id
-        }
+      if (workerStripeAccountId) {
+        const transfer = await stripe.transfers.create({
+          amount: toCents(escrow.workerAmount),
+          currency: 'nzd',
+          destination: workerStripeAccountId,
+          transfer_group: escrow.jobId,
+          metadata: {
+            escrowId,
+            jobId: escrow.jobId,
+            workerId: escrow.workerId,
+          },
+        })
+        stripeTransferId = transfer.id
       }
     }
 

@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
       mode: 'payment',
       line_items: lineItems,
       success_url: `${baseUrl}/jobs/${jobId}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${baseUrl}/jobs/${jobId}/post?payment=cancelled`,
+      cancel_url: `${baseUrl}/jobs/${jobId}?payment=cancelled`,
       metadata: {
         jobId,
         employerId,

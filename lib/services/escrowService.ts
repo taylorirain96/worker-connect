@@ -292,13 +292,19 @@ export async function getWorkerEarningsSummary(
   }
 }
 
-/** Build the earnings transaction history for a worker. */
+/**
+ * Build the earnings transaction history for a worker.
+ *
+ * NOTE: `jobTitle` and `employerName` are not stored on the escrow record.
+ * Callers that need these fields should enrich each record by fetching the
+ * corresponding job document from Firestore.
+ */
 export async function getWorkerEarningsTransactions(workerId: string): Promise<EarningsTransaction[]> {
   const escrows = await getWorkerEscrows(workerId, 100)
   return escrows.map((e) => ({
     id: e.id,
     jobId: e.jobId,
-    jobTitle: '',   // caller can enrich this from the job document
+    jobTitle: `Job #${e.jobId.slice(-6)}`,
     employerName: '',
     grossAmount: e.amount,
     commissionAmount: e.commissionAmount,

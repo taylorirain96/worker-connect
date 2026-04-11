@@ -168,8 +168,11 @@ export function CommissionTierLadder({ completedJobs, className }: CommissionTie
         <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
           Complete{' '}
           <span className="font-semibold text-indigo-600 dark:text-indigo-400">
-            {(COMMISSION_TIERS.find((t) => t.tier === currentTierConfig.nextTier)?.minJobs ?? 0) - completedJobs}
-            {' '}more job{completedJobs === (COMMISSION_TIERS.find((t) => t.tier === currentTierConfig.nextTier)?.minJobs ?? 0) - 1 ? '' : 's'}
+            {(() => {
+              const nextMinJobs = COMMISSION_TIERS.find((t) => t.tier === currentTierConfig.nextTier)?.minJobs ?? 0
+              const jobsRemaining = nextMinJobs - completedJobs
+              return `${jobsRemaining} more job${jobsRemaining === 1 ? '' : 's'}`
+            })()}
           </span>{' '}
           to unlock a lower commission rate.
         </p>
@@ -197,7 +200,7 @@ export function PostingFeeTiers({ className }: PostingFeeTiersProps) {
             <span className="text-slate-600 dark:text-slate-400">
               {f.label}{' '}
               <span className="text-xs text-slate-400 dark:text-slate-500">
-                ({f.maxValue === null ? `NZ$${f.minValue.toLocaleString()}+` : `NZ$${f.minValue.toLocaleString()}–$${f.maxValue.toLocaleString()}`})
+                ({f.maxValue === null ? `NZ$${f.minValue.toLocaleString()}+` : `NZ$${f.minValue.toLocaleString()}–NZ$${f.maxValue.toLocaleString()}`})
               </span>
             </span>
             <span className="font-medium text-slate-900 dark:text-white">NZ${f.fee.toFixed(2)}</span>
