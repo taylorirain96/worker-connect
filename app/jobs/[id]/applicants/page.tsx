@@ -9,9 +9,10 @@ import { Card, CardContent } from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import toast from 'react-hot-toast'
-import { ArrowLeft, Star, ChevronDown, ChevronUp, Users } from 'lucide-react'
+import { ArrowLeft, Star, ChevronDown, ChevronUp, Users, MessageCircle } from 'lucide-react'
 import { formatRelativeDate } from '@/lib/utils'
 import { getJobApplications, acceptApplication, rejectApplication } from '@/lib/services/applicationService'
+import { getOrCreateConversation } from '@/lib/messaging'
 import { db } from '@/lib/firebase'
 import { doc, getDoc, Timestamp } from 'firebase/firestore'
 import type { Job, JobApplication } from '@/types'
@@ -51,12 +52,13 @@ export default function ApplicantsPage() {
   const params = useParams()
   const router = useRouter()
   const jobId = params.id as string
-  const { user, loading } = useAuth()
+  const { user, loading, profile } = useAuth()
 
   const [job, setJob] = useState<Job | null>(null)
   const [applications, setApplications] = useState<JobApplication[]>([])
   const [loadingData, setLoadingData] = useState(true)
   const [actionInProgress, setActionInProgress] = useState<string | null>(null)
+  const [messagingId, setMessagingId] = useState<string | null>(null)
 
   // Redirect if not logged in
   useEffect(() => {
@@ -136,6 +138,28 @@ export default function ApplicantsPage() {
       toast.error(err instanceof Error ? err.message : 'Failed to reject application')
     } finally {
       setActionInProgress(null)
+    }
+  }
+
+  const handleMessage = async (app: JobApplication) => {
+    if (!user || !job) return
+    setMessagingId(app.id)
+    try {
+      const convId = await getOrCreateConversation(
+        user.uid,
+        user.displayName || profile?.displayName || 'Employer',
+        app.workerId,
+        app.workerName || 'Worker',
+        jobId,
+        job.title,
+        profile?.photoURL || user.photoURL || undefined,
+        app.workerPhotoURL
+      )
+      router.push(`/messages/${convId}`)
+    } catch {
+      toast.error('Could not open conversation. Please try again.')
+    } finally {
+      setMessagingId(null)
     }
   }
 
@@ -340,6 +364,18 @@ export default function ApplicantsPage() {
                           )}
                           {app.status === 'pending' && positionFilled && (
                             <span className="text-xs text-gray-500 italic">Position filled</span>
+                          )}
+                          {app.status === 'accepted' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleMessage(app)}
+                              loading={messagingId === app.id}
+                              disabled={messagingId === app.id}
+                            >
+                              <MessageCircle className="h-4 w-4 mr-1" />
+                              Message Worker
+                            </Button>
                           )}
                         </div>
                       </div>

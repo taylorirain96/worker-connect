@@ -8,9 +8,10 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import Link from 'next/link'
-import { Briefcase, ArrowLeft, Calendar } from 'lucide-react'
+import { Briefcase, ArrowLeft, Calendar, MessageCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { getWorkerApplications, withdrawApplication } from '@/lib/applications'
+import { getOrCreateConversation } from '@/lib/messaging'
 import { STATUS_LABELS } from '@/lib/utils'
 import type { JobApplication } from '@/types'
 
@@ -33,6 +34,7 @@ export default function MyApplicationsPage() {
   const [applications, setApplications] = useState<JobApplication[]>([])
   const [fetching, setFetching] = useState(true)
   const [withdrawingId, setWithdrawingId] = useState<string | null>(null)
+  const [messagingId, setMessagingId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!loading && !user) {
@@ -59,6 +61,27 @@ export default function MyApplicationsPage() {
       toast.error(err instanceof Error ? err.message : 'Failed to withdraw')
     } finally {
       setWithdrawingId(null)
+    }
+  }
+
+  const handleMessageEmployer = async (app: JobApplication) => {
+    if (!user || !app.employerId || !app.jobId || !app.jobTitle) return
+    setMessagingId(app.id)
+    try {
+      const convId = await getOrCreateConversation(
+        user.uid,
+        profile?.displayName || user.displayName || 'Worker',
+        app.employerId,
+        app.employerName || 'Employer',
+        app.jobId,
+        app.jobTitle,
+        profile?.photoURL || user.photoURL || undefined
+      )
+      router.push(`/messages/${convId}`)
+    } catch {
+      toast.error('Could not open conversation. Please try again.')
+    } finally {
+      setMessagingId(null)
     }
   }
 
@@ -142,6 +165,18 @@ export default function MyApplicationsPage() {
                             onClick={() => handleWithdraw(app.id)}
                           >
                             Withdraw
+                          </Button>
+                        )}
+                        {app.status === 'accepted' && app.employerId && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            loading={messagingId === app.id}
+                            disabled={messagingId === app.id}
+                            onClick={() => handleMessageEmployer(app)}
+                          >
+                            <MessageCircle className="h-4 w-4 mr-1" />
+                            Message Employer
                           </Button>
                         )}
                       </div>
