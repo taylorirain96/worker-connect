@@ -1,7 +1,5 @@
 import OpenAI from 'openai'
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-
 const CATEGORIES = [
   'Plumbing',
   'Electrical',
@@ -22,6 +20,7 @@ const CATEGORIES = [
 
 export async function categoriseJob(title: string, description: string): Promise<string> {
   try {
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [

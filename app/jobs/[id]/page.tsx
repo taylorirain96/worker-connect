@@ -21,6 +21,7 @@ import { hasReviewed, submitWorkerReview } from '@/lib/reviews/index'
 import { db } from '@/lib/firebase'
 import { getUserProfile } from '@/lib/users/getProfile'
 import { hasWorkerAI } from '@/lib/subscriptions'
+import AIWorkerMatches from '@/components/ai/AIWorkerMatches'
 
 const MOCK_JOBS: Record<string, Job & { employerRating?: number; employerJobs?: number }> = {
   '1': {
@@ -361,6 +362,18 @@ export default function JobDetailPage() {
                   ))}
                 </div>
               </div>
+
+              {/* AI Suggested Workers — only visible to the job's employer */}
+              {isEmployer && profile?.role === 'employer' && (
+                <AIWorkerMatches
+                  jobId={job.id}
+                  jobTitle={job.title}
+                  jobDescription={job.description}
+                  jobCategory={job.category}
+                  jobLocation={job.location}
+                  userRole="employer"
+                />
+              )}
 
               {/* Photo Gallery — shown when job is completed */}
               {job.status === 'completed' && (
