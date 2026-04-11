@@ -330,21 +330,21 @@ export default function PricingPage() {
                 <div className="flex flex-wrap justify-between items-center py-4">
                   <div>
                     <span className="text-emerald-400 font-medium">Worker earns</span>
-                    <p className="text-slate-500 text-xs mt-0.5">After 7.5% commission on earnings</p>
+                    <p className="text-slate-500 text-xs mt-0.5">After 8% commission on earnings (Established tier)</p>
                   </div>
-                  <span className="text-emerald-400 font-bold text-xl">$1,850 NZD</span>
+                  <span className="text-emerald-400 font-bold text-xl">$1,840 NZD</span>
                 </div>
                 <div className="flex flex-wrap justify-between items-center py-4">
                   <div>
                     <span className="text-indigo-400 font-medium">QuickTrade earns</span>
                     <p className="text-slate-500 text-xs mt-0.5">Platform commission</p>
                   </div>
-                  <span className="text-indigo-400 font-semibold">$150</span>
+                  <span className="text-indigo-400 font-semibold">$160</span>
                 </div>
               </div>
 
               <div className="mt-6 rounded-xl bg-indigo-500/10 border border-indigo-500/20 p-4">
-                <p className="text-indigo-200 text-sm font-medium mb-2">You get for that $150:</p>
+                <p className="text-indigo-200 text-sm font-medium mb-2">You get for that $160:</p>
                 <div className="flex flex-wrap gap-2">
                   {['Legal contract', 'Escrow protection', 'QuickTrade Guarantee', 'Verified review'].map(
                     (item) => (
