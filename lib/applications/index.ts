@@ -65,7 +65,7 @@ export async function applyToJob(
     workerName: worker.displayName,
     workerPhotoURL: worker.photoURL ?? null,
     workerRating: worker.rating ?? null,
-    coverLetter: coverLetter ?? '',
+    coverLetter: coverLetter ?? null,
     status: 'pending',
     appliedAt: now,
     updatedAt: now,
@@ -135,5 +135,25 @@ export async function hasApplied(jobId: string, workerId: string): Promise<boole
     return !snapshot.empty
   } catch {
     return false
+  }
+}
+
+/**
+ * Get the application ID for a worker's application to a specific job, or null if not applied.
+ */
+export async function getApplicationId(jobId: string, workerId: string): Promise<string | null> {
+  if (!db) return null
+
+  try {
+    const q = query(
+      collection(db, 'applications'),
+      where('jobId', '==', jobId),
+      where('workerId', '==', workerId)
+    )
+    const snapshot = await getDocs(q)
+    if (snapshot.empty) return null
+    return snapshot.docs[0].id
+  } catch {
+    return null
   }
 }

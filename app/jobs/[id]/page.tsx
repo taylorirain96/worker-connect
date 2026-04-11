@@ -15,7 +15,7 @@ import {
 import { formatCurrency, formatRelativeDate, JOB_CATEGORIES, URGENCY_LABELS } from '@/lib/utils'
 import type { Job, JobPhoto } from '@/types'
 import Link from 'next/link'
-import { applyToJob, hasApplied, withdrawApplication } from '@/lib/applications'
+import { applyToJob, getApplicationId, withdrawApplication } from '@/lib/applications'
 import { db } from '@/lib/firebase'
 
 const MOCK_JOBS: Record<string, Job & { employerRating?: number; employerJobs?: number }> = {
@@ -96,8 +96,11 @@ export default function JobDetailPage() {
   // Check if the worker has already applied
   useEffect(() => {
     if (!user?.uid || profile?.role !== 'worker' || !db) return
-    hasApplied(params.id as string, user.uid).then((applied) => {
-      setAlreadyApplied(applied)
+    getApplicationId(params.id as string, user.uid).then((appId) => {
+      if (appId) {
+        setAlreadyApplied(true)
+        setAppliedAppId(appId)
+      }
     })
   }, [user, profile, params.id])
 
