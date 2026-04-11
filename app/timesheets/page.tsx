@@ -16,7 +16,7 @@ interface TimesheetSummary {
 }
 
 export default function TimesheetsPage() {
-  const { user, profile } = useAuth()
+  const { user, profile, loading: authLoading } = useAuth()
   const [summaries, setSummaries] = useState<TimesheetSummary[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -48,12 +48,48 @@ export default function TimesheetsPage() {
     load()
   }, [user])
 
+  // Still loading auth/profile
+  if (authLoading) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="animate-pulse flex flex-col items-center gap-3">
+            <div className="h-8 w-48 bg-gray-200 dark:bg-gray-700 rounded" />
+            <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded" />
+          </div>
+        </main>
+        <Footer />
+      </div>
+    )
+  }
+
+  // Not logged in
+  if (!user) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-gray-500 dark:text-gray-400 mb-4">Please sign in to view timesheets.</p>
+            <Link href="/auth/login" className="text-fuchsia-600 hover:text-fuchsia-700 font-medium">Sign in</Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    )
+  }
+
+  // Wrong role
   if (profile?.role !== 'worker') {
     return (
       <div className="flex flex-col min-h-screen">
         <Navbar />
         <main className="flex-1 flex items-center justify-center">
-          <p className="text-gray-500 dark:text-gray-400">Timesheets are only available for workers.</p>
+          <div className="text-center">
+            <p className="text-gray-500 dark:text-gray-400 mb-4">Timesheets are only available for workers.</p>
+            <Link href="/dashboard/employer" className="text-fuchsia-600 hover:text-fuchsia-700 font-medium">Go to your dashboard</Link>
+          </div>
         </main>
         <Footer />
       </div>
