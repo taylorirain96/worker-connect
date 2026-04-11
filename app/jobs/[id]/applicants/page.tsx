@@ -117,8 +117,8 @@ export default function ApplicantsPage() {
         })
       )
       toast.success('Worker accepted! Job is now in progress')
-    } catch {
-      toast.error('Failed to accept application')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to accept application')
     } finally {
       setActionInProgress(null)
     }
@@ -132,8 +132,8 @@ export default function ApplicantsPage() {
         prev.map((a) => (a.id === app.id ? { ...a, status: 'rejected' } : a))
       )
       toast.success('Application rejected')
-    } catch {
-      toast.error('Failed to reject application')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to reject application')
     } finally {
       setActionInProgress(null)
     }

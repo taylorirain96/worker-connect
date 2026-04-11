@@ -119,7 +119,7 @@ export default function EmployerDashboardPage() {
     }
     async function fetchApplications() {
       try {
-        const apps = await getEmployerApplications(user!.uid)
+        const apps = await getEmployerApplications(user.uid)
         setPendingApplications(apps.filter((a) => a.status === 'pending'))
       } catch {
         setPendingApplications([])
