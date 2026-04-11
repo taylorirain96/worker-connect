@@ -174,14 +174,14 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
             <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800">
-              <h3 className="text-xl font-bold text-white mb-3">Hire in Marlborough &amp; Blenheim</h3>
+              <h3 className="text-xl font-bold text-white mb-3">Hire in Marlborough & Blenheim</h3>
               <p className="text-gray-400 leading-relaxed">
                 Find electricians, plumbers, builders and general labourers across the Marlborough region.
                 All workers are verified and reviewed by real employers. Post a job and get applicants the same day.
               </p>
             </div>
             <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800">
-              <h3 className="text-xl font-bold text-white mb-3">Trade Work in Nelson &amp; Tasman</h3>
+              <h3 className="text-xl font-bold text-white mb-3">Trade Work in Nelson & Tasman</h3>
               <p className="text-gray-400 leading-relaxed">
                 Browse trade job listings across Nelson City and Tasman District. From residential renovations
                 to commercial construction — QuickTrade matches you with the right opportunities.
