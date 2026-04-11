@@ -92,9 +92,9 @@ export default function LeaderboardPage() {
           </div>
 
           {/* Reward info banner */}
-          <div className="mb-6 p-4 bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl flex items-start gap-3">
-            <Info className="h-5 w-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-yellow-800 dark:text-yellow-300 space-y-0.5">
+          <div className="mb-6 p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl flex items-start gap-3">
+            <Info className="h-5 w-5 text-indigo-500 dark:text-indigo-400 flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-slate-700 dark:text-slate-300 space-y-0.5">
               <p className="font-semibold">Weekly Rewards — Top 3 each Sunday</p>
               <p>
                 {RANK_BONUSES[1].label} +{RANK_BONUSES[1].bonusPoints} pts &nbsp;·&nbsp;
