@@ -11,7 +11,7 @@ import Link from 'next/link'
 import {
   Briefcase, DollarSign, Users,
   Plus, Clock, CheckCircle, Eye, Building2, Shield, Award, Trophy, Star,
-  Camera, Filter,
+  Camera, Filter, Settings,
 } from 'lucide-react'
 import { formatCurrency, formatRelativeDate, STATUS_LABELS } from '@/lib/utils'
 import { collection, query, where, orderBy, getDocs, type DocumentData } from 'firebase/firestore'
@@ -170,6 +170,12 @@ export default function EmployerDashboardPage() {
               <Button className="flex items-center gap-2">
                 <Plus className="h-4 w-4" />
                 Post a Job
+              </Button>
+            </Link>
+            <Link href="/settings/profile">
+              <Button variant="outline" className="flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                Edit Profile
               </Button>
             </Link>
           </div>
@@ -412,6 +418,12 @@ export default function EmployerDashboardPage() {
                       <Button variant="primary" size="sm" className="w-full justify-start">
                         <Plus className="h-4 w-4" />
                         Post New Job
+                      </Button>
+                    </Link>
+                    <Link href="/settings/profile">
+                      <Button variant="outline" size="sm" className="w-full justify-start">
+                        <Settings className="h-4 w-4" />
+                        Edit Profile
                       </Button>
                     </Link>
                     <Link href="/workers">

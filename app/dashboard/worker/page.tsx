@@ -10,7 +10,7 @@ import Button from '@/components/ui/Button'
 import Link from 'next/link'
 import {
   Briefcase, DollarSign, Star, Clock, TrendingUp,
-  CheckCircle, AlertCircle, Search
+  CheckCircle, AlertCircle, Search, Settings
 } from 'lucide-react'
 import { formatCurrency, STATUS_LABELS, formatRelativeDate } from '@/lib/utils'
 import { collection, query, where, orderBy, getDocs, type DocumentData } from 'firebase/firestore'
@@ -131,6 +131,12 @@ export default function WorkerDashboardPage() {
               </p>
             </div>
             <div className="flex items-center gap-2">
+              <Link href="/settings/profile">
+                <Button variant="outline" className="flex items-center gap-2">
+                  <Settings className="h-4 w-4" />
+                  Edit Profile
+                </Button>
+              </Link>
               <Link href="/analytics">
                 <Button variant="outline" className="flex items-center gap-2">
                   <TrendingUp className="h-4 w-4" />
@@ -234,7 +240,7 @@ export default function WorkerDashboardPage() {
                       </div>
                     ))}
                   </div>
-                  <Link href="/profile">
+                  <Link href="/settings/profile">
                     <Button variant="outline" size="sm" className="w-full mt-4">Complete Profile</Button>
                   </Link>
                 </CardContent>
