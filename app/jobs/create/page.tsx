@@ -8,12 +8,12 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
-import AIUpgradePrompt from '@/components/ui/AIUpgradePrompt'
 import { useAuth } from '@/components/providers/AuthProvider'
 import toast from 'react-hot-toast'
 import { JOB_CATEGORIES } from '@/lib/utils'
 import { Briefcase, Sparkles } from 'lucide-react'
 import { hasEmployerAI } from '@/lib/subscriptions'
+import AIUpgradePrompt from '@/components/ui/AIUpgradePrompt'
 
 const jobSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters').max(100),
@@ -49,12 +49,12 @@ export default function CreateJobPage() {
   })
 
   const budgetType = watch('budgetType')
+  const selectedCategory = watch('category')
 
   const handleAIJobPost = async () => {
     if (!user || !aiInputs.task.trim()) return
     setAILoading(true)
     try {
-      const categoryValue = watch('category')
       const res = await fetch('/api/ai/write', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -62,19 +62,24 @@ export default function CreateJobPage() {
           type: 'job_post',
           userId: user.uid,
           userRole: 'employer',
-          inputs: { ...aiInputs, category: categoryValue },
+          inputs: {
+            task: aiInputs.task,
+            size: aiInputs.size,
+            requirements: aiInputs.requirements,
+            category: selectedCategory || '',
+          },
         }),
       })
-      const data = await res.json() as { text?: string }
-      if (data.text) {
-        setValue('description', data.text)
-        setShowAIPanel(false)
-        toast.success('AI description generated! Feel free to edit it.')
-      } else {
-        toast.error('Failed to generate description')
+      const data = await res.json() as { text?: string; error?: string }
+      if (!res.ok || !data.text) {
+        toast.error(data.error ?? 'AI generation failed')
+        return
       }
+      setValue('description', data.text)
+      setShowAIPanel(false)
+      toast.success('Description generated!')
     } catch {
-      toast.error('AI generation failed')
+      toast.error('Failed to generate description')
     } finally {
       setAILoading(false)
     }
@@ -164,6 +169,7 @@ export default function CreateJobPage() {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Description <span className="text-red-500">*</span>
                 </label>
+
                 {hasEmployerAI(profile) && (
                   <div className="mb-3">
                     {!showAIPanel ? (
@@ -234,6 +240,7 @@ export default function CreateJobPage() {
                     )}
                   </div>
                 )}
+
                 <textarea
                   rows={5}
                   placeholder="Describe the job in detail - what needs to be done, any special requirements, tools needed, etc."

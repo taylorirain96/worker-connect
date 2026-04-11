@@ -82,6 +82,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
+    // TODO: Verify the Firebase ID token from the Authorization header to authenticate
+    // the user server-side and enforce subscription tier checks via adminDb before
+    // calling OpenAI. For now, subscription gating is enforced on the client.
+
     const apiKey = process.env.OPENAI_API_KEY
     if (!apiKey) {
       return NextResponse.json({ error: 'AI service not configured' }, { status: 503 })

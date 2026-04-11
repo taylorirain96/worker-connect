@@ -1,6 +1,7 @@
 # QuickTrade
 
 This is the initial README file for the QuickTrade repository.
+
 ## Environment Variables
 
 Copy `.env.local.example` to `.env.local` and fill in your values.

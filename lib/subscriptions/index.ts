@@ -10,7 +10,7 @@ export type EmployerTier = 'free' | 'pro' | 'business' | 'enterprise'
 
 export function getWorkerTier(profile: UserProfile | null | undefined): WorkerTier {
   if (!profile) return 'free'
-  const tier = (profile as Record<string, unknown>).workerSubscriptionTier as string | undefined
+  const tier = profile.workerSubscriptionTier
   if (tier === 'elite') return 'elite'
   if (tier === 'pro') return 'pro'
   return 'free'
@@ -18,7 +18,7 @@ export function getWorkerTier(profile: UserProfile | null | undefined): WorkerTi
 
 export function getEmployerTier(profile: UserProfile | null | undefined): EmployerTier {
   if (!profile) return 'free'
-  const tier = (profile as Record<string, unknown>).employerSubscriptionTier as string | undefined
+  const tier = profile.employerSubscriptionTier
   if (tier === 'enterprise') return 'enterprise'
   if (tier === 'business') return 'business'
   if (tier === 'pro') return 'pro'

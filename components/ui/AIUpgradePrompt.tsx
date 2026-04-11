@@ -3,23 +3,22 @@ import { useState, useEffect } from 'react'
 import { Sparkles, X } from 'lucide-react'
 import Link from 'next/link'
 
-const SESSION_KEY = 'qt_ai_upgrade_dismissed'
-
 interface AIUpgradePromptProps {
   role: 'worker' | 'employer'
 }
 
 export default function AIUpgradePrompt({ role }: AIUpgradePromptProps) {
+  const key = `ai_prompt_dismissed_${role}`
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && !sessionStorage.getItem(SESSION_KEY)) {
+    if (typeof window !== 'undefined' && !sessionStorage.getItem(key)) {
       setVisible(true)
     }
-  }, [])
+  }, [key])
 
   const handleDismiss = () => {
-    sessionStorage.setItem(SESSION_KEY, '1')
+    sessionStorage.setItem(key, '1')
     setVisible(false)
   }
 
@@ -27,7 +26,7 @@ export default function AIUpgradePrompt({ role }: AIUpgradePromptProps) {
 
   const message =
     role === 'worker'
-      ? '✨ Pro members can write their bio and cover letters with AI — from $19/mo'
+      ? '✨ Pro members can write their bio, CV and cover letters with AI — from $19/mo'
       : '✨ Pro members can write job posts with AI — from $49/mo'
 
   return (

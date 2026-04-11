@@ -17,8 +17,8 @@ import { JOB_CATEGORIES } from '@/lib/utils'
 import { updateUserProfile } from '@/lib/users/updateProfile'
 import { getInitials } from '@/lib/utils'
 import { hasWorkerAI } from '@/lib/subscriptions'
-import CVSection from '@/components/cv/CVSection'
 import AIUpgradePrompt from '@/components/ui/AIUpgradePrompt'
+import CVSection from '@/components/cv/CVSection'
 
 const MAX_AVATAR_SIZE = 5 * 1024 * 1024 // 5 MB
 
@@ -70,6 +70,7 @@ export default function EditProfilePage() {
   const [selectedSkills, setSelectedSkills] = useState<string[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // Bio AI state
   const [showBioAI, setShowBioAI] = useState(false)
   const [bioAILoading, setBioAILoading] = useState(false)
   const [bioAIInputs, setBioAIInputs] = useState({ trade: '', years: '', strengths: '', extra: '' })
@@ -257,8 +258,9 @@ export default function EditProfilePage() {
     )
   }
 
-  const handleAIBio = async () => {
-    if (!user || !bioAIInputs.trade.trim()) return
+  // ── Bio AI handler ────────────────────────────────────────────────────────────
+  const handleBioAI = async () => {
+    if (!user || !bioAIInputs.trade.trim() || !bioAIInputs.strengths.trim()) return
     setBioAILoading(true)
     try {
       const res = await fetch('/api/ai/write', {
@@ -271,16 +273,16 @@ export default function EditProfilePage() {
           inputs: bioAIInputs,
         }),
       })
-      const data = await res.json() as { text?: string }
-      if (data.text) {
-        workerForm.setValue('bio', data.text)
-        setShowBioAI(false)
-        toast.success('Bio generated! Feel free to edit it.')
-      } else {
-        toast.error('Failed to generate bio')
+      const data = await res.json() as { text?: string; error?: string }
+      if (!res.ok || !data.text) {
+        toast.error(data.error ?? 'AI generation failed')
+        return
       }
+      workerForm.setValue('bio', data.text)
+      setShowBioAI(false)
+      toast.success('Bio generated!')
     } catch {
-      toast.error('AI generation failed')
+      toast.error('Failed to generate bio')
     } finally {
       setBioAILoading(false)
     }
@@ -412,6 +414,7 @@ export default function EditProfilePage() {
                       {...register('bio')}
                     />
                     {errors.bio && <p className="mt-1 text-sm text-red-600">{errors.bio.message}</p>}
+
                     {hasWorkerAI(profile) && (
                       <div className="mt-2">
                         {!showBioAI ? (
@@ -432,7 +435,7 @@ export default function EditProfilePage() {
                               <button type="button" onClick={() => setShowBioAI(false)} aria-label="Close AI Bio Writer" className="text-gray-400 hover:text-gray-600">✕</button>
                             </div>
                             <div>
-                              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">What&apos;s your trade / skill?</label>
+                              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">What&apos;s your trade or main skill?</label>
                               <input
                                 type="text"
                                 value={bioAIInputs.trade}
@@ -442,7 +445,7 @@ export default function EditProfilePage() {
                               />
                             </div>
                             <div>
-                              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Years of experience</label>
+                              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">How many years experience?</label>
                               <input
                                 type="text"
                                 value={bioAIInputs.years}
@@ -452,40 +455,38 @@ export default function EditProfilePage() {
                               />
                             </div>
                             <div>
-                              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">What are you known for / best at?</label>
-                              <input
-                                type="text"
+                              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">What are you best known for or most proud of?</label>
+                              <textarea
+                                rows={2}
                                 value={bioAIInputs.strengths}
                                 onChange={(e) => setBioAIInputs(p => ({ ...p, strengths: e.target.value }))}
-                                placeholder="e.g. Fast leak repairs, tidy work, always on time"
+                                placeholder="e.g. Always on time, tidy work, great reviews for bathroom renovations"
                                 className="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                               />
                             </div>
                             <div>
-                              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Anything else? <span className="text-gray-400">(optional)</span></label>
+                              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Anything else you want to mention? <span className="text-gray-400">(optional)</span></label>
                               <input
                                 type="text"
                                 value={bioAIInputs.extra}
                                 onChange={(e) => setBioAIInputs(p => ({ ...p, extra: e.target.value }))}
-                                placeholder="e.g. Based in Auckland, available weekends"
+                                placeholder="e.g. Available weekends, own van and tools"
                                 className="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                               />
                             </div>
                             <button
                               type="button"
-                              disabled={!bioAIInputs.trade.trim() || bioAILoading}
-                              onClick={handleAIBio}
+                              disabled={!bioAIInputs.trade.trim() || !bioAIInputs.strengths.trim() || bioAILoading}
+                              onClick={handleBioAI}
                               className="w-full py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-semibold flex items-center justify-center gap-2 transition-colors"
                             >
-                              {bioAILoading ? <><div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Generating...</> : <><Sparkles className="h-4 w-4" /> Generate Bio</>}
+                              {bioAILoading ? <><div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Generating...</> : <>Write my bio →</>}
                             </button>
                           </div>
                         )}
                       </div>
                     )}
-                    {!hasWorkerAI(profile) && (
-                      <AIUpgradePrompt role="worker" />
-                    )}
+                    {!hasWorkerAI(profile) && <AIUpgradePrompt role="worker" />}
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

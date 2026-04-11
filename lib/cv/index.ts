@@ -6,7 +6,7 @@ export interface WorkerCV {
   workerId: string
   fileName: string
   fileUrl: string
-  fileSize: number
+  fileSize?: number
   source: 'upload' | 'ai_generated'
   visibility: 'private' | 'public'  // public = shown on profile (Pro only)
   createdAt: string

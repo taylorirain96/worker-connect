@@ -257,7 +257,7 @@ export default function JobDetailPage() {
   }
 
   const handleAICoverLetter = async () => {
-    if (!user || !profile || !job) return
+    if (!user || !job) return
     setCoverLetterAILoading(true)
     try {
       const res = await fetch('/api/ai/write', {
@@ -268,23 +268,23 @@ export default function JobDetailPage() {
           userId: user.uid,
           userRole: 'worker',
           inputs: {
-            workerName: profile.displayName ?? user.displayName ?? 'Worker',
-            skills: profile.skills?.join(', ') ?? '',
-            experience: profile.bio ?? '',
+            workerName: profile?.displayName ?? user.displayName ?? 'Worker',
+            skills: profile?.skills?.join(', ') ?? '',
+            experience: profile?.bio ?? '',
             jobTitle: job.title,
             jobDescription: job.description,
           },
         }),
       })
-      const data = await res.json() as { text?: string }
-      if (data.text) {
-        setCoverLetter(data.text)
-        toast.success('Cover letter generated! Feel free to edit it.')
-      } else {
-        toast.error('Failed to generate cover letter')
+      const data = await res.json() as { text?: string; error?: string }
+      if (!res.ok || !data.text) {
+        toast.error(data.error ?? 'AI generation failed')
+        return
       }
+      setCoverLetter(data.text)
+      toast.success('Cover letter generated!')
     } catch {
-      toast.error('AI generation failed')
+      toast.error('Failed to generate cover letter')
     } finally {
       setCoverLetterAILoading(false)
     }
@@ -404,7 +404,7 @@ export default function JobDetailPage() {
                         placeholder="Introduce yourself, describe your relevant experience, and explain why you're the best fit for this job..."
                         className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                       />
-                      {hasWorkerAI(profile) && (
+                      {profile?.role === 'worker' && hasWorkerAI(profile) && (
                         <button
                           type="button"
                           disabled={coverLetterAILoading}
