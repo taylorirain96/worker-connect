@@ -24,7 +24,7 @@ import { getYearlyEarnings } from './taxService'
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
 const FORMS_COL = 'taxForms1099'
-const BUSINESS_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? 'worker-connect'
+const BUSINESS_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? 'QuickTrade'
 const BUSINESS_EIN = process.env.BUSINESS_EIN ?? ''
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -158,7 +158,7 @@ export async function send1099ToWorker(form1099Id: string): Promise<void> {
   // Example with SendGrid:
   // await sgMail.send({
   //   to: form.workerEmail,
-  //   from: 'noreply@worker-connect.com',
+  //   from: 'noreply@quicktrade.com',
   //   subject: `Your ${form.year} 1099-NEC Tax Form (${BUSINESS_NAME})`,
   //   text: buildEmailBody(form),
   //   attachments: [{ content: pdfBase64, filename: `1099-NEC-${form.year}.pdf`, type: 'application/pdf' }],

@@ -76,7 +76,7 @@ export default function EarningsStatement({ workerId, year }: EarningsStatementP
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h2 className="text-xl font-bold text-gray-900 dark:text-white">Earnings Statement</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Your complete earnings history on worker-connect</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Your complete earnings history on QuickTrade</p>
         </div>
         <div className="flex items-center gap-3">
           <select
@@ -233,7 +233,7 @@ export default function EarningsStatement({ workerId, year }: EarningsStatementP
             <p className="text-xs text-yellow-800 dark:text-yellow-300">
               <strong>Tax Disclaimer:</strong> These earnings statements are provided for informational purposes only.
               You are solely responsible for filing your own taxes, paying self-employment tax, and consulting with a
-              qualified CPA. worker-connect does not provide tax advice.
+              qualified CPA. QuickTrade does not provide tax advice.
             </p>
           </div>
         </>
