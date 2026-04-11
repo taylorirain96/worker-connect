@@ -5,8 +5,9 @@ import { TrendingUp, TrendingDown, Minus, Star, Briefcase } from 'lucide-react'
 import type { LeaderboardEntry } from '@/lib/leaderboard/rankingLogic'
 import { RANK_BONUSES } from '@/lib/leaderboard/rankingLogic'
 import { LEADERBOARD_BADGE_DEFINITIONS } from '@/lib/leaderboard/rankingLogic'
-import { JOB_CATEGORIES } from '@/lib/utils'
+import { JOB_CATEGORIES, CATEGORY_ICONS } from '@/lib/utils'
 import { getInitials } from '@/lib/utils'
+import type { CategoryId } from '@/lib/utils'
 import Badge from '@/components/ui/Badge'
 
 interface LeaderboardCardProps {
@@ -37,8 +38,8 @@ export default function LeaderboardCard({ entry, isCurrentUser = false }: Leader
           isCurrentUser
             ? 'border-primary-400 bg-primary-50 dark:bg-primary-900/20 dark:border-primary-600'
             : isTopThree
-            ? 'border-yellow-200 bg-yellow-50/40 dark:bg-yellow-900/10 dark:border-yellow-800 hover:border-yellow-300'
-            : 'border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600',
+            ? 'border-fuchsia-800/60 bg-fuchsia-950/30 hover:shadow-md hover:shadow-fuchsia-900/20'
+            : 'border-gray-200 bg-white dark:bg-gray-900 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-600',
         ].join(' ')}
       >
         {/* Rank */}
@@ -84,11 +85,14 @@ export default function LeaderboardCard({ entry, isCurrentUser = false }: Leader
           </div>
 
           <div className="flex items-center gap-3 mt-1 flex-wrap">
-            {categoryInfo && (
-              <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ${categoryInfo.color}`}>
-                {categoryInfo.icon} {categoryInfo.label}
-              </span>
-            )}
+            {categoryInfo && (() => {
+              const Icon = CATEGORY_ICONS[categoryInfo.id as CategoryId]
+              return (
+                <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ${categoryInfo.color}`}>
+                  <Icon className="h-3 w-3 flex-shrink-0" /> {categoryInfo.label}
+                </span>
+              )
+            })()}
             {entry.rating !== undefined && (
               <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
                 <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
