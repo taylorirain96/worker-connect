@@ -19,6 +19,7 @@ import Link from 'next/link'
 import { applyToJob, getApplicationId, withdrawApplication, getJobApplications } from '@/lib/applications'
 import { hasReviewed, submitWorkerReview } from '@/lib/reviews/index'
 import { db } from '@/lib/firebase'
+import { getUserProfile } from '@/lib/users/getProfile'
 
 const MOCK_JOBS: Record<string, Job & { employerRating?: number; employerJobs?: number }> = {
   '1': {
@@ -98,6 +99,7 @@ export default function JobDetailPage() {
   const [reviewRating, setReviewRating] = useState(0)
   const [reviewComment, setReviewComment] = useState('')
   const [submittingReview, setSubmittingReview] = useState(false)
+  const [assignedWorkerName, setAssignedWorkerName] = useState<string>('Worker')
 
   const job = MOCK_JOBS[params.id as string] || MOCK_JOBS['1']
   const jobPhotos = MOCK_JOB_PHOTOS.filter((p) => p.jobId === (params.id as string) || p.jobId === '1')
@@ -135,6 +137,18 @@ export default function JobDetailPage() {
       .finally(() => setCheckingReview(false))
   }, [user, profile, params.id, isEmployer])
 
+  // Fetch assigned worker's display name for use in the review
+  useEffect(() => {
+    if (!job.assignedWorkerId) return
+    getUserProfile(job.assignedWorkerId)
+      .then((workerProfile) => {
+        if (workerProfile?.displayName) {
+          setAssignedWorkerName(workerProfile.displayName)
+        }
+      })
+      .catch(() => {})
+  }, [job.assignedWorkerId])
+
   const handleSubmitReview = async () => {
     if (!user || !profile) return
     if (reviewRating === 0) {
@@ -151,7 +165,7 @@ export default function JobDetailPage() {
         jobId: params.id as string,
         jobTitle: job.title,
         workerId: job.assignedWorkerId!,
-        workerName: job.assignedWorkerId ?? 'Worker',
+        workerName: assignedWorkerName,
         employerId: user.uid,
         employerName: profile.displayName ?? user.displayName ?? 'Employer',
         employerPhotoURL: profile.photoURL ?? user.photoURL ?? undefined,

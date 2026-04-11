@@ -21,6 +21,11 @@ import {
 } from './firebase'
 import type { DetailedReview } from '@/types'
 
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+/** Maximum number of reviews fetched per worker in a single call */
+const MAX_REVIEWS_PER_PAGE = 100
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface WorkerReviewInput {
@@ -111,7 +116,7 @@ export async function submitWorkerReview(
 export async function getWorkerReviews(workerId: string): Promise<DetailedReview[]> {
   const { reviews } = await getReviewsForEntity(workerId, {
     sortBy: 'recent',
-    pageSize: 100,
+    pageSize: MAX_REVIEWS_PER_PAGE,
   })
   return reviews
 }

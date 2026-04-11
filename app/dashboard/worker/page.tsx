@@ -20,6 +20,8 @@ import type { Application, DetailedReview } from '@/types'
 import { getWorkerReviews, respondToReview } from '@/lib/reviews/index'
 import toast from 'react-hot-toast'
 
+const MAX_DISPLAYED_REVIEWS = 10
+
 interface RecentApplication {
   id: string
   title: string
@@ -95,7 +97,7 @@ export default function WorkerDashboardPage() {
       return
     }
     getWorkerReviews(user.uid)
-      .then((fetched) => setReviews(fetched.slice(0, 10)))
+      .then((fetched) => setReviews(fetched.slice(0, MAX_DISPLAYED_REVIEWS)))
       .catch(() => setReviews([]))
       .finally(() => setLoadingReviews(false))
   }, [user])
