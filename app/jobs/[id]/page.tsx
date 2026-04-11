@@ -10,7 +10,7 @@ import PhotoGallery from '@/components/jobs/PhotoGallery'
 import toast from 'react-hot-toast'
 import {
   MapPin, Clock, DollarSign, Users, AlertCircle, ArrowLeft,
-  Calendar, Star, CheckCircle, Send, Camera
+  Calendar, Star, CheckCircle, Send, Camera, ClipboardList
 } from 'lucide-react'
 import { formatCurrency, formatRelativeDate, JOB_CATEGORIES, URGENCY_LABELS } from '@/lib/utils'
 import type { Job, JobPhoto } from '@/types'
@@ -297,6 +297,15 @@ export default function JobDetailPage() {
                   >
                     Apply Now
                   </Button>
+                )}
+
+                {profile?.role === 'worker' && (job.status === 'in_progress' || job.status === 'completed') && (
+                  <Link href={`/timesheets/${job.id}`} className="block mt-4">
+                    <Button variant="outline" className="w-full flex items-center justify-center gap-2">
+                      <ClipboardList className="h-4 w-4" />
+                      Track Time
+                    </Button>
+                  </Link>
                 )}
               </div>
 

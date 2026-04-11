@@ -2,7 +2,7 @@
 import Link from 'next/link'
 import { useTheme } from 'next-themes'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { Sun, Moon, Menu, X, Wrench, ChevronDown } from 'lucide-react'
+import { Sun, Moon, Menu, X, Wrench, ChevronDown, ClipboardList } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import { useRouter } from 'next/navigation'
@@ -60,7 +60,8 @@ export default function Navbar() {
                 <Link href="/jobs/matched" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
                   My Matches
                 </Link>
-                <Link href="/timesheets" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
+                <Link href="/timesheets" className="flex items-center gap-1.5 text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
+                  <ClipboardList className="h-4 w-4" />
                   Timesheets
                 </Link>
               </>
@@ -228,7 +229,8 @@ export default function Navbar() {
                   <Link href="/jobs/matched" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 px-3 py-2 rounded-lg transition-colors" onClick={() => setMenuOpen(false)}>
                     My Matches
                   </Link>
-                  <Link href="/timesheets" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 px-3 py-2 rounded-lg transition-colors" onClick={() => setMenuOpen(false)}>
+                  <Link href="/timesheets" className="flex items-center gap-1.5 text-gray-600 dark:text-gray-300 hover:text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 px-3 py-2 rounded-lg transition-colors" onClick={() => setMenuOpen(false)}>
+                    <ClipboardList className="h-4 w-4" />
                     Timesheets
                   </Link>
                 </>
