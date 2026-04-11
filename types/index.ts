@@ -5,6 +5,7 @@ export interface UserProfile {
   photoURL: string | null
   role: 'worker' | 'employer' | 'admin'
   createdAt: string
+  updatedAt?: string
   profileComplete: boolean
   bio?: string
   location?: string

@@ -34,7 +34,7 @@ export default function Navbar() {
       if (!auth) return
       await signOut(auth)
       toast.success('Signed out successfully')
-      router.push('/')
+      router.push('/auth/login')
     } catch {
       toast.error('Error signing out')
     }
