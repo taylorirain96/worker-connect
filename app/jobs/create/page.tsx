@@ -181,7 +181,7 @@ export default function CreateJobPage() {
                           <p className="text-sm font-semibold text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5">
                             <Sparkles className="h-4 w-4" /> AI Job Post Writer
                           </p>
-                          <button type="button" onClick={() => setShowAIPanel(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+                          <button type="button" onClick={() => setShowAIPanel(false)} aria-label="Close AI Job Post Writer" className="text-gray-400 hover:text-gray-600">✕</button>
                         </div>
                         <div>
                           <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">What needs to be done?</label>

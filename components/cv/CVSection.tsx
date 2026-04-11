@@ -156,7 +156,7 @@ export default function CVSection({ userId, profile, hasAI }: CVSectionProps) {
     }
   }
 
-  const handleDownloadPDF = () => {
+  const handlePrintCV = () => {
     const printWindow = window.open('', '_blank')
     if (!printWindow) return
     printWindow.document.write(`
@@ -285,7 +285,8 @@ export default function CVSection({ userId, profile, hasAI }: CVSectionProps) {
                 </button>
                 <button
                   type="button"
-                  onClick={() => isProWorker ? handleVisibilityChange('public') : null}
+                  disabled={!isProWorker}
+                  onClick={() => handleVisibilityChange('public')}
                   className={`flex-1 text-xs py-2 rounded-lg border transition-colors flex items-center justify-center gap-1 ${!isProWorker ? 'opacity-50 cursor-not-allowed border-gray-300 dark:border-gray-600 text-gray-400' : visibility === 'public' ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-indigo-400'}`}
                 >
                   {!isProWorker && <Lock className="h-3 w-3" />}
@@ -489,11 +490,11 @@ export default function CVSection({ userId, profile, hasAI }: CVSectionProps) {
                   </button>
                   <button
                     type="button"
-                    onClick={handleDownloadPDF}
+                    onClick={handlePrintCV}
                     className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
                     <Download className="h-3.5 w-3.5" />
-                    Download PDF
+                    Print / Save PDF
                   </button>
                   <button
                     type="button"

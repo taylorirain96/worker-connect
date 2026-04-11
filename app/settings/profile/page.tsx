@@ -429,7 +429,7 @@ export default function EditProfilePage() {
                               <p className="text-sm font-semibold text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5">
                                 <Sparkles className="h-4 w-4" /> AI Bio Writer
                               </p>
-                              <button type="button" onClick={() => setShowBioAI(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+                              <button type="button" onClick={() => setShowBioAI(false)} aria-label="Close AI Bio Writer" className="text-gray-400 hover:text-gray-600">✕</button>
                             </div>
                             <div>
                               <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">What&apos;s your trade / skill?</label>

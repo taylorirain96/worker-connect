@@ -15,10 +15,12 @@ export interface WorkerCV {
 
 export async function saveCV(workerId: string, cv: Omit<WorkerCV, 'workerId' | 'createdAt' | 'updatedAt'>): Promise<void> {
   if (!db) throw new Error('Firestore not available')
-  await setDoc(doc(db, 'workerCVs', workerId), {
+  const docRef = doc(db, 'workerCVs', workerId)
+  const existing = await getDoc(docRef)
+  await setDoc(docRef, {
     ...cv,
     workerId,
-    createdAt: serverTimestamp(),
+    ...(existing.exists() ? {} : { createdAt: serverTimestamp() }),
     updatedAt: serverTimestamp(),
   }, { merge: true })
 }
