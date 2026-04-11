@@ -10,13 +10,14 @@ import PhotoGallery from '@/components/jobs/PhotoGallery'
 import toast from 'react-hot-toast'
 import {
   MapPin, Clock, DollarSign, Users, AlertCircle, ArrowLeft,
-  Calendar, Star, CheckCircle, Send, Camera, ClipboardList
+  Calendar, Star, CheckCircle, Send, Camera, ClipboardList, Eye
 } from 'lucide-react'
 import { formatCurrency, formatRelativeDate, JOB_CATEGORIES, URGENCY_LABELS } from '@/lib/utils'
 import type { Job, JobPhoto } from '@/types'
 import Link from 'next/link'
 import { applyToJob, getApplicationId, withdrawApplication } from '@/lib/applications'
 import { db } from '@/lib/firebase'
+import { getJobApplications } from '@/lib/services/applicationService'
 
 const MOCK_JOBS: Record<string, Job & { employerRating?: number; employerJobs?: number }> = {
   '1': {
@@ -87,11 +88,21 @@ export default function JobDetailPage() {
   const [alreadyApplied, setAlreadyApplied] = useState(false)
   const [withdrawing, setWithdrawing] = useState(false)
   const [appliedAppId, setAppliedAppId] = useState<string | null>(null)
+  const [applicantsCount, setApplicantsCount] = useState<number | null>(null)
 
   const job = MOCK_JOBS[params.id as string] || MOCK_JOBS['1']
   const jobPhotos = MOCK_JOB_PHOTOS.filter((p) => p.jobId === (params.id as string) || p.jobId === '1')
   const category = JOB_CATEGORIES.find((c) => c.id === job.category)
   const urgency = URGENCY_LABELS[job.urgency]
+  const isEmployer = user?.uid === job.employerId
+
+  useEffect(() => {
+    if (!isEmployer) return
+    const jobId = params.id as string
+    getJobApplications(jobId)
+      .then((apps) => setApplicantsCount(apps.length))
+      .catch(() => setApplicantsCount(job.applicantsCount ?? 0))
+  }, [isEmployer, params.id, job.applicantsCount])
 
   // Check if the worker has already applied
   useEffect(() => {
@@ -364,6 +375,16 @@ export default function JobDetailPage() {
                     <Button variant="outline" className="w-full flex items-center justify-center gap-2">
                       <ClipboardList className="h-4 w-4" />
                       Track Time
+                    </Button>
+                  </Link>
+                )}
+
+                {/* View Applicants — only shown to the job's employer */}
+                {isEmployer && (
+                  <Link href={`/jobs/${job.id}/applicants`} className="block mt-4">
+                    <Button variant="outline" className="w-full flex items-center justify-center gap-2">
+                      <Eye className="h-4 w-4" />
+                      View Applicants ({applicantsCount ?? job.applicantsCount})
                     </Button>
                   </Link>
                 )}

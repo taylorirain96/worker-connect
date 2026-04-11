@@ -6,10 +6,12 @@ import {
   getDoc,
   getDocs,
   updateDoc,
+  writeBatch,
   query,
   where,
   orderBy,
   serverTimestamp,
+  increment,
   Timestamp,
 } from 'firebase/firestore'
 import type { JobApplication } from '@/types'
@@ -218,4 +220,112 @@ export async function getApplicationById(
   } catch {
     return null
   }
+}
+
+/**
+ * Get all applications across all jobs posted by an employer.
+ */
+export async function getEmployerApplications(employerId: string): Promise<JobApplication[]> {
+  if (!db) {
+    return []
+  }
+
+  try {
+    const q = query(
+      collection(db, 'applications'),
+      where('employerId', '==', employerId),
+      orderBy('appliedAt', 'desc')
+    )
+    const snapshot = await getDocs(q)
+    return snapshot.docs.map((d) =>
+      docToApplication(d.id, d.data() as Record<string, unknown>)
+    )
+  } catch {
+    return []
+  }
+}
+
+/**
+ * Accept an application:
+ * 1. Sets the accepted application status to 'accepted'
+ * 2. Updates the job to 'in_progress' and assigns the worker
+ * 3. Batch-rejects all other pending applications for the same job
+ */
+export async function acceptApplication(
+  applicationId: string,
+  jobId: string
+): Promise<void> {
+  if (!db) return
+
+  const appRef = doc(db, 'applications', applicationId)
+  const appSnap = await getDoc(appRef)
+  if (!appSnap.exists()) throw new Error('Application not found')
+
+  const appData = appSnap.data()
+  const workerId: string = appData.workerId
+
+  // Get all other pending applications for this job
+  const otherPendingQuery = query(
+    collection(db, 'applications'),
+    where('jobId', '==', jobId),
+    where('status', '==', 'pending')
+  )
+  const otherPendingSnap = await getDocs(otherPendingQuery)
+
+  const batch = writeBatch(db)
+
+  // Accept the chosen application
+  batch.update(appRef, { status: 'accepted', updatedAt: serverTimestamp() })
+
+  // Update the job to in_progress and assign the worker
+  const jobRef = doc(db, 'jobs', jobId)
+  batch.update(jobRef, {
+    status: 'in_progress',
+    assignedWorkerId: workerId,
+    updatedAt: serverTimestamp(),
+  })
+
+  // Batch-reject all other pending applications
+  otherPendingSnap.docs.forEach((d) => {
+    if (d.id !== applicationId) {
+      batch.update(d.ref, { status: 'rejected', updatedAt: serverTimestamp() })
+    }
+  })
+
+  await batch.commit()
+}
+
+/**
+ * Reject a specific application.
+ */
+export async function rejectApplication(applicationId: string): Promise<void> {
+  if (!db) return
+
+  const appRef = doc(db, 'applications', applicationId)
+  const snap = await getDoc(appRef)
+  if (!snap.exists()) throw new Error('Application not found')
+
+  await updateDoc(appRef, { status: 'rejected', updatedAt: serverTimestamp() })
+}
+
+/**
+ * Increment the applicantsCount on a job when an application is submitted.
+ */
+export async function incrementApplicantsCount(jobId: string): Promise<void> {
+  if (!db) return
+  await updateDoc(doc(db, 'jobs', jobId), {
+    applicantsCount: increment(1),
+    updatedAt: serverTimestamp(),
+  })
+}
+
+/**
+ * Decrement the applicantsCount on a job when an application is withdrawn.
+ */
+export async function decrementApplicantsCount(jobId: string): Promise<void> {
+  if (!db) return
+  await updateDoc(doc(db, 'jobs', jobId), {
+    applicantsCount: increment(-1),
+    updatedAt: serverTimestamp(),
+  })
 }

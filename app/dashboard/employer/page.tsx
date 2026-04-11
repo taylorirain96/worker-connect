@@ -11,7 +11,7 @@ import Link from 'next/link'
 import {
   Briefcase, DollarSign, Users,
   Plus, Clock, CheckCircle, Eye, Building2, Shield, Award, Trophy, Star,
-  Camera, Filter, Settings,
+  Camera, Filter, Settings, FileText,
 } from 'lucide-react'
 import { formatCurrency, formatRelativeDate, STATUS_LABELS } from '@/lib/utils'
 import { collection, query, where, orderBy, getDocs, type DocumentData } from 'firebase/firestore'
@@ -19,6 +19,8 @@ import { db } from '@/lib/firebase'
 import type { Job } from '@/types'
 import { getWeeklyLeaderboard } from '@/lib/leaderboard/firebase'
 import type { LeaderboardEntry } from '@/lib/leaderboard/rankingLogic'
+import { getEmployerApplications } from '@/lib/services/applicationService'
+import type { JobApplication } from '@/types'
 
 interface PostedJob {
   id: string
@@ -65,6 +67,8 @@ export default function EmployerDashboardPage() {
   const [photoFilter, setPhotoFilter] = useState<'all' | 'with_photos' | 'no_photos'>('all')
   const [topPerformers, setTopPerformers] = useState<LeaderboardEntry[]>([])
   const [loadingLeaderboard, setLoadingLeaderboard] = useState(true)
+  const [pendingApplications, setPendingApplications] = useState<JobApplication[]>([])
+  const [loadingApplications, setLoadingApplications] = useState(true)
 
   useEffect(() => {
     if (!loading && !user) {
@@ -107,6 +111,24 @@ export default function EmployerDashboardPage() {
     }
     fetchLeaderboard()
   }, [])
+
+  useEffect(() => {
+    if (!user?.uid) {
+      setLoadingApplications(false)
+      return
+    }
+    async function fetchApplications() {
+      try {
+        const apps = await getEmployerApplications(user.uid)
+        setPendingApplications(apps.filter((a) => a.status === 'pending'))
+      } catch {
+        setPendingApplications([])
+      } finally {
+        setLoadingApplications(false)
+      }
+    }
+    fetchApplications()
+  }, [user])
 
   if (loading) {
     return (
@@ -290,6 +312,57 @@ export default function EmployerDashboardPage() {
 
             {/* Sidebar */}
             <div className="space-y-4">
+              {/* Pending Applications Card */}
+              <Card className="border-orange-200 dark:border-orange-800">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-orange-500" />
+                      <CardTitle>Applications</CardTitle>
+                    </div>
+                    {pendingApplications.length > 0 && (
+                      <Badge variant="warning">{pendingApplications.length} pending</Badge>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {loadingApplications ? (
+                    <div className="space-y-2">
+                      {[...Array(2)].map((_, i) => (
+                        <div key={i} className="h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                      ))}
+                    </div>
+                  ) : pendingApplications.length === 0 ? (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">No pending applications.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {pendingApplications.slice(0, 5).map((app) => (
+                        <Link
+                          key={app.id}
+                          href={`/jobs/${app.jobId}/applicants`}
+                          className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                              {app.workerName ?? 'Worker'}
+                            </p>
+                            <p className="text-xs text-gray-500 truncate">
+                              {app.jobTitle ?? `Job ${app.jobId}`}
+                            </p>
+                          </div>
+                          <Eye className="h-3.5 w-3.5 text-gray-400 flex-shrink-0 ml-2" />
+                        </Link>
+                      ))}
+                      {pendingApplications.length > 5 && (
+                        <p className="text-xs text-gray-500 text-center pt-1">
+                          +{pendingApplications.length - 5} more pending
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
               {/* Business Profile Card */}
               <Card className="border-primary-200 dark:border-primary-800 bg-primary-50/50 dark:bg-primary-900/10">
                 <CardHeader>
