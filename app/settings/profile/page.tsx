@@ -17,7 +17,7 @@ import { JOB_CATEGORIES } from '@/lib/utils'
 import { updateUserProfile } from '@/lib/users/updateProfile'
 import { getInitials } from '@/lib/utils'
 import { hasWorkerAI } from '@/lib/subscriptions'
-import AIUpgradePrompt from '@/components/ui/AIUpgradePrompt'
+import AIAddonPrompt from '@/components/ui/AIAddonPrompt'
 import CVSection from '@/components/cv/CVSection'
 
 const MAX_AVATAR_SIZE = 5 * 1024 * 1024 // 5 MB
@@ -72,6 +72,7 @@ export default function EditProfilePage() {
 
   // Bio AI state
   const [showBioAI, setShowBioAI] = useState(false)
+  const [showBioAIAddonPrompt, setShowBioAIAddonPrompt] = useState(false)
   const [bioAILoading, setBioAILoading] = useState(false)
   const [bioAIInputs, setBioAIInputs] = useState({ trade: '', years: '', strengths: '', extra: '' })
 
@@ -415,7 +416,7 @@ export default function EditProfilePage() {
                     />
                     {errors.bio && <p className="mt-1 text-sm text-red-600">{errors.bio.message}</p>}
 
-                    {hasWorkerAI(profile) && (
+                    {hasWorkerAI(profile) ? (
                       <div className="mt-2">
                         {!showBioAI ? (
                           <button
@@ -485,8 +486,23 @@ export default function EditProfilePage() {
                           </div>
                         )}
                       </div>
+                    ) : (
+                      <div className="mt-2">
+                        <button
+                          type="button"
+                          onClick={() => setShowBioAIAddonPrompt(true)}
+                          className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-400 hover:text-indigo-300 border border-indigo-800/50 rounded-lg px-3 py-1.5 bg-indigo-950/30 transition-colors"
+                        >
+                          <Sparkles className="h-3.5 w-3.5" />
+                          Improve my bio with AI
+                        </button>
+                        {showBioAIAddonPrompt && (
+                          <div className="mt-3">
+                            <AIAddonPrompt role="worker" context="bio" onClose={() => setShowBioAIAddonPrompt(false)} />
+                          </div>
+                        )}
+                      </div>
                     )}
-                    {!hasWorkerAI(profile) && <AIUpgradePrompt role="worker" />}
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

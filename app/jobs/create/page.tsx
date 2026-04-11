@@ -13,7 +13,7 @@ import toast from 'react-hot-toast'
 import { JOB_CATEGORIES } from '@/lib/utils'
 import { Briefcase, Sparkles } from 'lucide-react'
 import { hasEmployerAI } from '@/lib/subscriptions'
-import AIUpgradePrompt from '@/components/ui/AIUpgradePrompt'
+import AIAddonPrompt from '@/components/ui/AIAddonPrompt'
 
 const jobSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters').max(100),
@@ -34,6 +34,7 @@ export default function CreateJobPage() {
   const router = useRouter()
 
   const [showAIPanel, setShowAIPanel] = useState(false)
+  const [showAIAddonPrompt, setShowAIAddonPrompt] = useState(false)
   const [aiLoading, setAILoading] = useState(false)
   const [aiInputs, setAIInputs] = useState({ task: '', size: 'half_day', requirements: '' })
 
@@ -170,7 +171,7 @@ export default function CreateJobPage() {
                   Description <span className="text-red-500">*</span>
                 </label>
 
-                {hasEmployerAI(profile) && (
+                {hasEmployerAI(profile) ? (
                   <div className="mb-3">
                     {!showAIPanel ? (
                       <button
@@ -239,6 +240,22 @@ export default function CreateJobPage() {
                       </div>
                     )}
                   </div>
+                ) : (
+                  <div className="mb-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowAIAddonPrompt(true)}
+                      className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-400 hover:text-indigo-300 border border-indigo-800/50 rounded-lg px-3 py-1.5 bg-indigo-950/30 transition-colors"
+                    >
+                      <Sparkles className="h-3.5 w-3.5" />
+                      Write with AI
+                    </button>
+                    {showAIAddonPrompt && (
+                      <div className="mt-3">
+                        <AIAddonPrompt role="employer" context="job_post" onClose={() => setShowAIAddonPrompt(false)} />
+                      </div>
+                    )}
+                  </div>
                 )}
 
                 <textarea
@@ -248,9 +265,6 @@ export default function CreateJobPage() {
                   {...register('description')}
                 />
                 {errors.description && <p className="mt-1 text-sm text-red-600">{errors.description.message}</p>}
-                {!hasEmployerAI(profile) && profile?.role === 'employer' && (
-                  <AIUpgradePrompt role="employer" />
-                )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

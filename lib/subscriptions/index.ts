@@ -27,10 +27,18 @@ export function getEmployerTier(profile: UserProfile | null | undefined): Employ
 
 export function hasWorkerAI(profile: UserProfile | null | undefined): boolean {
   const tier = getWorkerTier(profile)
-  return tier === 'pro' || tier === 'elite'
+  if (tier === 'pro' || tier === 'elite') return true
+  // Also check one-off AI Writing Add-on purchase
+  return !!(profile?.aiWritingAddon)
 }
 
 export function hasEmployerAI(profile: UserProfile | null | undefined): boolean {
   const tier = getEmployerTier(profile)
-  return tier === 'pro' || tier === 'business' || tier === 'enterprise'
+  if (tier === 'pro' || tier === 'business' || tier === 'enterprise') return true
+  // Also check one-off AI Writing Add-on purchase
+  return !!(profile?.aiWritingAddon)
+}
+
+export function hasAIAddonOnly(profile: UserProfile | null | undefined): boolean {
+  return !!(profile?.aiWritingAddon) && getWorkerTier(profile) === 'free' && getEmployerTier(profile) === 'free'
 }

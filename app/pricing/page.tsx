@@ -15,6 +15,7 @@ import {
   Trophy,
   Users,
   Building2,
+  Sparkles,
 } from 'lucide-react'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
@@ -182,7 +183,14 @@ const COMMISSION_COVERS = [
   { icon: CheckCircle, label: 'Payment insurance' },
 ]
 
-const EMPLOYER_ADDONS = [
+interface AddonRow {
+  feature: string
+  price: string
+  highlight?: boolean
+}
+
+const EMPLOYER_ADDONS: AddonRow[] = [
+  { feature: '✨ AI Job Post Writer (unlimited writes)', price: '$9.99 one-off', highlight: true },
   { feature: 'Featured listing', price: '+$9.99/post' },
   { feature: 'Urgent badge 🔴', price: '+$4.99/post' },
   { feature: 'Top Worker Match (hand-picked)', price: '+$14.99/post' },
@@ -191,7 +199,8 @@ const EMPLOYER_ADDONS = [
   { feature: 'Contract upgrade (lawyer-reviewed)', price: '+$19.99' },
 ]
 
-const WORKER_ADDONS = [
+const WORKER_ADDONS: AddonRow[] = [
+  { feature: '✨ AI Writing Add-on (bio, CV, cover letters)', price: '$9.99 one-off', highlight: true },
   { feature: 'Profile boost', price: '$4.99/week' },
   { feature: 'Verified ID badge ✅', price: '$9.99 one-off' },
   { feature: 'Portfolio showcase (unlimited photos)', price: '$7.99/mo' },
@@ -457,6 +466,24 @@ export default function PricingPage() {
                 </div>
               ))}
             </div>
+
+            {/* AI Writing Add-on callout — Employer */}
+            <div className="rounded-2xl bg-indigo-900/20 border border-indigo-500/30 p-6 mt-8 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div className="h-12 w-12 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center flex-shrink-0">
+                <Sparkles className="h-6 w-6 text-indigo-400" />
+              </div>
+              <div className="flex-1">
+                <p className="text-white font-semibold mb-1">✨ AI Job Post Writer — $9.99 one-off</p>
+                <p className="text-slate-400 text-sm">Not ready for a subscription? Just grab the AI add-on. Write unlimited job posts with AI — better posts attract better workers. One payment, never expires.</p>
+              </div>
+              <Link
+                href="/auth/register?role=employer&addon=ai_writing"
+                className="flex-shrink-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors whitespace-nowrap"
+              >
+                <Sparkles className="h-4 w-4" />
+                Get AI Writing
+              </Link>
+            </div>
           </div>
         </section>
 
@@ -585,6 +612,24 @@ export default function PricingPage() {
               </div>
             </div>
 
+            {/* AI Writing Add-on callout — Worker */}
+            <div className="rounded-2xl bg-indigo-900/20 border border-indigo-500/30 p-6 mb-8 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div className="h-12 w-12 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center flex-shrink-0">
+                <Sparkles className="h-6 w-6 text-indigo-400" />
+              </div>
+              <div className="flex-1">
+                <p className="text-white font-semibold mb-1">✨ AI Writing Add-on — $9.99 one-off</p>
+                <p className="text-slate-400 text-sm">Not ready for Pro? Just grab the AI add-on. Write your bio, build your CV, and get tailored cover letters on every application. One payment, never expires.</p>
+              </div>
+              <Link
+                href="/auth/register?role=worker&addon=ai_writing"
+                className="flex-shrink-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors whitespace-nowrap"
+              >
+                <Sparkles className="h-4 w-4" />
+                Get AI Writing
+              </Link>
+            </div>
+
             {/* Worker Pro Plans */}
             <h3 className="text-xl font-bold text-white mb-6 text-center">Optional: Worker Pro Subscription</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -688,9 +733,9 @@ export default function PricingPage() {
                 </div>
                 <div className="divide-y divide-slate-700/30">
                   {EMPLOYER_ADDONS.map((row) => (
-                    <div key={row.feature} className="flex items-center justify-between px-6 py-3.5 hover:bg-slate-800/30 transition-colors">
-                      <span className="text-slate-300 text-sm">{row.feature}</span>
-                      <span className="text-white font-semibold text-sm">{row.price}</span>
+                    <div key={row.feature} className={`flex items-center justify-between px-6 py-3.5 hover:bg-slate-800/30 transition-colors ${row.highlight ? 'bg-indigo-900/20 border-l-2 border-indigo-500' : ''}`}>
+                      <span className={`text-sm ${row.highlight ? 'text-indigo-200 font-medium' : 'text-slate-300'}`}>{row.feature}</span>
+                      <span className={`font-semibold text-sm ${row.highlight ? 'text-indigo-300' : 'text-white'}`}>{row.price}</span>
                     </div>
                   ))}
                 </div>
@@ -705,9 +750,9 @@ export default function PricingPage() {
                 </div>
                 <div className="divide-y divide-slate-700/30">
                   {WORKER_ADDONS.map((row) => (
-                    <div key={row.feature} className="flex items-center justify-between px-6 py-3.5 hover:bg-slate-800/30 transition-colors">
-                      <span className="text-slate-300 text-sm">{row.feature}</span>
-                      <span className="text-white font-semibold text-sm">{row.price}</span>
+                    <div key={row.feature} className={`flex items-center justify-between px-6 py-3.5 hover:bg-slate-800/30 transition-colors ${row.highlight ? 'bg-indigo-900/20 border-l-2 border-indigo-500' : ''}`}>
+                      <span className={`text-sm ${row.highlight ? 'text-indigo-200 font-medium' : 'text-slate-300'}`}>{row.feature}</span>
+                      <span className={`font-semibold text-sm ${row.highlight ? 'text-indigo-300' : 'text-white'}`}>{row.price}</span>
                     </div>
                   ))}
                 </div>

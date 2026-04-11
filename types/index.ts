@@ -35,6 +35,7 @@ export interface UserProfile {
   companyName?: string
   workerSubscriptionTier?: 'free' | 'pro' | 'elite'
   employerSubscriptionTier?: 'free' | 'pro' | 'business' | 'enterprise'
+  aiWritingAddon?: boolean
 }
 
 export interface Job {

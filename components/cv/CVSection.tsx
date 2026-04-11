@@ -5,6 +5,7 @@ import toast from 'react-hot-toast'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import type { UserProfile } from '@/types'
 import { getCV, saveCV, uploadCVFile } from '@/lib/cv'
+import AIAddonPrompt from '@/components/ui/AIAddonPrompt'
 
 interface CVSectionProps {
   userId: string
@@ -167,15 +168,13 @@ export default function CVSection({ userId, profile, hasAI }: CVSectionProps) {
           >
             📄 Upload CV
           </button>
-          {hasAI && (
-            <button
-              type="button"
-              onClick={() => setActiveTab('ai')}
-              className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors flex items-center gap-1 ${activeTab === 'ai' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
-            >
-              <Sparkles className="h-3.5 w-3.5" /> Build with AI
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => setActiveTab('ai')}
+            className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors flex items-center gap-1 ${activeTab === 'ai' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+          >
+            <Sparkles className="h-3.5 w-3.5" /> Build with AI
+          </button>
         </div>
 
         {/* Upload tab */}
@@ -268,6 +267,12 @@ export default function CVSection({ userId, profile, hasAI }: CVSectionProps) {
         )}
 
         {/* AI builder tab */}
+        {activeTab === 'ai' && !hasAI && (
+          <div className="space-y-3">
+            <AIAddonPrompt role="worker" context="cv" onClose={() => setActiveTab('upload')} />
+          </div>
+        )}
+
         {activeTab === 'ai' && hasAI && (
           <div className="space-y-4">
             {/* Step 1 — About you */}
