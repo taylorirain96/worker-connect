@@ -155,7 +155,7 @@ export async function POST(req: NextRequest) {
             await sendNotification({
               userId: escrow.workerId,
               type: 'payment_received',
-              title: 'Escrow Funded — You\'re Protected',
+              title: "Escrow Funded — You're Protected",
               message: `The employer has placed NZ$${escrow.amount.toFixed(2)} in escrow for job #${escrow.jobId}. Your payment is secured and will be released when the job is complete.`,
               metadata: { escrowId: escrow.id, jobId: escrow.jobId },
             })

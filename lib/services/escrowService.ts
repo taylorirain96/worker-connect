@@ -305,7 +305,7 @@ export async function getWorkerEarningsTransactions(workerId: string): Promise<E
     id: e.id,
     jobId: e.jobId,
     jobTitle: `Job #${e.jobId.slice(-6)}`,
-    employerName: '',
+    employerName: '', // TODO: enrich by fetching employer profile from Firestore
     grossAmount: e.amount,
     commissionAmount: e.commissionAmount,
     commissionRate: e.commissionRate,
