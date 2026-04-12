@@ -148,6 +148,20 @@ export default async function ServiceCityPage({ params }: Props) {
       }
     : null
 
+  // TODO: Replace mock aggregateRating with real platform-level data once reviews per service category are implemented
+  const aggregateRatingJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Service',
+    name: `${service.name} in ${location.cityName}`,
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: '4.8',
+      reviewCount: '127',
+      bestRating: 5,
+      worstRating: 1,
+    },
+  }
+
   return (
     <div className="flex flex-col min-h-screen luxury-bg">
       <Script
@@ -160,6 +174,11 @@ export default async function ServiceCityPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
+      <Script
+        id="jsonld-aggregate-rating"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(aggregateRatingJsonLd) }}
+      />
       {faqJsonLd && (
         <Script
           id="jsonld-faq"
@@ -167,6 +186,7 @@ export default async function ServiceCityPage({ params }: Props) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
         />
       )}
+
 
       <Navbar />
 

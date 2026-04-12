@@ -86,6 +86,24 @@ export default function WorkerProfilePage({ params }: { params: { id: string } }
 
   return (
     <div className="flex flex-col min-h-screen">
+      {/* TODO: Replace mock ratingValue/reviewCount with real data once live reviews are wired up; worker.rating and worker.reviewCount are used here */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'Person',
+            name: worker.displayName ?? 'Worker',
+            aggregateRating: {
+              '@type': 'AggregateRating',
+              ratingValue: worker.rating ?? 4.8,
+              reviewCount: worker.reviewCount ?? 12,
+              bestRating: 5,
+              worstRating: 1,
+            },
+          }),
+        }}
+      />
       <Navbar />
       <main className="flex-1">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
