@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Script from 'next/script'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
-import { SERVICES, LOCATIONS, getServiceBySlug } from '@/lib/seo/servicesData'
+import { SERVICES, LOCATIONS, getServiceBySlug, getServiceDetails } from '@/lib/seo/servicesData'
 import { SITE_URL } from '@/lib/seo/config'
 
 interface Props {
@@ -20,8 +20,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const service = getServiceBySlug(serviceSlug)
   if (!service) return {}
 
+  const details = getServiceDetails(serviceSlug)
+  const priceHint = details
+    ? ` Prices from $${details.priceFrom} ${details.priceUnit}.`
+    : ''
+
   const title = `${service.name} in New Zealand | QuickTrade`
-  const description = `Find trusted ${service.namePlural} across New Zealand on QuickTrade. Get quotes, compare reviews, and hire local ${service.namePlural} today.`
+  const description = `Find trusted ${service.namePlural} across New Zealand on QuickTrade. Get quotes, compare reviews, and hire local ${service.namePlural} today.${priceHint}`
   const canonical = `${SITE_URL}/services/${service.slug}`
 
   return {
@@ -42,6 +47,7 @@ export default async function ServicePage({ params }: Props) {
   const service = getServiceBySlug(serviceSlug)
   if (!service) notFound()
 
+  const details = getServiceDetails(serviceSlug)
   const canonical = `${SITE_URL}/services/${service.slug}`
   const isHeatPumps = service.slug === 'heat-pumps-air-conditioning'
 
@@ -62,6 +68,21 @@ export default async function ServicePage({ params }: Props) {
     url: canonical,
   }
 
+  const faqJsonLd = details?.faqs.length
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: details.faqs.map((faq) => ({
+          '@type': 'Question',
+          name: faq.question,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: faq.answer,
+          },
+        })),
+      }
+    : null
+
   return (
     <div className="flex flex-col min-h-screen luxury-bg">
       <Script
@@ -69,6 +90,13 @@ export default async function ServicePage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+      {faqJsonLd && (
+        <Script
+          id="jsonld-faq"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+        />
+      )}
 
       <Navbar />
 
@@ -107,8 +135,66 @@ export default async function ServicePage({ params }: Props) {
               Browse verified {service.namePlural} across New Zealand — real reviews, transparent
               pricing, and secure payments.
             </p>
+
+            {details && (
+              <div className="inline-flex items-center gap-3 px-5 py-3 rounded-xl bg-slate-800/60 border border-slate-700/50">
+                <span className="text-slate-400 text-sm">Typical price:</span>
+                <span className="text-white font-semibold">
+                  ${details.priceFrom}–${details.priceTo}
+                </span>
+                <span className="text-slate-400 text-sm">{details.priceUnit}</span>
+              </div>
+            )}
           </div>
         </section>
+
+        {/* Pricing & common jobs */}
+        {details && (
+          <section className="py-14 px-4 border-b border-slate-800">
+            <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-10">
+              {/* Pricing */}
+              <div>
+                <h2 className="text-xl font-bold text-white mb-4">
+                  {service.name} Pricing Guide
+                </h2>
+                <div className="rounded-xl border border-slate-700/50 bg-slate-900/60 overflow-hidden">
+                  <div className="flex items-center justify-between px-5 py-4 border-b border-slate-700/50">
+                    <span className="text-slate-400 text-sm">Price range</span>
+                    <span className="text-white font-semibold">
+                      ${details.priceFrom}–${details.priceTo} {details.priceUnit}
+                    </span>
+                  </div>
+                  <ul className="divide-y divide-slate-700/30">
+                    {details.whyHire.map((reason, i) => (
+                      <li key={i} className="flex items-start gap-3 px-5 py-3">
+                        <span className="text-indigo-400 mt-0.5">✓</span>
+                        <span className="text-slate-300 text-sm">{reason}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              {/* Common jobs */}
+              <div>
+                <h2 className="text-xl font-bold text-white mb-4">
+                  Common {service.name} Jobs
+                </h2>
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {details.commonJobs.map((job, i) => (
+                    <li
+                      key={i}
+                      className="flex items-center gap-2 px-4 py-3 rounded-lg bg-slate-900/60 border border-slate-700/50 text-slate-300 text-sm"
+                    >
+                      <span className="text-indigo-400">›</span>
+                      {job}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Available locations */}
         <section className="py-14 px-4">
@@ -139,6 +225,28 @@ export default async function ServicePage({ params }: Props) {
           </div>
         </section>
 
+        {/* FAQ section */}
+        {details?.faqs.length && (
+          <section className="py-14 px-4 border-t border-slate-800">
+            <div className="max-w-3xl mx-auto">
+              <h2 className="text-2xl font-bold text-white mb-8">
+                Frequently Asked Questions
+              </h2>
+              <div className="space-y-4">
+                {details.faqs.map((faq, i) => (
+                  <div
+                    key={i}
+                    className="rounded-xl bg-slate-900/60 border border-slate-700/50 p-6"
+                  >
+                    <h3 className="text-white font-semibold mb-2">{faq.question}</h3>
+                    <p className="text-slate-400 text-sm leading-relaxed">{faq.answer}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* CTA */}
         <section className="pb-16 px-4">
           <div className="max-w-5xl mx-auto">
@@ -164,3 +272,4 @@ export default async function ServicePage({ params }: Props) {
     </div>
   )
 }
+
