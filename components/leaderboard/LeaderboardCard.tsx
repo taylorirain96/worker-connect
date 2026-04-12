@@ -68,23 +68,24 @@ function cardBorderClass(rank: number, isCurrentUser: boolean): string {
 }
 
 function pointsClass(rank: number): string {
-  if (rank === 1) return 'text-lg font-bold bg-gradient-to-r from-yellow-500 to-yellow-600 bg-clip-text text-transparent'
-  if (rank === 2) return 'text-lg font-bold bg-gradient-to-r from-slate-400 to-slate-600 bg-clip-text text-transparent'
-  if (rank === 3) return 'text-lg font-bold bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent'
-  return 'text-lg font-bold text-slate-900 dark:text-white'
+  const base = 'text-lg font-bold'
+  if (rank === 1) return `${base} bg-gradient-to-r from-yellow-500 to-yellow-600 bg-clip-text text-transparent`
+  if (rank === 2) return `${base} bg-gradient-to-r from-slate-400 to-slate-600 bg-clip-text text-transparent`
+  if (rank === 3) return `${base} bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent`
+  return `${base} text-slate-900 dark:text-white`
 }
 
 function badgePillClass(rank: number): string {
-  if (rank === 1) return 'text-xs bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 px-2 py-0.5 rounded-full border border-yellow-200/60 dark:border-yellow-700/30'
-  if (rank === 2) return 'text-xs bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-full border border-slate-200/60 dark:border-slate-600/30'
-  if (rank === 3) return 'text-xs bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 px-2 py-0.5 rounded-full border border-orange-200/60 dark:border-orange-700/30'
+  const base = 'text-xs px-2 py-0.5 rounded-full border'
+  if (rank === 1) return `${base} bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 border-yellow-200/60 dark:border-yellow-700/30`
+  if (rank === 2) return `${base} bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-slate-600/30`
+  if (rank === 3) return `${base} bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 border-orange-200/60 dark:border-orange-700/30`
   return 'text-xs bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400 px-2 py-0.5 rounded-full'
 }
 
 export default function LeaderboardCard({ entry, isCurrentUser = false }: LeaderboardCardProps) {
   const bonus = entry.rank <= 3 ? RANK_BONUSES[entry.rank as 1 | 2 | 3] : null
   const categoryInfo = JOB_CATEGORIES.find((c) => c.id === entry.category)
-  const isTopThree = entry.rank <= 3
 
   return (
     <Link href={`/workers/${entry.userId}`} className="block">
@@ -157,7 +158,7 @@ export default function LeaderboardCard({ entry, isCurrentUser = false }: Leader
                   <span
                     key={b}
                     title={def.description}
-                    className={badgePillClass(isTopThree ? entry.rank : 4)}
+                    className={badgePillClass(entry.rank)}
                   >
                     {def.icon} {def.label}
                   </span>
