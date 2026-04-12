@@ -1,11 +1,24 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { X, ArrowRight } from 'lucide-react'
 
+const STORAGE_KEY = 'founders-deal-banner-dismissed'
+
 export default function FoundersDealBanner() {
-  const [dismissed, setDismissed] = useState(false)
+  const [dismissed, setDismissed] = useState(true) // start hidden to avoid flash
+
+  useEffect(() => {
+    // Only show if the user hasn't dismissed it before
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (!stored) setDismissed(false)
+  }, [])
+
+  const handleDismiss = () => {
+    localStorage.setItem(STORAGE_KEY, '1')
+    setDismissed(true)
+  }
 
   if (dismissed) return null
 
@@ -27,7 +40,7 @@ export default function FoundersDealBanner() {
       </div>
 
       <button
-        onClick={() => setDismissed(true)}
+        onClick={handleDismiss}
         aria-label="Dismiss banner"
         className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors p-1"
       >
