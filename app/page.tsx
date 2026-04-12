@@ -1,4 +1,6 @@
-import type { Metadata } from 'next'
+'use client'
+
+import { useState } from 'react'
 import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
@@ -19,23 +21,14 @@ import {
   CheckCircle,
   ArrowRight,
   Crown,
+  HardHat,
+  ClipboardList,
+  Hammer,
+  Briefcase,
+  Wrench,
+  Building2,
+  ChevronDown,
 } from 'lucide-react'
-
-export const metadata: Metadata = {
-  title: 'QuickTrade | Trade Work & Employment in New Zealand',
-  description:
-    'QuickTrade connects tradies, homeowners, job seekers and employers across Marlborough, Nelson, Blenheim and Wellington. Find a tradie, post a trade job, or browse part-time and full-time employment — all in one place.',
-  keywords:
-    'trade workers NZ, hire tradesperson Marlborough, find electrician Nelson, plumber Blenheim, builder Wellington, jobs NZ, employment NZ, QuickTrade',
-  openGraph: {
-    title: 'QuickTrade | Trade Work & Employment in New Zealand',
-    description:
-      'Whether you\'re a tradie, a homeowner, looking for work, or looking to hire — QuickTrade connects the right people across New Zealand.',
-    url: 'https://quicktrade.co.nz',
-    siteName: 'QuickTrade',
-    type: 'website',
-  },
-}
 
 const STATS = [
   { label: 'Active Workers', value: '12,000+', icon: Users },
@@ -44,42 +37,33 @@ const STATS = [
   { label: 'Regions Covered', value: 'NZ Wide', icon: MapPin },
 ]
 
-const PATH_TILES = [
+const WORK_SUBTILES = [
   {
-    emoji: '🔨',
-    title: "I'm a tradie",
-    description: 'Find local trade jobs, quote clients, get paid safely',
-    cta: 'Find Jobs Near Me',
+    icon: Hammer,
+    title: "I'm a Tradie",
+    description: 'Trade & skilled work',
     href: '/jobs?path=tradie',
-    accent: 'border-orange-500/40 hover:border-orange-500/70',
-    badge: 'bg-orange-500/10 text-orange-300',
   },
   {
-    emoji: '🏠',
-    title: 'I need a tradie',
-    description: 'Post your job and get quotes from verified local tradies',
-    cta: 'Post a Job',
-    href: '/jobs/create?path=client',
-    accent: 'border-sky-500/40 hover:border-sky-500/70',
-    badge: 'bg-sky-500/10 text-sky-300',
-  },
-  {
-    emoji: '👷',
-    title: "I'm looking for work",
-    description: 'Browse part-time, casual and full-time roles near you',
-    cta: 'Browse Jobs',
+    icon: Briefcase,
+    title: 'Looking for work',
+    description: 'Jobs, contracts & roles',
     href: '/jobs?path=jobseeker',
-    accent: 'border-emerald-500/40 hover:border-emerald-500/70',
-    badge: 'bg-emerald-500/10 text-emerald-300',
+  },
+]
+
+const HIRE_SUBTILES = [
+  {
+    icon: Wrench,
+    title: 'Get a job done',
+    description: 'One-off, any size',
+    href: '/jobs/create?path=client',
   },
   {
-    emoji: '🏢',
-    title: 'I want to hire someone',
-    description: 'Post a role and find the right person for your team',
-    cta: 'Post a Role',
+    icon: Building2,
+    title: "I'm a Business",
+    description: 'I hire regularly',
     href: '/jobs/create?path=employer',
-    accent: 'border-violet-500/40 hover:border-violet-500/70',
-    badge: 'bg-violet-500/10 text-violet-300',
   },
 ]
 
@@ -93,6 +77,12 @@ const FEATURED_WORKERS = [
 const PREMIUM_CATEGORIES: CategoryId[] = ['plumbing', 'electrical', 'hvac']
 
 export default function HomePage() {
+  const [expanded, setExpanded] = useState<'work' | 'hire' | null>(null)
+
+  function toggle(key: 'work' | 'hire') {
+    setExpanded((prev) => (prev === key ? null : key))
+  }
+
   return (
     <div className="flex flex-col min-h-screen luxury-bg">
       <Navbar />
@@ -118,27 +108,92 @@ export default function HomePage() {
               <span className="platinum-shimmer">Trade Work & Employment</span>
             </h1>
             <p className="text-xl text-slate-400 mb-10 max-w-2xl mx-auto">
-              Whether you&apos;re a tradie, a homeowner, looking for work, or looking to hire — QuickTrade connects the right people.
+              Whether you need a tradie or you are one — QuickTrade connects the right people across New Zealand.
             </p>
 
-            {/* 4 Path Tiles */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
-              {PATH_TILES.map((tile) => (
-                <Link
-                  key={tile.title}
-                  href={tile.href}
-                  className={`glass-card rounded-2xl p-6 border ${tile.accent} text-left transition-all hover:scale-[1.02] group`}
+            {/* 2-Step Path Tiles */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8 max-w-2xl mx-auto">
+              {/* I want work */}
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => toggle('work')}
+                  aria-expanded={expanded === 'work'}
+                  className="bg-slate-900/70 rounded-2xl p-6 border border-indigo-500/30 hover:border-indigo-500/60 text-left transition-all hover:shadow-[0_0_30px_rgba(99,102,241,0.2)] group w-full"
                 >
-                  <div className={`inline-flex items-center justify-center h-12 w-12 rounded-xl ${tile.badge} text-2xl mb-4`}>
-                    {tile.emoji}
+                  <div className="flex items-start justify-between">
+                    <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-indigo-500/10 mb-4">
+                      <HardHat className="h-6 w-6 text-indigo-400" />
+                    </div>
+                    <ChevronDown
+                      className={`h-5 w-5 text-indigo-400 mt-1 transition-transform duration-300 ${expanded === 'work' ? 'rotate-180' : ''}`}
+                    />
                   </div>
-                  <h2 className="text-base font-bold text-white mb-2">{tile.title}</h2>
-                  <p className="text-sm text-slate-400 mb-4 leading-relaxed">{tile.description}</p>
-                  <span className="inline-flex items-center gap-1 text-sm font-semibold text-indigo-400 group-hover:text-indigo-300 transition-colors">
-                    {tile.cta} <ArrowRight className="h-3.5 w-3.5" />
-                  </span>
-                </Link>
-              ))}
+                  <h2 className="text-base font-bold text-white mb-1">I want work</h2>
+                  <p className="text-sm text-slate-400">Tradies & job seekers</p>
+                </button>
+                <div
+                  aria-hidden={expanded !== 'work'}
+                  className={`grid grid-cols-2 gap-3 overflow-hidden transition-all duration-300 ${expanded === 'work' ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
+                >
+                  {WORK_SUBTILES.map(({ icon: Icon, title, description, href }) => (
+                    <Link
+                      key={href}
+                      href={href}
+                      className="bg-slate-800/60 rounded-xl p-4 border border-indigo-500/20 hover:border-indigo-500/50 text-left transition-all group"
+                    >
+                      <div className="inline-flex items-center justify-center h-9 w-9 rounded-lg bg-indigo-500/10 mb-3">
+                        <Icon className="h-4 w-4 text-indigo-400" />
+                      </div>
+                      <h3 className="text-sm font-semibold text-white mb-1">{title}</h3>
+                      <p className="text-xs text-slate-400 mb-2">{description}</p>
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-400 group-hover:text-indigo-300 transition-colors">
+                        Go <ArrowRight className="h-3 w-3" />
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              {/* I need work done */}
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => toggle('hire')}
+                  aria-expanded={expanded === 'hire'}
+                  className="bg-slate-900/70 rounded-2xl p-6 border border-indigo-500/30 hover:border-indigo-500/60 text-left transition-all hover:shadow-[0_0_30px_rgba(99,102,241,0.2)] group w-full"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-indigo-500/10 mb-4">
+                      <ClipboardList className="h-6 w-6 text-indigo-400" />
+                    </div>
+                    <ChevronDown
+                      className={`h-5 w-5 text-indigo-400 mt-1 transition-transform duration-300 ${expanded === 'hire' ? 'rotate-180' : ''}`}
+                    />
+                  </div>
+                  <h2 className="text-base font-bold text-white mb-1">I need work done</h2>
+                  <p className="text-sm text-slate-400">One-off or hire someone</p>
+                </button>
+                <div
+                  aria-hidden={expanded !== 'hire'}
+                  className={`grid grid-cols-2 gap-3 overflow-hidden transition-all duration-300 ${expanded === 'hire' ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
+                >
+                  {HIRE_SUBTILES.map(({ icon: Icon, title, description, href }) => (
+                    <Link
+                      key={href}
+                      href={href}
+                      className="bg-slate-800/60 rounded-xl p-4 border border-indigo-500/20 hover:border-indigo-500/50 text-left transition-all group"
+                    >
+                      <div className="inline-flex items-center justify-center h-9 w-9 rounded-lg bg-indigo-500/10 mb-3">
+                        <Icon className="h-4 w-4 text-indigo-400" />
+                      </div>
+                      <h3 className="text-sm font-semibold text-white mb-1">{title}</h3>
+                      <p className="text-xs text-slate-400 mb-2">{description}</p>
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-400 group-hover:text-indigo-300 transition-colors">
+                        Go <ArrowRight className="h-3 w-3" />
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -365,16 +420,16 @@ export default function HomePage() {
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 max-w-3xl mx-auto">
             <GlowButton href="/jobs?path=tradie" variant="indigo">
-              🔨 Find Jobs Near Me
+              <Hammer className="h-4 w-4" /> Find Jobs Near Me
             </GlowButton>
             <GlowButton href="/jobs/create?path=client" variant="violet">
-              🏠 Post a Job
+              <Wrench className="h-4 w-4" /> Post a Job
             </GlowButton>
             <GlowButton href="/jobs?path=jobseeker" variant="indigo">
-              👷 Browse Roles
+              <Briefcase className="h-4 w-4" /> Browse Roles
             </GlowButton>
             <GlowButton href="/jobs/create?path=employer" variant="violet">
-              🏢 Post a Role
+              <Building2 className="h-4 w-4" /> Post a Role
             </GlowButton>
           </div>
         </div>
