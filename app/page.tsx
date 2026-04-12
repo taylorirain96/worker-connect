@@ -7,6 +7,7 @@ import GlowButton from '@/components/luxury/GlowButton'
 import PremiumBadge from '@/components/luxury/PremiumBadge'
 import PremiumCategoryCard from '@/components/luxury/PremiumCategoryCard'
 import HowItWorksTabs from '@/components/home/HowItWorksTabs'
+import FoundersDealBanner from '@/components/home/FoundersDealBanner'
 import { JOB_CATEGORIES, CATEGORY_ICONS, CATEGORY_GRADIENTS, type CategoryId } from '@/lib/utils'
 import {
   MapPin,
@@ -96,6 +97,7 @@ export default function HomePage() {
     <div className="flex flex-col min-h-screen luxury-bg">
       <Navbar />
       <TrustSignalBar />
+      <FoundersDealBanner />
 
       {/* Hero Section */}
       <section className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #0a0f1e 0%, #111827 60%, #0a0f1e 100%)' }}>
