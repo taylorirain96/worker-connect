@@ -109,7 +109,7 @@ export default function LeaderboardCard({ entry, isCurrentUser = false }: Leader
               className="h-11 w-11 rounded-full object-cover"
             />
           ) : (
-            <div className="h-11 w-11 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white text-sm font-bold">
+            <div className="h-11 w-11 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 shadow-[0_0_12px_rgba(139,92,246,0.4)] flex items-center justify-center text-white text-sm font-bold">
               {getInitials(entry.displayName || 'W')}
             </div>
           )}

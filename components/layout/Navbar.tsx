@@ -86,7 +86,7 @@ export default function Navbar() {
             {isEmployer && (
               <Link
                 href="/jobs/create"
-                className="hidden md:inline-flex items-center bg-orange-500 hover:bg-orange-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+                className="hidden md:inline-flex items-center bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-all shadow-sm shadow-indigo-500/30"
               >
                 Post a Job
               </Link>
@@ -122,7 +122,7 @@ export default function Navbar() {
                     onClick={() => setProfileOpen(!profileOpen)}
                     className="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                   >
-                    <div className="h-8 w-8 rounded-full bg-primary-600 flex items-center justify-center text-white text-sm font-semibold">
+                    <div className="h-8 w-8 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-white text-sm font-semibold">
                       {getInitials(user.displayName || user.email || 'U')}
                     </div>
                     <ChevronDown className="h-4 w-4 text-gray-500 hidden md:block" />
