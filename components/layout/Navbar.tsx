@@ -60,10 +60,6 @@ export default function Navbar() {
                 <Link href="/jobs/matched" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
                   My Matches
                 </Link>
-                <Link href="/timesheets" className="flex items-center gap-1.5 text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
-                  <ClipboardList className="h-4 w-4" />
-                  Timesheets
-                </Link>
               </>
             )}
             {isEmployer && (
@@ -152,6 +148,12 @@ export default function Navbar() {
                           <Link href="/dashboard" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" onClick={() => setProfileOpen(false)}>
                             Dashboard
                           </Link>
+                          {isWorker && (
+                            <Link href="/timesheets" className="flex items-center gap-1.5 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" onClick={() => setProfileOpen(false)}>
+                              <ClipboardList className="h-4 w-4" />
+                              Timesheets
+                            </Link>
+                          )}
                           <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" onClick={() => setProfileOpen(false)}>
                             Profile
                           </Link>
@@ -246,10 +248,6 @@ export default function Navbar() {
                   <Link href="/jobs/matched" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 px-3 py-2 rounded-lg transition-colors" onClick={() => setMenuOpen(false)}>
                     My Matches
                   </Link>
-                  <Link href="/timesheets" className="flex items-center gap-1.5 text-gray-600 dark:text-gray-300 hover:text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 px-3 py-2 rounded-lg transition-colors" onClick={() => setMenuOpen(false)}>
-                    <ClipboardList className="h-4 w-4" />
-                    Timesheets
-                  </Link>
                 </>
               )}
               {isEmployer && (
@@ -293,6 +291,12 @@ export default function Navbar() {
                     <DualRoleToggle />
                   </div>
                   <Link href="/dashboard" className="block px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg" onClick={() => setMenuOpen(false)}>Dashboard</Link>
+                  {isWorker && (
+                    <Link href="/timesheets" className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg" onClick={() => setMenuOpen(false)}>
+                      <ClipboardList className="h-4 w-4" />
+                      Timesheets
+                    </Link>
+                  )}
                   <Link href="/messages" className="flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg" onClick={() => setMenuOpen(false)}>
                     Messages
                     {unreadMessages > 0 && (
