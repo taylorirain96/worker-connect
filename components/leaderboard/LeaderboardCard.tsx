@@ -53,18 +53,18 @@ function RankBadge({ rank }: { rank: number }) {
 
 function cardBorderClass(rank: number, isCurrentUser: boolean): string {
   if (isCurrentUser) {
-    return 'ring-1 ring-indigo-400/50 border-indigo-200 dark:border-indigo-500/30 shadow-[0_4px_30px_rgba(99,102,241,0.2)]'
+    return 'ring-2 ring-indigo-500/70 border-indigo-300 dark:border-indigo-500/60 shadow-[0_0_0_3px_rgba(99,102,241,0.15),0_6px_40px_rgba(99,102,241,0.45)]'
   }
   if (rank === 1) {
-    return 'ring-1 ring-yellow-400/50 border-yellow-200/60 dark:border-yellow-500/20 shadow-[0_4px_30px_rgba(234,179,8,0.2)] dark:shadow-[0_4px_30px_rgba(234,179,8,0.15)]'
+    return 'ring-2 ring-yellow-400/80 border-yellow-300/80 dark:border-yellow-500/50 shadow-[0_0_0_3px_rgba(234,179,8,0.1),0_6px_40px_rgba(234,179,8,0.5)] dark:shadow-[0_0_0_3px_rgba(234,179,8,0.1),0_6px_40px_rgba(234,179,8,0.4)]'
   }
   if (rank === 2) {
-    return 'ring-1 ring-slate-400/50 border-slate-200/60 dark:border-slate-500/20 shadow-[0_4px_30px_rgba(148,163,184,0.2)]'
+    return 'ring-2 ring-slate-400/70 border-slate-300/80 dark:border-slate-400/40 shadow-[0_0_0_3px_rgba(148,163,184,0.1),0_6px_40px_rgba(148,163,184,0.45)]'
   }
   if (rank === 3) {
-    return 'ring-1 ring-orange-400/40 border-orange-200/60 dark:border-orange-500/20 shadow-[0_4px_30px_rgba(251,146,60,0.15)]'
+    return 'ring-2 ring-orange-400/70 border-orange-300/80 dark:border-orange-400/40 shadow-[0_0_0_3px_rgba(251,146,60,0.1),0_6px_40px_rgba(251,146,60,0.4)]'
   }
-  return 'ring-1 ring-black/5 dark:ring-white/5 border-gray-200 dark:border-gray-800 shadow-[0_2px_20px_rgba(0,0,0,0.08)] dark:shadow-[0_2px_20px_rgba(0,0,0,0.4)]'
+  return 'ring-2 ring-black/10 dark:ring-white/10 border-gray-300 dark:border-gray-700 shadow-[0_0_0_2px_rgba(0,0,0,0.04),0_4px_30px_rgba(0,0,0,0.18)] dark:shadow-[0_0_0_2px_rgba(255,255,255,0.03),0_4px_30px_rgba(0,0,0,0.7)]'
 }
 
 function pointsClass(rank: number): string {
