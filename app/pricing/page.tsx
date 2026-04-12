@@ -23,26 +23,26 @@ const GIG_TIERS = [
   {
     label: 'Small Job',
     value: 'Under $500 NZD',
-    fee: '$9.99',
+    fee: '$14.99',
     description: 'Minor repairs, small installations, quick fixes',
   },
   {
     label: 'Medium Job',
     value: '$500–$2,000 NZD',
-    fee: '$19.99',
+    fee: '$29.99',
     description: 'Bathroom renos, deck builds, major repairs',
     popular: true,
   },
   {
     label: 'Large Job',
     value: '$2,000–$10,000 NZD',
-    fee: '$34.99',
+    fee: '$54.99',
     description: 'Full renovations, large landscaping, new builds',
   },
   {
     label: 'Commercial',
     value: '$10,000+ NZD',
-    fee: '$59.99',
+    fee: '$89.99',
     description: 'Commercial fit-outs, major construction projects',
   },
 ]
@@ -70,8 +70,8 @@ const EMPLOYER_SUBSCRIPTION_PLANS: EmployerSubscriptionPlan[] = [
   {
     id: 'pro',
     name: 'Pro',
-    monthlyPrice: 49,
-    yearlyPrice: 39,
+    monthlyPrice: 79,
+    yearlyPrice: 63,
     features: [
       'Unlimited job postings',
       '2 featured listings/month',
@@ -85,8 +85,8 @@ const EMPLOYER_SUBSCRIPTION_PLANS: EmployerSubscriptionPlan[] = [
   {
     id: 'business',
     name: 'Business',
-    monthlyPrice: 99,
-    yearlyPrice: 79,
+    monthlyPrice: 159,
+    yearlyPrice: 127,
     popular: true,
     features: [
       'Everything in Pro',
@@ -116,10 +116,10 @@ const EMPLOYER_SUBSCRIPTION_PLANS: EmployerSubscriptionPlan[] = [
 ]
 
 const RECRUITMENT_OPTIONS = [
-  { role: 'Casual / Part-time', postingFee: '$49', successFee: '$299', successLabel: 'if hired' },
-  { role: 'Full-time Trade', postingFee: '$49', successFee: '$799', successLabel: 'if hired' },
-  { role: 'Full-time Professional', postingFee: '$49', successFee: '$1,199', successLabel: 'if hired' },
-  { role: 'Contract Role', postingFee: '$49', successFee: '$599', successLabel: 'if hired' },
+  { role: 'Casual / Part-time', postingFee: '$79', successFee: '$479', successLabel: 'if hired' },
+  { role: 'Full-time Trade', postingFee: '$79', successFee: '$1,279', successLabel: 'if hired' },
+  { role: 'Full-time Professional', postingFee: '$79', successFee: '$1,919', successLabel: 'if hired' },
+  { role: 'Contract Role', postingFee: '$79', successFee: '$959', successLabel: 'if hired' },
 ]
 
 const WORKER_COMMISSION_TIERS = [
@@ -150,8 +150,8 @@ const WORKER_PRO_PLANS: WorkerPlan[] = [
   },
   {
     name: 'Pro Worker',
-    monthlyPrice: 19,
-    yearlyPrice: 15,
+    monthlyPrice: 29,
+    yearlyPrice: 24,
     highlight: true,
     features: [
       'Flat 4% commission on every job',
@@ -162,8 +162,8 @@ const WORKER_PRO_PLANS: WorkerPlan[] = [
   },
   {
     name: 'Elite Worker',
-    monthlyPrice: 39,
-    yearlyPrice: 31,
+    monthlyPrice: 59,
+    yearlyPrice: 49,
     features: [
       'Flat 3% commission on every job',
       'Featured profile placement',
@@ -183,20 +183,20 @@ const COMMISSION_COVERS = [
 ]
 
 const EMPLOYER_ADDONS = [
-  { feature: 'Featured listing', price: '+$9.99/post' },
-  { feature: 'Urgent badge 🔴', price: '+$4.99/post' },
-  { feature: 'Top Worker Match (hand-picked)', price: '+$14.99/post' },
-  { feature: 'Private job post', price: '+$12.99/post' },
-  { feature: 'Re-post expired job', price: '+$4.99' },
-  { feature: 'Contract upgrade (lawyer-reviewed)', price: '+$19.99' },
+  { feature: 'Featured listing', price: '+$14.99/post' },
+  { feature: 'Urgent badge 🔴', price: '+$7.99/post' },
+  { feature: 'Top Worker Match (hand-picked)', price: '+$24.99/post' },
+  { feature: 'Private job post', price: '+$20.99/post' },
+  { feature: 'Re-post expired job', price: '+$7.99' },
+  { feature: 'Contract upgrade (lawyer-reviewed)', price: '+$32.99' },
 ]
 
 const WORKER_ADDONS = [
-  { feature: 'Profile boost', price: '$4.99/week' },
-  { feature: 'Verified ID badge ✅', price: '$9.99 one-off' },
-  { feature: 'Portfolio showcase (unlimited photos)', price: '$7.99/mo' },
-  { feature: 'Early job alerts (30 min head start)', price: '$9.99/mo' },
-  { feature: 'Skill certification badge', price: '$14.99 one-off' },
+  { feature: 'Profile boost', price: '$7.99/week' },
+  { feature: 'Verified ID badge ✅', price: '$15.99 one-off' },
+  { feature: 'Portfolio showcase (unlimited photos)', price: '$12.99/mo' },
+  { feature: 'Early job alerts (30 min head start)', price: '$15.99/mo' },
+  { feature: 'Skill certification badge', price: '$24.99 one-off' },
 ]
 
 const LEADERBOARD_PRIZES = [
@@ -231,11 +231,11 @@ const FAQS = [
   },
   {
     q: 'Can I post multiple jobs?',
-    a: 'Yes — each job post is priced individually by size, so you only pay for what you post. If you post frequently, our Pro Employer plan ($49/month) gives you unlimited posts and is the best value for regular hirers.',
+    a: 'Yes — each job post is priced individually by size, so you only pay for what you post. If you post frequently, our Pro Employer plan ($79/month) gives you unlimited posts and is the best value for regular hirers.',
   },
   {
     q: "What is the recruitment success fee?",
-    a: "The success fee is only charged when a worker is actually hired through your recruitment posting. You pay the flat $49 listing fee upfront, and the success fee only applies if the placement is made. No hire = no success fee.",
+    a: "The success fee is only charged when a worker is actually hired through your recruitment posting. You pay the flat $79 listing fee upfront, and the success fee only applies if the placement is made. No hire = no success fee.",
   },
   {
     q: 'How does the 30-day hire guarantee work?',
@@ -483,12 +483,12 @@ export default function PricingPage() {
                 </div>
                 <div>
                   <p className="text-slate-400 text-xs mb-1">QuickTrade</p>
-                  <p className="text-2xl font-bold text-emerald-400">$799</p>
+                  <p className="text-2xl font-bold text-emerald-400">$1,279</p>
                   <p className="text-slate-500 text-xs">full-time trade hire</p>
                 </div>
                 <div>
                   <p className="text-slate-400 text-xs mb-1">You Save</p>
-                  <p className="text-2xl font-bold text-violet-300">$8,801</p>
+                  <p className="text-2xl font-bold text-violet-300">$8,321</p>
                   <p className="text-slate-500 text-xs">on average</p>
                 </div>
               </div>

@@ -25,8 +25,8 @@ export function JobPostingFeeBreakdown({
 }: JobPostingFeeBreakdownProps) {
   const feeConfig = getJobPostingFee(estimatedValue)
   let total = feeConfig.fee
-  if (featuredListing) total += 9.99
-  if (urgentBadge) total += 4.99
+  if (featuredListing) total += 14.99
+  if (urgentBadge) total += 7.99
 
   return (
     <div className={cn('rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/40 p-4', className)}>
@@ -43,13 +43,13 @@ export function JobPostingFeeBreakdown({
         {featuredListing && (
           <div className="flex justify-between">
             <span className="text-slate-600 dark:text-slate-400">Featured listing</span>
-            <span className="font-medium text-slate-900 dark:text-white">NZ$9.99</span>
+            <span className="font-medium text-slate-900 dark:text-white">NZ$14.99</span>
           </div>
         )}
         {urgentBadge && (
           <div className="flex justify-between">
             <span className="text-slate-600 dark:text-slate-400">Urgent badge</span>
-            <span className="font-medium text-slate-900 dark:text-white">NZ$4.99</span>
+            <span className="font-medium text-slate-900 dark:text-white">NZ$7.99</span>
           </div>
         )}
         <div className="border-t border-indigo-200 dark:border-indigo-800 pt-1.5 flex justify-between font-semibold">
@@ -208,7 +208,7 @@ export function PostingFeeTiers({ className }: PostingFeeTiersProps) {
         ))}
       </div>
       <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-        Optional: +NZ$9.99 featured listing · +NZ$4.99 urgent badge
+        Optional: +NZ$14.99 featured listing · +NZ$7.99 urgent badge
       </p>
     </div>
   )
