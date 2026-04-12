@@ -10,6 +10,7 @@ import {
   getServiceBySlug,
   getLocation,
   getNearbyLocations,
+  getServiceDetails,
 } from '@/lib/seo/servicesData'
 import { SITE_URL } from '@/lib/seo/config'
 
@@ -38,8 +39,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!service || !location) return {}
 
+  const details = getServiceDetails(serviceSlug)
+  const priceHint = details
+    ? ` Prices from $${details.priceFrom} ${details.priceUnit}.`
+    : ''
+
   const title = `${service.namePlural} in ${location.cityName} | QuickTrade NZ`
-  const description = `Find trusted ${service.namePlural} in ${location.cityName}, ${location.regionName}. Compare quotes and reviews on QuickTrade — New Zealand's trusted services marketplace.`
+  const description = `Find trusted ${service.namePlural} in ${location.cityName}, ${location.regionName}. Compare quotes and reviews on QuickTrade — New Zealand's trusted services marketplace.${priceHint}`
   const canonical = `${SITE_URL}/services/${service.slug}/nz/${location.regionSlug}/${location.citySlug}`
 
   return {
@@ -62,6 +68,7 @@ export default async function ServiceCityPage({ params }: Props) {
 
   if (!service || !location) notFound()
 
+  const details = getServiceDetails(serviceSlug)
   const canonical = `${SITE_URL}/services/${service.slug}/nz/${location.regionSlug}/${location.citySlug}`
   const nearbyLocations = getNearbyLocations(location.regionSlug, location.citySlug)
   const otherLocations = LOCATIONS.filter(
@@ -126,6 +133,21 @@ export default async function ServiceCityPage({ params }: Props) {
     ],
   }
 
+  const faqJsonLd = details?.faqs.length
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: details.faqs.map((faq) => ({
+          '@type': 'Question',
+          name: faq.question,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: faq.answer,
+          },
+        })),
+      }
+    : null
+
   return (
     <div className="flex flex-col min-h-screen luxury-bg">
       <Script
@@ -138,6 +160,13 @@ export default async function ServiceCityPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
+      {faqJsonLd && (
+        <Script
+          id="jsonld-faq"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+        />
+      )}
 
       <Navbar />
 
@@ -169,7 +198,7 @@ export default async function ServiceCityPage({ params }: Props) {
                 {location.cityName}
               </span>
             </h1>
-            <p className="text-lg text-slate-400 max-w-2xl">
+            <p className="text-lg text-slate-400 max-w-2xl mb-6">
               Looking for trusted {service.namePlural} in {location.cityName}? QuickTrade connects
               you with verified local {service.namePlural} across {location.regionName}.
               {isHeatPumps
@@ -177,8 +206,71 @@ export default async function ServiceCityPage({ params }: Props) {
                 : ''}{' '}
               Get quotes, compare reviews, and hire with confidence.
             </p>
+
+            {details && (
+              <div className="inline-flex items-center gap-3 px-5 py-3 rounded-xl bg-slate-800/60 border border-slate-700/50">
+                <span className="text-slate-400 text-sm">Typical price:</span>
+                <span className="text-white font-semibold">
+                  ${details.priceFrom}–${details.priceTo}
+                </span>
+                <span className="text-slate-400 text-sm">{details.priceUnit}</span>
+              </div>
+            )}
           </div>
         </section>
+
+        {/* Pricing & why hire */}
+        {details && (
+          <section className="py-14 px-4 border-b border-slate-800">
+            <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-10">
+              {/* Why hire */}
+              <div>
+                <h2 className="text-xl font-bold text-white mb-4">
+                  Why Hire a Professional {service.name} in {location.cityName}?
+                </h2>
+                <ul className="space-y-3">
+                  {details.whyHire.map((reason, i) => (
+                    <li key={i} className="flex items-start gap-3 text-slate-300 text-sm">
+                      <span className="text-indigo-400 mt-0.5 shrink-0">✓</span>
+                      {reason}
+                    </li>
+                  ))}
+                </ul>
+
+                {details.trustSignals && (
+                  <div className="mt-6 flex flex-wrap gap-2">
+                    {details.trustSignals.map((signal, i) => (
+                      <span
+                        key={i}
+                        className="px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs"
+                      >
+                        {signal}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Common jobs */}
+              <div>
+                <h2 className="text-xl font-bold text-white mb-4">
+                  Common {service.name} Jobs in {location.cityName}
+                </h2>
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {details.commonJobs.map((job, i) => (
+                    <li
+                      key={i}
+                      className="flex items-center gap-2 px-4 py-3 rounded-lg bg-slate-900/60 border border-slate-700/50 text-slate-300 text-sm"
+                    >
+                      <span className="text-indigo-400">›</span>
+                      {job}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* CTA */}
         <section className="py-10 px-4 bg-indigo-600/10 border-y border-indigo-500/20">
@@ -196,9 +288,31 @@ export default async function ServiceCityPage({ params }: Props) {
           </div>
         </section>
 
+        {/* FAQ section */}
+        {details?.faqs.length && (
+          <section className="py-14 px-4 border-t border-slate-800">
+            <div className="max-w-3xl mx-auto">
+              <h2 className="text-2xl font-bold text-white mb-8">
+                {service.name} FAQs in {location.cityName}
+              </h2>
+              <div className="space-y-4">
+                {details.faqs.map((faq, i) => (
+                  <div
+                    key={i}
+                    className="rounded-xl bg-slate-900/60 border border-slate-700/50 p-6"
+                  >
+                    <h3 className="text-white font-semibold mb-2">{faq.question}</h3>
+                    <p className="text-slate-400 text-sm leading-relaxed">{faq.answer}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* Nearby areas */}
         {nearbyLocations.length > 0 && (
-          <section className="py-12 px-4">
+          <section className="py-12 px-4 border-t border-slate-800">
             <div className="max-w-5xl mx-auto">
               <h2 className="text-xl font-bold text-white mb-6">
                 Nearby areas for {service.name}
@@ -264,3 +378,4 @@ export default async function ServiceCityPage({ params }: Props) {
     </div>
   )
 }
+
