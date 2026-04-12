@@ -1728,10 +1728,10 @@ export interface JobPostingFee {
 }
 
 export const JOB_POSTING_FEES: JobPostingFee[] = [
-  { tier: 'small',      label: 'Small Job',       minValue: 0,      maxValue: 499.99,  fee: 9.99  },
-  { tier: 'medium',     label: 'Medium Job',       minValue: 500,    maxValue: 1999.99, fee: 19.99 },
-  { tier: 'large',      label: 'Large Job',        minValue: 2000,   maxValue: 9999.99, fee: 34.99 },
-  { tier: 'commercial', label: 'Commercial / Major', minValue: 10000, maxValue: null,    fee: 59.99 },
+  { tier: 'small',      label: 'Small Job',       minValue: 0,      maxValue: 499.99,  fee: 14.99 },
+  { tier: 'medium',     label: 'Medium Job',       minValue: 500,    maxValue: 1999.99, fee: 29.99 },
+  { tier: 'large',      label: 'Large Job',        minValue: 2000,   maxValue: 9999.99, fee: 54.99 },
+  { tier: 'commercial', label: 'Commercial / Major', minValue: 10000, maxValue: null,    fee: 89.99 },
 ]
 
 export interface CommissionTierConfig {
@@ -1869,10 +1869,10 @@ export interface PostingFeeInfo {
 }
 
 export const POSTING_FEES: PostingFeeInfo[] = [
-  { size: 'small',      label: 'Small Job',         minBudget: 0,     maxBudget: 499,   fee: 9.99,  description: 'Under $500 NZD' },
-  { size: 'medium',     label: 'Medium Job',         minBudget: 500,   maxBudget: 1999,  fee: 19.99, description: '$500–$2,000 NZD' },
-  { size: 'large',      label: 'Large Job',          minBudget: 2000,  maxBudget: 9999,  fee: 34.99, description: '$2,000–$10,000 NZD' },
-  { size: 'commercial', label: 'Commercial / Major', minBudget: 10000, maxBudget: null,  fee: 59.99, description: '$10,000+ NZD' },
+  { size: 'small',      label: 'Small Job',         minBudget: 0,     maxBudget: 499,   fee: 14.99, description: 'Under $500 NZD' },
+  { size: 'medium',     label: 'Medium Job',         minBudget: 500,   maxBudget: 1999,  fee: 29.99, description: '$500–$2,000 NZD' },
+  { size: 'large',      label: 'Large Job',          minBudget: 2000,  maxBudget: 9999,  fee: 54.99, description: '$2,000–$10,000 NZD' },
+  { size: 'commercial', label: 'Commercial / Major', minBudget: 10000, maxBudget: null,  fee: 89.99, description: '$10,000+ NZD' },
 ]
 
 export function getPostingFee(estimatedBudgetNZD: number): PostingFeeInfo {
