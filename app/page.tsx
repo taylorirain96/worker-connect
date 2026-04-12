@@ -6,9 +6,9 @@ import TrustSignalBar from '@/components/luxury/TrustSignalBar'
 import GlowButton from '@/components/luxury/GlowButton'
 import PremiumBadge from '@/components/luxury/PremiumBadge'
 import PremiumCategoryCard from '@/components/luxury/PremiumCategoryCard'
+import HowItWorksTabs from '@/components/home/HowItWorksTabs'
 import { JOB_CATEGORIES, CATEGORY_ICONS, CATEGORY_GRADIENTS, type CategoryId } from '@/lib/utils'
 import {
-  Search,
   MapPin,
   Shield,
   Clock,
@@ -18,20 +18,18 @@ import {
   CheckCircle,
   ArrowRight,
   Crown,
-  Zap,
-  FileText,
 } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'QuickTrade | Find Trusted Trade Workers in New Zealand',
+  title: 'QuickTrade | Trade Work & Employment in New Zealand',
   description:
-    'QuickTrade connects Marlborough, Nelson and Wellington businesses with verified, reviewed trade workers. Hire electricians, plumbers, builders and more — fast.',
+    'QuickTrade connects tradies, homeowners, job seekers and employers across Marlborough, Nelson, Blenheim and Wellington. Find a tradie, post a trade job, or browse part-time and full-time employment — all in one place.',
   keywords:
-    'trade workers NZ, hire tradesperson Marlborough, find electrician Nelson, plumber Blenheim, builder Wellington, QuickTrade',
+    'trade workers NZ, hire tradesperson Marlborough, find electrician Nelson, plumber Blenheim, builder Wellington, jobs NZ, employment NZ, QuickTrade',
   openGraph: {
-    title: 'QuickTrade | Find Trusted Trade Workers in New Zealand',
+    title: 'QuickTrade | Trade Work & Employment in New Zealand',
     description:
-      'Connect with verified trade workers across Marlborough, Nelson and Wellington. Post a job in 2 minutes.',
+      'Whether you\'re a tradie, a homeowner, looking for work, or looking to hire — QuickTrade connects the right people across New Zealand.',
     url: 'https://quicktrade.co.nz',
     siteName: 'QuickTrade',
     type: 'website',
@@ -42,26 +40,53 @@ const STATS = [
   { label: 'Active Workers', value: '12,000+', icon: Users },
   { label: 'Jobs Completed', value: '45,000+', icon: CheckCircle },
   { label: 'Avg Rating', value: '4.8★', icon: Star },
-  { label: 'Cities Covered', value: '200+', icon: MapPin },
+  { label: 'Regions Covered', value: 'NZ Wide', icon: MapPin },
 ]
 
-const HOW_IT_WORKS_EMPLOYER = [
-  { step: '01', title: 'Post a Job', description: 'Describe what you need, set your budget, and specify the timeline.', icon: FileText },
-  { step: '02', title: 'Review Applicants', description: 'Browse worker profiles, check reviews, and compare proposals.', icon: Users },
-  { step: '03', title: 'Hire & Pay Securely', description: 'Accept a worker, fund escrow, and release payment when done.', icon: CheckCircle },
-]
-
-const HOW_IT_WORKS_WORKER = [
-  { step: '01', title: 'Create Your Profile', description: 'Showcase your skills, certifications, and portfolio.', icon: Crown },
-  { step: '02', title: 'Browse & Apply', description: 'Find jobs that match your skills and submit proposals.', icon: Search },
-  { step: '03', title: 'Work & Get Paid', description: 'Complete the job and receive secure payment instantly.', icon: Zap },
+const PATH_TILES = [
+  {
+    emoji: '🔨',
+    title: "I'm a tradie",
+    description: 'Find local trade jobs, quote clients, get paid safely',
+    cta: 'Find Jobs Near Me',
+    href: '/jobs?path=tradie',
+    accent: 'border-orange-500/40 hover:border-orange-500/70',
+    badge: 'bg-orange-500/10 text-orange-300',
+  },
+  {
+    emoji: '🏠',
+    title: 'I need a tradie',
+    description: 'Post your job and get quotes from verified local tradies',
+    cta: 'Post a Job',
+    href: '/jobs/create?path=client',
+    accent: 'border-sky-500/40 hover:border-sky-500/70',
+    badge: 'bg-sky-500/10 text-sky-300',
+  },
+  {
+    emoji: '👷',
+    title: "I'm looking for work",
+    description: 'Browse part-time, casual and full-time roles near you',
+    cta: 'Browse Jobs',
+    href: '/jobs?path=jobseeker',
+    accent: 'border-emerald-500/40 hover:border-emerald-500/70',
+    badge: 'bg-emerald-500/10 text-emerald-300',
+  },
+  {
+    emoji: '🏢',
+    title: 'I want to hire someone',
+    description: 'Post a role and find the right person for your team',
+    cta: 'Post a Role',
+    href: '/jobs/create?path=employer',
+    accent: 'border-violet-500/40 hover:border-violet-500/70',
+    badge: 'bg-violet-500/10 text-violet-300',
+  },
 ]
 
 const FEATURED_WORKERS = [
-  { name: 'Mike Johnson', skill: 'Master Plumber', rating: 4.9, jobs: 87, location: 'New York, NY', initials: 'MJ', isPremium: true },
-  { name: 'Sarah Chen', skill: 'Licensed Electrician', rating: 4.8, jobs: 124, location: 'Los Angeles, CA', initials: 'SC', isPremium: true },
-  { name: 'Carlos Rivera', skill: 'HVAC Technician', rating: 5.0, jobs: 56, location: 'Chicago, IL', initials: 'CR', isPremium: false },
-  { name: 'Emily Parker', skill: 'Carpenter & Joiner', rating: 4.7, jobs: 203, location: 'Houston, TX', initials: 'EP', isPremium: false },
+  { name: 'James Tahu', skill: 'Master Plumber', rating: 4.9, jobs: 87, location: 'Blenheim, Marlborough', initials: 'JT', isPremium: true },
+  { name: 'Sarah Wilson', skill: 'Licensed Electrician', rating: 4.8, jobs: 124, location: 'Nelson, Tasman', initials: 'SW', isPremium: true },
+  { name: 'Mark Te Hau', skill: 'Builder & Carpenter', rating: 5.0, jobs: 56, location: 'Wellington, Wellington', initials: 'MT', isPremium: false },
+  { name: 'Emily Fraser', skill: 'Landscape Gardener', rating: 4.7, jobs: 203, location: 'Christchurch, Canterbury', initials: 'EF', isPremium: false },
 ]
 
 const PREMIUM_CATEGORIES: CategoryId[] = ['plumbing', 'electrical', 'hvac']
@@ -84,55 +109,32 @@ export default function HomePage() {
             {/* Premium badge */}
             <div className="inline-flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/30 rounded-full px-4 py-1.5 text-sm mb-6">
               <TrendingUp className="h-4 w-4 text-indigo-400" />
-              <span className="text-indigo-300">Trusted by 12,000+ skilled workers</span>
+              <span className="text-indigo-300">Trusted by 12,000+ tradies and workers</span>
             </div>
             <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight text-white">
-              Find Skilled Workers{' '}
-              <span className="platinum-shimmer">Fast</span>
+              New Zealand&apos;s Home for{' '}
+              <span className="platinum-shimmer">Trade Work & Employment</span>
             </h1>
             <p className="text-xl text-slate-400 mb-10 max-w-2xl mx-auto">
-              Connect with verified plumbers, electricians, carpenters, and more. Post a job in
-              minutes, get proposals from skilled tradespeople near you.
+              Whether you&apos;re a tradie, a homeowner, looking for work, or looking to hire — QuickTrade connects the right people.
             </p>
 
-            {/* Search Bar */}
-            <div className="glass-card rounded-2xl p-2 shadow-2xl max-w-2xl mx-auto">
-              <div className="flex flex-col sm:flex-row gap-2">
-                <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-                  <input
-                    type="text"
-                    placeholder="What do you need help with?"
-                    className="w-full pl-10 pr-4 py-3 text-white bg-transparent focus:outline-none text-sm placeholder:text-slate-500"
-                  />
-                </div>
-                <div className="flex-1 relative border-t sm:border-t-0 sm:border-l border-slate-700">
-                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-                  <input
-                    type="text"
-                    placeholder="Your location"
-                    className="w-full pl-10 pr-4 py-3 text-white bg-transparent focus:outline-none text-sm placeholder:text-slate-500"
-                  />
-                </div>
+            {/* 4 Path Tiles */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
+              {PATH_TILES.map((tile) => (
                 <Link
-                  href="/workers"
-                  className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white px-6 py-3 rounded-xl font-bold text-sm transition-all hover:scale-105 shadow-indigo-glow flex items-center justify-center gap-2"
+                  key={tile.title}
+                  href={tile.href}
+                  className={`glass-card rounded-2xl p-6 border ${tile.accent} text-left transition-all hover:scale-[1.02] group`}
                 >
-                  Search
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap justify-center gap-3 mt-6 text-sm text-slate-500">
-              <span>Popular:</span>
-              {['Plumbing', 'Electrical', 'Carpentry', 'HVAC', 'Roofing'].map((cat) => (
-                <Link
-                  key={cat}
-                  href={`/workers?category=${cat.toLowerCase()}`}
-                  className="text-indigo-400/80 hover:text-indigo-300 transition-colors underline underline-offset-2"
-                >
-                  {cat}
+                  <div className={`inline-flex items-center justify-center h-12 w-12 rounded-xl ${tile.badge} text-2xl mb-4`}>
+                    {tile.emoji}
+                  </div>
+                  <h2 className="text-base font-bold text-white mb-2">{tile.title}</h2>
+                  <p className="text-sm text-slate-400 mb-4 leading-relaxed">{tile.description}</p>
+                  <span className="inline-flex items-center gap-1 text-sm font-semibold text-indigo-400 group-hover:text-indigo-300 transition-colors">
+                    {tile.cta} <ArrowRight className="h-3.5 w-3.5" />
+                  </span>
                 </Link>
               ))}
             </div>
@@ -249,66 +251,9 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-white mb-3">How It Works</h2>
-            <p className="text-slate-400">Get started in just a few simple steps</p>
+            <p className="text-slate-400">Pick your path and get started in minutes</p>
           </div>
-          <div className="grid md:grid-cols-2 gap-12">
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
-                <span className="bg-gradient-to-r from-violet-500 to-violet-600 text-white rounded-lg px-3 py-1 text-sm">For Employers</span>
-              </h3>
-              <div className="space-y-6">
-                {HOW_IT_WORKS_EMPLOYER.map(({ step, title, description, icon: StepIcon }) => (
-                  <div key={step} className="flex gap-4">
-                    <div className="flex-shrink-0">
-                      <div className="h-10 w-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
-                        <StepIcon className="h-5 w-5 text-indigo-400" strokeWidth={1.5} />
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-bold text-indigo-400/70 uppercase tracking-wide">{step}</span>
-                        <h4 className="font-semibold text-white">{title}</h4>
-                      </div>
-                      <p className="text-sm text-slate-400">{description}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-8">
-                <GlowButton href="/jobs/create" variant="violet">
-                  Post a Job <ArrowRight className="h-4 w-4" />
-                </GlowButton>
-              </div>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
-                <span className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-lg px-3 py-1 text-sm">For Workers</span>
-              </h3>
-              <div className="space-y-6">
-                {HOW_IT_WORKS_WORKER.map(({ step, title, description, icon: StepIcon }) => (
-                  <div key={step} className="flex gap-4">
-                    <div className="flex-shrink-0">
-                      <div className="h-10 w-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
-                        <StepIcon className="h-5 w-5 text-indigo-400" strokeWidth={1.5} />
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-bold text-indigo-400/70 uppercase tracking-wide">{step}</span>
-                        <h4 className="font-semibold text-white">{title}</h4>
-                      </div>
-                      <p className="text-sm text-slate-400">{description}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-8">
-                <GlowButton href="/auth/register" variant="indigo">
-                  Start Earning <ArrowRight className="h-4 w-4" />
-                </GlowButton>
-              </div>
-            </div>
-          </div>
+          <HowItWorksTabs />
         </div>
       </section>
 
@@ -408,20 +353,26 @@ export default function HomePage() {
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="inline-flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/20 rounded-full px-4 py-1.5 text-sm mb-6">
             <Crown className="h-4 w-4 text-indigo-400" />
-            <span className="text-indigo-400">Premium Platform</span>
+            <span className="text-indigo-400">New Zealand&apos;s Trade & Employment Platform</span>
           </div>
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
             Ready to Get Started?
           </h2>
           <p className="text-slate-400 mb-8 text-lg">
-            Join thousands of workers and employers already using QuickTrade
+            Join thousands of tradies, homeowners, workers and employers already using QuickTrade
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <GlowButton href="/auth/register?role=employer" variant="violet" pulse>
-              Post a Job
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 max-w-3xl mx-auto">
+            <GlowButton href="/jobs?path=tradie" variant="indigo">
+              🔨 Find Jobs Near Me
             </GlowButton>
-            <GlowButton href="/auth/register?role=worker" variant="indigo" pulse>
-              Find Work
+            <GlowButton href="/jobs/create?path=client" variant="violet">
+              🏠 Post a Job
+            </GlowButton>
+            <GlowButton href="/jobs?path=jobseeker" variant="indigo">
+              👷 Browse Roles
+            </GlowButton>
+            <GlowButton href="/jobs/create?path=employer" variant="violet">
+              🏢 Post a Role
             </GlowButton>
           </div>
         </div>
