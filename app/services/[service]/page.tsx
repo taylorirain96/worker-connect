@@ -100,8 +100,8 @@ export default async function ServicePage({ params }: Props) {
     name: service.name,
     aggregateRating: {
       '@type': 'AggregateRating',
-      ratingValue: '4.8',
-      reviewCount: '127',
+      ratingValue: 4.8,
+      reviewCount: 127,
       bestRating: 5,
       worstRating: 1,
     },
