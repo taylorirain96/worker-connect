@@ -100,6 +100,50 @@ const STEPS_WORKER = [
 export default function HowItWorksPage() {
   return (
     <div className="flex flex-col min-h-screen luxury-bg">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'HowTo',
+            name: 'How to hire a tradesperson on QuickTrade',
+            description:
+              'Step-by-step guide to hiring a verified tradesperson in New Zealand using QuickTrade.',
+            step: [
+              {
+                '@type': 'HowToStep',
+                position: 1,
+                name: 'Create an Account',
+                text: 'Sign up as an employer in under 2 minutes. No credit card required.',
+              },
+              {
+                '@type': 'HowToStep',
+                position: 2,
+                name: 'Post Your Job',
+                text: 'Describe the work, set your budget, location, and timeline.',
+              },
+              {
+                '@type': 'HowToStep',
+                position: 3,
+                name: 'Review Applications',
+                text: 'Browse worker profiles, ratings, and proposed rates.',
+              },
+              {
+                '@type': 'HowToStep',
+                position: 4,
+                name: 'Hire with Confidence',
+                text: 'Funds held in escrow until work is completed to your satisfaction.',
+              },
+              {
+                '@type': 'HowToStep',
+                position: 5,
+                name: 'Rate & Review',
+                text: 'Release payment and leave a review to help the community.',
+              },
+            ],
+          }),
+        }}
+      />
       <Navbar />
       <main className="flex-1">
         {/* Hero */}

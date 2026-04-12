@@ -10,6 +10,53 @@ export const metadata: Metadata = {
   },
 }
 
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [
+    {
+      '@type': 'Question',
+      name: 'Is QuickTrade free to use?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Workers can create a free account and apply for jobs. Employers pay a small fee only when they hire. No subscription required to get started.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'How does QuickTrade work for tradespeople?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Create a free profile, browse jobs near you, and apply directly. You only pay a small platform fee when you complete a job.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Is payment secure on QuickTrade?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Yes. All payments are held in escrow and only released to the worker once the employer confirms the job is complete.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'What trades are available on QuickTrade?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'QuickTrade covers plumbing, electrical, carpentry, HVAC, roofing, painting, landscaping, flooring, cleaning, moving, and general handyman work across New Zealand.',
+      },
+    },
+  ],
+}
+
 export default function PricingLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
+      {children}
+    </>
+  )
 }
