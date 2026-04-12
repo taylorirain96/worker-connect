@@ -9,8 +9,7 @@ import { getWeeklyLeaderboard } from '@/lib/leaderboard/firebase'
 import { getWeekId, getWeekBounds, RANK_BONUSES } from '@/lib/leaderboard/rankingLogic'
 import type { LeaderboardEntry } from '@/lib/leaderboard/rankingLogic'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { Trophy, RefreshCw, Calendar, Info } from 'lucide-react'
-import Button from '@/components/ui/Button'
+import { Trophy, RefreshCw } from 'lucide-react'
 
 function formatWeekRange(date: Date = new Date()): string {
   const { start, end } = getWeekBounds(date)
@@ -62,45 +61,56 @@ export default function LeaderboardPage() {
   const rest = filteredEntries.slice(3)
 
   return (
-    <div className="flex flex-col min-h-screen bg-white dark:bg-gray-950">
+    <div className="flex flex-col min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       <Navbar />
-      <main className="flex-1 bg-gradient-to-b from-slate-100 to-gray-50 dark:bg-gray-900">
+      <main className="flex-1">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-          {/* Header */}
-          <div className="flex items-start justify-between mb-6 gap-4 flex-wrap">
-            <div>
-              <div className="flex items-center gap-3 mb-1">
-                <Trophy className="h-7 w-7 text-yellow-500" />
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Leaderboard</h1>
+          {/* Hero section */}
+          <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-3xl mb-8 p-8 text-center shadow-2xl">
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(234,179,8,0.15)_0%,_transparent_70%)] pointer-events-none" />
+            <div className="relative z-10">
+              <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-to-br from-yellow-400 to-yellow-600 shadow-[0_0_30px_rgba(234,179,8,0.5)] mb-4 mx-auto">
+                <Trophy className="h-8 w-8 text-white" />
               </div>
-              <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                <Calendar className="h-4 w-4" />
-                <span>Week {weekId} &nbsp;·&nbsp; {weekRange}</span>
-              </div>
+              <h1 className="text-4xl font-black bg-gradient-to-r from-yellow-300 via-yellow-400 to-yellow-500 bg-clip-text text-transparent mb-2">
+                Leaderboard
+              </h1>
+              <p className="text-slate-400 text-sm">Week {weekId} &nbsp;·&nbsp; {weekRange}</p>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRefresh}
-              loading={refreshing}
-              className="flex items-center gap-2"
-            >
-              <RefreshCw className="h-4 w-4" />
-              Refresh
-            </Button>
           </div>
 
-          {/* Reward info banner */}
-          <div className="mb-6 p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl flex items-start gap-3">
-            <Info className="h-5 w-5 text-indigo-500 dark:text-indigo-400 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-slate-700 dark:text-slate-300 space-y-0.5">
-              <p className="font-semibold">Weekly Rewards — Top 3 each Sunday</p>
-              <p>
-                {RANK_BONUSES[1].label} +{RANK_BONUSES[1].bonusPoints} pts &nbsp;·&nbsp;
-                {RANK_BONUSES[2].label} +{RANK_BONUSES[2].bonusPoints} pts &nbsp;·&nbsp;
-                {RANK_BONUSES[3].label} +{RANK_BONUSES[3].bonusPoints} pts
-              </p>
+          {/* Refresh button */}
+          <div className="flex justify-end mb-6">
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:border-indigo-300 dark:hover:border-indigo-700 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all disabled:opacity-50"
+            >
+              <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
+          </div>
+
+          {/* Reward tier cards */}
+          <div className="grid grid-cols-3 gap-3 mb-8">
+            {/* Gold */}
+            <div className="rounded-2xl border border-yellow-400/40 bg-gradient-to-b from-yellow-50 to-white dark:from-yellow-900/20 dark:to-slate-900 p-4 text-center shadow-[0_0_20px_rgba(234,179,8,0.15)]">
+              <div className="text-2xl mb-1">🥇</div>
+              <p className="font-bold text-yellow-600 dark:text-yellow-400 text-sm">Champion</p>
+              <p className="text-xs text-slate-500">+{RANK_BONUSES[1].bonusPoints} bonus pts</p>
+            </div>
+            {/* Silver */}
+            <div className="rounded-2xl border border-slate-400/40 bg-gradient-to-b from-slate-50 to-white dark:from-slate-700/20 dark:to-slate-900 p-4 text-center shadow-[0_0_20px_rgba(148,163,184,0.2)]">
+              <div className="text-2xl mb-1">🥈</div>
+              <p className="font-bold text-slate-500 dark:text-slate-300 text-sm">Runner-up</p>
+              <p className="text-xs text-slate-500">+{RANK_BONUSES[2].bonusPoints} bonus pts</p>
+            </div>
+            {/* Bronze */}
+            <div className="rounded-2xl border border-orange-400/40 bg-gradient-to-b from-orange-50 to-white dark:from-orange-900/20 dark:to-slate-900 p-4 text-center shadow-[0_0_20px_rgba(251,146,60,0.15)]">
+              <div className="text-2xl mb-1">🥉</div>
+              <p className="font-bold text-orange-500 dark:text-orange-400 text-sm">Rising Star</p>
+              <p className="text-xs text-slate-500">+{RANK_BONUSES[3].bonusPoints} bonus pts</p>
             </div>
           </div>
 
@@ -138,8 +148,10 @@ export default function LeaderboardPage() {
               {/* Podium — top 3 */}
               {topThree.length > 0 && (
                 <div>
-                  <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+                  <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <span className="flex-1 h-px bg-gradient-to-r from-transparent to-slate-200 dark:to-slate-700" />
                     Top Performers
+                    <span className="flex-1 h-px bg-gradient-to-l from-transparent to-slate-200 dark:to-slate-700" />
                   </h2>
                   <div className="space-y-2">
                     {topThree.map((entry) => (
@@ -156,8 +168,10 @@ export default function LeaderboardPage() {
               {/* Rest of top 10 */}
               {rest.length > 0 && (
                 <div>
-                  <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+                  <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <span className="flex-1 h-px bg-gradient-to-r from-transparent to-slate-200 dark:to-slate-700" />
                     Rankings
+                    <span className="flex-1 h-px bg-gradient-to-l from-transparent to-slate-200 dark:to-slate-700" />
                   </h2>
                   <div className="space-y-2">
                     {rest.map((entry) => (

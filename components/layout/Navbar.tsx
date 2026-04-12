@@ -9,7 +9,6 @@ import { useRouter } from 'next/navigation'
 import { getInitials } from '@/lib/utils'
 import NotificationCenter from '@/components/notifications/NotificationCenter'
 import { onUnreadMessagesCount } from '@/lib/messaging'
-import DualRoleToggle from '@/components/ui/DualRoleToggle'
 import { useRole } from '@/context/RoleContext'
 
 export default function Navbar() {
@@ -51,7 +50,7 @@ export default function Navbar() {
             </span>
           </Link>
 
-          <div className="hidden md:flex items-center space-x-6">
+          <div className="hidden md:flex items-center space-x-4">
             {isWorker && (
               <>
                 <Link href="/jobs" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
@@ -64,14 +63,11 @@ export default function Navbar() {
             )}
             {isEmployer && (
               <>
-                <Link href="/jobs/create" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
-                  Post a Job
-                </Link>
                 <Link href="/workers" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
                   Find Workers
                 </Link>
                 <Link href="/jobs" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
-                  Manage Listings
+                  Listings
                 </Link>
               </>
             )}
@@ -81,15 +77,20 @@ export default function Navbar() {
             <Link href="/leaderboard" className="flex items-center gap-1.5 text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
               <Trophy className="h-4 w-4 text-yellow-900 drop-shadow-[0_0_4px_rgba(234,179,8,0.7)]" /> Leaderboard
             </Link>
-            <Link href="/how-it-works" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
-              How It Works
-            </Link>
             <Link href="/pricing" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
               Pricing
             </Link>
           </div>
 
           <div className="flex items-center space-x-2">
+            {isEmployer && (
+              <Link
+                href="/jobs/create"
+                className="hidden md:inline-flex items-center bg-orange-500 hover:bg-orange-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+              >
+                Post a Job
+              </Link>
+            )}
             <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
               className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -97,8 +98,6 @@ export default function Navbar() {
             >
               {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </button>
-
-            {user && <DualRoleToggle />}
 
             {user ? (
               <div className="flex items-center space-x-2">
@@ -259,7 +258,7 @@ export default function Navbar() {
                     Find Workers
                   </Link>
                   <Link href="/jobs" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 px-3 py-2 rounded-lg transition-colors" onClick={() => setMenuOpen(false)}>
-                    Manage Listings
+                    Listings
                   </Link>
                 </>
               )}
@@ -268,9 +267,6 @@ export default function Navbar() {
               </Link>
               <Link href="/leaderboard" className="flex items-center gap-1.5 text-gray-600 dark:text-gray-300 hover:text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 px-3 py-2 rounded-lg transition-colors" onClick={() => setMenuOpen(false)}>
                 <Trophy className="h-4 w-4 text-yellow-900 drop-shadow-[0_0_4px_rgba(234,179,8,0.7)]" /> Leaderboard
-              </Link>
-              <Link href="/how-it-works" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 px-3 py-2 rounded-lg transition-colors" onClick={() => setMenuOpen(false)}>
-                How It Works
               </Link>
               <Link href="/pricing" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 px-3 py-2 rounded-lg transition-colors" onClick={() => setMenuOpen(false)}>
                 Pricing
@@ -287,9 +283,6 @@ export default function Navbar() {
               )}
               {user && (
                 <div className="pt-3 border-t border-gray-200 dark:border-gray-700 space-y-1">
-                  <div className="px-3 pb-2">
-                    <DualRoleToggle />
-                  </div>
                   <Link href="/dashboard" className="block px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg" onClick={() => setMenuOpen(false)}>Dashboard</Link>
                   {isWorker && (
                     <Link href="/timesheets" className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg" onClick={() => setMenuOpen(false)}>
