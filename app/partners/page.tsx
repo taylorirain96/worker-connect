@@ -2,13 +2,14 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
+import { SITE_URL } from '@/lib/seo/config'
 
 export const metadata: Metadata = {
   title: 'Partner with QuickTrade | QuickTrade NZ',
   description:
     "Become a QuickTrade partner. Get listed on New Zealand's trusted services marketplace and earn a verified partner badge for your website.",
   alternates: {
-    canonical: 'https://quicktrade.co.nz/partners',
+    canonical: `${SITE_URL}/partners`,
   },
 }
 

@@ -4,8 +4,7 @@ import Script from 'next/script'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { SERVICES } from '@/lib/seo/servicesData'
-
-const SITE_URL = 'https://quicktrade.co.nz'
+import { SITE_URL } from '@/lib/seo/config'
 
 export const metadata: Metadata = {
   title: 'Services | QuickTrade NZ',

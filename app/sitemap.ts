@@ -1,7 +1,8 @@
 import type { MetadataRoute } from 'next'
 import { SERVICES, LOCATIONS } from '@/lib/seo/servicesData'
+import { SITE_URL } from '@/lib/seo/config'
 
-const BASE = 'https://quicktrade.co.nz'
+const BASE = SITE_URL
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date().toISOString()
