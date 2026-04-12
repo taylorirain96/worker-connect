@@ -246,8 +246,8 @@ const FAQS = [
     a: "Yes! Workers earn credits by completing jobs, achieving milestones, and maintaining streaks. Credits can only be spent on QuickTrade platform features like profile boosts and add-ons — they can't be withdrawn as cash.",
   },
   {
-    q: "What's the difference between gig work and recruitment pricing?",
-    a: "Gig work is one-off jobs completed through the platform — you pay a posting fee and the worker pays a small commission from their earnings. Recruitment is for hiring someone full-time or long-term — you pay a flat posting fee plus a success fee only if you hire someone.",
+    q: "What's the difference between a one-off job and hiring full-time?",
+    a: "A one-off job is completed through the platform — you pay a posting fee and the worker pays a small commission from their earnings. Hiring full-time is for bringing someone on long-term — you pay a flat posting fee plus a success fee only if you hire someone.",
   },
 ]
 
@@ -289,8 +289,7 @@ export default function PricingPage() {
               </span>
             </h1>
             <p className="text-lg text-slate-400 max-w-2xl mx-auto mb-10">
-              Multiple revenue tracks — gig work, recruitment, subscriptions, add-ons — built so
-              everyone pays fairly for exactly what they get.
+              Whether you need a sparky for the weekend or a full-time builder — or you are one — pricing is simple, fair, and built for New Zealand.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-6 text-slate-300 text-sm font-medium">
               <span className="flex items-center gap-1.5">
@@ -298,7 +297,7 @@ export default function PricingPage() {
               </span>
               <span className="text-slate-600">·</span>
               <span className="flex items-center gap-1.5">
-                <Briefcase className="h-4 w-4 text-indigo-400" /> Employers pay to post
+                <Briefcase className="h-4 w-4 text-indigo-400" /> Post any job, any size
               </span>
               <span className="text-slate-600">·</span>
               <span className="flex items-center gap-1.5">
@@ -337,14 +336,14 @@ export default function PricingPage() {
           </div>
         </section>
 
-        {/* ── Section 1: Gig Work Pricing ── */}
-        <section className="py-16 px-4" id="gig">
+        {/* ── Section 1: One-off Job Pricing ── */}
+        <section className="py-16 px-4" id="one-off">
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-10">
               <span className="border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 rounded-full px-4 py-1.5 text-sm font-medium inline-flex items-center gap-2">
-                <Briefcase className="h-4 w-4" /> Gig Work — One-off Jobs
+                <Briefcase className="h-4 w-4" /> One-off Jobs
               </span>
-              <h2 className="text-3xl font-bold text-white mt-4 mb-2">Post a Gig Job</h2>
+              <h2 className="text-3xl font-bold text-white mt-4 mb-2">Post a Job</h2>
               <p className="text-slate-400 max-w-xl mx-auto">
                 Need something done? One small fee to reach hundreds of vetted workers.
               </p>
@@ -381,7 +380,7 @@ export default function PricingPage() {
             </div>
 
             <div className="rounded-2xl bg-slate-900/70 border border-slate-700/50 p-6 sm:p-8">
-              <h3 className="text-white font-semibold mb-4">Every gig post includes:</h3>
+              <h3 className="text-white font-semibold mb-4">Every job post includes:</h3>
               <ul className="grid sm:grid-cols-2 gap-3">
                 {GIG_INCLUDES.map((item) => (
                   <li key={item} className="flex items-center gap-2 text-sm text-slate-300">
@@ -394,16 +393,16 @@ export default function PricingPage() {
           </div>
         </section>
 
-        {/* ── Section 2: Employer Subscriptions ── */}
+        {/* ── Section 2: Posting Jobs Regularly / Subscriptions ── */}
         <section className="py-16 px-4 bg-slate-800/30" id="subscriptions">
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-10">
               <span className="border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 rounded-full px-4 py-1.5 text-sm font-medium inline-flex items-center gap-2">
-                <Building2 className="h-4 w-4" /> Employer Subscriptions
+                <Building2 className="h-4 w-4" /> Posting Jobs Regularly?
               </span>
-              <h2 className="text-3xl font-bold text-white mt-4 mb-2">For Regular Hirers</h2>
+              <h2 className="text-3xl font-bold text-white mt-4 mb-2">For Businesses & Regular Hirers</h2>
               <p className="text-slate-400 max-w-xl mx-auto">
-                Post as often as you need. Subscription plans are optional — they make sense once you&apos;re hiring regularly.
+                Post as often as you need. Subscription plans are optional — they make sense once you&apos;re posting jobs regularly.
               </p>
             </div>
 
@@ -683,7 +682,7 @@ export default function PricingPage() {
               <div className="rounded-2xl bg-slate-900/70 border border-slate-700/50 overflow-hidden">
                 <div className="px-6 py-4 border-b border-slate-700/50 bg-slate-800/50">
                   <h3 className="text-white font-semibold flex items-center gap-2">
-                    <Building2 className="h-4 w-4 text-indigo-400" /> For Employers
+                    <Building2 className="h-4 w-4 text-indigo-400" /> For People Posting Jobs
                   </h3>
                 </div>
                 <div className="divide-y divide-slate-700/30">
