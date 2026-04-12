@@ -49,7 +49,7 @@ const PATH_TILES = [
     title: "I'm a tradie",
     description: 'Find local trade jobs, quote clients, get paid safely',
     cta: 'Find Jobs Near Me',
-    href: '/jobs',
+    href: '/jobs?path=tradie',
     accent: 'border-orange-500/40 hover:border-orange-500/70',
     badge: 'bg-orange-500/10 text-orange-300',
   },
@@ -58,7 +58,7 @@ const PATH_TILES = [
     title: 'I need a tradie',
     description: 'Post your job and get quotes from verified local tradies',
     cta: 'Post a Job',
-    href: '/jobs/create',
+    href: '/jobs/create?path=client',
     accent: 'border-sky-500/40 hover:border-sky-500/70',
     badge: 'bg-sky-500/10 text-sky-300',
   },
@@ -67,7 +67,7 @@ const PATH_TILES = [
     title: "I'm looking for work",
     description: 'Browse part-time, casual and full-time roles near you',
     cta: 'Browse Jobs',
-    href: '/jobs',
+    href: '/jobs?path=jobseeker',
     accent: 'border-emerald-500/40 hover:border-emerald-500/70',
     badge: 'bg-emerald-500/10 text-emerald-300',
   },
@@ -76,7 +76,7 @@ const PATH_TILES = [
     title: 'I want to hire someone',
     description: 'Post a role and find the right person for your team',
     cta: 'Post a Role',
-    href: '/jobs/create',
+    href: '/jobs/create?path=employer',
     accent: 'border-violet-500/40 hover:border-violet-500/70',
     badge: 'bg-violet-500/10 text-violet-300',
   },
@@ -84,7 +84,7 @@ const PATH_TILES = [
 
 const FEATURED_WORKERS = [
   { name: 'James Tahu', skill: 'Master Plumber', rating: 4.9, jobs: 87, location: 'Blenheim, Marlborough', initials: 'JT', isPremium: true },
-  { name: 'Sarah Wilson', skill: 'Licensed Electrician', rating: 4.8, jobs: 124, location: 'Nelson, Nelson', initials: 'SW', isPremium: true },
+  { name: 'Sarah Wilson', skill: 'Licensed Electrician', rating: 4.8, jobs: 124, location: 'Nelson, Tasman', initials: 'SW', isPremium: true },
   { name: 'Mark Te Hau', skill: 'Builder & Carpenter', rating: 5.0, jobs: 56, location: 'Wellington, Wellington', initials: 'MT', isPremium: false },
   { name: 'Emily Fraser', skill: 'Landscape Gardener', rating: 4.7, jobs: 203, location: 'Christchurch, Canterbury', initials: 'EF', isPremium: false },
 ]
@@ -362,16 +362,16 @@ export default function HomePage() {
             Join thousands of tradies, homeowners, workers and employers already using QuickTrade
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 max-w-3xl mx-auto">
-            <GlowButton href="/jobs" variant="indigo">
+            <GlowButton href="/jobs?path=tradie" variant="indigo">
               🔨 Find Jobs Near Me
             </GlowButton>
-            <GlowButton href="/jobs/create" variant="violet">
+            <GlowButton href="/jobs/create?path=client" variant="violet">
               🏠 Post a Job
             </GlowButton>
-            <GlowButton href="/jobs" variant="indigo">
+            <GlowButton href="/jobs?path=jobseeker" variant="indigo">
               👷 Browse Roles
             </GlowButton>
-            <GlowButton href="/jobs/create" variant="violet">
+            <GlowButton href="/jobs/create?path=employer" variant="violet">
               🏢 Post a Role
             </GlowButton>
           </div>

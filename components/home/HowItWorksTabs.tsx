@@ -32,7 +32,7 @@ const PATHS = [
         icon: Zap,
       },
     ],
-    cta: { label: 'Find Jobs Near Me', href: '/jobs' },
+    cta: { label: 'Find Jobs Near Me', href: '/jobs?path=tradie' },
     ctaVariant: 'indigo' as const,
   },
   {
@@ -62,7 +62,7 @@ const PATHS = [
         icon: CheckCircle,
       },
     ],
-    cta: { label: 'Post a Job', href: '/jobs/create' },
+    cta: { label: 'Post a Job', href: '/jobs/create?path=client' },
     ctaVariant: 'violet' as const,
   },
   {
@@ -92,7 +92,7 @@ const PATHS = [
         icon: UserCheck,
       },
     ],
-    cta: { label: 'Browse Jobs', href: '/jobs' },
+    cta: { label: 'Browse Jobs', href: '/jobs?path=jobseeker' },
     ctaVariant: 'indigo' as const,
   },
   {
@@ -122,7 +122,7 @@ const PATHS = [
         icon: CheckCircle,
       },
     ],
-    cta: { label: 'Post a Role', href: '/jobs/create' },
+    cta: { label: 'Post a Role', href: '/jobs/create?path=employer' },
     ctaVariant: 'violet' as const,
   },
 ]
