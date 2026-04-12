@@ -1,7 +1,6 @@
 import type { ServiceDefinition } from './services'
 import type { NZRegion } from './regions'
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://quicktrade.co.nz'
+import { SITE_URL } from './config'
 
 /**
  * CollectionPage / WebPage JSON-LD for /services/[service]

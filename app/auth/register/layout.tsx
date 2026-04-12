@@ -1,9 +1,11 @@
 import type { Metadata } from 'next'
+import { SITE_URL } from '@/lib/seo/config'
 
 export const metadata: Metadata = {
-  title: 'Sign Up | QuickTrade',
+  title: 'Create Your Free Account | QuickTrade NZ',
   description:
-    'Create your free QuickTrade account. Find work as a tradesperson or hire verified workers across New Zealand.',
+    'Join QuickTrade for free. Sign up as a tradesperson to find work, or as a business to hire verified local workers across New Zealand.',
+  alternates: { canonical: `${SITE_URL}/auth/register` },
 }
 
 export default function RegisterLayout({ children }: { children: React.ReactNode }) {

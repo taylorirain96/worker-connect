@@ -7,8 +7,7 @@ import Footer from '@/components/layout/Footer'
 import { SERVICES, getService } from '@/lib/seo/services'
 import { NZ_REGIONS, getNZRegion, COUNTRY_NAMES } from '@/lib/seo/regions'
 import { buildServiceLocationJsonLd } from '@/lib/seo/jsonld'
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://quicktrade.co.nz'
+import { SITE_URL } from '@/lib/seo/config'
 
 interface Props {
   params: Promise<{ service: string; country: string; region: string }>

@@ -1,3 +1,5 @@
+import type { Metadata } from 'next'
+import { SITE_URL } from '@/lib/seo/config'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import Link from 'next/link'
@@ -14,6 +16,20 @@ import {
   DollarSign,
   Shield,
 } from 'lucide-react'
+
+export const metadata: Metadata = {
+  title: 'How QuickTrade Works | Find & Hire Tradespeople in NZ',
+  description:
+    'Learn how QuickTrade connects homeowners and businesses with verified tradespeople across New Zealand. Post a job, receive quotes, hire with confidence.',
+  alternates: { canonical: `${SITE_URL}/how-it-works` },
+  openGraph: {
+    title: 'How QuickTrade Works | Find & Hire Tradespeople in NZ',
+    description:
+      'Learn how QuickTrade connects homeowners and businesses with verified tradespeople across New Zealand. Post a job, receive quotes, hire with confidence.',
+    url: `${SITE_URL}/how-it-works`,
+    type: 'website',
+  },
+}
 
 const STEPS_EMPLOYER = [
   {

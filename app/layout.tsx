@@ -10,12 +10,20 @@ import { GoogleAnalytics } from '@next/third-parties/google'
 const SupportChatbot = dynamic(() => import('@/components/chat/SupportChatbot'), { ssr: false })
 
 export const metadata: Metadata = {
-  title: 'QuickTrade | Find Trusted Trade Workers in New Zealand',
+  title: {
+    default: 'QuickTrade | Find Trusted Trade Workers in New Zealand',
+    template: '%s | QuickTrade NZ',
+  },
   description:
-    'QuickTrade connects Marlborough, Nelson and Wellington businesses with verified, reviewed trade workers. Hire electricians, plumbers, builders and more — fast.',
+    "QuickTrade is New Zealand's trusted marketplace for local tradespeople. Hire verified plumbers, electricians, builders, cleaners and more — fast, safe, and affordable.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'https://quicktrade-pi.vercel.app'),
   alternates: {
     canonical: '/',
+  },
+  openGraph: {
+    siteName: 'QuickTrade NZ',
+    type: 'website',
+    locale: 'en_NZ',
   },
   verification: {
     google: 'enRA8wPdrXeyGokwFwib3l91iwklLPAdCdLruIhLJJc',

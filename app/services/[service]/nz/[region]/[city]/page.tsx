@@ -11,8 +11,7 @@ import {
   getLocation,
   getNearbyLocations,
 } from '@/lib/seo/servicesData'
-
-const SITE_URL = 'https://quicktrade.co.nz'
+import { SITE_URL } from '@/lib/seo/config'
 
 interface Props {
   params: Promise<{ service: string; region: string; city: string }>

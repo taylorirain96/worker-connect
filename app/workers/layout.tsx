@@ -1,11 +1,18 @@
 import type { Metadata } from 'next'
+import { SITE_URL } from '@/lib/seo/config'
 
 export const metadata: Metadata = {
-  title: 'Hire Trade Workers in New Zealand | QuickTrade',
+  title: 'Find Verified Trade Workers in New Zealand | QuickTrade',
   description:
-    'Find and hire verified trade workers in Marlborough, Nelson, Blenheim and Wellington. Browse worker profiles, read reviews and hire in minutes.',
-  keywords:
-    'hire trade workers NZ, tradesperson Marlborough, electrician for hire Nelson, plumber Blenheim, builder Wellington',
+    'Browse skilled tradespeople across New Zealand — plumbers, electricians, builders, cleaners and more. Verified profiles, real reviews, secure payments.',
+  alternates: { canonical: `${SITE_URL}/workers` },
+  openGraph: {
+    title: 'Find Verified Trade Workers in New Zealand | QuickTrade',
+    description:
+      'Browse skilled tradespeople across New Zealand — plumbers, electricians, builders, cleaners and more. Verified profiles, real reviews, secure payments.',
+    url: `${SITE_URL}/workers`,
+    type: 'website',
+  },
 }
 
 export default function WorkersLayout({ children }: { children: React.ReactNode }) {

@@ -2,13 +2,14 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
+import { SITE_URL } from '@/lib/seo/config'
 
 export const metadata: Metadata = {
   title: 'Press & Media | QuickTrade',
   description:
     "QuickTrade press resources, founder story, brand assets, and media contact. New Zealand's trusted services marketplace, founded in Blenheim.",
   alternates: {
-    canonical: 'https://quicktrade.co.nz/press',
+    canonical: `${SITE_URL}/press`,
   },
 }
 
