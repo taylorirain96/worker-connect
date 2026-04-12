@@ -33,6 +33,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en-NZ" suppressHydrationWarning>
+      <head>
+        <link rel="preconnect" href="https://firestore.googleapis.com" />
+        <link rel="preconnect" href="https://identitytoolkit.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      </head>
       <body className="font-sans bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <AuthProvider>
@@ -43,6 +48,36 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </RoleProvider>
           </AuthProvider>
         </ThemeProvider>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@graph": [
+                {
+                  "@type": "Organization",
+                  "@id": "https://quicktrade-pi.vercel.app/#organization",
+                  "name": "QuickTrade",
+                  "url": "https://quicktrade-pi.vercel.app",
+                  "description": "New Zealand's trusted marketplace for local tradespeople. Hire verified plumbers, electricians, builders, cleaners and more.",
+                  "areaServed": { "@type": "Country", "name": "New Zealand" }
+                },
+                {
+                  "@type": "WebSite",
+                  "@id": "https://quicktrade-pi.vercel.app/#website",
+                  "url": "https://quicktrade-pi.vercel.app",
+                  "name": "QuickTrade NZ",
+                  "publisher": { "@id": "https://quicktrade-pi.vercel.app/#organization" },
+                  "potentialAction": {
+                    "@type": "SearchAction",
+                    "target": { "@type": "EntryPoint", "urlTemplate": "https://quicktrade-pi.vercel.app/search?q={search_term_string}" },
+                    "query-input": "required name=search_term_string"
+                  }
+                }
+              ]
+            })
+          }}
+        />
       </body>
       <GoogleAnalytics gaId="G-VNY47FMBTR" />
     </html>
