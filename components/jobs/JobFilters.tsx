@@ -68,7 +68,7 @@ export default function JobFilters({ filters, onChange, onReset }: JobFiltersPro
         >
           <option value="">All Categories</option>
           {JOB_CATEGORIES.map((cat) => (
-            <option key={cat.id} value={cat.id}>{cat.icon} {cat.label}</option>
+            <option key={cat.id} value={cat.id}>{cat.label}</option>
           ))}
         </select>
       </div>

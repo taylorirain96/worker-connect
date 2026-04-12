@@ -264,7 +264,7 @@ export default function CreateJobPage() {
                   >
                     <option value="">Select a category</option>
                     {JOB_CATEGORIES.map((cat) => (
-                      <option key={cat.id} value={cat.id}>{cat.icon} {cat.label}</option>
+                      <option key={cat.id} value={cat.id}>{cat.label}</option>
                     ))}
                   </select>
                   {errors.category && <p className="mt-1 text-sm text-red-600">{errors.category.message}</p>}

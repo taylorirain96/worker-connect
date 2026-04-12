@@ -15,8 +15,6 @@ interface LeaderboardCardProps {
   isCurrentUser?: boolean
 }
 
-const RANK_MEDAL: Record<number, string> = { 1: '🥇', 2: '🥈', 3: '🥉' }
-
 function TrendIcon({ trend }: { trend: LeaderboardEntry['trend'] }) {
   if (trend === 'up') return <TrendingUp className="h-4 w-4 text-green-500" />
   if (trend === 'down') return <TrendingDown className="h-4 w-4 text-red-500" />
@@ -24,34 +22,81 @@ function TrendIcon({ trend }: { trend: LeaderboardEntry['trend'] }) {
   return <span className="text-xs font-medium text-blue-500">NEW</span>
 }
 
+function RankBadge({ rank }: { rank: number }) {
+  if (rank === 1) {
+    return (
+      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-yellow-300 to-yellow-500 shadow-[0_0_12px_rgba(234,179,8,0.6)] flex items-center justify-center text-white font-black text-sm flex-shrink-0">
+        1
+      </div>
+    )
+  }
+  if (rank === 2) {
+    return (
+      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-slate-300 to-slate-500 shadow-[0_0_12px_rgba(148,163,184,0.5)] flex items-center justify-center text-white font-black text-sm flex-shrink-0">
+        2
+      </div>
+    )
+  }
+  if (rank === 3) {
+    return (
+      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-orange-300 to-orange-500 shadow-[0_0_12px_rgba(251,146,60,0.4)] flex items-center justify-center text-white font-black text-sm flex-shrink-0">
+        3
+      </div>
+    )
+  }
+  return (
+    <div className="h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 font-bold text-sm flex-shrink-0">
+      {rank}
+    </div>
+  )
+}
+
+function cardBorderClass(rank: number, isCurrentUser: boolean): string {
+  if (isCurrentUser) {
+    return 'ring-1 ring-indigo-400/50 border-indigo-200 dark:border-indigo-500/30 shadow-[0_4px_30px_rgba(99,102,241,0.2)]'
+  }
+  if (rank === 1) {
+    return 'ring-1 ring-yellow-400/50 border-yellow-200/60 dark:border-yellow-500/20 shadow-[0_4px_30px_rgba(234,179,8,0.2)] dark:shadow-[0_4px_30px_rgba(234,179,8,0.15)]'
+  }
+  if (rank === 2) {
+    return 'ring-1 ring-slate-400/50 border-slate-200/60 dark:border-slate-500/20 shadow-[0_4px_30px_rgba(148,163,184,0.2)]'
+  }
+  if (rank === 3) {
+    return 'ring-1 ring-orange-400/40 border-orange-200/60 dark:border-orange-500/20 shadow-[0_4px_30px_rgba(251,146,60,0.15)]'
+  }
+  return 'ring-1 ring-black/5 dark:ring-white/5 border-gray-200 dark:border-gray-800 shadow-[0_2px_20px_rgba(0,0,0,0.08)] dark:shadow-[0_2px_20px_rgba(0,0,0,0.4)]'
+}
+
+function pointsClass(rank: number): string {
+  const base = 'text-lg font-bold'
+  if (rank === 1) return `${base} bg-gradient-to-r from-yellow-500 to-yellow-600 bg-clip-text text-transparent`
+  if (rank === 2) return `${base} bg-gradient-to-r from-slate-400 to-slate-600 bg-clip-text text-transparent`
+  if (rank === 3) return `${base} bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent`
+  return `${base} text-slate-900 dark:text-white`
+}
+
+function badgePillClass(rank: number): string {
+  const base = 'text-xs px-2 py-0.5 rounded-full border'
+  if (rank === 1) return `${base} bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 border-yellow-200/60 dark:border-yellow-700/30`
+  if (rank === 2) return `${base} bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-slate-600/30`
+  if (rank === 3) return `${base} bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 border-orange-200/60 dark:border-orange-700/30`
+  return 'text-xs bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400 px-2 py-0.5 rounded-full'
+}
+
 export default function LeaderboardCard({ entry, isCurrentUser = false }: LeaderboardCardProps) {
-  const medal = RANK_MEDAL[entry.rank]
   const bonus = entry.rank <= 3 ? RANK_BONUSES[entry.rank as 1 | 2 | 3] : null
   const categoryInfo = JOB_CATEGORIES.find((c) => c.id === entry.category)
-  const isTopThree = entry.rank <= 3
 
   return (
     <Link href={`/workers/${entry.userId}`} className="block">
       <div
         className={[
-          'flex items-center gap-4 p-4 rounded-xl border transition-all hover:shadow-md',
-          isCurrentUser
-            ? 'border-primary-400 bg-primary-50 dark:bg-primary-900/20 dark:border-primary-600'
-            : isTopThree
-            ? 'border-indigo-200/60 bg-indigo-50/30 dark:bg-indigo-950/10 dark:border-indigo-800/30 hover:shadow-sm'
-            : 'border-gray-200 bg-white dark:bg-gray-900 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-600',
+          'flex items-center gap-4 p-4 rounded-2xl border bg-white dark:bg-slate-900 transition-all hover:-translate-y-0.5 hover:shadow-[0_4px_30px_rgba(0,0,0,0.15)] dark:hover:shadow-[0_4px_30px_rgba(0,0,0,0.6)]',
+          cardBorderClass(entry.rank, isCurrentUser),
         ].join(' ')}
       >
-        {/* Rank */}
-        <div className="w-10 flex-shrink-0 text-center">
-          {medal ? (
-            <span className="text-2xl">{medal}</span>
-          ) : (
-            <span className="text-lg font-bold text-gray-500 dark:text-gray-400">
-              #{entry.rank}
-            </span>
-          )}
-        </div>
+        {/* Rank badge */}
+        <RankBadge rank={entry.rank} />
 
         {/* Avatar */}
         <div className="relative flex-shrink-0">
@@ -67,9 +112,6 @@ export default function LeaderboardCard({ entry, isCurrentUser = false }: Leader
             <div className="h-11 w-11 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white text-sm font-bold">
               {getInitials(entry.displayName || 'W')}
             </div>
-          )}
-          {isTopThree && (
-            <span className="absolute -bottom-1 -right-1 text-sm">{medal}</span>
           )}
         </div>
 
@@ -116,7 +158,7 @@ export default function LeaderboardCard({ entry, isCurrentUser = false }: Leader
                   <span
                     key={b}
                     title={def.description}
-                    className="text-xs bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400 px-2 py-0.5 rounded-full"
+                    className={badgePillClass(entry.rank)}
                   >
                     {def.icon} {def.label}
                   </span>
@@ -128,7 +170,7 @@ export default function LeaderboardCard({ entry, isCurrentUser = false }: Leader
 
         {/* Stats */}
         <div className="flex-shrink-0 text-right space-y-1">
-          <p className="text-lg font-bold text-gray-900 dark:text-white">
+          <p className={pointsClass(entry.rank)}>
             {entry.weeklyPoints.toLocaleString()} <span className="text-xs font-normal text-gray-500">pts</span>
           </p>
           <div className="flex items-center gap-1 justify-end text-xs text-gray-500 dark:text-gray-400">
