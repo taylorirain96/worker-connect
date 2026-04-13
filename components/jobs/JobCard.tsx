@@ -37,7 +37,7 @@ export default function JobCard({ job }: JobCardProps) {
             </div>
           </div>
           <div className="flex flex-col items-end gap-1 flex-shrink-0">
-            <Badge variant={job.status === 'open' ? 'success' : job.status === 'in_progress' ? 'info' : 'default'}>
+            <Badge variant={job.status === 'open' ? 'success' : job.status === 'in_progress' ? 'info' : job.status === 'completed' ? 'success' : 'default'}>
               {status?.label}
             </Badge>
             {isUrgent && (

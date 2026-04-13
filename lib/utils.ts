@@ -111,7 +111,7 @@ export const URGENCY_LABELS: Record<string, { label: string; color: string }> = 
 export const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   open: { label: 'Open', color: 'bg-indigo-500/15 text-indigo-300' },
   in_progress: { label: 'In Progress', color: 'bg-slate-500/20 text-slate-300' },
-  completed: { label: 'Completed', color: 'bg-slate-700/50 text-slate-400' },
+  completed: { label: 'Completed ✓', color: 'bg-green-500/15 text-green-400' },
   cancelled: { label: 'Cancelled', color: 'bg-slate-700/50 text-slate-400' },
   pending: { label: 'Pending', color: 'bg-slate-500/20 text-slate-300' },
   accepted: { label: 'Accepted', color: 'bg-indigo-500/15 text-indigo-300' },
