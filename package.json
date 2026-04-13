@@ -10,9 +10,9 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
-    "@mdx-js/loader": "latest",
-    "@mdx-js/react": "latest",
-    "@next/mdx": "latest",
+    "@mdx-js/loader": "^3.1.1",
+    "@mdx-js/react": "^3.1.1",
+    "@next/mdx": "^16.2.3",
     "@next/third-parties": "^16.2.3",
     "@stripe/react-stripe-js": "^2.8.1",
     "@stripe/stripe-js": "^4.8.0",
@@ -29,7 +29,7 @@
     "react-hook-form": "^7.54.0",
     "react-hot-toast": "^2.4.1",
     "recharts": "^3.8.1",
-    "remark-gfm": "latest",
+    "remark-gfm": "^4.0.1",
     "resend": "^6.10.0",
     "stripe": "^16.12.0",
     "tailwind-merge": "^2.6.0",
@@ -37,7 +37,7 @@
     "zustand": "^5.0.1"
   },
   "devDependencies": {
-    "@tailwindcss/typography": "latest",
+    "@tailwindcss/typography": "^0.5.19",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
