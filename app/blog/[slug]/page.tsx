@@ -18,6 +18,26 @@ const mdxModules: Record<string, () => Promise<{ default: React.ComponentType }>
     import('@/content/blog/best-electricians-auckland.mdx'),
   'how-to-hire-a-builder-new-zealand': () =>
     import('@/content/blog/how-to-hire-a-builder-new-zealand.mdx'),
+  'heat-pump-installation-cost-nz': () =>
+    import('@/content/blog/heat-pump-installation-cost-nz.mdx'),
+  'house-cleaning-cost-nz': () =>
+    import('@/content/blog/house-cleaning-cost-nz.mdx'),
+  'roof-repair-cost-nz': () =>
+    import('@/content/blog/roof-repair-cost-nz.mdx'),
+  'painters-wellington': () =>
+    import('@/content/blog/painters-wellington.mdx'),
+  'plumbers-christchurch': () =>
+    import('@/content/blog/plumbers-christchurch.mdx'),
+  'landscaping-cost-nz': () =>
+    import('@/content/blog/landscaping-cost-nz.mdx'),
+  'electricians-hamilton': () =>
+    import('@/content/blog/electricians-hamilton.mdx'),
+  'handyman-services-auckland': () =>
+    import('@/content/blog/handyman-services-auckland.mdx'),
+  'how-to-hire-a-plasterer-nz': () =>
+    import('@/content/blog/how-to-hire-a-plasterer-nz.mdx'),
+  'moving-house-nz-checklist': () =>
+    import('@/content/blog/moving-house-nz-checklist.mdx'),
 }
 
 export function generateStaticParams() {
