@@ -25,6 +25,14 @@ export const metadata: Metadata = {
     siteName: 'QuickTrade NZ',
     type: 'website',
     locale: 'en_NZ',
+    images: [
+      {
+        url: '/opengraph-image',
+        width: 1200,
+        height: 630,
+        alt: "QuickTrade NZ — New Zealand's trusted home services marketplace",
+      },
+    ],
   },
   verification: {
     google: 'enRA8wPdrXeyGokwFwib3l91iwklLPAdCdLruIhLJJc',

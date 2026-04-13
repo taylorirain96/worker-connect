@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Script from 'next/script'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import TrustSignalBar from '@/components/luxury/TrustSignalBar'
@@ -11,6 +12,7 @@ import PremiumCategoryCard from '@/components/luxury/PremiumCategoryCard'
 import HowItWorksTabs from '@/components/home/HowItWorksTabs'
 import FoundersDealBanner from '@/components/home/FoundersDealBanner'
 import { JOB_CATEGORIES, CATEGORY_ICONS, CATEGORY_GRADIENTS, type CategoryId } from '@/lib/utils'
+import { SITE_URL } from '@/lib/seo/config'
 import {
   MapPin,
   Shield,
@@ -85,6 +87,19 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col min-h-screen luxury-bg">
+      <Script
+        id="jsonld-breadcrumb"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+            ],
+          }),
+        }}
+      />
       <Navbar />
       <TrustSignalBar />
       <FoundersDealBanner />
