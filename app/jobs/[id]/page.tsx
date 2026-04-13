@@ -357,20 +357,25 @@ export default function JobDetailPage() {
         error?: string
         alreadyCompleted?: boolean
       }
-      if (!res.ok && res.status !== 207) {
-        toast.error(data.error ?? 'Failed to mark job as complete')
-        return
-      }
-      const completedAt = data.completedAt ?? new Date().toISOString()
-      setLocalStatus('completed')
-      setLocalCompletedAt(completedAt)
-      setShowCompletionBanner(true)
       if (res.status === 207) {
+        // Partial success: job marked complete but escrow release failed
+        const completedAt = data.completedAt ?? new Date().toISOString()
+        setLocalStatus('completed')
+        setLocalCompletedAt(completedAt)
+        setShowCompletionBanner(true)
         toast.error(data.error ?? 'Job marked complete but escrow release failed — please contact support.')
-      } else if (data.alreadyCompleted) {
-        toast.success('Job is already marked as complete.')
+      } else if (res.ok) {
+        const completedAt = data.completedAt ?? new Date().toISOString()
+        setLocalStatus('completed')
+        setLocalCompletedAt(completedAt)
+        setShowCompletionBanner(true)
+        if (data.alreadyCompleted) {
+          toast.success('Job is already marked as complete.')
+        } else {
+          toast.success('Job marked as complete! Payment has been released to the worker.')
+        }
       } else {
-        toast.success('Job marked as complete! Payment has been released to the worker.')
+        toast.error(data.error ?? 'Failed to mark job as complete')
       }
     } catch {
       toast.error('Failed to mark job as complete')
@@ -702,7 +707,7 @@ export default function JobDetailPage() {
                           ? 'Payment has been released to the worker.'
                           : 'The employer has released your payment.'}
                       </p>
-                      {showCompletionBanner && !alreadyReviewed && job.assignedWorkerId && (
+                      {!alreadyReviewed && isEmployer && (showCompletionBanner || !!job.assignedWorkerId) && (
                         <div className="mt-3">
                           <p className="text-sm text-green-700 dark:text-green-400 mb-2">
                             How did everything go? Leave a review to help build trust in the community.
