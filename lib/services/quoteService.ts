@@ -39,6 +39,7 @@ function docToQuote(id: string, data: DocumentData): Quote {
     updatedAt: toStr(data.updatedAt),
     expiresAt: toStr(data.expiresAt),
     acceptedAt: data.acceptedAt ? toStr(data.acceptedAt) : undefined,
+    counterOfferAt: data.counterOfferAt ? toStr(data.counterOfferAt) : undefined,
   } as Quote
 }
 
@@ -107,6 +108,28 @@ export async function updateQuoteStatus(
   const updates: Record<string, unknown> = { status, updatedAt: serverTimestamp() }
   if (status === 'accepted') updates.acceptedAt = serverTimestamp()
   await updateDoc(doc(db, QUOTES_COL, quoteId), updates)
+}
+
+/** Send a counter offer on a pending/countered quote. */
+export async function counterQuote(
+  quoteId: string,
+  counterOfferPrice: number,
+  counterOfferNote?: string
+): Promise<void> {
+  if (!db) return
+  const snap = await getDoc(doc(db, QUOTES_COL, quoteId))
+  if (!snap.exists()) throw new Error(`Quote ${quoteId} not found`)
+  const currentStatus = snap.data()?.status as string
+  if (currentStatus !== 'pending' && currentStatus !== 'countered') {
+    throw new Error('Only pending or countered quotes can receive a counter offer')
+  }
+  await updateDoc(doc(db, QUOTES_COL, quoteId), {
+    status: 'countered',
+    counterOfferPrice,
+    counterOfferNote: counterOfferNote ?? null,
+    counterOfferAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  })
 }
 
 /** Delete a quote (only expired/rejected allowed). */

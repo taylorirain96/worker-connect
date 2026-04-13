@@ -1,14 +1,20 @@
 'use client'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useForm, useFieldArray } from 'react-hook-form'
 import Button from '@/components/ui/Button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { formatCurrency } from '@/lib/utils'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, Paperclip, X, FileText } from 'lucide-react'
+import AIPriceSuggestion from './AIPriceSuggestion'
+import { storage } from '@/lib/firebase'
+import { ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
 
 interface WorkerQuoteFormProps {
   jobId: string
   jobTitle: string
+  jobDescription?: string
+  category?: string
+  location?: string
   employerId: string
   workerId: string
   workerName: string
@@ -30,9 +36,23 @@ interface FormValues {
   conditions: string
 }
 
+interface AttachmentFile {
+  file: File
+  preview?: string
+  progress: number
+  url?: string
+  error?: string
+}
+
+const MAX_FILES = 5
+const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
+
 export default function WorkerQuoteForm({
   jobId,
   jobTitle,
+  jobDescription,
+  category,
+  location,
   employerId,
   workerId,
   workerName,
@@ -42,8 +62,10 @@ export default function WorkerQuoteForm({
 }: WorkerQuoteFormProps) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [attachments, setAttachments] = useState<AttachmentFile[]>([])
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const { register, control, watch, handleSubmit, formState: { errors } } = useForm<FormValues>({
+  const { register, control, watch, handleSubmit, setValue, formState: { errors } } = useForm<FormValues>({
     defaultValues: {
       basePrice: 0,
       laborHours: 0,
@@ -66,10 +88,99 @@ export default function WorkerQuoteForm({
   const travelCost = Number(values.travelCost) || 0
   const totalPrice = (Number(values.basePrice) || 0) + materialsTotal + laborTotal + travelCost
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? [])
+    if (attachments.length + files.length > MAX_FILES) {
+      setError(`Maximum ${MAX_FILES} files allowed`)
+      return
+    }
+    const oversized = files.filter((f) => f.size > MAX_FILE_SIZE)
+    if (oversized.length > 0) {
+      setError(`Files must be under 10 MB each: ${oversized.map((f) => f.name).join(', ')}`)
+      return
+    }
+    setError(null)
+
+    const newAttachments: AttachmentFile[] = files.map((file) => ({
+      file,
+      preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined,
+      progress: 0,
+    }))
+
+    setAttachments((prev) => [...prev, ...newAttachments])
+
+    // Upload each file
+    newAttachments.forEach((att, i) => {
+      const globalIdx = attachments.length + i
+      if (!storage) {
+        // Storage not available — store as pending, submit will fail gracefully
+        return
+      }
+      const path = `quotes/${workerId}/${Date.now()}/${att.file.name}`
+      const sRef = storageRef(storage, path)
+      const task = uploadBytesResumable(sRef, att.file)
+
+      task.on(
+        'state_changed',
+        (snapshot) => {
+          const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100)
+          setAttachments((prev) => {
+            const next = [...prev]
+            if (next[globalIdx]) next[globalIdx] = { ...next[globalIdx], progress }
+            return next
+          })
+        },
+        (uploadErr) => {
+          setAttachments((prev) => {
+            const next = [...prev]
+            if (next[globalIdx]) next[globalIdx] = { ...next[globalIdx], error: uploadErr.message }
+            return next
+          })
+        },
+        async () => {
+          const url = await getDownloadURL(task.snapshot.ref)
+          setAttachments((prev) => {
+            const next = [...prev]
+            if (next[globalIdx]) next[globalIdx] = { ...next[globalIdx], url, progress: 100 }
+            return next
+          })
+        }
+      )
+    })
+
+    // Reset input so same file can be re-selected if removed
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  const removeAttachment = (idx: number) => {
+    setAttachments((prev) => {
+      const next = [...prev]
+      const att = next[idx]
+      if (att?.preview) URL.revokeObjectURL(att.preview)
+      next.splice(idx, 1)
+      return next
+    })
+  }
+
   const onSubmit = async (data: FormValues) => {
+    // Check for pending uploads
+    const pendingUploads = attachments.filter((a) => !a.url && !a.error)
+    if (pendingUploads.length > 0) {
+      setError('Please wait for all files to finish uploading')
+      return
+    }
+
     setSubmitting(true)
     setError(null)
     try {
+      const uploadedAttachments = attachments
+        .filter((a) => a.url)
+        .map((a) => ({
+          url: a.url!,
+          name: a.file.name,
+          type: (a.file.type.startsWith('image/') ? 'image' : 'document') as 'image' | 'document',
+        }))
+
       const res = await fetch('/api/quotes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-user-id': workerId },
@@ -94,6 +205,7 @@ export default function WorkerQuoteForm({
           timeline: data.timeline || undefined,
           availability: data.availability || undefined,
           conditions: data.conditions || undefined,
+          attachments: uploadedAttachments.length > 0 ? uploadedAttachments : undefined,
         }),
       })
       if (!res.ok) {
@@ -121,6 +233,16 @@ export default function WorkerQuoteForm({
               {error}
             </div>
           )}
+
+          {/* AI Price Suggestion */}
+          <AIPriceSuggestion
+            jobTitle={jobTitle}
+            jobDescription={jobDescription}
+            category={category}
+            location={location}
+            workerId={workerId}
+            onUsePrice={(price) => setValue('basePrice', price)}
+          />
 
           {/* Base Price */}
           <div>
@@ -200,7 +322,7 @@ export default function WorkerQuoteForm({
           {/* Travel */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Travel Distance (miles)</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Travel Distance (km)</label>
               <input
                 type="number"
                 min="0"
@@ -276,6 +398,75 @@ export default function WorkerQuoteForm({
             />
           </div>
 
+          {/* Attachments */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Attach Photos / Documents
+                <span className="ml-1 text-xs text-gray-400">({attachments.length}/{MAX_FILES})</span>
+              </label>
+              {attachments.length < MAX_FILES && (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-sm text-primary-600 hover:text-primary-700 flex items-center gap-1"
+                >
+                  <Paperclip className="h-4 w-4" /> Add File
+                </button>
+              )}
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,application/pdf"
+              multiple
+              className="hidden"
+              onChange={handleFileChange}
+            />
+            {attachments.length > 0 && (
+              <div className="flex flex-wrap gap-3 mt-2">
+                {attachments.map((att, idx) => (
+                  <div key={idx} className="relative group">
+                    {att.preview ? (
+                      <div className="w-20 h-20 rounded-lg border border-gray-200 dark:border-gray-600 overflow-hidden bg-gray-100 dark:bg-gray-700">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={att.preview} alt={att.file.name} className="w-full h-full object-cover" />
+                        {att.progress < 100 && !att.error && (
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                            <span className="text-white text-xs font-medium">{att.progress}%</span>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="w-20 h-20 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 flex flex-col items-center justify-center gap-1 px-1">
+                        <FileText className="h-6 w-6 text-gray-400" />
+                        <span className="text-xs text-gray-500 text-center truncate w-full px-1">{att.file.name}</span>
+                        {att.progress < 100 && !att.error && (
+                          <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-1">
+                            <div className="bg-primary-500 h-1 rounded-full" style={{ width: `${att.progress}%` }} />
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {att.error && (
+                      <span className="absolute -bottom-5 left-0 text-xs text-red-500 whitespace-nowrap">Upload failed</span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => removeAttachment(idx)}
+                      className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
+              Up to {MAX_FILES} files, 10 MB each. Images or PDFs.
+            </p>
+          </div>
+
           {/* Total Summary */}
           <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 space-y-2">
             <h4 className="font-semibold text-gray-900 dark:text-white text-sm">Quote Summary</h4>
@@ -326,3 +517,4 @@ export default function WorkerQuoteForm({
     </Card>
   )
 }
+

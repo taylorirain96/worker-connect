@@ -1316,11 +1316,15 @@ export interface Quote {
   timeline?: string
   availability?: string
   conditions?: string
-  status: 'pending' | 'accepted' | 'rejected' | 'expired'
+  status: 'pending' | 'accepted' | 'rejected' | 'expired' | 'countered'
   expiresAt: string
   createdAt: string
   updatedAt: string
   acceptedAt?: string
+  attachments?: { url: string; name: string; type: 'image' | 'document' }[]
+  counterOfferPrice?: number
+  counterOfferNote?: string
+  counterOfferAt?: string
 }
 
 export interface QuoteRequest {

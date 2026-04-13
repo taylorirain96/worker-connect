@@ -30,6 +30,7 @@ export async function POST(req: NextRequest) {
       timeline?: string
       availability?: string
       conditions?: string
+      attachments?: { url: string; name: string; type: 'image' | 'document' }[]
     }
 
     const {
@@ -48,6 +49,7 @@ export async function POST(req: NextRequest) {
       timeline,
       availability,
       conditions,
+      attachments,
     } = body
 
     if (!jobId || !jobTitle || !employerId || !workerId || !workerName || !description) {
@@ -82,6 +84,7 @@ export async function POST(req: NextRequest) {
       timeline,
       availability,
       conditions,
+      attachments,
     })
 
     return NextResponse.json({ id: quoteId, totalPrice }, { status: 201 })

@@ -20,6 +20,7 @@ import type { Application, DetailedReview } from '@/types'
 import { getWorkerReviews, respondToReview } from '@/lib/reviews/index'
 import { getWorkerActivePlacement, type Placement } from '@/lib/placements/firebase'
 import toast from 'react-hot-toast'
+import QuoteStats from '@/components/quotes/QuoteStats'
 
 const MAX_DISPLAYED_REVIEWS = 10
 const MS_PER_DAY = 86_400_000
@@ -377,6 +378,9 @@ export default function WorkerDashboardPage() {
                   )}
                 </CardContent>
               </Card>
+
+              {/* Quote Performance Stats */}
+              {user && <QuoteStats workerId={user.uid} />}
 
               {/* Reviews Received */}
               <Card>

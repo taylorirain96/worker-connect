@@ -3,7 +3,8 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/Card'
 import { formatCurrency } from '@/lib/utils'
 import type { Quote } from '@/types'
-import { CheckCircle, XCircle, Clock, ChevronLeft, ChevronRight } from 'lucide-react'
+import { CheckCircle, XCircle, Clock, ChevronLeft, ChevronRight, ArrowLeftRight } from 'lucide-react'
+import { useCountdown } from '@/hooks/useCountdown'
 
 interface QuoteListProps {
   workerId?: string
@@ -14,7 +15,7 @@ interface QuoteListProps {
   onView?: (quote: Quote) => void
 }
 
-const STATUS_FILTERS = ['all', 'pending', 'accepted', 'rejected', 'expired'] as const
+const STATUS_FILTERS = ['all', 'pending', 'accepted', 'rejected', 'expired', 'countered'] as const
 
 const PAGE_SIZE = 10
 
@@ -23,6 +24,17 @@ const STATUS_CONFIG = {
   accepted: { label: 'Accepted', color: 'text-green-600 dark:text-green-400', icon: CheckCircle },
   rejected: { label: 'Rejected', color: 'text-red-600 dark:text-red-400', icon: XCircle },
   expired: { label: 'Expired', color: 'text-gray-500 dark:text-gray-400', icon: Clock },
+  countered: { label: 'Negotiating', color: 'text-orange-600 dark:text-orange-400', icon: ArrowLeftRight },
+}
+
+function QuoteCountdown({ expiresAt }: { expiresAt: string }) {
+  const { days, hours, minutes, isExpired, isUrgent } = useCountdown(expiresAt)
+  if (isExpired) return <span className="text-xs text-red-500">Expired</span>
+  const isVeryUrgent = days === 0 && hours < 2
+  const color = isVeryUrgent ? 'text-red-500' : isUrgent ? 'text-amber-500' : 'text-gray-400 dark:text-gray-500'
+  const pulse = isVeryUrgent ? 'animate-pulse' : ''
+  const label = days > 0 ? `${days}d ${hours}h` : hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`
+  return <span className={`text-xs ${color} ${pulse}`}>⏰ {label}</span>
 }
 
 export default function QuoteList({
@@ -111,7 +123,7 @@ export default function QuoteList({
       ) : (
         <div className="space-y-3">
           {paginated.map((quote) => {
-            const status = STATUS_CONFIG[quote.status]
+            const status = STATUS_CONFIG[quote.status as keyof typeof STATUS_CONFIG] ?? STATUS_CONFIG.pending
             const StatusIcon = status.icon
             return (
               <Card key={quote.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => onView?.(quote)}>
@@ -133,6 +145,11 @@ export default function QuoteList({
                   </div>
                   {quote.timeline && (
                     <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">⏱ {quote.timeline}</p>
+                  )}
+                  {quote.status === 'pending' && (
+                    <div className="mt-1">
+                      <QuoteCountdown expiresAt={quote.expiresAt} />
+                    </div>
                   )}
                 </CardContent>
               </Card>
