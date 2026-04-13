@@ -41,9 +41,9 @@ export async function PUT(
     const body = await req.json() as { status?: string }
     const { status } = body
 
-    if (!status || !['accepted', 'rejected', 'expired'].includes(status)) {
+    if (!status || !['accepted', 'rejected', 'expired', 'countered'].includes(status)) {
       return NextResponse.json(
-        { error: 'status must be one of: accepted, rejected, expired' },
+        { error: 'status must be one of: accepted, rejected, expired, countered' },
         { status: 400 }
       )
     }
@@ -54,7 +54,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Quote not found' }, { status: 404 })
     }
 
-    await updateQuoteStatus(params.id, status as 'accepted' | 'rejected' | 'expired')
+    await updateQuoteStatus(params.id, status as 'accepted' | 'rejected' | 'expired' | 'countered')
 
     // If accepted, auto-create invoice
     if (status === 'accepted') {

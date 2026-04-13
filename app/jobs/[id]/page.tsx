@@ -11,10 +11,10 @@ import RatingStars from '@/components/reviews/RatingStars'
 import toast from 'react-hot-toast'
 import {
   MapPin, Clock, DollarSign, Users, AlertCircle, ArrowLeft,
-  Calendar, Star, CheckCircle, Send, Camera, ClipboardList, Eye, MessageSquare, Sparkles
+  Calendar, Star, CheckCircle, Send, Camera, ClipboardList, Eye, MessageSquare, Sparkles, LayoutList, Columns
 } from 'lucide-react'
 import { formatCurrency, formatRelativeDate, JOB_CATEGORIES, URGENCY_LABELS } from '@/lib/utils'
-import type { Job, JobPhoto } from '@/types'
+import type { Job, JobPhoto, Quote } from '@/types'
 import Link from 'next/link'
 import { applyToJob, getApplicationId, withdrawApplication, getJobApplications } from '@/lib/applications'
 import { hasReviewed, submitWorkerReview } from '@/lib/reviews/index'
@@ -22,6 +22,8 @@ import { db } from '@/lib/firebase'
 import { getUserProfile } from '@/lib/users/getProfile'
 import { hasWorkerAI } from '@/lib/subscriptions'
 import AIWorkerMatches from '@/components/ai/AIWorkerMatches'
+import QuoteList from '@/components/quotes/QuoteList'
+import QuoteComparison from '@/components/quotes/QuoteComparison'
 
 const MOCK_JOBS: Record<string, Job & { employerRating?: number; employerJobs?: number }> = {
   '1': {
@@ -112,6 +114,11 @@ export default function JobDetailPage() {
   const [submittingReview, setSubmittingReview] = useState(false)
   const [assignedWorkerName, setAssignedWorkerName] = useState<string>('Worker')
 
+  // Quote comparison state (employer view)
+  const [jobQuotes, setJobQuotes] = useState<Quote[]>([])
+  const [quotesView, setQuotesView] = useState<'list' | 'compare'>('list')
+  const [quotesLoaded, setQuotesLoaded] = useState(false)
+
   const job = MOCK_JOBS[params.id as string] || MOCK_JOBS['1']
   const jobPhotos = MOCK_JOB_PHOTOS.filter((p) => p.jobId === (params.id as string) || p.jobId === '1')
   const category = JOB_CATEGORIES.find((c) => c.id === job.category)
@@ -160,6 +167,17 @@ export default function JobDetailPage() {
       .catch(() => {})
   }, [job.assignedWorkerId])
 
+  // Fetch quotes for employer comparison view
+  useEffect(() => {
+    if (!isEmployer || quotesLoaded) return
+    const jobId = params.id as string
+    fetch(`/api/quotes/job/${jobId}`, { headers: { 'x-user-id': user?.uid ?? 'employer' } })
+      .then((r) => r.json())
+      .then((data) => setJobQuotes(data.quotes ?? []))
+      .catch(() => {})
+      .finally(() => setQuotesLoaded(true))
+  }, [isEmployer, params.id, user?.uid, quotesLoaded])
+
   const handleSubmitReview = async () => {
     if (!user || !profile) return
     if (reviewRating === 0) {
@@ -197,6 +215,26 @@ export default function JobDetailPage() {
     setShowReviewForm(false)
     setReviewRating(0)
     setReviewComment('')
+  }
+
+  const handleAcceptQuote = async (quoteId: string) => {
+    const res = await fetch(`/api/quotes/${quoteId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': user?.uid ?? '' },
+      body: JSON.stringify({ status: 'accepted' }),
+    })
+    if (!res.ok) throw new Error('Failed to accept quote')
+    setJobQuotes((prev) => prev.map((q) => q.id === quoteId ? { ...q, status: 'accepted' as const } : q))
+  }
+
+  const handleRejectQuote = async (quoteId: string) => {
+    const res = await fetch(`/api/quotes/${quoteId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': user?.uid ?? '' },
+      body: JSON.stringify({ status: 'rejected' }),
+    })
+    if (!res.ok) throw new Error('Failed to reject quote')
+    setJobQuotes((prev) => prev.map((q) => q.id === quoteId ? { ...q, status: 'rejected' as const } : q))
   }
 
   const handleApply = async () => {
@@ -373,6 +411,62 @@ export default function JobDetailPage() {
                   jobLocation={job.location}
                   userRole="employer"
                 />
+              )}
+
+              {/* Quotes section — only visible to the job's employer */}
+              {isEmployer && quotesLoaded && (
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                  <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+                    <h2 className="font-semibold text-gray-900 dark:text-white">
+                      Quotes Received
+                      {jobQuotes.length > 0 && (
+                        <span className="ml-2 text-sm font-normal text-gray-500">({jobQuotes.length})</span>
+                      )}
+                    </h2>
+                    {jobQuotes.filter((q) => q.status === 'pending').length >= 2 && (
+                      <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+                        <button
+                          type="button"
+                          onClick={() => setQuotesView('list')}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                            quotesView === 'list'
+                              ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
+                          }`}
+                        >
+                          <LayoutList className="h-3.5 w-3.5" /> List
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setQuotesView('compare')}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                            quotesView === 'compare'
+                              ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
+                          }`}
+                        >
+                          <Columns className="h-3.5 w-3.5" /> Compare
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  {jobQuotes.length === 0 ? (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">No quotes submitted yet.</p>
+                  ) : quotesView === 'compare' ? (
+                    <QuoteComparison
+                      quotes={jobQuotes.filter((q) => q.status === 'pending')}
+                      onAccept={handleAcceptQuote}
+                      onReject={handleRejectQuote}
+                    />
+                  ) : (
+                    <QuoteList
+                      jobId={job.id}
+                      isEmployer
+                      onAccept={handleAcceptQuote}
+                      onReject={handleRejectQuote}
+                    />
+                  )}
+                </div>
               )}
 
               {/* Photo Gallery — shown when job is completed */}
