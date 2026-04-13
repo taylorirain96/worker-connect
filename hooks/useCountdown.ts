@@ -12,7 +12,7 @@ interface CountdownResult {
 }
 
 export function useCountdown(expiresAt: string): CountdownResult {
-  const getRemaining = () => {
+  const getRemaining = (): CountdownResult => {
     const diff = new Date(expiresAt).getTime() - Date.now()
     if (diff <= 0) {
       return { days: 0, hours: 0, minutes: 0, seconds: 0, isExpired: true, isUrgent: true }
@@ -29,11 +29,22 @@ export function useCountdown(expiresAt: string): CountdownResult {
   const [state, setState] = useState<CountdownResult>(getRemaining)
 
   useEffect(() => {
-    if (state.isExpired) return
+    // Recalculate immediately in case of initial stale state
+    const current = getRemaining()
+    if (current.isExpired) {
+      setState(current)
+      return
+    }
+    setState(current)
     const id = setInterval(() => {
-      setState(getRemaining())
+      const next = getRemaining()
+      setState(next)
+      if (next.isExpired) {
+        clearInterval(id)
+      }
     }, 1000)
     return () => clearInterval(id)
+  // expiresAt is the only external value that should trigger re-subscription
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [expiresAt])
 

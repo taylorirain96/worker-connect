@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
       workerId?: string
     }
 
-    const { jobTitle, category, workerId } = body
+    const { jobTitle, jobDescription, category, location, workerId } = body
 
     const { db } = await import('@/lib/firebase')
     if (!db) {
@@ -82,16 +82,18 @@ export async function POST(req: NextRequest) {
 
     let prices: number[] = snap.docs.map((d) => d.data().totalPrice as number).filter(Boolean)
 
-    // Also filter by title keywords if available
-    if (jobTitle && prices.length < 3) {
-      const words = jobTitle.toLowerCase().split(/\s+/).filter((w) => w.length > 3)
+    // Also filter by title and description keywords if available
+    if ((jobTitle || jobDescription) && prices.length < 3) {
+      const titleWords = (jobTitle ?? '').toLowerCase().split(/\s+/).filter((w) => w.length > 3)
+      const descWords = (jobDescription ?? '').toLowerCase().split(/\s+/).filter((w) => w.length > 4).slice(0, 5)
+      const keywords = Array.from(new Set([...titleWords, ...descWords]))
       const titleSnap = await getDocs(
         query(collection(db, 'quotes'), where('status', '==', 'accepted'), orderBy('createdAt', 'desc'), limit(100))
       )
       const titlePrices = titleSnap.docs
         .filter((d) => {
-          const t = (d.data().jobTitle as string ?? '').toLowerCase()
-          return words.some((w) => t.includes(w))
+          const t = [(d.data().jobTitle as string ?? ''), (d.data().description as string ?? '')].join(' ').toLowerCase()
+          return keywords.some((w) => t.includes(w))
         })
         .map((d) => d.data().totalPrice as number)
         .filter(Boolean)
@@ -136,8 +138,8 @@ export async function POST(req: NextRequest) {
     const confidence = allPrices.length >= 10 ? 'high' : allPrices.length >= 5 ? 'medium' : 'low'
 
     const tip = workerPrices.length > 0
-      ? `Your accepted quotes average $${Math.round(workerPrices.reduce((a, b) => a + b, 0) / workerPrices.length)}. QuickTrade data from ${allPrices.length} similar jobs.`
-      : `Based on ${allPrices.length} accepted quotes for similar jobs on QuickTrade NZ.`
+      ? `Your accepted quotes average $${Math.round(workerPrices.reduce((a, b) => a + b, 0) / workerPrices.length)}. QuickTrade data from ${allPrices.length} similar jobs${location ? ` in ${location}` : ''}.`
+      : `Based on ${allPrices.length} accepted quotes for similar jobs on QuickTrade NZ${location ? ` in ${location}` : ''}.`
 
     return NextResponse.json({
       suggestedMin: Math.round(p10),
