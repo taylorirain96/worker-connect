@@ -149,6 +149,27 @@ export const SERVICES: Service[] = [
     description:
       'Residential and commercial building services including renovations, extensions, and new builds.',
   },
+  {
+    slug: 'solar-installation',
+    name: 'Solar Installation',
+    namePlural: 'Solar Installers',
+    description:
+      'Solar panel supply and installation for homes and businesses across New Zealand, including grid-tied and off-grid systems.',
+  },
+  {
+    slug: 'fencing',
+    name: 'Fencing',
+    namePlural: 'Fencing Contractors',
+    description:
+      'Timber, steel, and aluminium fencing installation and repairs for residential and commercial properties.',
+  },
+  {
+    slug: 'waterproofing',
+    name: 'Waterproofing',
+    namePlural: 'Waterproofing Specialists',
+    description:
+      'Membrane waterproofing, deck coatings, basement tanking, and wet-area waterproofing for NZ homes and buildings.',
+  },
 ]
 
 export const LOCATIONS: Location[] = [

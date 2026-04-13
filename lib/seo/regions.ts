@@ -132,6 +132,13 @@ export const NZ_REGIONS: NZRegion[] = [
     geo: { lat: -41.2127, lng: 174.9089 },
   },
   {
+    slug: 'whanganui',
+    city: 'Whanganui',
+    region: 'Manawatū-Whanganui',
+    country: 'nz',
+    geo: { lat: -39.9306, lng: 175.0479 },
+  },
+  {
     slug: 'gisborne',
     city: 'Gisborne',
     region: 'Gisborne',
