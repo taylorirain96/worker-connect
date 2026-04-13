@@ -75,6 +75,10 @@ export interface Job {
   escrowId?: string
   /** Current escrow status */
   escrowStatus?: 'pending' | 'held' | 'released' | 'disputed' | 'refunded'
+  /** ISO timestamp when the job was marked as completed */
+  completedAt?: string
+  /** ISO deadline (completedAt + 24h) within which the worker may dispute completion */
+  workerDisputeDeadline?: string
 }
 
 export type JobCategory =

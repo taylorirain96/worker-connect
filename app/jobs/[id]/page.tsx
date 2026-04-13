@@ -119,11 +119,21 @@ export default function JobDetailPage() {
   const [quotesView, setQuotesView] = useState<'list' | 'compare'>('list')
   const [quotesLoaded, setQuotesLoaded] = useState(false)
 
+  // Job completion state
+  const [markingComplete, setMarkingComplete] = useState(false)
+  const [localStatus, setLocalStatus] = useState<Job['status'] | undefined>(undefined)
+  const [localCompletedAt, setLocalCompletedAt] = useState<string | undefined>(undefined)
+  const [showCompletionBanner, setShowCompletionBanner] = useState(false)
+
   const job = MOCK_JOBS[params.id as string] || MOCK_JOBS['1']
   const jobPhotos = MOCK_JOB_PHOTOS.filter((p) => p.jobId === (params.id as string) || p.jobId === '1')
   const category = JOB_CATEGORIES.find((c) => c.id === job.category)
   const urgency = URGENCY_LABELS[job.urgency]
   const isEmployer = user?.uid === job.employerId
+
+  // Effective job status — updated optimistically after Mark as Complete
+  const effectiveStatus = localStatus ?? job.status
+  const effectiveCompletedAt = localCompletedAt ?? job.completedAt
 
   useEffect(() => {
     if (!isEmployer) return
@@ -329,6 +339,51 @@ export default function JobDetailPage() {
     }
   }
 
+  const handleMarkComplete = async () => {
+    if (!user) {
+      toast.error('Please sign in')
+      return
+    }
+    setMarkingComplete(true)
+    try {
+      const res = await fetch(`/api/jobs/${params.id as string}/complete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ completedBy: user.uid }),
+      })
+      const data = await res.json() as {
+        success?: boolean
+        completedAt?: string
+        error?: string
+        alreadyCompleted?: boolean
+      }
+      if (res.status === 207) {
+        // Partial success: job marked complete but escrow release failed
+        const completedAt = data.completedAt ?? new Date().toISOString()
+        setLocalStatus('completed')
+        setLocalCompletedAt(completedAt)
+        setShowCompletionBanner(true)
+        toast.error(data.error ?? 'Job marked complete but escrow release failed — please contact support.')
+      } else if (res.ok) {
+        const completedAt = data.completedAt ?? new Date().toISOString()
+        setLocalStatus('completed')
+        setLocalCompletedAt(completedAt)
+        setShowCompletionBanner(true)
+        if (data.alreadyCompleted) {
+          toast.success('Job is already marked as complete.')
+        } else {
+          toast.success('Job marked as complete! Payment has been released to the worker.')
+        }
+      } else {
+        toast.error(data.error ?? 'Failed to mark job as complete')
+      }
+    } catch {
+      toast.error('Failed to mark job as complete')
+    } finally {
+      setMarkingComplete(false)
+    }
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
@@ -347,9 +402,20 @@ export default function JobDetailPage() {
                   <span className="text-4xl">{category?.icon || '🛠️'}</span>
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2 mb-2">
-                      <Badge variant={job.status === 'open' ? 'success' : 'default'}>
-                        {job.status === 'open' ? 'Open' : job.status}
+                      <Badge variant={effectiveStatus === 'open' ? 'success' : effectiveStatus === 'completed' ? 'success' : 'default'}>
+                        {effectiveStatus === 'open'
+                          ? 'Open'
+                          : effectiveStatus === 'completed'
+                            ? 'Completed ✓'
+                            : effectiveStatus === 'in_progress'
+                              ? 'In Progress'
+                              : effectiveStatus}
                       </Badge>
+                      {effectiveStatus === 'completed' && effectiveCompletedAt && (
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          Completed {new Date(effectiveCompletedAt).toLocaleDateString('en-NZ', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </span>
+                      )}
                       {job.urgency === 'emergency' && (
                         <Badge variant="danger" className="flex items-center gap-1">
                           <AlertCircle className="h-3 w-3" />
@@ -543,7 +609,7 @@ export default function JobDetailPage() {
               )}
 
               {/* Leave a Review — shown to employer when job has an assigned worker */}
-              {isEmployer && job.assignedWorkerId && (job.status === 'in_progress' || job.status === 'completed') && !checkingReview && (
+              {isEmployer && job.assignedWorkerId && (effectiveStatus === 'in_progress' || effectiveStatus === 'completed') && !checkingReview && (
                 <div id="review" className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
                   <div className="flex items-center gap-2 mb-4">
                     <Star className="h-5 w-5 text-yellow-500 fill-yellow-400" />
@@ -623,6 +689,43 @@ export default function JobDetailPage() {
                   )}
                 </div>
               )}
+
+              {/* Job Completion Banner — shown to both parties after job is completed */}
+              {effectiveStatus === 'completed' && (
+                <div className="bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800 p-5">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-green-800 dark:text-green-300 mb-1">
+                        Job Completed ✓
+                      </h3>
+                      <p className="text-sm text-green-700 dark:text-green-400">
+                        {effectiveCompletedAt
+                          ? `Completed on ${new Date(effectiveCompletedAt).toLocaleDateString('en-NZ', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' })}.`
+                          : 'This job has been completed.'}{' '}
+                        {isEmployer
+                          ? 'Payment has been released to the worker.'
+                          : 'The employer has released your payment.'}
+                      </p>
+                      {!alreadyReviewed && isEmployer && (showCompletionBanner || !!job.assignedWorkerId) && (
+                        <div className="mt-3">
+                          <p className="text-sm text-green-700 dark:text-green-400 mb-2">
+                            How did everything go? Leave a review to help build trust in the community.
+                          </p>
+                          <Button
+                            size="sm"
+                            onClick={() => setShowReviewForm(true)}
+                            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white border-0"
+                          >
+                            <Star className="h-4 w-4" />
+                            Leave a Review
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Sidebar */}
@@ -650,7 +753,7 @@ export default function JobDetailPage() {
                   </div>
                 )}
 
-                {job.status === 'open' && profile?.role !== 'employer' && !showApplyForm && !alreadyApplied && (
+                {effectiveStatus === 'open' && profile?.role !== 'employer' && !showApplyForm && !alreadyApplied && (
                   <Button
                     className="w-full mt-4"
                     onClick={() => {
@@ -669,7 +772,7 @@ export default function JobDetailPage() {
                   </Button>
                 )}
 
-                {job.status === 'open' && profile?.role === 'worker' && alreadyApplied && (
+                {effectiveStatus === 'open' && profile?.role === 'worker' && alreadyApplied && (
                   <div className="mt-4 space-y-2">
                     <div className="flex items-center gap-2 text-green-600 dark:text-green-400 text-sm font-medium">
                       <CheckCircle className="h-4 w-4" />
@@ -689,7 +792,7 @@ export default function JobDetailPage() {
                   </div>
                 )}
 
-                {profile?.role === 'worker' && (job.status === 'in_progress' || job.status === 'completed') && (
+                {profile?.role === 'worker' && (effectiveStatus === 'in_progress' || effectiveStatus === 'completed') && (
                   <Link href={`/timesheets/${job.id}`} className="block mt-4">
                     <Button variant="outline" className="w-full flex items-center justify-center gap-2">
                       <ClipboardList className="h-4 w-4" />
@@ -706,6 +809,26 @@ export default function JobDetailPage() {
                       View Applicants ({applicantsCount ?? job.applicantsCount})
                     </Button>
                   </Link>
+                )}
+
+                {/* Mark as Complete — shown to the employer when job is in_progress */}
+                {isEmployer && effectiveStatus === 'in_progress' && (
+                  <Button
+                    className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white border-0 flex items-center justify-center gap-2"
+                    onClick={handleMarkComplete}
+                    loading={markingComplete}
+                  >
+                    <CheckCircle className="h-4 w-4" />
+                    Mark as Complete
+                  </Button>
+                )}
+
+                {/* Completed status — shown to the employer when job is done */}
+                {isEmployer && effectiveStatus === 'completed' && (
+                  <div className="mt-4 flex items-center gap-2 text-green-600 dark:text-green-400 text-sm font-medium justify-center">
+                    <CheckCircle className="h-4 w-4" />
+                    Job Completed ✓
+                  </div>
                 )}
               </div>
 
