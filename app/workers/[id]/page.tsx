@@ -8,26 +8,32 @@ import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import { MapPin, Star, CheckCircle, Briefcase, DollarSign, ArrowLeft, MessageSquare, Calendar } from 'lucide-react'
 import { getInitials } from '@/lib/utils'
-import type { UserProfile } from '@/types'
+import type { UserProfile, ReviewAggregates } from '@/types'
 import Link from 'next/link'
 import { getUserProfile } from '@/lib/users/getProfile'
 import ReviewSummary from '@/components/reviews/ReviewSummary'
+import { getReviewAggregates } from '@/lib/reviews/firebase'
 
 export default function WorkerProfilePage({ params }: { params: { id: string } }) {
   const router = useRouter()
   const [worker, setWorker] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
+  const [reviewAgg, setReviewAgg] = useState<ReviewAggregates | null>(null)
 
   useEffect(() => {
     async function fetchWorker() {
       setLoading(true)
-      const profile = await getUserProfile(params.id)
+      const [profile, agg] = await Promise.all([
+        getUserProfile(params.id),
+        getReviewAggregates(params.id),
+      ])
       if (!profile || profile.role !== 'worker') {
         setNotFound(true)
       } else {
         setWorker(profile)
       }
+      setReviewAgg(agg)
       setLoading(false)
     }
     fetchWorker()
@@ -86,24 +92,25 @@ export default function WorkerProfilePage({ params }: { params: { id: string } }
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* TODO: Replace mock ratingValue/reviewCount with real data once live reviews are wired up; worker.rating and worker.reviewCount are used here */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'Person',
-            name: worker.displayName ?? 'Worker',
-            aggregateRating: {
-              '@type': 'AggregateRating',
-              ratingValue: worker.rating ?? 4.8,
-              reviewCount: worker.reviewCount ?? 12,
-              bestRating: 5,
-              worstRating: 1,
-            },
-          }),
-        }}
-      />
+      {reviewAgg && reviewAgg.totalReviews > 0 && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'Person',
+              name: worker.displayName ?? 'Worker',
+              aggregateRating: {
+                '@type': 'AggregateRating',
+                ratingValue: reviewAgg.averageRating,
+                reviewCount: reviewAgg.totalReviews,
+                bestRating: 5,
+                worstRating: 1,
+              },
+            }),
+          }}
+        />
+      )}
       <Navbar />
       <main className="flex-1">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -152,8 +159,12 @@ export default function WorkerProfilePage({ params }: { params: { id: string } }
                     <div className="flex items-center gap-4 mt-2 text-sm">
                       <div className="flex items-center gap-1">
                         <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                        <span className="font-semibold text-gray-900 dark:text-white">{worker.rating?.toFixed(1) ?? '-'}</span>
-                        <span className="text-gray-500">({worker.reviewCount ?? 0} reviews)</span>
+                        <span className="font-semibold text-gray-900 dark:text-white">
+                          {(reviewAgg?.averageRating ?? worker.rating)?.toFixed(1) ?? '-'}
+                        </span>
+                        <span className="text-gray-500">
+                          ({(reviewAgg?.totalReviews ?? worker.reviewCount ?? 0)} reviews)
+                        </span>
                       </div>
                       <div className="flex items-center gap-1 text-gray-500">
                         <Briefcase className="h-4 w-4" />
@@ -228,7 +239,9 @@ export default function WorkerProfilePage({ params }: { params: { id: string } }
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-500">Avg Rating</span>
-                    <span className="font-medium text-gray-900 dark:text-white">{worker.rating?.toFixed(1) ?? '-'} ★</span>
+                    <span className="font-medium text-gray-900 dark:text-white">
+                      {(reviewAgg?.averageRating ?? worker.rating)?.toFixed(1) ?? '-'} ★
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-500">Member Since</span>

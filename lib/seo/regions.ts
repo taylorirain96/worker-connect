@@ -89,6 +89,55 @@ export const NZ_REGIONS: NZRegion[] = [
     country: 'nz',
     geo: { lat: -40.3523, lng: 175.6082 },
   },
+  {
+    slug: 'hastings',
+    city: 'Hastings',
+    region: "Hawke's Bay",
+    country: 'nz',
+    geo: { lat: -39.6383, lng: 176.8497 },
+  },
+  {
+    slug: 'rotorua',
+    city: 'Rotorua',
+    region: 'Bay of Plenty',
+    country: 'nz',
+    geo: { lat: -38.1368, lng: 176.2497 },
+  },
+  {
+    slug: 'new-plymouth',
+    city: 'New Plymouth',
+    region: 'Taranaki',
+    country: 'nz',
+    geo: { lat: -39.0556, lng: 174.0752 },
+  },
+  {
+    slug: 'whangarei',
+    city: 'Whangārei',
+    region: 'Northland',
+    country: 'nz',
+    geo: { lat: -35.7275, lng: 174.3236 },
+  },
+  {
+    slug: 'invercargill',
+    city: 'Invercargill',
+    region: 'Southland',
+    country: 'nz',
+    geo: { lat: -46.4132, lng: 168.3538 },
+  },
+  {
+    slug: 'lower-hutt',
+    city: 'Lower Hutt',
+    region: 'Wellington',
+    country: 'nz',
+    geo: { lat: -41.2127, lng: 174.9089 },
+  },
+  {
+    slug: 'gisborne',
+    city: 'Gisborne',
+    region: 'Gisborne',
+    country: 'nz',
+    geo: { lat: -38.6623, lng: 178.0176 },
+  },
 ]
 
 export const COUNTRY_NAMES: Record<string, string> = {
