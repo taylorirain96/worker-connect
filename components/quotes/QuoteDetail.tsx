@@ -10,6 +10,7 @@ import { useCountdown } from '@/hooks/useCountdown'
 interface QuoteDetailProps {
   quote: Quote
   isEmployer?: boolean
+  userId?: string
   onAccept?: (quoteId: string) => Promise<void>
   onReject?: (quoteId: string) => Promise<void>
   onRefresh?: () => void
@@ -63,7 +64,7 @@ function LightboxModal({ src, alt, onClose }: { src: string; alt: string; onClos
   )
 }
 
-export default function QuoteDetail({ quote, isEmployer = false, onAccept, onReject, onRefresh }: QuoteDetailProps) {
+export default function QuoteDetail({ quote, isEmployer = false, userId, onAccept, onReject, onRefresh }: QuoteDetailProps) {
   const [loading, setLoading] = useState<'accept' | 'reject' | 'counter' | 'acceptCounter' | 'declineCounter' | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [showCounterForm, setShowCounterForm] = useState(false)
@@ -118,7 +119,7 @@ export default function QuoteDetail({ quote, isEmployer = false, onAccept, onRej
     try {
       const res = await fetch(`/api/quotes/${quote.id}/counter`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', 'x-user-id': 'employer' },
+        headers: { 'Content-Type': 'application/json', 'x-user-id': userId ?? quote.employerId },
         body: JSON.stringify({ counterOfferPrice: price, counterOfferNote: counterNote || undefined }),
       })
       if (!res.ok) {
@@ -142,7 +143,7 @@ export default function QuoteDetail({ quote, isEmployer = false, onAccept, onRej
     try {
       const res = await fetch(`/api/quotes/${quote.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'x-user-id': 'worker' },
+        headers: { 'Content-Type': 'application/json', 'x-user-id': userId ?? quote.workerId },
         body: JSON.stringify({ status: 'accepted' }),
       })
       if (!res.ok) {

@@ -20,6 +20,10 @@ const NZ_MARKET_BASELINES: Record<string, { min: number; max: number }> = {
   moving: { min: 200, max: 600 },
 }
 
+function fmtNZD(amount: number): string {
+  return `$${new Intl.NumberFormat('en-NZ', { maximumFractionDigits: 0 }).format(Math.round(amount))}`
+}
+
 function getBaseline(category?: string): { min: number; max: number } {
   if (!category) return { min: 100, max: 500 }
   const key = category.toLowerCase()
@@ -120,7 +124,7 @@ export async function POST(req: NextRequest) {
     if (allPrices.length < 3) {
       const baseline = getBaseline(category)
       const tip = workerPrices.length > 0
-        ? `Your past accepted quotes average $${Math.round(workerPrices.reduce((a, b) => a + b, 0) / workerPrices.length)}. Market baseline shown.`
+        ? `Your past accepted quotes average ${fmtNZD(Math.round(workerPrices.reduce((a, b) => a + b, 0) / workerPrices.length))}. Market baseline shown.`
         : 'Based on NZ market rates. Submit more quotes to unlock personalised pricing.'
       return NextResponse.json({
         suggestedMin: baseline.min,
@@ -138,7 +142,7 @@ export async function POST(req: NextRequest) {
     const confidence = allPrices.length >= 10 ? 'high' : allPrices.length >= 5 ? 'medium' : 'low'
 
     const tip = workerPrices.length > 0
-      ? `Your accepted quotes average $${Math.round(workerPrices.reduce((a, b) => a + b, 0) / workerPrices.length)}. QuickTrade data from ${allPrices.length} similar jobs${location ? ` in ${location}` : ''}.`
+      ? `Your accepted quotes average ${fmtNZD(Math.round(workerPrices.reduce((a, b) => a + b, 0) / workerPrices.length))}. QuickTrade data from ${allPrices.length} similar jobs${location ? ` in ${location}` : ''}.`
       : `Based on ${allPrices.length} accepted quotes for similar jobs on QuickTrade NZ${location ? ` in ${location}` : ''}.`
 
     return NextResponse.json({
