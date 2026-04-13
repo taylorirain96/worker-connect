@@ -34,6 +34,12 @@ export const metadata: Metadata = {
       },
     ],
   },
+  twitter: {
+    card: 'summary_large_image',
+    site: '@QuickTradeNZ',
+    creator: '@QuickTradeNZ',
+    images: ['/opengraph-image'],
+  },
   verification: {
     google: 'enRA8wPdrXeyGokwFwib3l91iwklLPAdCdLruIhLJJc',
   },
