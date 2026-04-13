@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next'
 import { SERVICES, LOCATIONS } from '@/lib/seo/servicesData'
 import { SITE_URL } from '@/lib/seo/config'
+import { getAllPosts } from '@/lib/blog/posts'
 
 const BASE = SITE_URL
 
@@ -25,6 +26,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.7,
     },
   ]
+
+  entries.push({ url: `${BASE}/blog`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 })
+  for (const post of getAllPosts()) {
+    entries.push({ url: `${BASE}/blog/${post.slug}`, lastModified: post.date, changeFrequency: 'monthly', priority: 0.7 })
+  }
 
   for (const s of SERVICES) {
     entries.push({

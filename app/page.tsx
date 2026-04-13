@@ -11,6 +11,7 @@ import PremiumBadge from '@/components/luxury/PremiumBadge'
 import PremiumCategoryCard from '@/components/luxury/PremiumCategoryCard'
 import HowItWorksTabs from '@/components/home/HowItWorksTabs'
 import FoundersDealBanner from '@/components/home/FoundersDealBanner'
+import { getAllPosts } from '@/lib/blog/posts'
 import { JOB_CATEGORIES, CATEGORY_ICONS, CATEGORY_GRADIENTS, type CategoryId } from '@/lib/utils'
 import { SITE_URL } from '@/lib/seo/config'
 import {
@@ -286,6 +287,78 @@ export default function HomePage() {
               </a>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Popular Services Near You */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto w-full">
+        <div className="text-center mb-10">
+          <h2 className="text-3xl font-bold text-white mb-3">Popular Services Near You</h2>
+          <p className="text-slate-400 max-w-xl mx-auto">
+            Find verified tradespeople for the most in-demand services across New Zealand.
+          </p>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {[
+            { label: 'Plumbing', slug: 'plumbing', icon: '🔧' },
+            { label: 'Electrical', slug: 'electrical', icon: '⚡' },
+            { label: 'Building', slug: 'builder', icon: '🏗️' },
+            { label: 'Heat Pumps & Air Con', slug: 'heat-pumps-air-conditioning', icon: '❄️' },
+            { label: 'Painting', slug: 'painting', icon: '🖌️' },
+            { label: 'Landscaping', slug: 'landscaping-gardening', icon: '🌿' },
+          ].map(({ label, slug, icon }) => (
+            <Link
+              key={slug}
+              href={`/services/${slug}`}
+              className="group flex items-center gap-3 bg-slate-900 border border-slate-800 hover:border-indigo-500/50 rounded-xl p-4 transition-all duration-200"
+            >
+              <span className="text-2xl">{icon}</span>
+              <span className="text-white font-medium group-hover:text-indigo-300 transition-colors">
+                {label}
+              </span>
+              <ArrowRight className="ml-auto h-4 w-4 text-slate-600 group-hover:text-indigo-400 transition-colors" />
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* Latest Guides & Tips */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto w-full">
+        <div className="text-center mb-10">
+          <h2 className="text-3xl font-bold text-white mb-3">Latest Guides &amp; Tips</h2>
+          <p className="text-slate-400 max-w-xl mx-auto">
+            Expert advice on hiring tradespeople, understanding costs, and getting the best value.
+          </p>
+        </div>
+        <div className="grid md:grid-cols-3 gap-6">
+          {getAllPosts().map((post) => (
+            <Link
+              key={post.slug}
+              href={`/blog/${post.slug}`}
+              className="group block bg-slate-900 border border-slate-800 hover:border-indigo-500/50 rounded-xl p-6 transition-all duration-200"
+            >
+              <span className="inline-block bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-xs font-medium px-3 py-1 rounded-full mb-3">
+                {post.category}
+              </span>
+              <h3 className="text-white font-bold mb-2 group-hover:text-indigo-300 transition-colors line-clamp-2">
+                {post.title}
+              </h3>
+              <p className="text-slate-400 text-sm leading-relaxed line-clamp-2 mb-4">
+                {post.description}
+              </p>
+              <span className="text-indigo-400 text-sm font-medium group-hover:text-indigo-300 transition-colors">
+                Read guide →
+              </span>
+            </Link>
+          ))}
+        </div>
+        <div className="text-center mt-8">
+          <Link
+            href="/blog"
+            className="inline-flex items-center gap-2 text-indigo-400 hover:text-indigo-300 font-medium transition-colors"
+          >
+            View all guides <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
       </section>
 

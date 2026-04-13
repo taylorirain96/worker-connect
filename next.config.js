@@ -1,5 +1,13 @@
 /** @type {import('next').NextConfig} */
+const withMDX = require('@next/mdx')({
+  extension: /\.mdx?$/,
+  options: {
+    remarkPlugins: [require('remark-gfm')],
+  },
+})
+
 const nextConfig = {
+  pageExtensions: ['ts', 'tsx', 'md', 'mdx'],
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -20,4 +28,4 @@ const nextConfig = {
     ],
   },
 }
-module.exports = nextConfig
+module.exports = withMDX(nextConfig)
