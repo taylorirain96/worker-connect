@@ -38,6 +38,24 @@ const mdxModules: Record<string, () => Promise<{ default: React.ComponentType }>
     import('@/content/blog/how-to-hire-a-plasterer-nz.mdx'),
   'moving-house-nz-checklist': () =>
     import('@/content/blog/moving-house-nz-checklist.mdx'),
+  'how-much-does-a-heat-pump-cost-nz': () =>
+    import('@/content/blog/how-much-does-a-heat-pump-cost-nz.mdx'),
+  'find-licensed-plumber-new-zealand': () =>
+    import('@/content/blog/find-licensed-plumber-new-zealand.mdx'),
+  'best-handyman-services-nz': () =>
+    import('@/content/blog/best-handyman-services-nz.mdx'),
+  'end-of-tenancy-cleaning-nz': () =>
+    import('@/content/blog/end-of-tenancy-cleaning-nz.mdx'),
+  'deck-building-cost-nz': () =>
+    import('@/content/blog/deck-building-cost-nz.mdx'),
+  'hire-painter-new-zealand': () =>
+    import('@/content/blog/hire-painter-new-zealand.mdx'),
+  'lawn-mowing-service-nz': () =>
+    import('@/content/blog/lawn-mowing-service-nz.mdx'),
+  'electrician-call-out-fee-nz': () =>
+    import('@/content/blog/electrician-call-out-fee-nz.mdx'),
+  'home-renovation-cost-nz': () =>
+    import('@/content/blog/home-renovation-cost-nz.mdx'),
 }
 
 export function generateStaticParams() {
