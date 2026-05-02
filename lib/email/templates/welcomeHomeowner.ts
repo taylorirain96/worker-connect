@@ -1,4 +1,4 @@
-import { emailWrapper, ctaButton } from './_layout'
+import { emailWrapper, ctaButton, escapeHtml } from './_layout'
 import { APP_URL } from '../resendClient'
 
 export interface WelcomeHomeownerTemplateData {
@@ -9,9 +9,10 @@ export interface WelcomeHomeownerTemplateData {
 export function welcomeHomeownerTemplate(data: WelcomeHomeownerTemplateData): string {
   const { name, unsubscribeUrl } = data
   const postJobUrl = `${APP_URL}/jobs/post`
+  const safeName = escapeHtml(name)
 
   return emailWrapper(`
-    <h1 style="font-size:22px;font-weight:800;color:#0f172a;margin:0 0 8px;">Welcome to WorkerConnect, ${name}! 🏠</h1>
+    <h1 style="font-size:22px;font-weight:800;color:#0f172a;margin:0 0 8px;">Welcome to WorkerConnect, ${safeName}! 🏠</h1>
     <p style="color:#475569;line-height:1.7;margin:0 0 16px;">
       You've just joined New Zealand's fastest-growing platform for finding trusted local tradies and skilled workers.
     </p>

@@ -5,13 +5,24 @@
 
 export const APP_NAME = 'WorkerConnect'
 
+/** Escape characters that have special meaning in HTML to prevent XSS. */
+export function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 // ── Layout wrapper ────────────────────────────────────────────────────────────
 
 export function emailWrapper(body: string, unsubscribeUrl?: string): string {
-  const footer = unsubscribeUrl
+  const escapedUnsubUrl = unsubscribeUrl ? escapeHtml(unsubscribeUrl) : undefined
+  const footer = escapedUnsubUrl
     ? `<p style="color:#475569;font-size:12px;text-align:center;margin:8px 0 0;">
          Don't want these emails?
-         <a href="${unsubscribeUrl}" style="color:#6366f1;">Unsubscribe</a>
+         <a href="${escapedUnsubUrl}">Unsubscribe</a>
        </p>`
     : ''
 
@@ -54,9 +65,9 @@ export function emailWrapper(body: string, unsubscribeUrl?: string): string {
 export function ctaButton(href: string, label: string): string {
   return `
     <div style="text-align:center;margin:28px 0 20px;">
-      <a href="${href}"
+      <a href="${escapeHtml(href)}"
          style="display:inline-block;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;padding:14px 36px;border-radius:10px;text-decoration:none;font-weight:700;font-size:16px;letter-spacing:0.3px;">
-        ${label}
+        ${escapeHtml(label)}
       </a>
     </div>`
 }

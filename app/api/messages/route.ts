@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
                                recipientData.emailNotifications?.all === false
 
               if (recipientEmail && !optedOut) {
-                const unsubscribeUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/api/email/unsubscribe?token=${createUnsubscribeToken(recipientId, 'newMessage')}`
+        const unsubscribeUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/api/email/unsubscribe?token=${encodeURIComponent(createUnsubscribeToken(recipientId, 'newMessage'))}`
                 const html = newMessageTemplate({
                   recipientName,
                   senderName,

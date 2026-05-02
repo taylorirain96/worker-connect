@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
                        employerData?.emailNotifications?.all === false
 
       if (employerEmail && !optedOut) {
-        const unsubscribeUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/api/email/unsubscribe?token=${createUnsubscribeToken(employerId, 'applicationReceived')}`
+        const unsubscribeUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/api/email/unsubscribe?token=${encodeURIComponent(createUnsubscribeToken(employerId, 'applicationReceived'))}`
         const html = applicationReceivedTemplate({
           employerName,
           applicantName: workerName ?? 'A worker',
