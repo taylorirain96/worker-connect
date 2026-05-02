@@ -81,6 +81,27 @@ function RegisterForm() {
       })
       return
     }
+    // Jobseekers get a CV-style profile with employment fields
+    if (role === 'jobseeker') {
+      await setDoc(doc(db, 'users', uid), {
+        uid,
+        email,
+        displayName,
+        photoURL: null,
+        role: 'jobseeker',
+        createdAt: now,
+        updatedAt: now,
+        profileComplete: false,
+        verified: false,
+        skills: [],
+        bio: '',
+        location: '',
+        availabilityStatus: 'available',
+        desiredWorkType: [],
+        ...(phone ? { phone } : {}),
+      })
+      return
+    }
     const baseFields = {
       uid,
       email,
@@ -146,7 +167,7 @@ function RegisterForm() {
       if (data.role === 'homeowner') {
         router.push('/dashboard/homeowner')
       } else if (data.role === 'jobseeker') {
-        router.push('/dashboard/jobseeker/profile')
+        router.push('/dashboard/jobseeker')
       } else {
         router.push(data.role === 'employer' ? '/dashboard/employer' : '/dashboard/worker')
       }
@@ -191,7 +212,7 @@ function RegisterForm() {
       if (selectedRole === 'homeowner') {
         router.push('/dashboard/homeowner')
       } else if (selectedRole === 'jobseeker') {
-        router.push('/dashboard/jobseeker/profile')
+        router.push('/dashboard/jobseeker')
       } else {
         router.push(selectedRole === 'employer' ? '/dashboard/employer' : '/dashboard/worker')
       }
@@ -247,8 +268,8 @@ function RegisterForm() {
               {[
                 { value: 'homeowner', label: 'Get work done', emoji: '🏠', desc: 'Post a job and get quotes from local tradies' },
                 { value: 'worker', label: 'Find work', emoji: '👷', desc: 'I\'m a tradie or skilled worker' },
-                { value: 'jobseeker', label: 'Find employment', emoji: '💼', desc: 'I\'m looking for a staff or contract role' },
                 { value: 'employer', label: 'Hire staff', emoji: '🏢', desc: 'I\'m a business looking to hire' },
+                { value: 'jobseeker', label: 'Find employment', emoji: '🎯', desc: 'I\'m looking for full-time or part-time work' },
               ].map(({ value, label, emoji, desc }) => (
                 <button
                   key={value}

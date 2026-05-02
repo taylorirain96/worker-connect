@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getReviewsForEntity } from '@/lib/reviews/firebase'
+import { adminDb } from '@/lib/firebase-admin'
+import { sendReviewReceivedEmail } from '@/lib/email/transactional'
 
 export const dynamic = 'force-dynamic'
 
@@ -57,6 +59,37 @@ export async function POST(request: NextRequest) {
     }
 
     // In production, save to Firestore and update user's average rating
+
+    // Send "Review Received" email to reviewee (non-blocking)
+    if (adminDb) {
+      ;(async () => {
+        try {
+          const [revieweeSnap, reviewerSnap] = await Promise.all([
+            adminDb.collection('users').doc(revieweeId).get(),
+            adminDb.collection('users').doc(reviewerId).get(),
+          ])
+          const revieweeData = revieweeSnap.exists ? revieweeSnap.data() : null
+          const reviewerData = reviewerSnap.exists ? reviewerSnap.data() : null
+          const revieweeEmail = revieweeData?.email as string | undefined
+          const revieweeName = (revieweeData?.displayName ?? revieweeData?.name ?? 'there') as string
+          const reviewerName = (reviewerData?.displayName ?? reviewerData?.name ?? 'Someone') as string
+          const snippet = comment.length > 150 ? `${comment.slice(0, 150)}\u2026` : comment
+          if (revieweeEmail) {
+            await sendReviewReceivedEmail({
+              revieweeEmail,
+              revieweeName,
+              reviewerName,
+              rating,
+              reviewSnippet: snippet,
+              revieweeId,
+            })
+          }
+        } catch (emailErr) {
+          console.error('Failed to send review-received email:', emailErr)
+        }
+      })().catch(() => {})
+    }
+
     return NextResponse.json(review, { status: 201 })
   } catch (error) {
     console.error('Create review error:', error)
