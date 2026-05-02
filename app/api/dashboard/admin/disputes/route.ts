@@ -88,15 +88,18 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      await adminDb.collection('jobs').doc(jobId).update({
+      const update: Record<string, unknown> = {
         status: 'completed',
         escrowStatus: action === 'refund_to_homeowner' ? 'refunded' : 'released',
         adminDisputeNote: adminNote ?? '',
         adminDisputeAction: action,
-        adminDisputeSplitPercent: splitPercent ?? null,
         resolvedAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-      })
+      }
+      if (action === 'split') {
+        update.adminDisputeSplitPercent = splitPercent
+      }
+      await adminDb.collection('jobs').doc(jobId).update(update)
     } catch {
       // Firestore not configured — simulate success
     }

@@ -140,6 +140,10 @@ export default function AdminEmailsPage() {
                           <CheckCircle className="h-3.5 w-3.5 text-green-400" />
                           <span className="text-xs text-green-400">Sent</span>
                         </div>
+                      ) : log.status === 'skipped' ? (
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs text-slate-400">Skipped</span>
+                        </div>
                       ) : (
                         <div className="flex items-center gap-1.5">
                           <XCircle className="h-3.5 w-3.5 text-red-400" />

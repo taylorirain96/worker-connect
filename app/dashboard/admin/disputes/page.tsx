@@ -114,7 +114,7 @@ function DisputePanel({ dispute, onResolved }: { dispute: Dispute; onResolved: (
 
       {/* Admin note */}
       <div className="p-5 border-t border-slate-700">
-        <label className="block text-xs font-medium text-slate-400 mb-1.5">Admin Note (saved to Firestore, emailed to both parties)</label>
+        <label className="block text-xs font-medium text-slate-400 mb-1.5">Admin Note (saved to Firestore with dispute record)</label>
         <textarea
           value={adminNote}
           onChange={(e) => setAdminNote(e.target.value)}

@@ -36,7 +36,8 @@ function buildMockLogs(count: number) {
       type,
       subject: SUBJECTS[type],
       status: i % 12 === 0 ? 'failed' : 'sent',
-      sentAt: new Date(Date.now() - Math.round(seeded(i, i * 600_000 + 300_000))).toISOString(),
+      // Spread timestamps across 5–10 minutes per entry using a fixed scale for consistent intervals
+      sentAt: new Date(Date.now() - (Math.round(seeded(i, 600_000)) + 300_000)).toISOString(),
     }
   })
 }

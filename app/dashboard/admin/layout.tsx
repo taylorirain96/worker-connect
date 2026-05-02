@@ -97,7 +97,9 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
       return
     }
 
-    // Optional double-check against NEXT_PUBLIC_ADMIN_UID env var
+    // Optional supplementary check: if NEXT_PUBLIC_ADMIN_UID is set, the UID
+    // must also match. This is NOT the primary security mechanism — the primary
+    // check is the Firestore role above. API routes enforce server-side checks.
     const adminUid = process.env.NEXT_PUBLIC_ADMIN_UID
     if (adminUid && user.uid !== adminUid) {
       router.replace('/')
