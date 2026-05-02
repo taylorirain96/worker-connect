@@ -86,13 +86,17 @@ export default function ConversationPage() {
     if (!conversation) return
     const participantIds = Object.keys(conversation.participants || {})
     if (participantIds.length < 2) return
+    let isMounted = true
     Promise.all(participantIds.map((id) => getUserProfile(id)))
       .then((profiles) => {
-        setBothWorkers(profiles.every((p) => p !== null && p.role === 'worker'))
+        if (isMounted) {
+          setBothWorkers(profiles.every((p) => p !== null && p.role === 'worker'))
+        }
       })
       .catch((err) => {
         console.error('Failed to fetch participant profiles:', err)
       })
+    return () => { isMounted = false }
   }, [conversation])
 
   const handleSend = useCallback(async () => {

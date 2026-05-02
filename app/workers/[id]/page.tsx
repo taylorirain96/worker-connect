@@ -229,7 +229,7 @@ export default function WorkerProfilePage({ params }: { params: { id: string } }
                   className="w-full mb-3"
                   disabled={messaging || user?.uid === worker.uid}
                   onClick={async () => {
-                    if (!user) { router.push('/auth/login?redirect=/workers/' + worker.uid); return }
+                    if (!user) { router.push(`/auth/login?redirect=/workers/${worker.uid}`); return }
                     setMessaging(true)
                     try {
                       const convId = await getOrCreateConversation(
