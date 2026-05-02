@@ -198,6 +198,27 @@ export const SERVICES: Service[] = [
     description:
       'Licensed asbestos identification, testing, and safe removal in compliance with NZ WorkSafe regulations.',
   },
+  {
+    slug: 'carpet-cleaning',
+    name: 'Carpet Cleaning',
+    namePlural: 'Carpet Cleaners',
+    description:
+      'Professional steam and dry carpet cleaning for homes and offices across New Zealand — removes stains, allergens, and odours.',
+  },
+  {
+    slug: 'window-cleaning',
+    name: 'Window Cleaning',
+    namePlural: 'Window Cleaners',
+    description:
+      'Residential and commercial window cleaning services — streak-free results for single-storey and multi-storey properties.',
+  },
+  {
+    slug: 'pool-maintenance',
+    name: 'Pool Maintenance',
+    namePlural: 'Pool Maintenance Specialists',
+    description:
+      'Regular pool cleaning, chemical balancing, filter servicing, and repairs for residential pools across New Zealand.',
+  },
 ]
 
 export const LOCATIONS: Location[] = [
@@ -315,6 +336,24 @@ export const LOCATIONS: Location[] = [
     cityName: 'Timaru',
     regionName: 'Canterbury',
   },
+  {
+    regionSlug: 'manawatu-whanganui',
+    citySlug: 'whanganui',
+    cityName: 'Whanganui',
+    regionName: 'Manawatū-Whanganui',
+  },
+  {
+    regionSlug: 'wellington',
+    citySlug: 'upper-hutt',
+    cityName: 'Upper Hutt',
+    regionName: 'Wellington',
+  },
+  {
+    regionSlug: 'wellington',
+    citySlug: 'porirua',
+    cityName: 'Porirua',
+    regionName: 'Wellington',
+  },
 ]
 
 export const NEARBY_MESH: Record<string, string[]> = {
@@ -337,6 +376,9 @@ export const NEARBY_MESH: Record<string, string[]> = {
   'wellington/lower-hutt': ['wellington/wellington'],
   'gisborne/gisborne': [],
   'canterbury/timaru': ['canterbury/christchurch', 'otago/dunedin'],
+  'manawatu-whanganui/whanganui': ['manawatu-whanganui/palmerston-north'],
+  'wellington/upper-hutt': ['wellington/wellington', 'wellington/lower-hutt', 'wellington/porirua'],
+  'wellington/porirua': ['wellington/wellington', 'wellington/upper-hutt'],
 }
 
 /** Find a service by slug */
@@ -1488,6 +1530,147 @@ export const SERVICE_DETAILS: Record<string, ServiceDetails> = {
       'Clearance certificates provided',
       'Accredited air monitoring',
       'Fully insured asbestos specialists',
+    ],
+  },
+  'carpet-cleaning': {
+    priceFrom: 50,
+    priceTo: 100,
+    priceUnit: 'per room',
+    commonJobs: [
+      'Residential steam carpet cleaning',
+      'End-of-tenancy carpet cleaning',
+      'Stain and odour treatment',
+      'Commercial carpet cleaning',
+      'Upholstery and sofa cleaning',
+      'Dry carpet cleaning',
+    ],
+    whyHire: [
+      'Commercial truck-mounted steam cleaning removes deep-set dirt and allergens',
+      'Professional stain treatment achieves better results than DIY products',
+      'Extends the lifespan of carpet and protects your bond refund',
+      'Fast drying times with high-powered extraction equipment',
+    ],
+    faqs: [
+      {
+        question: 'How much does carpet cleaning cost in NZ?',
+        answer:
+          'Carpet cleaning in NZ typically costs $50–$100 per room or $250–$500 for a standard 3-bedroom home. End-of-tenancy packages are often priced as a whole-home rate.',
+      },
+      {
+        question: 'How often should carpets be professionally cleaned?',
+        answer:
+          'For residential homes, professional carpet cleaning once every 12–18 months is recommended. Households with pets, children, or allergy sufferers benefit from more frequent cleans (every 6–12 months).',
+      },
+      {
+        question: 'How long does carpet take to dry after steam cleaning?',
+        answer:
+          'With professional truck-mounted extraction, carpets are typically dry within 2–6 hours. Open windows and use fans to speed up drying.',
+      },
+      {
+        question: 'Can carpet cleaning remove pet stains and odours?',
+        answer:
+          'Professional carpet cleaners use enzyme-based treatments that break down pet urine compounds, effectively removing both stains and odours in most cases. Severe or long-standing stains may require specialist treatment.',
+      },
+    ],
+    trustSignals: [
+      'Commercial-grade steam cleaning equipment',
+      'Bond-clean guarantee available',
+      'Fully insured professionals',
+      'Eco-friendly product options',
+    ],
+  },
+  'window-cleaning': {
+    priceFrom: 80,
+    priceTo: 300,
+    priceUnit: 'per visit',
+    commonJobs: [
+      'Residential window cleaning',
+      'Commercial window cleaning',
+      'High-rise window cleaning',
+      'Conservatory cleaning',
+      'Window track and frame cleaning',
+      'Solar panel cleaning',
+    ],
+    whyHire: [
+      'Streak-free results with professional squeegees and purified water systems',
+      'Safe access to high and difficult windows',
+      'Extends window life by removing corrosive mineral deposits',
+      'Regular cleans keep your home looking its best year-round',
+    ],
+    faqs: [
+      {
+        question: 'How much does window cleaning cost in NZ?',
+        answer:
+          'Residential window cleaning in NZ typically costs $80–$200 for a standard home. Larger or multi-storey properties may cost $200–$400+. Commercial window cleaning is usually quoted per visit or on an ongoing contract.',
+      },
+      {
+        question: 'How often should windows be professionally cleaned?',
+        answer:
+          'For most NZ homes, twice-yearly professional cleaning (spring and autumn) maintains clean windows and removes mineral deposits. Coastal properties may benefit from more frequent cleans due to salt spray.',
+      },
+      {
+        question: 'Do window cleaners clean window tracks and frames?',
+        answer:
+          'Most professional window cleaners include track and frame wiping as part of the service. Confirm this when booking — heavily soiled tracks may incur an additional charge.',
+      },
+      {
+        question: 'Can window cleaners clean solar panels?',
+        answer:
+          'Yes. Many NZ window cleaners also offer solar panel cleaning, which is important for maintaining panel efficiency. Professional cleaning removes dust, bird droppings, and grime that reduce solar output.',
+      },
+    ],
+    trustSignals: [
+      'Fully insured professionals',
+      'Height safety certified',
+      'Purified water systems used',
+      'Streak-free guarantee',
+    ],
+  },
+  'pool-maintenance': {
+    priceFrom: 100,
+    priceTo: 300,
+    priceUnit: 'per visit',
+    commonJobs: [
+      'Regular pool cleaning and vacuuming',
+      'Chemical balancing and water testing',
+      'Filter cleaning and backwashing',
+      'Pool pump and equipment servicing',
+      'Algae treatment',
+      'Pool opening and closing (seasonal)',
+    ],
+    whyHire: [
+      'Correct chemical balance ensures safe, comfortable swimming',
+      'Regular professional maintenance prevents costly equipment failures',
+      'Time-saving — no need to buy, store, or apply chemicals yourself',
+      'Expert diagnosis of water quality issues and equipment faults',
+    ],
+    faqs: [
+      {
+        question: 'How much does pool maintenance cost in NZ?',
+        answer:
+          'Regular pool maintenance in NZ typically costs $100–$200 per fortnightly visit, or $150–$300 for a monthly service. Annual contracts covering all chemicals, cleaning, and equipment checks cost $2,000–$5,000 per year.',
+      },
+      {
+        question: 'How often should a pool be professionally serviced?',
+        answer:
+          'For most residential pools in NZ, fortnightly servicing during summer and monthly in winter keeps water chemistry balanced and equipment running well. Heavily used pools may require weekly service.',
+      },
+      {
+        question: 'Why is my pool water green?',
+        answer:
+          'Green water is caused by algae, which typically results from insufficient chlorine, poor circulation, or pH imbalance. A pool technician can shock-treat the pool and restore water clarity within 24–72 hours.',
+      },
+      {
+        question: 'What chemicals does my pool need?',
+        answer:
+          'Residential pools require chlorine (or saltwater equivalent), pH adjusters (acid/soda ash), alkalinity buffers, and occasional algaecide or clarifier. A pool professional will test your water and advise on the correct treatment.',
+      },
+    ],
+    trustSignals: [
+      'Certified pool technicians',
+      'Water test records provided',
+      'Fully insured service',
+      'Equipment fault diagnosis included',
     ],
   },
 }

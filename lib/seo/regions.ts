@@ -145,6 +145,27 @@ export const NZ_REGIONS: NZRegion[] = [
     country: 'nz',
     geo: { lat: -38.6623, lng: 178.0176 },
   },
+  {
+    slug: 'timaru',
+    city: 'Timaru',
+    region: 'Canterbury',
+    country: 'nz',
+    geo: { lat: -44.3904, lng: 171.2373 },
+  },
+  {
+    slug: 'upper-hutt',
+    city: 'Upper Hutt',
+    region: 'Wellington',
+    country: 'nz',
+    geo: { lat: -41.1244, lng: 175.0707 },
+  },
+  {
+    slug: 'porirua',
+    city: 'Porirua',
+    region: 'Wellington',
+    country: 'nz',
+    geo: { lat: -41.1344, lng: 174.8394 },
+  },
 ]
 
 export const COUNTRY_NAMES: Record<string, string> = {

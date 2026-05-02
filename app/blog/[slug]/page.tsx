@@ -56,6 +56,36 @@ const mdxModules: Record<string, () => Promise<{ default: React.ComponentType }>
     import('@/content/blog/electrician-call-out-fee-nz.mdx'),
   'home-renovation-cost-nz': () =>
     import('@/content/blog/home-renovation-cost-nz.mdx'),
+  'how-to-find-a-reliable-electrician-nz': () =>
+    import('@/content/blog/how-to-find-a-reliable-electrician-nz.mdx'),
+  'nz-building-consent-guide-2026': () =>
+    import('@/content/blog/nz-building-consent-guide-2026.mdx'),
+  'best-time-to-renovate-your-nz-home': () =>
+    import('@/content/blog/best-time-to-renovate-your-nz-home.mdx'),
+  'how-much-does-a-bathroom-renovation-cost-nz': () =>
+    import('@/content/blog/how-much-does-a-bathroom-renovation-cost-nz.mdx'),
+  'deck-building-costs-nz-2026': () =>
+    import('@/content/blog/deck-building-costs-nz-2026.mdx'),
+  'find-tradies-tauranga': () =>
+    import('@/content/blog/find-tradies-tauranga.mdx'),
+  'find-tradies-hamilton': () =>
+    import('@/content/blog/find-tradies-hamilton.mdx'),
+  'solar-panel-installation-nz-guide': () =>
+    import('@/content/blog/solar-panel-installation-nz-guide.mdx'),
+  'landlord-maintenance-obligations-nz': () =>
+    import('@/content/blog/landlord-maintenance-obligations-nz.mdx'),
+  'plumbers-palmerston-north': () =>
+    import('@/content/blog/plumbers-palmerston-north.mdx'),
+  'find-tradies-rotorua': () =>
+    import('@/content/blog/find-tradies-rotorua.mdx'),
+  'pest-control-nz-guide': () =>
+    import('@/content/blog/pest-control-nz-guide.mdx'),
+  'home-insulation-nz-guide': () =>
+    import('@/content/blog/home-insulation-nz-guide.mdx'),
+  'how-to-get-multiple-quotes-nz': () =>
+    import('@/content/blog/how-to-get-multiple-quotes-nz.mdx'),
+  'hiring-a-cleaner-nz': () =>
+    import('@/content/blog/hiring-a-cleaner-nz.mdx'),
 }
 
 export function generateStaticParams() {
