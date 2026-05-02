@@ -17,7 +17,7 @@ const registerSchema = z
     email: z.string().email('Please enter a valid email'),
     password: z.string().min(8, 'Password must be at least 8 characters'),
     confirmPassword: z.string(),
-    role: z.enum(['worker', 'employer']),
+    role: z.enum(['worker', 'employer', 'homeowner']),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Passwords do not match',
@@ -29,7 +29,7 @@ type RegisterFormData = z.infer<typeof registerSchema>
 function RegisterForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const defaultRole = (searchParams.get('role') as 'worker' | 'employer') || 'worker'
+  const defaultRole = (searchParams.get('role') as 'worker' | 'employer' | 'homeowner') || 'worker'
   const { user, profile, loading } = useAuth()
 
   // Redirect away if already logged in
@@ -55,7 +55,7 @@ function RegisterForm() {
 
   const selectedRole = watch('role')
 
-  const createUserProfile = async (uid: string, email: string | null, displayName: string, role: 'worker' | 'employer') => {
+  const createUserProfile = async (uid: string, email: string | null, displayName: string, role: 'worker' | 'employer' | 'homeowner') => {
     const { doc, setDoc, serverTimestamp } = await import('firebase/firestore')
     const { db } = await import('@/lib/firebase')
     if (!db) {
@@ -71,7 +71,7 @@ function RegisterForm() {
       role,
       createdAt: now,
       updatedAt: now,
-      profileComplete: false,
+      profileComplete: role === 'homeowner' ? true : false,
       verified: false,
     }
     const workerFields = role === 'worker'
@@ -107,7 +107,13 @@ function RegisterForm() {
         body: JSON.stringify({ email: data.email, name: data.displayName, role: data.role }),
       }).catch(() => {}) // silently ignore if email fails
       toast.success('Account created successfully!')
-      router.push(data.role === 'employer' ? '/dashboard/employer' : '/dashboard/worker')
+      if (data.role === 'employer') {
+        router.push('/dashboard/employer')
+      } else if (data.role === 'homeowner') {
+        router.push('/dashboard/homeowner')
+      } else {
+        router.push('/dashboard/worker')
+      }
     } catch (error: unknown) {
       const err = error as { code?: string }
       if (err.code === 'auth/email-already-in-use') {
@@ -143,7 +149,13 @@ function RegisterForm() {
         body: JSON.stringify({ email: user.email, name: user.displayName || 'User', role: selectedRole }),
       }).catch(() => {}) // silently ignore if email fails
       toast.success('Account created successfully!')
-      router.push(selectedRole === 'employer' ? '/dashboard/employer' : '/dashboard/worker')
+      if (selectedRole === 'employer') {
+        router.push('/dashboard/employer')
+      } else if (selectedRole === 'homeowner') {
+        router.push('/dashboard/homeowner')
+      } else {
+        router.push('/dashboard/worker')
+      }
     } catch (error: unknown) {
       const err = error as { code?: string }
       console.error('Google sign-up error:', error)
@@ -192,15 +204,16 @@ function RegisterForm() {
             <label className="block text-sm font-medium text-gray-300 mb-2">
               I want to...
             </label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               {[
                 { value: 'worker', label: 'Find Work', emoji: '👷', desc: 'I am a skilled worker' },
                 { value: 'employer', label: 'Hire Workers', emoji: '🏢', desc: 'I need work done' },
+                { value: 'homeowner', label: 'Post a Job', emoji: '🏠', desc: 'I need a tradie' },
               ].map(({ value, label, emoji, desc }) => (
                 <button
                   key={value}
                   type="button"
-                  onClick={() => setValue('role', value as 'worker' | 'employer')}
+                  onClick={() => setValue('role', value as 'worker' | 'employer' | 'homeowner')}
                   className={`p-4 rounded-xl border-2 text-left transition-all ${
                     selectedRole === value
                       ? 'border-indigo-500 bg-indigo-500/10'
