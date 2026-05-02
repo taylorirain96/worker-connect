@@ -23,7 +23,7 @@ interface ChatMessage {
 export async function POST(request: NextRequest) {
   if (rateLimit(request, { max: 10, windowMs: 60_000 })) {
     return NextResponse.json(
-      { reply: 'Too many requests. Please wait a moment before trying again.' },
+      { error: 'Too many requests. Please wait a moment before trying again.' },
       { status: 429 }
     )
   }

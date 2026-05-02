@@ -50,9 +50,11 @@ export function rateLimit(
   const windowStart = now - windowMs
 
   // Periodically sweep stale entries to prevent unbounded memory growth.
+  // Use a fixed 60-second cleanup threshold independent of the request window size.
   if (now - lastCleanup > 60_000) {
+    const cutoff = now - 60_000
     for (const [key, entry] of store.entries()) {
-      entry.requests = entry.requests.filter((t) => t > windowStart)
+      entry.requests = entry.requests.filter((t) => t > cutoff)
       if (entry.requests.length === 0) {
         store.delete(key)
       }
@@ -60,7 +62,11 @@ export function rateLimit(
     lastCleanup = now
   }
 
-  const entry = store.get(ip) ?? { requests: [] }
+  let entry = store.get(ip)
+  if (!entry) {
+    entry = { requests: [] }
+    store.set(ip, entry)
+  }
 
   // Discard timestamps that have fallen outside the sliding window.
   entry.requests = entry.requests.filter((t) => t > windowStart)
@@ -70,6 +76,5 @@ export function rateLimit(
   }
 
   entry.requests.push(now)
-  store.set(ip, entry)
   return false // within limit
 }
