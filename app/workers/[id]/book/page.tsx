@@ -12,17 +12,9 @@ import toast from 'react-hot-toast'
 import { getUserProfile } from '@/lib/users/getProfile'
 import type { UserProfile, WorkerAvailability } from '@/types'
 
+// Ordered to match JavaScript's Date.getDay() (0=Sunday … 6=Saturday).
+// The calendar grid renders Monday-first by applying a (day + 6) % 7 offset.
 const DAYS_OF_WEEK = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const
-type DayKey = typeof DAYS_OF_WEEK[number]
-
-function getAvailableDaysFromSchedule(availability: WorkerAvailability): DayKey[] {
-  return DAYS_OF_WEEK.filter((day) => {
-    if (day === 'sunday' || day === 'saturday') {
-      return availability[day]?.available
-    }
-    return availability[day as keyof Omit<WorkerAvailability, 'blockedDates' | 'minNoticeHours'>]?.available
-  })
-}
 
 function isDateAvailable(date: Date, availability: WorkerAvailability): boolean {
   const dayName = DAYS_OF_WEEK[date.getDay()]
@@ -217,7 +209,7 @@ export default function BookWorkerPage({ params }: { params: { id: string } }) {
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Link
             href={`/workers/${params.id}`}
-            className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 mb-6 text-sm transition-colours"
+            className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 mb-6 text-sm transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to {worker.displayName}&apos;s Profile
@@ -255,7 +247,7 @@ export default function BookWorkerPage({ params }: { params: { id: string } }) {
                       <button
                         type="button"
                         onClick={() => setCalendarMonth(new Date(year, month - 1, 1))}
-                        className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colours text-gray-600 dark:text-gray-400"
+                        className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-400"
                         aria-label="Previous month"
                       >
                         ‹
@@ -264,7 +256,7 @@ export default function BookWorkerPage({ params }: { params: { id: string } }) {
                       <button
                         type="button"
                         onClick={() => setCalendarMonth(new Date(year, month + 1, 1))}
-                        className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colours text-gray-600 dark:text-gray-400"
+                        className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-400"
                         aria-label="Next month"
                       >
                         ›
@@ -297,7 +289,7 @@ export default function BookWorkerPage({ params }: { params: { id: string } }) {
                               setSelectedTime('')
                             }}
                             className={`
-                              h-9 w-full rounded-lg text-sm font-medium transition-colours focus:outline-none focus:ring-2 focus:ring-primary-500
+                              h-9 w-full rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500
                               ${isSelected
                                 ? 'bg-primary-600 text-white'
                                 : available && !isPast
@@ -349,7 +341,7 @@ export default function BookWorkerPage({ params }: { params: { id: string } }) {
                         type="button"
                         onClick={() => setSelectedTime(slot)}
                         className={`
-                          py-2 rounded-lg text-sm font-medium transition-colours border focus:outline-none focus:ring-2 focus:ring-primary-500
+                          py-2 rounded-lg text-sm font-medium transition-colors border focus:outline-none focus:ring-2 focus:ring-primary-500
                           ${selectedTime === slot
                             ? 'bg-primary-600 text-white border-primary-600'
                             : 'border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-primary-300 dark:hover:border-primary-600'}

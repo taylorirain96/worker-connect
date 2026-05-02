@@ -149,7 +149,7 @@ export default function WorkerAvailabilityPage() {
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Link
             href="/dashboard/worker"
-            className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 mb-6 text-sm transition-colours"
+            className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 mb-6 text-sm transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Dashboard
@@ -181,7 +181,7 @@ export default function WorkerAvailabilityPage() {
                   return (
                     <div
                       key={key}
-                      className={`flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg border transition-colours ${
+                      className={`flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg border transition-colors ${
                         day.available
                           ? 'border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-900/10'
                           : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
@@ -191,7 +191,7 @@ export default function WorkerAvailabilityPage() {
                         <button
                           type="button"
                           onClick={() => toggleDay(key)}
-                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colours focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
                             day.available ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'
                           }`}
                           aria-label={`Toggle ${label}`}
@@ -314,7 +314,7 @@ export default function WorkerAvailabilityPage() {
                       <button
                         type="button"
                         onClick={() => removeBlockedDate(date)}
-                        className="hover:text-red-900 dark:hover:text-red-200 transition-colours"
+                        className="hover:text-red-900 dark:hover:text-red-200 transition-colors"
                         aria-label={`Remove ${date}`}
                       >
                         <X className="h-3.5 w-3.5" />
