@@ -323,7 +323,7 @@ export async function POST(req: NextRequest) {
             },
           })
 
-          // ── Referral reward: credit referrer on first paid job ─────────────
+          // ── Referral reward: credit referrer AND referred user on first paid job ─────────────
           try {
             const workerDoc = await adminDb.collection('users').doc(workerId).get()
             const workerData = workerDoc.data()
@@ -334,26 +334,69 @@ export async function POST(req: NextRequest) {
               const refDoc = await adminDb.collection('referrals').doc(workerId).get()
 
               if (refDoc.exists && refDoc.data()?.referrerId === referredBy && refDoc.data()?.status === 'signed_up') {
-                const REWARD_AMOUNT = 25 // NZ$25 on first paid job
+                const CREDIT_AMOUNT = 10 // NZ$10 credit for both parties
                 const now = new Date().toISOString()
 
                 await refDoc.ref.update({
                   status: 'completed_3',
-                  earnedAmount: REWARD_AMOUNT,
+                  earnedAmount: CREDIT_AMOUNT,
+                  creditAwarded: true,
                   updatedAt: now,
                 })
 
-                // Use FieldValue to increment referralCredits atomically
+                // Award $10 credit to the referrer
                 await adminDb.collection('users').doc(referredBy).update({
-                  referralCredits: FieldValue.increment(REWARD_AMOUNT),
+                  credit: FieldValue.increment(CREDIT_AMOUNT),
+                  referralCredits: FieldValue.increment(CREDIT_AMOUNT),
                 })
+
+                // Log credit transaction for referrer
+                await adminDb
+                  .collection('creditTransactions')
+                  .doc(referredBy)
+                  .collection('items')
+                  .add({
+                    userId: referredBy,
+                    amount: CREDIT_AMOUNT,
+                    type: 'referral_reward',
+                    description: `NZ$${CREDIT_AMOUNT} referral reward — your referred contact completed their first job`,
+                    referralId: refDoc.id,
+                    createdAt: now,
+                  })
+
+                // Award $10 credit to the referred user (worker)
+                await adminDb.collection('users').doc(workerId).update({
+                  credit: FieldValue.increment(CREDIT_AMOUNT),
+                })
+
+                // Log credit transaction for referred user
+                await adminDb
+                  .collection('creditTransactions')
+                  .doc(workerId)
+                  .collection('items')
+                  .add({
+                    userId: workerId,
+                    amount: CREDIT_AMOUNT,
+                    type: 'referral_signup',
+                    description: `NZ$${CREDIT_AMOUNT} credit for completing your first job via referral`,
+                    referralId: refDoc.id,
+                    createdAt: now,
+                  })
 
                 await sendNotification({
                   userId: referredBy,
                   type: 'payment_received',
                   title: '🎉 Referral Reward Earned!',
-                  message: `Your referral completed their first paid job — you've earned NZ$${REWARD_AMOUNT} in referral credits!`,
-                  metadata: { referralId: refDoc.id, rewardAmount: REWARD_AMOUNT },
+                  message: `Your referral completed their first paid job — you've earned NZ$${CREDIT_AMOUNT} credit!`,
+                  metadata: { referralId: refDoc.id, rewardAmount: CREDIT_AMOUNT },
+                })
+
+                await sendNotification({
+                  userId: workerId,
+                  type: 'payment_received',
+                  title: '🎉 Welcome Bonus Credit!',
+                  message: `You've earned NZ$${CREDIT_AMOUNT} credit for completing your first job — use it on your next payment!`,
+                  metadata: { referralId: refDoc.id, rewardAmount: CREDIT_AMOUNT },
                 })
               }
             }

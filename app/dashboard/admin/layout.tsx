@@ -6,7 +6,7 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import {
   LayoutDashboard, Users, Briefcase, DollarSign,
-  AlertTriangle, Mail, Shield, Menu, X, ChevronRight, ShieldCheck,
+  AlertTriangle, Mail, Shield, Menu, X, ChevronRight, ShieldCheck, Tag,
 } from 'lucide-react'
 
 const NAV_ITEMS = [
@@ -16,6 +16,7 @@ const NAV_ITEMS = [
   { label: 'Payments',       href: '/dashboard/admin/payments',           icon: DollarSign },
   { label: 'Disputes',       href: '/dashboard/admin/disputes',           icon: AlertTriangle },
   { label: 'Verification',   href: '/dashboard/admin/verification',       icon: ShieldCheck },
+  { label: 'Promo Codes',    href: '/dashboard/admin/promos',             icon: Tag },
   { label: 'Email Logs',     href: '/dashboard/admin/emails',             icon: Mail },
 ]
 
