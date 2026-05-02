@@ -49,7 +49,7 @@ function docToApplication(id: string, data: DocumentData): Application {
 interface DisputedWorkerJob {
   id: string
   title: string
-  createdAt: string
+  lastModified: string
 }
 
 export default function WorkerDashboardPage() {
@@ -126,7 +126,7 @@ export default function WorkerDashboardPage() {
           snapshot.docs.map((d) => ({
             id: d.id,
             title: d.data().title ?? 'Untitled job',
-            createdAt: toISO(d.data().updatedAt ?? d.data().createdAt),
+            lastModified: toISO(d.data().updatedAt ?? d.data().createdAt),
           }))
         )
       } catch {
@@ -387,7 +387,7 @@ export default function WorkerDashboardPage() {
                 >
                   <div>
                     <p className="font-semibold text-gray-900 dark:text-white text-sm">{job.title}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{formatRelativeDate(job.createdAt)}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{formatRelativeDate(job.lastModified)}</p>
                   </div>
                   <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300 whitespace-nowrap">
                     Under Review

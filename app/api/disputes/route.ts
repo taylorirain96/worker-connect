@@ -173,7 +173,7 @@ export async function POST(request: Request) {
         try {
           const { sendDisputeRaisedEmail } = await import('@/lib/email/transactional')
           const reasonLabel = reason.replace(/_/g, ' ')
-            .replace(/\b\w/g, (c: string) => c.toUpperCase())
+            .replace(/\b\w/g, (c) => c.toUpperCase())
 
           const emailPromises: Promise<void>[] = []
 

@@ -103,7 +103,8 @@ export default function RaiseDisputePage() {
     if (!storage || photos.length === 0) return []
     const urls: string[] = []
     for (const file of photos) {
-      const path = `disputes/${jobId}/${user!.uid}/${Date.now()}_${file.name}`
+      const safeFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+      const path = `disputes/${jobId}/${user!.uid}/${Date.now()}_${safeFileName}`
       const sRef = storageRef(storage, path)
       await uploadBytes(sRef, file)
       const url = await getDownloadURL(sRef)
@@ -323,6 +324,7 @@ export default function RaiseDisputePage() {
                 onChange={(e) => setDescription(e.target.value)}
                 required
                 minLength={50}
+                maxLength={2000}
                 rows={5}
                 placeholder="Describe what happened in as much detail as possible — include dates, amounts, and any communication you had with the other party…"
                 className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
