@@ -236,7 +236,7 @@ const posts: BlogPost[] = [
     slug: 'find-tradies-hamilton',
     title: 'Find Trusted Tradies in Hamilton: Local Guide for Waikato Homeowners',
     description: 'How to find reliable tradespeople in Hamilton — from electricians and plumbers to builders and painters in the Waikato region.',
-    date: '2026-04-18',
+    date: '2026-04-19',
     readTime: '5 min read',
     category: 'Local Guides',
   },
