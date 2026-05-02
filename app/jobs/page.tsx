@@ -218,10 +218,10 @@ function JobsPageContent() {
 
             {/* Tabs — only shown to workers */}
             {profile?.role === 'worker' && (
-              <div className="flex gap-1 mt-5 border-b border-gray-200 dark:border-gray-700 -mb-8 pb-0">
+              <div className="flex gap-1 mt-5 border-b border-gray-200 dark:border-gray-700">
                 <button
                   onClick={() => setActiveTab('all')}
-                  className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                  className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
                     activeTab === 'all'
                       ? 'border-primary-600 text-primary-600'
                       : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
@@ -231,7 +231,7 @@ function JobsPageContent() {
                 </button>
                 <button
                   onClick={() => setActiveTab('for-you')}
-                  className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                  className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
                     activeTab === 'for-you'
                       ? 'border-primary-600 text-primary-600'
                       : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'

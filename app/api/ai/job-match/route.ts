@@ -94,12 +94,20 @@ export async function POST(request: NextRequest) {
     // Try AI scoring first
     if (apiKey && skills.length > 0) {
       try {
+        // Sanitise skills to prevent prompt injection
+        const safeSkills = skills
+          .slice(0, 20)
+          .map((s) => String(s).replace(/[\n\r|`]/g, ' ').trim().substring(0, 80))
+          .filter(Boolean)
+
+        const safeLocation = String(location || 'New Zealand').replace(/[\n\r|`]/g, ' ').trim().substring(0, 100)
+
         const prompt = `You are a job matching assistant for QuickTrade, a New Zealand trade platform.
 
 Worker profile:
-- Skills: ${skills.join(', ')}
-- Location: ${location || 'New Zealand'}
-${jobHistory && jobHistory.length > 0 ? `- Previous jobs: ${jobHistory.slice(0, 5).join(', ')}` : ''}
+- Skills: ${safeSkills.join(', ')}
+- Location: ${safeLocation}
+${jobHistory && jobHistory.length > 0 ? `- Previous jobs: ${jobHistory.slice(0, 5).map((j) => String(j).replace(/[\n\r|`]/g, ' ').trim().substring(0, 60)).join(', ')}` : ''}
 
 Available jobs:
 ${jobs.map((j, i) => `${i + 1}. ID: ${j.id} | Title: ${j.title} | Category: ${j.category} | Location: ${j.location} | Skills needed: ${j.skills.join(', ')} | Description: ${j.description.substring(0, 120)}`).join('\n')}
