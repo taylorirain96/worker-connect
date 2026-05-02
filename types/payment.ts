@@ -99,9 +99,9 @@ export interface SubscriptionPlanConfig {
   id: SubscriptionPlan
   name: string
   description: string
-  /** Monthly price in USD when billed monthly */
+  /** Monthly price in NZD when billed monthly */
   monthlyPrice: number
-  /** Monthly price in USD when billed annually (discounted rate per month) */
+  /** Monthly price in NZD when billed annually (discounted rate per month) */
   yearlyPricePerMonth: number
   features: string[]
   jobLimit: number | null
@@ -112,48 +112,44 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlanConfig[] = [
   {
     id: 'free',
     name: 'Free',
-    description: 'Perfect for getting started',
+    description: 'Start earning with zero upfront cost',
     monthlyPrice: 0,
     yearlyPricePerMonth: 0,
-    jobLimit: 3,
+    jobLimit: null,
     features: [
-      'Up to 3 active jobs',
-      'Basic worker profiles',
-      'Standard support',
-      'Payment processing',
+      'Sliding scale commission (18% → 10%)',
+      'Browse & apply to all jobs',
+      'Receive reviews & ratings',
+      'Full escrow payment protection',
     ],
   },
   {
     id: 'pro',
-    name: 'Pro',
-    description: 'For growing businesses',
-    monthlyPrice: 29,
-    yearlyPricePerMonth: 26,
+    name: 'Pro Worker',
+    description: 'For active tradies doing 3+ jobs/month',
+    monthlyPrice: 49,
+    yearlyPricePerMonth: 39,
     jobLimit: null,
     highlighted: true,
     features: [
-      'Unlimited active jobs',
-      'Priority worker matching',
-      'Priority support',
-      'Advanced analytics',
-      'Custom invoicing',
-      'Dedicated account manager',
+      'Flat 8% commission on every job',
+      'Profile boost included',
+      'Early job alerts (30 min head start)',
+      'Commission savings pay for themselves after just 2 jobs/month',
     ],
   },
   {
     id: 'enterprise',
-    name: 'Enterprise',
-    description: 'For large organisations',
-    monthlyPrice: 99,
-    yearlyPricePerMonth: 89,
+    name: 'Elite Worker',
+    description: 'For top earners who want maximum take-home',
+    monthlyPrice: 89,
+    yearlyPricePerMonth: 71,
     jobLimit: null,
     features: [
-      'Everything in Pro',
-      'API access',
-      'Custom integrations',
-      'SLA guarantee',
-      'Multi-seat management',
-      'White-label options',
+      'Flat 6% commission on every job',
+      'Featured profile placement',
+      'Priority notifications',
+      'Verified elite badge',
     ],
   },
 ]

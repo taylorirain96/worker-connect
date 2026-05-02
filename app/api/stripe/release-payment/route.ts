@@ -5,10 +5,10 @@
  * Called when the employer marks the job as complete, or automatically after 7 days.
  *
  * Commission tiers (deducted from escrow before paying worker):
- *   New Worker (0–5 jobs):     10%
- *   Established (6–20 jobs):    8%
- *   Pro Worker (21–50 jobs):    6%
- *   Elite Worker (50+ jobs):    5%
+ *   New Worker (0–5 jobs):     18%
+ *   Established (6–20 jobs):   15%
+ *   Pro Worker (21–50 jobs):   12%
+ *   Elite Worker (51+ jobs):   10%
  *
  * TODO: Replace STRIPE_SECRET_KEY with your live key when going live.
  * TODO: In production, use Stripe Connect Transfer to pay the worker directly.

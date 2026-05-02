@@ -10,7 +10,7 @@ export const STRIPE_CONNECT_CONFIG = {
   /** Minimum payout amount in dollars */
   minPayoutAmount: 25,
   /** Supported payout currencies */
-  supportedCurrencies: ['usd'],
+  supportedCurrencies: ['nzd'],
   /** Stripe Connect account type used for workers */
   accountType: 'express' as const,
 }
