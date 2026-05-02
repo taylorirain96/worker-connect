@@ -68,13 +68,17 @@ function formatSalary(job: StaffJob) {
 
 function profileCompletionScore(profile: Record<string, unknown> | null): number {
   if (!profile) return 0
-  const fields = ['displayName', 'photoURL', 'bio', 'location', 'skills', 'phone']
-  const filled = fields.filter((f) => {
-    const v = profile[f]
-    if (Array.isArray(v)) return v.length > 0
-    return !!v
-  })
-  return Math.round((filled.length / fields.length) * 100)
+  // Fields a jobseeker can realistically fill in to show profile completeness
+  const checks: [string, (v: unknown) => boolean][] = [
+    ['displayName', (v) => typeof v === 'string' && v.trim().length > 0],
+    ['bio', (v) => typeof v === 'string' && v.trim().length > 0],
+    ['location', (v) => typeof v === 'string' && v.trim().length > 0],
+    ['skills', (v) => Array.isArray(v) && v.length > 0],
+    ['cvFileName', (v) => typeof v === 'string' && v.trim().length > 0],
+    ['headline', (v) => typeof v === 'string' && v.trim().length > 0],
+  ]
+  const filled = checks.filter(([key, test]) => test(profile[key])).length
+  return Math.round((filled / checks.length) * 100)
 }
 
 export default function JobseekerDashboardPage() {

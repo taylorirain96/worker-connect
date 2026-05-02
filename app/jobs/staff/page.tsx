@@ -195,13 +195,28 @@ function StaffJobsContent() {
     }
     setApplyingId(job.id)
     try {
+      // Get the ID token to authenticate the request
+      let idToken: string | null = null
+      try {
+        idToken = await user.getIdToken()
+      } catch {
+        // Proceed without token — server will record applicantId as null
+      }
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (idToken) headers['Authorization'] = `Bearer ${idToken}`
+
       // One-click Quick Apply — uses saved profile data
       const resp = await fetch('/api/jobs/staff/apply', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jobId: job.id, employerId: job.employerId }),
+        headers,
+        body: JSON.stringify({
+          jobId: job.id,
+          employerId: job.employerId,
+          jobTitle: job.title,
+          companyName: job.companyName,
+        }),
       })
-      if (!resp.ok) throw new Error('apply failed')
+      if (!resp.ok) throw new Error(`Apply request failed with status ${resp.status}`)
       setAppliedIds((prev) => new Set([...prev, job.id]))
       toast.success(`Applied to "${job.title}" ✓`)
     } catch {
@@ -222,15 +237,15 @@ function StaffJobsContent() {
     })
 
   const filtered = jobs.filter((job) => {
-    const matchSearch = !search || job.title.toLowerCase().includes(search.toLowerCase()) || job.companyName.toLowerCase().includes(search.toLowerCase()) || job.location.toLowerCase().includes(search.toLowerCase())
+    const matchSearch = !search
+      || job.title.toLowerCase().includes(search.toLowerCase())
+      || job.companyName.toLowerCase().includes(search.toLowerCase())
+      || job.location.toLowerCase().includes(search.toLowerCase())
     const matchType = workTypeFilter === 'all' || job.workType === workTypeFilter
     const matchCategory = categoryFilter === 'all' || job.category === categoryFilter
-    const matchSalary = (() => {
-      if (salaryFilter === 'any') return true
-      if (!job.salaryMin) return false
-      const threshold = salaryFilter === '50k+' ? 50000 : salaryFilter === '70k+' ? 70000 : 90000
-      return job.salaryMin >= threshold
-    })()
+    const salaryThresholds: Record<string, number> = { '50k+': 50000, '70k+': 70000, '90k+': 90000 }
+    const matchSalary = salaryFilter === 'any'
+      || (!!job.salaryMin && job.salaryMin >= (salaryThresholds[salaryFilter] ?? 0))
     return matchSearch && matchType && matchCategory && matchSalary
   })
 

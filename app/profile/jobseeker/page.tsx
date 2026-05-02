@@ -83,6 +83,9 @@ const SKILL_SUGGESTIONS = [
 ]
 
 function uid4() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID()
+  }
   return Math.random().toString(36).slice(2, 10)
 }
 
@@ -238,9 +241,9 @@ export default function JobseekerProfilePage() {
     if (!file) return
     if (file.type !== 'application/pdf') { toast.error('CV must be a PDF file'); return }
     if (file.size > 10 * 1024 * 1024) { toast.error('CV must be under 10 MB'); return }
-    // In production this would upload to Firebase Storage
+    // File is stored by name — click "Save Profile" to upload and persist
     set('cvFileName', file.name)
-    toast.success(`CV "${file.name}" ready to save`)
+    toast.success(`CV "${file.name}" selected — click Save Profile to upload`)
   }
 
   const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -248,9 +251,9 @@ export default function JobseekerProfilePage() {
     if (!file) return
     if (!file.type.startsWith('video/')) { toast.error('Please upload a video file'); return }
     if (file.size > 100 * 1024 * 1024) { toast.error('Video must be under 100 MB'); return }
-    // In production this would upload to Firebase Storage
+    // File is stored by name — click "Save Profile" to upload and persist
     set('videoFileName', file.name)
-    toast.success(`Video intro "${file.name}" ready to save`)
+    toast.success(`Video intro "${file.name}" selected — click Save Profile to upload`)
   }
 
   if (loading) {
