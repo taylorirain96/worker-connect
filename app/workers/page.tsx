@@ -131,6 +131,7 @@ export default function WorkersPage() {
     maxRate: '',
     minRating: '',
     availability: '',
+    sortBy: '',
   })
 
   useEffect(() => {
@@ -160,12 +161,19 @@ export default function WorkersPage() {
     return true
   })
 
+  const sortedWorkers = [...filteredWorkers].sort((a, b) => {
+    if (filters.sortBy === 'highest_rated') {
+      return (b.rating ?? 0) - (a.rating ?? 0)
+    }
+    return 0
+  })
+
   const handleFilterChange = (key: string, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }))
   }
 
   const handleFilterReset = () => {
-    setFilters({ search: '', location: '', category: '', minRate: '', maxRate: '', minRating: '', availability: '' })
+    setFilters({ search: '', location: '', category: '', minRate: '', maxRate: '', minRating: '', availability: '', sortBy: '' })
   }
 
   if (loading) {
@@ -190,7 +198,7 @@ export default function WorkersPage() {
               Find a Tradie
             </h1>
             <p className="text-gray-500 dark:text-gray-400 mt-1">
-              {filteredWorkers.length} skilled tradie{filteredWorkers.length !== 1 ? 's' : ''} available — browse and message any tradie directly
+              {sortedWorkers.length} skilled tradie{sortedWorkers.length !== 1 ? 's' : ''} available — browse and message any tradie directly
             </p>
           </div>
         </div>
@@ -208,7 +216,7 @@ export default function WorkersPage() {
             </div>
 
             <div className="flex-1">
-              {filteredWorkers.length === 0 ? (
+              {sortedWorkers.length === 0 ? (
                 <div className="text-center py-16">
                   <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No workers found</h3>
@@ -221,7 +229,7 @@ export default function WorkersPage() {
                 </div>
               ) : (
                 <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                  {filteredWorkers.map((worker) => (
+                  {sortedWorkers.map((worker) => (
                     <WorkerCard key={worker.uid} worker={worker} />
                   ))}
                 </div>

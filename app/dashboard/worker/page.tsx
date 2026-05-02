@@ -318,9 +318,19 @@ export default function WorkerDashboardPage() {
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                 Welcome back, {profile?.displayName?.split(' ')[0] || user?.displayName?.split(' ')[0] || 'Worker'}! 👋
               </h1>
-              <p className="text-gray-500 dark:text-gray-400 mt-1">
-                {profile?.availability === 'available' ? '🟢 You are visible to employers' : '🔴 Update your availability to get more jobs'}
-              </p>
+              <div className="flex items-center gap-3 mt-1 flex-wrap">
+                <p className="text-gray-500 dark:text-gray-400">
+                  {profile?.availability === 'available' ? '🟢 You are visible to employers' : '🔴 Update your availability to get more jobs'}
+                </p>
+                {(profile?.rating ?? 0) > 0 && (
+                  <div className="flex items-center gap-1 text-sm">
+                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                    <span className="font-semibold text-gray-900 dark:text-white">{profile?.rating?.toFixed(1)}</span>
+                    <span className="text-gray-500 dark:text-gray-400">/ 5</span>
+                    <span className="text-gray-400 dark:text-gray-500 ml-1">({profile?.reviewCount ?? 0} review{(profile?.reviewCount ?? 0) === 1 ? '' : 's'})</span>
+                  </div>
+                )}
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <Link href="/settings/profile">
@@ -343,6 +353,27 @@ export default function WorkerDashboardPage() {
               </Link>
             </div>
           </div>
+
+          {/* Low rating warning */}
+          {(profile?.rating ?? 0) > 0 && (profile?.rating ?? 0) < 3.5 && (
+            <div className="mb-6 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl p-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-amber-800 dark:text-amber-300">Your rating is low — tips to improve</p>
+                  <p className="text-sm text-amber-700 dark:text-amber-400 mt-1">
+                    Your current rating is <strong>{profile?.rating?.toFixed(1)}</strong>. Here are some ways to improve it:
+                  </p>
+                  <ul className="mt-2 space-y-1 text-sm text-amber-700 dark:text-amber-400 list-disc list-inside">
+                    <li>Respond to messages promptly and professionally</li>
+                    <li>Arrive on time and complete work to a high standard</li>
+                    <li>Communicate clearly about timelines and any issues</li>
+                    <li>Follow up after the job to ensure the client is happy</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Active Placement Check-in Card */}
           {placement && !placementConfirmed && (
