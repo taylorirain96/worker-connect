@@ -170,6 +170,34 @@ export const SERVICES: Service[] = [
     description:
       'Membrane waterproofing, deck coatings, basement tanking, and wet-area waterproofing for NZ homes and buildings.',
   },
+  {
+    slug: 'tiling',
+    name: 'Tiling',
+    namePlural: 'Tilers',
+    description:
+      'Professional floor and wall tiling for bathrooms, kitchens, and outdoor areas across New Zealand.',
+  },
+  {
+    slug: 'concreting',
+    name: 'Concreting',
+    namePlural: 'Concreters',
+    description:
+      'Driveways, paths, slabs, and decorative concrete work by experienced NZ concreters.',
+  },
+  {
+    slug: 'insulation',
+    name: 'Insulation',
+    namePlural: 'Insulation Installers',
+    description:
+      'Ceiling, underfloor, and wall insulation installation to meet NZ Healthy Homes standards and improve energy efficiency.',
+  },
+  {
+    slug: 'asbestos-removal',
+    name: 'Asbestos Removal',
+    namePlural: 'Asbestos Removal Specialists',
+    description:
+      'Licensed asbestos identification, testing, and safe removal in compliance with NZ WorkSafe regulations.',
+  },
 ]
 
 export const LOCATIONS: Location[] = [
@@ -281,6 +309,12 @@ export const LOCATIONS: Location[] = [
     cityName: 'Gisborne',
     regionName: 'Gisborne',
   },
+  {
+    regionSlug: 'canterbury',
+    citySlug: 'timaru',
+    cityName: 'Timaru',
+    regionName: 'Canterbury',
+  },
 ]
 
 export const NEARBY_MESH: Record<string, string[]> = {
@@ -302,6 +336,7 @@ export const NEARBY_MESH: Record<string, string[]> = {
   'southland/invercargill': ['otago/dunedin'],
   'wellington/lower-hutt': ['wellington/wellington'],
   'gisborne/gisborne': [],
+  'canterbury/timaru': ['canterbury/christchurch', 'otago/dunedin'],
 }
 
 /** Find a service by slug */
@@ -1124,6 +1159,335 @@ export const SERVICE_DETAILS: Record<string, ServiceDetails> = {
       'Plant & design expertise',
       'NZ plant species knowledge',
       'Regular maintenance programmes',
+    ],
+  },
+  fencing: {
+    priceFrom: 80,
+    priceTo: 200,
+    priceUnit: 'per metre',
+    commonJobs: [
+      'Timber fence installation',
+      'Steel palisade fencing',
+      'Aluminium slat fencing',
+      'Post & rail fencing',
+      'Fence repairs & re-nailing',
+      'Gate installation',
+    ],
+    whyHire: [
+      'Correct post depth and spacing ensures fences withstand NZ wind and weather',
+      'Licensed contractors handle boundary pegging and council requirements',
+      'Range of materials and styles to suit any budget',
+      'Professional finish adds kerb appeal and property value',
+    ],
+    faqs: [
+      {
+        question: 'How much does fencing cost in NZ?',
+        answer:
+          'Fencing in NZ typically costs $80–$200 per metre depending on material and style. A standard timber paling fence costs around $100–$150/m installed; aluminium slat or steel fencing runs $150–$250/m.',
+      },
+      {
+        question: 'Do I need council consent for a fence?',
+        answer:
+          'Fences up to 2m high generally don\'t require building consent in NZ. Fences in front yards are typically limited to 1.2m. Check your local district plan before building near boundaries.',
+      },
+      {
+        question: 'Who pays for a boundary fence in NZ?',
+        answer:
+          'Under the Fencing Act 1978, costs for a boundary fence are generally shared equally between neighbours. You must give written notice to your neighbour and allow them to respond before proceeding.',
+      },
+      {
+        question: 'How long does a timber fence last in NZ?',
+        answer:
+          'A quality treated pine fence lasts 15–25 years with regular maintenance (staining/oiling every 3–5 years). Hardwood and composite options last longer with less maintenance.',
+      },
+    ],
+    trustSignals: [
+      'Licensed fencing contractors',
+      'Boundary-compliant installs',
+      'Wind-rated post installation',
+      'Written quote & warranty',
+    ],
+  },
+  waterproofing: {
+    priceFrom: 50,
+    priceTo: 150,
+    priceUnit: 'per m²',
+    commonJobs: [
+      'Bathroom wet-area waterproofing',
+      'Deck membrane waterproofing',
+      'Basement tanking',
+      'Retaining wall waterproofing',
+      'Flat roof re-coating',
+      'Shower tray liner installation',
+    ],
+    whyHire: [
+      'Water damage is one of the most expensive building failures in NZ',
+      'Compliance with NZ Building Code clause E3 (internal moisture)',
+      'Warranty-backed membrane systems',
+      'Prevents mould, rot, and structural damage',
+    ],
+    faqs: [
+      {
+        question: 'How much does waterproofing cost in NZ?',
+        answer:
+          'Waterproofing costs in NZ typically range from $50–$150 per m² depending on the system used. A standard bathroom wet area (3–5 m²) costs $500–$1,500; a deck membrane coating may cost $3,000–$8,000 depending on size.',
+      },
+      {
+        question: 'Is waterproofing required by NZ building code?',
+        answer:
+          'Yes. NZ Building Code clause E3 requires all wet areas (showers, baths, laundry floors) to be waterproofed. Waterproofing must be carried out before tiling and inspected before being covered.',
+      },
+      {
+        question: 'How long does waterproofing last?',
+        answer:
+          'Quality membrane waterproofing systems last 10–25 years. Durability depends on correct application, substrate preparation, and exposure conditions. Regular inspection is recommended every 5 years.',
+      },
+      {
+        question: 'Can I tile over existing waterproofing?',
+        answer:
+          'Only if the existing waterproofing is intact and compatible with your adhesive. In most renovation scenarios, old waterproofing should be removed and reapplied to ensure full Code compliance.',
+      },
+    ],
+    trustSignals: [
+      'Building Code compliant systems',
+      'Membrane warranty certificates',
+      'Licensed applicators',
+      'Pre-tile inspection available',
+    ],
+  },
+  'solar-installation': {
+    priceFrom: 8000,
+    priceTo: 25000,
+    priceUnit: 'per system installed',
+    commonJobs: [
+      'Residential solar panel installation',
+      'Commercial solar system installation',
+      'Battery storage system installation',
+      'Solar inverter replacement',
+      'Grid-tie system setup',
+      'Off-grid solar design & install',
+    ],
+    whyHire: [
+      'Certified solar installers ensure grid-compliance and safety',
+      'Correct system sizing maximises return on investment',
+      'Knowledge of NZ net metering and buy-back rates',
+      'Manufacturer warranties preserved with authorised installation',
+    ],
+    faqs: [
+      {
+        question: 'How much does solar installation cost in NZ?',
+        answer:
+          'A typical residential solar system in NZ costs $8,000–$20,000+ depending on system size, panels, and whether battery storage is included. A standard 5–6kW grid-tied system costs around $12,000–$18,000 installed.',
+      },
+      {
+        question: 'How long does it take for solar to pay off in NZ?',
+        answer:
+          'The payback period for NZ solar installations is typically 7–12 years depending on your electricity usage, local solar resource, and whether you sell excess power back to the grid. Post-payback, savings continue for 20+ years.',
+      },
+      {
+        question: 'Do I need council consent for solar panels in NZ?',
+        answer:
+          'Most residential roof-mounted solar installations are permitted as of right and don\'t require building consent. However, large commercial systems or ground-mounted arrays may need consent. Your installer will advise.',
+      },
+      {
+        question: 'Can I sell solar power back to the grid in NZ?',
+        answer:
+          'Yes. Most NZ power retailers offer buy-back rates (typically 8–17c/kWh) for excess solar exported to the grid. Rates vary by retailer — shop around to maximise your export earnings.',
+      },
+    ],
+    trustSignals: [
+      'MCS-equivalent certified installers',
+      'Grid-connection approved',
+      'Manufacturer warranty preserved',
+      '25-year panel performance warranty',
+    ],
+  },
+  tiling: {
+    priceFrom: 60,
+    priceTo: 140,
+    priceUnit: 'per m²',
+    commonJobs: [
+      'Bathroom floor and wall tiling',
+      'Kitchen splashback tiling',
+      'Outdoor patio tiling',
+      'Pool area tiling',
+      'Laundry floor tiling',
+      'Feature wall tile installation',
+    ],
+    whyHire: [
+      'Professional tile laying ensures level, waterproof, and durable results',
+      'Correct adhesive and grout selection for each application',
+      'Precise cuts around fixtures and corners',
+      'Faster completion than DIY with fewer waste tiles',
+    ],
+    faqs: [
+      {
+        question: 'How much does tiling cost in NZ?',
+        answer:
+          'Tiling in NZ costs $60–$140 per m² for labour only, depending on tile size, pattern, and complexity. Larger format tiles and herringbone patterns cost more. Supply and install packages are available from most tilers.',
+      },
+      {
+        question: 'How long does tiling take to dry?',
+        answer:
+          'Tile adhesive sets in 24 hours and grout cures in 24–72 hours. Walk-on time for floor tiles is typically 24 hours; full curing before heavy use or grouting is 48–72 hours.',
+      },
+      {
+        question: 'What tiles are best for NZ bathrooms?',
+        answer:
+          'Porcelain tiles are the most popular choice for NZ bathrooms — they\'re hard-wearing, low-maintenance, and naturally slip-resistant when textured. Rectified large-format tiles (600×600mm or larger) are a popular modern choice.',
+      },
+      {
+        question: 'Do I need waterproofing before tiling a shower?',
+        answer:
+          'Yes — this is a NZ Building Code requirement (clause E3). Waterproofing membrane must be applied and inspected before any tiles are laid in shower areas or wet floors. A tiler will usually arrange this or work with a waterproofer.',
+      },
+    ],
+    trustSignals: [
+      'Trade-qualified tilers',
+      'Building Code compliant wet areas',
+      'Clean, precise workmanship',
+      'Grout colour matching service',
+    ],
+  },
+  concreting: {
+    priceFrom: 100,
+    priceTo: 200,
+    priceUnit: 'per m²',
+    commonJobs: [
+      'Concrete driveway installation',
+      'Concrete path laying',
+      'Concrete slab for shed or garage',
+      'Exposed aggregate concrete',
+      'Concrete kerbing',
+      'House slab foundation',
+    ],
+    whyHire: [
+      'Correct mix design ensures strength and durability for NZ conditions',
+      'Proper sub-base preparation prevents cracking and sinking',
+      'Reinforcing steel placed to NZ standards',
+      'Consistent finish and correct falls for drainage',
+    ],
+    faqs: [
+      {
+        question: 'How much does a concrete driveway cost in NZ?',
+        answer:
+          'A standard concrete driveway in NZ costs $100–$200 per m² for plain concrete. Exposed aggregate and decorative finishes cost $150–$250+ per m². A typical double driveway (40m²) runs $4,000–$8,000.',
+      },
+      {
+        question: 'How thick should a concrete driveway be in NZ?',
+        answer:
+          'Residential driveways in NZ are typically poured at 100mm thickness with mesh reinforcing. Areas subject to heavy vehicles (trucks, motorhomes) should be 125–150mm thick.',
+      },
+      {
+        question: 'How long does concrete take to cure in NZ?',
+        answer:
+          'Concrete reaches foot-traffic strength in 24–48 hours. Light vehicle traffic is safe after 7 days. Full curing takes 28 days — avoid parking heavy vehicles or placing heavy loads in the first month.',
+      },
+      {
+        question: 'Do I need building consent for a concrete slab in NZ?',
+        answer:
+          'A standalone concrete path or driveway generally doesn\'t require consent. A slab used as a foundation for a building (shed, garage, dwelling) will require a building consent from your local council.',
+      },
+    ],
+    trustSignals: [
+      'Licensed concrete contractors',
+      'Reinforced to NZ standards',
+      'Pre-pour inspection available',
+      'Sealant and curing compounds applied',
+    ],
+  },
+  insulation: {
+    priceFrom: 1500,
+    priceTo: 6000,
+    priceUnit: 'per home',
+    commonJobs: [
+      'Ceiling insulation installation',
+      'Underfloor insulation installation',
+      'Wall insulation (retrofit)',
+      'Healthy Homes compliance assessment',
+      'Insulation top-up',
+      'Vapour barrier installation',
+    ],
+    whyHire: [
+      'Mandatory for rental properties under NZ Healthy Homes Standards',
+      'Significantly reduces heating costs year-round',
+      'Correct R-values specified for each NZ climate zone',
+      'Professional installation avoids gaps and compression that reduce effectiveness',
+    ],
+    faqs: [
+      {
+        question: 'How much does insulation cost in NZ?',
+        answer:
+          'Ceiling insulation typically costs $1,500–$3,500 for an average NZ home. Underfloor insulation adds $1,500–$3,000. Combined ceiling and underfloor packages often cost $3,000–$6,000. Government subsidies may be available through Warmer Kiwi Homes.',
+      },
+      {
+        question: 'What are the NZ Healthy Homes insulation requirements?',
+        answer:
+          'All rental properties in NZ must meet Healthy Homes insulation standards. Ceiling insulation must meet minimum R-values: R2.9 in Zone 1 (Northland/Auckland), R3.3 in Zone 2 (central NZ), R3.6 in Zone 3 (southern NZ and highlands). Underfloor R1.3 is required nationally where accessible.',
+      },
+      {
+        question: 'What is the best insulation for NZ homes?',
+        answer:
+          'Pink Batts (glasswool), polyester, and rigid foam board are the most popular NZ insulation types. For underfloor, foil-backed polyester or glasswool batts are standard. Each has different R-values, cost points, and installation requirements.',
+      },
+      {
+        question: 'Can I get a subsidy for insulation in NZ?',
+        answer:
+          'Yes. The Warmer Kiwi Homes programme offers up to 80% off insulation costs for eligible owner-occupiers. Community Service Card holders and low-income homeowners typically qualify. Check eligibility at eeca.govt.nz.',
+      },
+    ],
+    trustSignals: [
+      'Healthy Homes Standards compliance',
+      'Warmer Kiwi Homes approved installers',
+      'Certified R-value documentation',
+      'Subsidy assistance available',
+    ],
+  },
+  'asbestos-removal': {
+    priceFrom: 500,
+    priceTo: 5000,
+    priceUnit: 'per job',
+    commonJobs: [
+      'Asbestos inspection & testing',
+      'Friable asbestos removal',
+      'Non-friable (bonded) asbestos removal',
+      'Vinyl floor tile removal',
+      'Asbestos roof removal',
+      'Clearance air monitoring',
+    ],
+    whyHire: [
+      'Asbestos removal is tightly regulated by WorkSafe NZ — licensed contractors only',
+      'Incorrect removal creates serious health risks for occupants and workers',
+      'Licensed removalists carry specialist equipment and insurance',
+      'Clearance certificates required before re-occupation',
+    ],
+    faqs: [
+      {
+        question: 'How much does asbestos removal cost in NZ?',
+        answer:
+          'Asbestos removal costs in NZ range from $500 for small non-friable jobs (e.g., a sheet or two of textured ceiling) to $5,000+ for whole-of-roof or friable asbestos removal. Air monitoring and clearance certificates add $300–$800 per clearance.',
+      },
+      {
+        question: 'Is asbestos common in NZ homes?',
+        answer:
+          'Yes. Homes built before 1990 often contain asbestos in materials such as textured (stipple) ceilings, vinyl floor tiles, cement sheets (fibrolite), and roof tiles. Homes built before 1980 are at highest risk.',
+      },
+      {
+        question: 'Do I need a licensed contractor for asbestos removal in NZ?',
+        answer:
+          'For friable asbestos (which can crumble into dust), a Class A licensed removalist is legally required. For non-friable asbestos over 10m², a Class B licence is required. Small amounts of non-friable asbestos (under 10m²) may be removed by homeowners following WorkSafe guidelines.',
+      },
+      {
+        question: 'What should I do if I find asbestos during a renovation?',
+        answer:
+          'Stop work immediately. Do not drill, cut, or sand the material. Seal off the area and arrange for testing by an accredited laboratory. Your QuickTrade asbestos removal specialist can arrange testing and safe removal.',
+      },
+    ],
+    trustSignals: [
+      'WorkSafe NZ licensed contractors',
+      'Clearance certificates provided',
+      'Accredited air monitoring',
+      'Fully insured asbestos specialists',
     ],
   },
 }
