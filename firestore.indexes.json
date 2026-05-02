@@ -13,7 +13,23 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "category", "order": "ASCENDING" },
-        { "fieldPath": "location", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "jobs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "postedBy", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "jobs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "assignedTo", "order": "ASCENDING" },
         { "fieldPath": "status", "order": "ASCENDING" }
       ]
     },
@@ -22,7 +38,7 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "jobId", "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" }
+        { "fieldPath": "createdAt", "order": "ASCENDING" }
       ]
     },
     {
@@ -39,6 +55,14 @@
       "fields": [
         { "fieldPath": "revieweeId", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "conversations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "participants", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "updatedAt", "order": "DESCENDING" }
       ]
     },
     {
