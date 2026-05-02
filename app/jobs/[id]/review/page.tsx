@@ -57,9 +57,10 @@ export default function LeaveReviewPage() {
       setLoadingJob(false)
       return
     }
+    const firestore = db
     async function fetchJob() {
       try {
-        const snap = await getDoc(doc(db!, 'jobs', jobId))
+        const snap = await getDoc(doc(firestore, 'jobs', jobId))
         if (snap.exists()) {
           setJob({ id: snap.id, ...snap.data() } as Job)
         }

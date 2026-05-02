@@ -114,7 +114,12 @@ export async function POST(request: NextRequest) {
           .where('revieweeId', '==', revieweeId)
           .get()
         const count = reviewsSnap.size
-        const sum = reviewsSnap.docs.reduce((acc: number, d: { data: () => Record<string, unknown> }) => acc + ((d.data().rating as number) ?? 0), 0)
+        let ratingSum = 0
+        for (const d of reviewsSnap.docs) {
+          const r = d.data().rating
+          if (typeof r === 'number') ratingSum += r
+        }
+        const sum = ratingSum
         const avg = count > 0 ? Math.round((sum / count) * 10) / 10 : 0
         await adminDb.collection('users').doc(revieweeId).update({
           rating: avg,
