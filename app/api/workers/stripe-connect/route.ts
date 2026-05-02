@@ -1,9 +1,3 @@
-/**
- * Stripe Connect API routes for worker onboarding.
- *
- * POST /api/workers/stripe-connect  (action: initialize | refresh)
- * GET  /api/workers/stripe-connect  (action: status)
- */
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import {
@@ -11,6 +5,7 @@ import {
   getStripeConnectStatus,
   refreshStripeConnectStatus,
 } from '@/lib/services/onboardingService'
+import { rateLimit } from '@/lib/rateLimit'
 
 export const dynamic = 'force-dynamic'
 
@@ -34,6 +29,13 @@ export async function GET(request: NextRequest) {
 
 // POST /api/workers/stripe-connect  — initialize or refresh
 export async function POST(request: NextRequest) {
+  if (rateLimit(request, { max: 20, windowMs: 60_000 })) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please wait a moment before trying again.' },
+      { status: 429 }
+    )
+  }
+
   try {
     const body = await request.json()
     const { action, workerId, email, country } = body as {
