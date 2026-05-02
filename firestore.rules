@@ -1,0 +1,67 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Users ────────────────────────────────────────────────────────────────
+    // Only the authenticated user can read or write their own document.
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // ── Jobs ─────────────────────────────────────────────────────────────────
+    // Any authenticated user can read and create.
+    // Only the job owner (employerId) can update or delete.
+    match /jobs/{jobId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null
+        && resource.data.employerId == request.auth.uid;
+    }
+
+    // ── Quotes ───────────────────────────────────────────────────────────────
+    // Any authenticated user can create (workers submit quotes).
+    // Only the quote author (workerId) or the job owner (employerId) can read.
+    // Only the quote author (workerId) can update or delete.
+    match /quotes/{quoteId} {
+      allow create: if request.auth != null;
+      allow read: if request.auth != null
+        && (resource.data.workerId == request.auth.uid
+            || resource.data.employerId == request.auth.uid);
+      allow update, delete: if request.auth != null
+        && resource.data.workerId == request.auth.uid;
+    }
+
+    // ── Reviews ──────────────────────────────────────────────────────────────
+    // Anyone (including unauthenticated) can read reviews.
+    // Authenticated users can create a review only for a completed job.
+    // No updates or deletes are permitted.
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && get(/databases/$(database)/documents/jobs/$(request.resource.data.jobId)).data.status == 'completed';
+    }
+
+    // ── Notifications ────────────────────────────────────────────────────────
+    // Only the recipient (userId) can read, update, or delete their own
+    // notifications. Creation is handled exclusively by server-side Admin SDK
+    // (which bypasses these rules) — no client-side creates are permitted.
+    match /notifications/{notificationId} {
+      allow create: if false;
+      allow read, update, delete: if request.auth != null
+        && resource.data.userId == request.auth.uid;
+    }
+
+    // ── Payments ─────────────────────────────────────────────────────────────
+    // All writes are handled exclusively by server-side code using the Admin
+    // SDK (which bypasses security rules) — no client-side writes are permitted.
+    // The relevant user — worker or employer — can read their own records.
+    match /payments/{paymentId} {
+      allow create, update, delete: if false;
+      allow read: if request.auth != null
+        && (resource.data.workerId == request.auth.uid
+            || resource.data.employerId == request.auth.uid);
+    }
+
+  }
+}
