@@ -18,6 +18,8 @@ import { getWorkerTier } from '@/types'
 import { isStripeConfigured } from '@/lib/stripe'
 import Stripe from 'stripe'
 import { rateLimit } from '@/lib/rateLimit'
+import { sendPaymentReleasedEmail } from '@/lib/email/transactional'
+import { adminDb } from '@/lib/firebase-admin'
 
 export async function POST(request: Request) {
   if (rateLimit(request, { max: 20, windowMs: 60_000 })) {
@@ -31,6 +33,7 @@ export async function POST(request: Request) {
     const body = await request.json() as {
       paymentIntentId?: string
       jobId?: string
+      jobTitle?: string
       workerId?: string
       workerCompletedJobs?: number
       amount?: number
@@ -40,6 +43,7 @@ export async function POST(request: Request) {
     const {
       paymentIntentId,
       jobId,
+      jobTitle,
       workerId,
       workerCompletedJobs = 0,
       amount,
@@ -58,6 +62,37 @@ export async function POST(request: Request) {
     const workerReceivesCents = Math.round(amount * 100) - commissionCents
     const commission = commissionCents / 100
     const workerReceives = workerReceivesCents / 100
+
+    // Send "Payment Released" email to worker (non-blocking)
+    const sendPaymentEmail = async () => {
+      try {
+        let workerEmail: string | undefined
+        let workerName: string | undefined
+        if (adminDb) {
+          const workerSnap = await adminDb.collection('users').doc(workerId).get()
+          if (workerSnap.exists) {
+            const data = workerSnap.data()
+            workerEmail = data?.email as string | undefined
+            workerName = (data?.displayName ?? data?.name ?? 'there') as string
+          }
+        }
+        if (workerEmail) {
+          await sendPaymentReleasedEmail({
+            workerEmail,
+            workerName: workerName ?? 'there',
+            jobTitle: jobTitle ?? jobId,
+            grossAmount: amount,
+            commissionAmount: commission,
+            workerAmount: workerReceives,
+            jobId,
+          })
+        }
+      } catch (emailErr) {
+        console.error('Failed to send payment-released email:', emailErr)
+      }
+    }
+
+    let stripeOk = false
 
     if (isStripeConfigured()) {
       const key = process.env.STRIPE_SECRET_KEY!
@@ -86,22 +121,13 @@ export async function POST(request: Request) {
         })
       }
 
-      return NextResponse.json({
-        success: true,
-        paymentIntentId,
-        amount,
-        commission,
-        commissionRate: tierInfo.commissionRate,
-        workerReceives,
-        workerTier: tierInfo.tier,
-        workerTierLabel: tierInfo.label,
-        currency: 'nzd',
-        releasedAt: new Date().toISOString(),
-      })
+      stripeOk = true
     }
 
-    // Mock response when Stripe is not configured (test/dev mode)
-    return NextResponse.json({
+    // Fire-and-forget payment email regardless of Stripe mode (non-blocking)
+    sendPaymentEmail().catch(() => {})
+
+    const responsePayload = {
       success: true,
       paymentIntentId,
       amount,
@@ -112,7 +138,10 @@ export async function POST(request: Request) {
       workerTierLabel: tierInfo.label,
       currency: 'nzd',
       releasedAt: new Date().toISOString(),
-    })
+      ...(stripeOk ? {} : { mock: true }),
+    }
+
+    return NextResponse.json(responsePayload)
   } catch (error) {
     console.error('POST /api/stripe/release-payment error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
