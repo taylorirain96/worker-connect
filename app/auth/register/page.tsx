@@ -102,7 +102,7 @@ function RegisterForm() {
         referredEmail: email,
         referredName: name,
       }),
-    }).catch(() => {})
+    }).catch((err) => console.error('Referral attribution failed:', err))
   }
 
   const onSubmit = async (data: RegisterFormData) => {

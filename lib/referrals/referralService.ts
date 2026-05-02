@@ -53,7 +53,7 @@ export async function recordReferral(params: {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(params),
   })
-  if (!res.ok && res.status !== 200) {
+  if (!res.ok) {
     const data = await res.json().catch(() => ({}))
     throw new Error((data as { error?: string }).error ?? 'Failed to record referral')
   }

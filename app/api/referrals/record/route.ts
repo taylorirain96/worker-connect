@@ -36,9 +36,15 @@ export async function POST(req: NextRequest) {
     const now = new Date().toISOString()
     // Use referredUserId as the document ID — guarantees one referral per user atomically
     const referralRef = adminDb.collection('referrals').doc(referredUserId)
+    const userRef = adminDb.collection('users').doc(referredUserId)
+
+    let alreadyExists = false
     await adminDb.runTransaction(async (tx) => {
       const existing = await tx.get(referralRef)
-      if (existing.exists) return // already recorded — idempotent
+      if (existing.exists) {
+        alreadyExists = true
+        return
+      }
       tx.set(referralRef, {
         referrerId,
         referredId: referredUserId,
@@ -50,13 +56,16 @@ export async function POST(req: NextRequest) {
         ...(referredName ? { referredName } : {}),
         ...(referredEmail ? { referredEmail } : {}),
       })
+      // Store referredBy on the user doc in the same transaction
+      tx.update(userRef, {
+        referredByCode: referralCode,
+        referredBy: referrerId,
+      })
     })
 
-    // Also store referredByCode on the new user's profile for future reward processing
-    await adminDb.collection('users').doc(referredUserId).update({
-      referredByCode: referralCode,
-      referredBy: referrerId,
-    })
+    if (alreadyExists) {
+      return NextResponse.json({ message: 'Referral already recorded' }, { status: 200 })
+    }
 
     return NextResponse.json({ success: true })
   } catch (err) {
