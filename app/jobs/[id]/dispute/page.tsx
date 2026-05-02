@@ -60,8 +60,9 @@ export default function RaiseDisputePage() {
       try {
         const snap = await getDoc(doc(db!, 'jobs', jobId))
         if (snap.exists()) {
-          setJob({ id: snap.id, ...snap.data() } as Job)
-          if ((snap.data() as Job).status === 'disputed') {
+          const jobData = { id: snap.id, ...snap.data() } as Job
+          setJob(jobData)
+          if (jobData.status === 'disputed') {
             setAlreadyDisputed(true)
           }
         }

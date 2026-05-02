@@ -36,13 +36,14 @@ interface RecentApplication {
   budgetType: 'fixed' | 'hourly'
 }
 
+function toISO(v: unknown): string {
+  if (v && typeof v === 'object' && 'toDate' in v) {
+    return (v as { toDate: () => Date }).toDate().toISOString()
+  }
+  return typeof v === 'string' ? v : new Date().toISOString()
+}
+
 function docToApplication(id: string, data: DocumentData): Application {
-  const toISO = (v: unknown) =>
-    v && typeof v === 'object' && 'toDate' in v
-      ? (v as { toDate: () => Date }).toDate().toISOString()
-      : typeof v === 'string'
-      ? v
-      : new Date().toISOString()
   return { ...data, id, createdAt: toISO(data.createdAt), updatedAt: toISO(data.updatedAt) } as Application
 }
 
@@ -118,10 +119,6 @@ export default function WorkerDashboardPage() {
           orderBy('updatedAt', 'desc')
         )
         const snapshot = await getDocs(q)
-        const toISO = (v: unknown) =>
-          v && typeof v === 'object' && 'toDate' in v
-            ? (v as { toDate: () => Date }).toDate().toISOString()
-            : typeof v === 'string' ? v : new Date().toISOString()
         setDisputedJobs(
           snapshot.docs.map((d) => ({
             id: d.id,

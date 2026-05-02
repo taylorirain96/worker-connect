@@ -159,6 +159,15 @@ export async function POST(request: Request) {
       }
 
       try {
+        // Check if a dispute already exists for this job
+        const existingSnap = await adminDb.collection('disputes').doc(jobId!).get()
+        if (existingSnap.exists) {
+          return NextResponse.json(
+            { error: 'A dispute already exists for this job.' },
+            { status: 409 }
+          )
+        }
+
         // Store at disputes/{jobId} so it's easy to look up by job
         await adminDb.collection('disputes').doc(jobId!).set(disputeData)
         disputeId = jobId!
