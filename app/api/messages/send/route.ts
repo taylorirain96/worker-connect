@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { conversationId, senderId, senderName, content, type, senderAvatar } = body
+    const { conversationId, senderId, senderName, content, type, senderAvatar, imageUrls } = body
 
     if (!conversationId || !senderId || !senderName || !content) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -25,7 +25,8 @@ export async function POST(request: NextRequest) {
       senderName,
       content,
       senderAvatar,
-      type ?? 'text'
+      type ?? 'text',
+      Array.isArray(imageUrls) ? imageUrls : undefined
     )
 
     // Notify recipient(s) via push notification (non-blocking)

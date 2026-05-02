@@ -8,7 +8,7 @@ import toast from 'react-hot-toast'
 import { useRouter } from 'next/navigation'
 import { getInitials } from '@/lib/utils'
 import NotificationCenter from '@/components/notifications/NotificationCenter'
-import { onUnreadMessagesCount } from '@/lib/messaging'
+import { subscribeToTotalUnread } from '@/lib/services/messagingService'
 import { useRole } from '@/context/RoleContext'
 
 export default function Navbar() {
@@ -22,7 +22,7 @@ export default function Navbar() {
 
   useEffect(() => {
     if (!user) return
-    const unsub = onUnreadMessagesCount(user.uid, setUnreadMessages)
+    const unsub = subscribeToTotalUnread(user.uid, setUnreadMessages)
     return () => unsub()
   }, [user])
 
