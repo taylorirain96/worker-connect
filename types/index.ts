@@ -63,6 +63,8 @@ export interface Job {
   images?: string[]
   /** Whether the job posting fee has been paid (draft = unpaid, active = live, expired = listing period ended) */
   paymentStatus?: 'draft' | 'active' | 'expired'
+  /** Type of job — 'employment' = staff role posted by employer, 'gig' = one-off task posted by homeowner */
+  jobType?: 'employment' | 'gig'
   /** Reference to the job posting payment record */
   postingPaymentId?: string
   /** Whether the job has a featured listing upsell */

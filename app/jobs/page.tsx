@@ -158,7 +158,12 @@ function JobsPageContent() {
     return urgencyOrder[a.urgency] - urgencyOrder[b.urgency]
   })
 
-  const filteredJobs = sortedJobs.filter((job) => {
+  // Jobseekers only see employment-type jobs (staff roles posted by employers)
+  const roleFilteredJobs = profile?.role === 'jobseeker'
+    ? sortedJobs.filter((job) => !job.jobType || job.jobType === 'employment')
+    : sortedJobs
+
+  const filteredJobs = roleFilteredJobs.filter((job) => {
     if (filters.search && !job.title.toLowerCase().includes(filters.search.toLowerCase()) &&
         !job.description.toLowerCase().includes(filters.search.toLowerCase())) return false
     if (filters.category && job.category !== filters.category) return false
@@ -200,10 +205,12 @@ function JobsPageContent() {
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                   <Briefcase className="h-6 w-6 text-primary-600" />
-                  Browse Jobs
+                  {profile?.role === 'jobseeker' ? 'Staff Jobs' : 'Browse Jobs'}
                 </h1>
                 <p className="text-gray-500 dark:text-gray-400 mt-1">
-                  {activeTab === 'all' ? `${filteredJobs.length} job${filteredJobs.length !== 1 ? 's' : ''} available` : 'Jobs matched to your skills'}
+                  {activeTab === 'all'
+                    ? `${filteredJobs.length} job${filteredJobs.length !== 1 ? 's' : ''} available${profile?.role === 'jobseeker' ? ' — employment roles' : ''}`
+                    : 'Jobs matched to your skills'}
                 </p>
               </div>
               {profile?.role === 'employer' && (
@@ -277,7 +284,7 @@ function JobsPageContent() {
                 ) : (
                   <div className="grid gap-4">
                     {filteredJobs.map((job) => (
-                      <JobCard key={job.id} job={job} />
+                      <JobCard key={job.id} job={job} showApplyButton={profile?.role === 'jobseeker'} />
                     ))}
                   </div>
                 )}
