@@ -667,6 +667,8 @@ export interface Referral {
   referredName?: string
   referredEmail?: string
   jobsCompleted?: number
+  /** Set to true once referral credit has been awarded to both parties */
+  creditAwarded?: boolean
 }
 
 export interface ReferralStats {

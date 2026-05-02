@@ -9,6 +9,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
+import { calculatePromoDiscount } from '@/lib/utils'
 import type { PromoCode } from '@/types'
 
 export const dynamic = 'force-dynamic'
@@ -51,10 +52,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ valid: false, error: 'Promo code has reached its usage limit' })
     }
 
-    const discountAmount =
-      promo.discountType === 'percent'
-        ? Math.round((amount * promo.discountAmount / 100) * 100) / 100
-        : Math.min(promo.discountAmount, amount)
+    const discountAmount = calculatePromoDiscount(promo.discountType, promo.discountAmount, amount)
 
     const discountedAmount = Math.max(0, amount - discountAmount)
 

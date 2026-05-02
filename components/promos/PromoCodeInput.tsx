@@ -30,12 +30,13 @@ export default function PromoCodeInput({ userId, amount, onApply, onRemove }: Pr
 
   const handleApply = async () => {
     if (!code.trim()) return
+    const normalisedCode = code.trim().toUpperCase()
     setLoading(true)
     try {
       const res = await fetch('/api/promos/validate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: code.trim().toUpperCase(), userId, amount }),
+        body: JSON.stringify({ code: normalisedCode, userId, amount }),
       })
       const data: ValidateResponse = await res.json()
       if (!data.valid) {
@@ -43,9 +44,9 @@ export default function PromoCodeInput({ userId, amount, onApply, onRemove }: Pr
         return
       }
       const discountValue = data.discountAmount ?? 0
-      setApplied(data.code ?? code.toUpperCase())
+      setApplied(data.code ?? normalisedCode)
       setDiscount(discountValue)
-      onApply(discountValue, data.code ?? code.toUpperCase())
+      onApply(discountValue, data.code ?? normalisedCode)
       toast.success(`Promo code applied — you save ${formatNZD(discountValue)}!`)
     } catch {
       toast.error('Could not validate promo code')
@@ -89,10 +90,10 @@ export default function PromoCodeInput({ userId, amount, onApply, onRemove }: Pr
         <input
           type="text"
           value={code}
-          onChange={(e) => setCode(e.target.value.toUpperCase())}
+          onChange={(e) => setCode(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleApply()}
           placeholder="Promo code"
-          className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 font-mono"
+          className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
         />
       </div>
       <button

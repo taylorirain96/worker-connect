@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
 import { FieldValue } from 'firebase-admin/firestore'
+import { roundCurrency } from '@/lib/utils'
 import type { CreditTransaction } from '@/types'
 
 export const dynamic = 'force-dynamic'
@@ -42,7 +43,7 @@ export async function POST(req: NextRequest) {
 
     const creditUsed = Math.min(currentCredit, amount)
     const adjustedAmount = Math.max(0, amount - creditUsed)
-    const remainingCredit = Math.round((currentCredit - creditUsed) * 100) / 100
+    const remainingCredit = roundCurrency(currentCredit - creditUsed)
 
     const now = new Date().toISOString()
 

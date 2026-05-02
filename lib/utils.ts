@@ -118,3 +118,26 @@ export const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   rejected: { label: 'Rejected', color: 'bg-slate-700/50 text-slate-400' },
   withdrawn: { label: 'Withdrawn', color: 'bg-slate-700/50 text-slate-400' },
 }
+
+/**
+ * Rounds a currency value to 2 decimal places using standard rounding.
+ * Use this for any NZD monetary calculation to ensure consistent precision.
+ */
+export function roundCurrency(value: number): number {
+  return Math.round(value * 100) / 100
+}
+
+/**
+ * Calculates the discount amount for a promo code.
+ * Returns the discount in NZD, capped at the original amount.
+ */
+export function calculatePromoDiscount(
+  discountType: 'percent' | 'fixed',
+  discountValue: number,
+  amount: number,
+): number {
+  if (discountType === 'percent') {
+    return roundCurrency((amount * discountValue) / 100)
+  }
+  return Math.min(discountValue, amount)
+}
