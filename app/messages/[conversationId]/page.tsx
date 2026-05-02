@@ -6,7 +6,7 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { useAuth } from '@/components/providers/AuthProvider'
 import Button from '@/components/ui/Button'
-import { ArrowLeft, Send, Loader2, MessageSquare } from 'lucide-react'
+import { ArrowLeft, Send, Loader2, MessageSquare, Hammer } from 'lucide-react'
 import { getInitials } from '@/lib/utils'
 import { formatDistanceToNow } from 'date-fns'
 import {
@@ -18,6 +18,7 @@ import {
 import type { ChatConversation, RTDBMessage } from '@/lib/messaging'
 import toast from 'react-hot-toast'
 import { cn } from '@/lib/utils'
+import { getUserProfile } from '@/lib/users/getProfile'
 
 function formatTs(ts: number): string {
   return formatDistanceToNow(new Date(ts), { addSuffix: true })
@@ -36,6 +37,7 @@ export default function ConversationPage() {
   const [messageText, setMessageText] = useState('')
   const [loadingConv, setLoadingConv] = useState(true)
   const [sending, setSending] = useState(false)
+  const [bothWorkers, setBothWorkers] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // Auth guard
@@ -78,6 +80,24 @@ export default function ConversationPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  // Check if both participants are workers (for tradie-to-tradie banner)
+  useEffect(() => {
+    if (!conversation) return
+    const participantIds = Object.keys(conversation.participants || {})
+    if (participantIds.length < 2) return
+    let isMounted = true
+    Promise.all(participantIds.map((id) => getUserProfile(id)))
+      .then((profiles) => {
+        if (isMounted) {
+          setBothWorkers(profiles.every((p) => p !== null && p.role === 'worker'))
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to fetch participant profiles:', err)
+      })
+    return () => { isMounted = false }
+  }, [conversation])
 
   const handleSend = useCallback(async () => {
     if (!messageText.trim() || !user || sending) return
@@ -205,6 +225,20 @@ export default function ConversationPage() {
                 )}
               </div>
             </div>
+
+            {/* Tradie-to-tradie collaboration banner */}
+            {bothWorkers && (
+              <div className="px-4 py-2.5 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800 flex items-center gap-2 flex-shrink-0">
+                <Hammer className="h-4 w-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+                <p className="text-xs text-amber-800 dark:text-amber-300 flex-1">
+                  Working together?{' '}
+                  <Link href="/post/homeowner" className="font-semibold underline hover:no-underline">
+                    Create a job and pay securely through WorkerConnect
+                  </Link>
+                  {' '}— so your payment goes through escrow.
+                </p>
+              </div>
+            )}
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50 dark:bg-gray-900/50">
