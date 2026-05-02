@@ -67,8 +67,10 @@ export default function HomeownerJobFormPage() {
         const { auth } = await import('@/lib/firebase')
         if (!auth) throw new Error('Auth not available')
 
-        // Generate a random password for the silent account
-        const tempPassword = Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-6).toUpperCase() + '!'
+        // Generate a cryptographically secure random password for the silent account
+        const randomBytes = new Uint8Array(24)
+        crypto.getRandomValues(randomBytes)
+        const tempPassword = Array.from(randomBytes, (b) => b.toString(16).padStart(2, '0')).join('') + 'A1!'
         const randomEmail = email || `homeowner-${Date.now()}@quicktrade-guest.nz`
 
         const cred = await createUserWithEmailAndPassword(auth, randomEmail, tempPassword)
@@ -144,7 +146,7 @@ export default function HomeownerJobFormPage() {
               </label>
               <textarea
                 rows={4}
-                placeholder="e.g. I need a leaking tap fixed in the bathroom. It&apos;s been dripping for a week."
+                placeholder="e.g. I need a leaking tap fixed in the bathroom. It's been dripping for a week."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 className="w-full rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"

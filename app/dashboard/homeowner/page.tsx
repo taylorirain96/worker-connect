@@ -333,7 +333,7 @@ export default function HomeownerDashboardPage() {
                                       {formatCurrency(topQuote.amount)}
                                     </span>
                                   </div>
-                                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 italic">&quot;{topQuote.message}&quot;</p>
+                                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 italic">{'"'}{topQuote.message}{'"'}</p>
                                   <button
                                     type="button"
                                     disabled={acceptingQuote === topQuote.id}
