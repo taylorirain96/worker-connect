@@ -3,13 +3,18 @@
  * Sends via Resend using the RESEND_API_KEY environment variable.
  *
  * Emails:
- *   sendJobAcceptedEmail       — sent to worker when their quote is accepted
- *   sendPaymentReleasedEmail   — sent to worker when escrow payment is released
- *   sendQuoteReceivedEmail     — sent to homeowner when a worker submits a quote
- *   sendMessageReceivedEmail   — sent to recipient when they receive a message (30+ min inactive)
- *   sendApplicationUpdateEmail — sent to jobseeker when employer views/updates their application
- *   sendReviewReceivedEmail    — sent to user when they receive a new review
- *   sendJobMatchesEmail        — sent to workers when a new job matches their trade/location
+ *   sendJobAcceptedEmail          — sent to worker when their quote is accepted
+ *   sendPaymentReleasedEmail      — sent to worker when escrow payment is released
+ *   sendQuoteReceivedEmail        — sent to homeowner when a worker submits a quote
+ *   sendMessageReceivedEmail      — sent to recipient when they receive a message (30+ min inactive)
+ *   sendApplicationUpdateEmail    — sent to jobseeker when employer views/updates their application
+ *   sendReviewReceivedEmail       — sent to user when they receive a new review
+ *   sendVerificationApprovedEmail — sent to worker when their identity is verified
+ *   sendVerificationRejectedEmail — sent to worker when their verification is rejected
+ *   sendBookingRequestEmail       — sent to worker when a homeowner requests a booking
+ *   sendBookingConfirmedEmail     — sent to homeowner when worker confirms a booking
+ *   sendBookingDeclinedEmail      — sent to homeowner when worker declines a booking
+ *   sendJobMatchesEmail           — sent to workers when a new job matches their trade/location
  */
 import { Resend } from 'resend'
 
@@ -374,7 +379,139 @@ export async function sendVerificationRejectedEmail(opts: {
   })
 }
 
-// ─── Email 9: Job Matches ─────────────────────────────────────────────────────
+// ─── Email 9: Booking Request (to Worker) ────────────────────────────────────
+
+/**
+ * Sent to the worker when a homeowner requests a booking.
+ */
+export async function sendBookingRequestEmail(opts: {
+  workerEmail: string
+  workerName: string
+  homeownerName: string
+  requestedDate: string
+  requestedTime: string
+  duration: number
+  description: string
+  address: string
+  bookingId: string
+}): Promise<void> {
+  const { workerEmail, workerName, homeownerName, requestedDate, requestedTime, duration, description, address, bookingId } = opts
+  const bookingUrl = `${APP_URL}/dashboard/worker/bookings`
+
+  const html = emailWrapper(`
+    <h1 style="font-size:24px;font-weight:700;color:#fff;margin:0 0 8px;">New booking request! 📅</h1>
+    <p style="color:#94a3b8;line-height:1.6;margin:0 0 20px;">Kia ora ${workerName}, <strong style="color:#e2e8f0;">${homeownerName}</strong> wants to book you for a job. Head to your dashboard to accept or decline.</p>
+    ${infoTable(`
+      ${infoRow('Date', requestedDate)}
+      ${infoRow('Time', requestedTime)}
+      ${infoRow('Duration', `${duration} hour${duration !== 1 ? 's' : ''}`)}
+      ${infoRow('Address', address)}
+    `)}
+    <div style="background:#1e293b;border-left:4px solid #4f46e5;border-radius:8px;padding:16px 20px;margin:20px 0;">
+      <p style="color:#94a3b8;font-size:12px;margin:0 0 6px;text-transform:uppercase;letter-spacing:0.05em;">Job Description</p>
+      <p style="color:#e2e8f0;font-size:15px;line-height:1.6;margin:0;">${description}</p>
+    </div>
+    ${ctaButton(bookingUrl, 'Accept or Decline →')}
+    <p style="color:#64748b;font-size:13px;text-align:center;margin:0;">Please respond promptly — homeowners appreciate quick replies!</p>
+  `)
+
+  const resend = getResend()
+  if (!resend) return
+  await resend.emails.send({
+    from: FROM,
+    to: workerEmail,
+    subject: `New booking request from ${homeownerName} — ${requestedDate}`,
+    html,
+  })
+}
+
+// ─── Email 10: Booking Confirmed (to Homeowner) ──────────────────────────────
+
+/**
+ * Sent to the homeowner when the worker confirms their booking.
+ */
+export async function sendBookingConfirmedEmail(opts: {
+  homeownerEmail: string
+  homeownerName: string
+  workerName: string
+  requestedDate: string
+  requestedTime: string
+  duration: number
+  workerMessage?: string
+  bookingId: string
+}): Promise<void> {
+  const { homeownerEmail, homeownerName, workerName, requestedDate, requestedTime, duration, workerMessage, bookingId } = opts
+  const bookingUrl = `${APP_URL}/dashboard/homeowner/bookings`
+
+  const html = emailWrapper(`
+    <h1 style="font-size:24px;font-weight:700;color:#fff;margin:0 0 8px;">Booking confirmed! 🎉</h1>
+    <p style="color:#94a3b8;line-height:1.6;margin:0 0 20px;">Great news, ${homeownerName}! <strong style="color:#e2e8f0;">${workerName}</strong> has confirmed your booking request.</p>
+    ${infoTable(`
+      ${infoRow('Worker', workerName)}
+      ${infoRow('Date', requestedDate)}
+      ${infoRow('Time', requestedTime)}
+      ${infoRow('Duration', `${duration} hour${duration !== 1 ? 's' : ''}`)}
+    `)}
+    ${workerMessage ? `
+    <div style="background:#1e293b;border-left:4px solid #22c55e;border-radius:8px;padding:16px 20px;margin:20px 0;">
+      <p style="color:#94a3b8;font-size:12px;margin:0 0 6px;text-transform:uppercase;letter-spacing:0.05em;">Message from ${workerName}</p>
+      <p style="color:#e2e8f0;font-size:15px;line-height:1.6;margin:0;font-style:italic;">"${workerMessage}"</p>
+    </div>
+    ` : ''}
+    ${ctaButton(bookingUrl, 'View Booking →')}
+    <p style="color:#64748b;font-size:13px;text-align:center;margin:0;">You can message the worker directly through the platform if you need to discuss anything.</p>
+  `)
+
+  const resend = getResend()
+  if (!resend) return
+  await resend.emails.send({
+    from: FROM,
+    to: homeownerEmail,
+    subject: `Booking confirmed — ${workerName} on ${requestedDate}`,
+    html,
+  })
+}
+
+// ─── Email 11: Booking Declined (to Homeowner) ───────────────────────────────
+
+/**
+ * Sent to the homeowner when the worker declines their booking.
+ */
+export async function sendBookingDeclinedEmail(opts: {
+  homeownerEmail: string
+  homeownerName: string
+  workerName: string
+  requestedDate: string
+  workerMessage?: string
+  bookingId: string
+}): Promise<void> {
+  const { homeownerEmail, homeownerName, workerName, requestedDate, workerMessage, bookingId } = opts
+  const workersUrl = `${APP_URL}/workers`
+
+  const html = emailWrapper(`
+    <h1 style="font-size:24px;font-weight:700;color:#fff;margin:0 0 8px;">Booking update 📋</h1>
+    <p style="color:#94a3b8;line-height:1.6;margin:0 0 20px;">Hi ${homeownerName}, unfortunately <strong style="color:#e2e8f0;">${workerName}</strong> is unable to take your booking for ${requestedDate}.</p>
+    ${workerMessage ? `
+    <div style="background:#1e293b;border-left:4px solid #ef4444;border-radius:8px;padding:16px 20px;margin:20px 0;">
+      <p style="color:#94a3b8;font-size:12px;margin:0 0 6px;text-transform:uppercase;letter-spacing:0.05em;">Message from ${workerName}</p>
+      <p style="color:#e2e8f0;font-size:15px;line-height:1.6;margin:0;font-style:italic;">"${workerMessage}"</p>
+    </div>
+    ` : ''}
+    ${ctaButton(workersUrl, 'Find Another Worker →')}
+    <p style="color:#64748b;font-size:13px;text-align:center;margin:0;">Plenty more great tradies are available — find one that works for you.</p>
+  `)
+
+  const resend = getResend()
+  if (!resend) return
+  await resend.emails.send({
+    from: FROM,
+    to: homeownerEmail,
+    subject: `Booking declined — ${workerName} on ${requestedDate}`,
+    html,
+  })
+}
+
+// ─── Email 12: Job Matches ────────────────────────────────────────────────────
 
 /**
  * Sent to matching workers when a new job is posted in their trade/location.
