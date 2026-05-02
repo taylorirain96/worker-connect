@@ -229,13 +229,13 @@ export default function JobDetailPage() {
   }
 
   const handleAcceptQuote = async (quoteId: string) => {
+    const acceptedQuote = jobQuotes.find((q) => q.id === quoteId)
     const res = await fetch(`/api/quotes/${quoteId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'x-user-id': user?.uid ?? '' },
       body: JSON.stringify({ status: 'accepted' }),
     })
     if (!res.ok) throw new Error('Failed to accept quote')
-    const acceptedQuote = jobQuotes.find((q) => q.id === quoteId)
     trackEvent('quote_accepted', { quote_id: quoteId, job_id: params.id as string, value: acceptedQuote?.totalPrice ?? acceptedQuote?.basePrice })
     setJobQuotes((prev) => prev.map((q) => q.id === quoteId ? { ...q, status: 'accepted' as const } : q))
   }
