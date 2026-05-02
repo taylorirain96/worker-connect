@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { adminDb } from '@/lib/firebase-admin'
+import { sendJobAcceptedEmail } from '@/lib/email/transactional'
 
 export const dynamic = 'force-dynamic'
 
@@ -101,6 +103,30 @@ export async function PUT(
       } catch (invoiceErr) {
         console.error('Failed to auto-create invoice:', invoiceErr)
         // Non-fatal — quote was still accepted
+      }
+
+      // Send "Job Accepted" email to worker (non-fatal)
+      try {
+        let workerEmail: string | undefined
+        if (adminDb) {
+          const workerSnap = await adminDb.collection('users').doc(quote.workerId).get()
+          if (!workerSnap.exists) {
+            console.warn(`Job-accepted email: worker document not found for id ${quote.workerId}`)
+          } else {
+            workerEmail = workerSnap.data()?.email as string | undefined
+          }
+        }
+        if (workerEmail) {
+          await sendJobAcceptedEmail({
+            workerEmail,
+            workerName: quote.workerName,
+            jobTitle: quote.jobTitle,
+            amount: quote.totalPrice,
+            jobId: quote.jobId,
+          })
+        }
+      } catch (emailErr) {
+        console.error('Failed to send job-accepted email:', emailErr)
       }
     }
 
