@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
@@ -179,6 +179,7 @@ export default function HomeownerDashboardPage() {
   }
 
   const totalNewQuotes = jobs.reduce((sum, j) => sum + (j.quoteCount || 0), 0)
+  const inProgressJobs = useMemo(() => jobs.filter((j) => j.status === 'in_progress'), [jobs])
 
   if (loading || !user) {
     return (
@@ -266,6 +267,30 @@ export default function HomeownerDashboardPage() {
                     </span>
                   </Link>
                 ))}
+            </div>
+          )}
+
+          {/* Jobs awaiting your completion confirmation */}
+          {!loadingJobs && inProgressJobs.length > 0 && (
+            <div className="mb-6 space-y-3">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-base font-semibold text-green-700 dark:text-green-400">✅ Jobs Awaiting Your Confirmation</span>
+              </div>
+              {inProgressJobs.map((job) => (
+                <Link
+                  key={job.id}
+                  href={`/jobs/${job.id}`}
+                  className="flex items-center justify-between bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-xl p-4 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors"
+                >
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-white text-sm">{job.title}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">In progress · {formatRelativeDate(job.createdAt)}</p>
+                  </div>
+                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 whitespace-nowrap">
+                    Mark Complete →
+                  </span>
+                </Link>
+              ))}
             </div>
           )}
 

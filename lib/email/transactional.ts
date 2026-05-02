@@ -11,10 +11,13 @@
  *   sendReviewReceivedEmail       — sent to user when they receive a new review
  *   sendVerificationApprovedEmail — sent to worker when their identity is verified
  *   sendVerificationRejectedEmail — sent to worker when their verification is rejected
- *   sendBookingRequestEmail       — sent to worker when a homeowner requests a booking
- *   sendBookingConfirmedEmail     — sent to homeowner when worker confirms a booking
- *   sendBookingDeclinedEmail      — sent to homeowner when worker declines a booking
- *   sendJobMatchesEmail           — sent to workers when a new job matches their trade/location
+ *   sendBookingRequestEmail           — sent to worker when a homeowner requests a booking
+ *   sendBookingConfirmedEmail         — sent to homeowner when worker confirms a booking
+ *   sendBookingDeclinedEmail          — sent to homeowner when worker declines a booking
+ *   sendJobCompletedWorkerEmail       — sent to worker when homeowner marks job complete + payment released
+ *   sendJobCompletedHomeownerEmail    — sent to homeowner after marking complete, prompts review
+ *   sendPaymentReleaseRequestEmail    — sent to homeowner when worker requests payment confirmation
+ *   sendJobMatchesEmail               — sent to workers when a new job matches their trade/location
  */
 import { Resend } from 'resend'
 
@@ -554,7 +557,110 @@ export async function sendBookingDeclinedEmail(opts: {
   })
 }
 
-// ─── Email 13: Job Matches ────────────────────────────────────────────────────
+// ─── Email 13: Job Completed (Worker) ────────────────────────────────────────
+
+/**
+ * Sent to the worker when the homeowner marks the job as complete and payment is released.
+ */
+export async function sendJobCompletedWorkerEmail(opts: {
+  workerEmail: string
+  workerName: string
+  homeownerName: string
+  jobTitle: string
+  jobId: string
+  paymentAmount: number
+}): Promise<void> {
+  const { workerEmail, workerName, homeownerName, jobTitle, jobId, paymentAmount } = opts
+  const earningsUrl = `${APP_URL}/dashboard/worker`
+
+  const html = emailWrapper(`
+    <h1 style="font-size:24px;font-weight:700;color:#fff;margin:0 0 8px;">Great news — payment released! 🎉</h1>
+    <p style="color:#94a3b8;line-height:1.6;margin:0 0 20px;">Ka pai, ${workerName}! <strong style="color:#e2e8f0;">${homeownerName}</strong> has marked your job as complete and your payment has been released.</p>
+    ${infoTable(`
+      ${infoRow('Job', jobTitle)}
+      ${infoRow('Payment released', formatNzd(paymentAmount))}
+    `)}
+    ${ctaButton(earningsUrl, 'View Your Earnings →')}
+    <p style="color:#64748b;font-size:13px;text-align:center;margin:0;">Funds will appear in your account within 2–3 business days. Thanks for your hard work!</p>
+  `)
+
+  const resend = getResend()
+  if (!resend) return
+  await resend.emails.send({
+    from: FROM,
+    to: workerEmail,
+    subject: `Job complete — payment of ${formatNzd(paymentAmount)} released for ${jobTitle}`,
+    html,
+  })
+}
+
+// ─── Email 14: Job Completed (Homeowner) ─────────────────────────────────────
+
+/**
+ * Sent to the homeowner after they mark a job as complete, prompting them to leave a review.
+ */
+export async function sendJobCompletedHomeownerEmail(opts: {
+  homeownerEmail: string
+  homeownerName: string
+  workerName: string
+  jobTitle: string
+  jobId: string
+}): Promise<void> {
+  const { homeownerEmail, homeownerName, workerName, jobTitle, jobId } = opts
+  const reviewUrl = `${APP_URL}/jobs/${jobId}#review`
+
+  const html = emailWrapper(`
+    <h1 style="font-size:24px;font-weight:700;color:#fff;margin:0 0 8px;">Job complete! Leave a review ⭐</h1>
+    <p style="color:#94a3b8;line-height:1.6;margin:0 0 20px;">Hi ${homeownerName}, you've marked <strong style="color:#e2e8f0;">${jobTitle}</strong> as complete. Payment has been released to <strong style="color:#e2e8f0;">${workerName}</strong>.</p>
+    <p style="color:#94a3b8;line-height:1.6;margin:0 0 20px;">How did ${workerName} do? Leaving a review helps build trust in the community and rewards great tradies.</p>
+    ${ctaButton(reviewUrl, `Leave a Review for ${workerName} →`)}
+    <p style="color:#64748b;font-size:13px;text-align:center;margin:0;">It only takes a minute and makes a big difference to local tradies.</p>
+  `)
+
+  const resend = getResend()
+  if (!resend) return
+  await resend.emails.send({
+    from: FROM,
+    to: homeownerEmail,
+    subject: `Job complete — please leave a review for ${workerName}`,
+    html,
+  })
+}
+
+// ─── Email 15: Payment Release Request (Homeowner) ───────────────────────────
+
+/**
+ * Sent to the homeowner when the worker requests confirmation that the job is complete.
+ */
+export async function sendPaymentReleaseRequestEmail(opts: {
+  homeownerEmail: string
+  homeownerName: string
+  workerName: string
+  jobTitle: string
+  jobId: string
+}): Promise<void> {
+  const { homeownerEmail, homeownerName, workerName, jobTitle, jobId } = opts
+  const jobUrl = `${APP_URL}/jobs/${jobId}`
+
+  const html = emailWrapper(`
+    <h1 style="font-size:24px;font-weight:700;color:#fff;margin:0 0 8px;">Is the job done? Please confirm ✅</h1>
+    <p style="color:#94a3b8;line-height:1.6;margin:0 0 20px;">Hi ${homeownerName}, <strong style="color:#e2e8f0;">${workerName}</strong> believes the work on <strong style="color:#e2e8f0;">${jobTitle}</strong> is complete and has requested you confirm so their payment can be released.</p>
+    <p style="color:#94a3b8;line-height:1.6;margin:0 0 20px;">If you're happy with the work, click below to mark it as complete. If there are any issues, you can raise a dispute instead.</p>
+    ${ctaButton(jobUrl, 'Confirm Job Complete →')}
+    <p style="color:#64748b;font-size:13px;text-align:center;margin:0;">If you have concerns about the work, you can raise a dispute directly on the job page.</p>
+  `)
+
+  const resend = getResend()
+  if (!resend) return
+  await resend.emails.send({
+    from: FROM,
+    to: homeownerEmail,
+    subject: `${workerName} is requesting job completion confirmation — ${jobTitle}`,
+    html,
+  })
+}
+
+// ─── Email 16: Job Matches ────────────────────────────────────────────────────
 
 /**
  * Sent to matching workers when a new job is posted in their trade/location.

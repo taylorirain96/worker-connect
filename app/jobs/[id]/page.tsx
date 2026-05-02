@@ -26,6 +26,9 @@ import QuoteList from '@/components/quotes/QuoteList'
 import QuoteComparison from '@/components/quotes/QuoteComparison'
 import { trackEvent } from '@/lib/analytics'
 
+/** 7 days in milliseconds — used for the auto-completion banner threshold */
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000
+
 const MOCK_JOBS: Record<string, Job & { employerRating?: number; employerJobs?: number }> = {
   '1': {
     id: '1',
@@ -122,9 +125,14 @@ export default function JobDetailPage() {
 
   // Job completion state
   const [markingComplete, setMarkingComplete] = useState(false)
+  const [showCompleteModal, setShowCompleteModal] = useState(false)
   const [localStatus, setLocalStatus] = useState<Job['status'] | undefined>(undefined)
   const [localCompletedAt, setLocalCompletedAt] = useState<string | undefined>(undefined)
   const [showCompletionBanner, setShowCompletionBanner] = useState(false)
+
+  // Worker "Request Completion" state
+  const [requestingCompletion, setRequestingCompletion] = useState(false)
+  const [completionRequested, setCompletionRequested] = useState(false)
 
   const job = MOCK_JOBS[params.id as string] || MOCK_JOBS['1']
   const jobPhotos = MOCK_JOB_PHOTOS.filter((p) => p.jobId === (params.id as string) || p.jobId === '1')
@@ -342,11 +350,16 @@ export default function JobDetailPage() {
     }
   }
 
-  const handleMarkComplete = async () => {
+  const handleMarkComplete = () => {
+    setShowCompleteModal(true)
+  }
+
+  const handleConfirmComplete = async () => {
     if (!user) {
       toast.error('Please sign in')
       return
     }
+    setShowCompleteModal(false)
     setMarkingComplete(true)
     try {
       const res = await fetch(`/api/jobs/${params.id as string}/complete`, {
@@ -388,15 +401,119 @@ export default function JobDetailPage() {
     }
   }
 
+  const handleRequestCompletion = async () => {
+    if (!user) {
+      toast.error('Please sign in')
+      return
+    }
+    setRequestingCompletion(true)
+    try {
+      const res = await fetch(`/api/jobs/${params.id as string}/request-completion`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requestedBy: user.uid }),
+      })
+      const data = await res.json() as { success?: boolean; error?: string }
+      if (res.ok) {
+        setCompletionRequested(true)
+        toast.success('Request sent! The homeowner has been notified to confirm completion.')
+      } else {
+        toast.error(data.error ?? 'Failed to send request')
+      }
+    } catch {
+      toast.error('Failed to send request')
+    } finally {
+      setRequestingCompletion(false)
+    }
+  }
+
+  // 7-day auto-completion banner: job is in_progress and deadline was 7+ days ago
+  const sevenDayBannerVisible =
+    effectiveStatus === 'in_progress' &&
+    isEmployer &&
+    job.deadline != null &&
+    Date.now() - new Date(job.deadline).getTime() > SEVEN_DAYS_MS
+
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
+
+      {/* Mark as Complete — confirmation modal */}
+      {showCompleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-10 w-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
+                <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+              </div>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                Mark Job as Complete?
+              </h2>
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+              Are you sure the work is finished and you&apos;re happy with the result? This will release payment to the worker and cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setShowCompleteModal(false)}
+                disabled={markingComplete}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white border-0"
+                onClick={handleConfirmComplete}
+                loading={markingComplete}
+              >
+                <CheckCircle className="h-4 w-4" />
+                Yes, Release Payment
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <main className="flex-1">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Link href="/jobs" className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 mb-6 text-sm transition-colors">
             <ArrowLeft className="h-4 w-4" />
             Back to Jobs
           </Link>
+
+          {/* 7-day auto-completion banner */}
+          {sevenDayBannerVisible && (
+            <div className="mb-6 bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700 rounded-xl p-4 flex items-start gap-3">
+              <Clock className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-amber-800 dark:text-amber-300 text-sm">
+                  This job may be complete — please confirm or raise a dispute
+                </p>
+                <p className="text-amber-700 dark:text-amber-400 text-sm mt-0.5">
+                  The agreed end date has passed. If the work is done, mark it as complete to release payment to the worker.
+                  If there&apos;s an issue, you can raise a dispute.
+                </p>
+                <div className="flex gap-3 mt-3">
+                  <Button
+                    size="sm"
+                    className="bg-green-600 hover:bg-green-700 text-white border-0 flex items-center gap-1.5"
+                    onClick={handleMarkComplete}
+                    loading={markingComplete}
+                  >
+                    <CheckCircle className="h-3.5 w-3.5" />
+                    Mark as Complete
+                  </Button>
+                  <Link href={`/jobs/${job.id}/dispute`}>
+                    <Button size="sm" variant="outline" className="text-amber-600 border-amber-300 hover:bg-amber-50 flex items-center gap-1.5">
+                      <AlertTriangle className="h-3.5 w-3.5" />
+                      Raise a Dispute
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="grid lg:grid-cols-3 gap-6">
             {/* Main Content */}
@@ -836,6 +953,28 @@ export default function JobDetailPage() {
                     <CheckCircle className="h-4 w-4" />
                     Mark as Complete
                   </Button>
+                )}
+
+                {/* Request Completion — shown to the assigned worker when job is in_progress */}
+                {profile?.role === 'worker' && user?.uid === job.assignedWorkerId && effectiveStatus === 'in_progress' && (
+                  <div className="mt-4">
+                    {completionRequested ? (
+                      <div className="flex items-center gap-2 text-green-600 dark:text-green-400 text-sm font-medium justify-center bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+                        <CheckCircle className="h-4 w-4 flex-shrink-0" />
+                        Request sent — homeowner notified
+                      </div>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        className="w-full flex items-center justify-center gap-2 text-green-600 dark:text-green-400 border-green-300 dark:border-green-700 hover:bg-green-50 dark:hover:bg-green-900/20"
+                        onClick={handleRequestCompletion}
+                        loading={requestingCompletion}
+                      >
+                        <Send className="h-4 w-4" />
+                        Request Payment Release
+                      </Button>
+                    )}
+                  </div>
                 )}
 
                 {/* Completed status — shown to the employer when job is done */}
