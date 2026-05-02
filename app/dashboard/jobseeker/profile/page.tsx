@@ -74,7 +74,7 @@ function calcProfileStrength(data: JobseekerProfileData): { pct: number; tips: A
   return { pct: Math.min(score, 100), tips }
 }
 
-function uid4(): string {
+function randomId(): string {
   return Math.random().toString(36).slice(2, 10)
 }
 
@@ -165,7 +165,7 @@ export default function JobseekerProfilePage() {
     set('skills', formData.skills.filter((s) => s !== skill))
 
   const addWorkEntry = () =>
-    set('workHistory', [...formData.workHistory, { id: uid4(), company: '', role: '', startDate: '', endDate: '', current: false, description: '' }])
+    set('workHistory', [...formData.workHistory, { id: randomId(), company: '', role: '', startDate: '', endDate: '', current: false, description: '' }])
 
   const updateWorkEntry = (id: string, field: keyof WorkHistoryEntry, value: string | boolean) =>
     set('workHistory', formData.workHistory.map((e) => e.id === id ? { ...e, [field]: value } : e))
@@ -174,7 +174,7 @@ export default function JobseekerProfilePage() {
     set('workHistory', formData.workHistory.filter((e) => e.id !== id))
 
   const addEducationEntry = () =>
-    set('education', [...formData.education, { id: uid4(), institution: '', qualification: '', year: '' }])
+    set('education', [...formData.education, { id: randomId(), institution: '', qualification: '', year: '' }])
 
   const updateEducationEntry = (id: string, field: keyof EducationEntry, value: string) =>
     set('education', formData.education.map((e) => e.id === id ? { ...e, [field]: value } : e))
@@ -227,7 +227,7 @@ export default function JobseekerProfilePage() {
     const urls: string[] = []
     for (const file of toUpload) {
       try {
-        const storageRef = ref(storage, `profiles/${user.uid}/portfolio/${uid4()}`)
+        const storageRef = ref(storage, `profiles/${user.uid}/portfolio/${randomId()}`)
         await uploadBytes(storageRef, file)
         const url = await getDownloadURL(storageRef)
         urls.push(url)
