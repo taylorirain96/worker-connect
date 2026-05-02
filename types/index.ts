@@ -37,6 +37,24 @@ export interface UserProfile {
   companyName?: string
   workerSubscriptionTier?: 'free' | 'pro' | 'elite'
   employerSubscriptionTier?: 'free' | 'pro' | 'business' | 'enterprise'
+  /** Array of worker UIDs this homeowner has favourited */
+  favourites?: string[]
+}
+
+export interface DirectRequest {
+  id: string
+  homeownerId: string
+  homeownerName: string
+  homeownerEmail: string
+  workerId: string
+  workerName: string
+  workerEmail: string
+  description: string
+  date: string
+  address: string
+  status: 'pending' | 'accepted' | 'declined'
+  createdAt: string
+  updatedAt: string
 }
 
 export interface Job {
