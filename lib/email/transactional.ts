@@ -379,7 +379,50 @@ export async function sendVerificationRejectedEmail(opts: {
   })
 }
 
-// ─── Email 9: Booking Request (to Worker) ────────────────────────────────────
+// ─── Email 9: Dispute Raised ──────────────────────────────────────────────────
+
+/**
+ * Sent to both parties (and optionally admin) when a dispute is raised on a job.
+ */
+export async function sendDisputeRaisedEmail(opts: {
+  recipientEmail: string
+  recipientName: string
+  raisedByName: string
+  jobTitle: string
+  jobId: string
+  reason: string
+  isAdmin?: boolean
+}): Promise<void> {
+  const { recipientEmail, recipientName, raisedByName, jobTitle, jobId, reason, isAdmin } = opts
+  const disputeUrl = `${APP_URL}/jobs/${jobId}/dispute`
+
+  const intro = isAdmin
+    ? `A dispute has been raised on job <strong style="color:#e2e8f0;">${jobTitle}</strong> by <strong style="color:#e2e8f0;">${raisedByName}</strong>. Please review and resolve from the admin dashboard.`
+    : `<strong style="color:#e2e8f0;">${raisedByName}</strong> has raised a dispute on the job <strong style="color:#e2e8f0;">${jobTitle}</strong>. Our team will review it within 24 hours.`
+
+  const html = emailWrapper(`
+    <h1 style="font-size:24px;font-weight:700;color:#fff;margin:0 0 8px;">Dispute raised ⚠️</h1>
+    <p style="color:#94a3b8;line-height:1.6;margin:0 0 20px;">Hi ${recipientName}, ${intro}</p>
+    ${infoTable(`
+      ${infoRow('Job', jobTitle)}
+      ${infoRow('Raised by', raisedByName)}
+      ${infoRow('Reason', reason)}
+    `)}
+    ${ctaButton(isAdmin ? `${APP_URL}/dashboard/admin/disputes` : disputeUrl, isAdmin ? 'Review in Admin Dashboard →' : 'View Dispute →')}
+    <p style="color:#64748b;font-size:13px;text-align:center;margin:0;">No action is needed right now. We&apos;ll be in touch once we&apos;ve reviewed the details.</p>
+  `)
+
+  const resend = getResend()
+  if (!resend) return
+  await resend.emails.send({
+    from: FROM,
+    to: recipientEmail,
+    subject: `Dispute raised — ${jobTitle}`,
+    html,
+  })
+}
+
+// ─── Email 10: Booking Request (to Worker) ────────────────────────────────────
 
 /**
  * Sent to the worker when a homeowner requests a booking.
@@ -425,7 +468,7 @@ export async function sendBookingRequestEmail(opts: {
   })
 }
 
-// ─── Email 10: Booking Confirmed (to Homeowner) ──────────────────────────────
+// ─── Email 11: Booking Confirmed (to Homeowner) ──────────────────────────────
 
 /**
  * Sent to the homeowner when the worker confirms their booking.
@@ -472,7 +515,7 @@ export async function sendBookingConfirmedEmail(opts: {
   })
 }
 
-// ─── Email 11: Booking Declined (to Homeowner) ───────────────────────────────
+// ─── Email 12: Booking Declined (to Homeowner) ───────────────────────────────
 
 /**
  * Sent to the homeowner when the worker declines their booking.
@@ -511,7 +554,7 @@ export async function sendBookingDeclinedEmail(opts: {
   })
 }
 
-// ─── Email 12: Job Matches ────────────────────────────────────────────────────
+// ─── Email 13: Job Matches ────────────────────────────────────────────────────
 
 /**
  * Sent to matching workers when a new job is posted in their trade/location.

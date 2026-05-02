@@ -13,7 +13,7 @@ interface PostedJob {
   id: string
   title: string
   description: string
-  status: 'open' | 'in_progress' | 'completed' | 'cancelled'
+  status: 'open' | 'in_progress' | 'completed' | 'cancelled' | 'disputed'
   budget: number
   budgetType: 'fixed' | 'hourly'
   createdAt: string
@@ -36,6 +36,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   in_progress: { label: 'In Progress', color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' },
   completed: { label: 'Done', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
   cancelled: { label: 'Cancelled', color: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400' },
+  disputed: { label: 'Disputed', color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' },
 }
 
 const MOCK_JOBS: PostedJob[] = [
@@ -241,6 +242,32 @@ export default function HomeownerDashboardPage() {
               + Post a Job
             </Link>
           </div>
+
+          {/* Disputed jobs banner */}
+          {!loadingJobs && jobs.filter((j) => j.status === 'disputed').length > 0 && (
+            <div className="mb-6 space-y-3">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-base font-semibold text-orange-700 dark:text-orange-400">⚠️ Jobs Under Dispute</span>
+              </div>
+              {jobs
+                .filter((j) => j.status === 'disputed')
+                .map((job) => (
+                  <Link
+                    key={job.id}
+                    href={`/jobs/${job.id}`}
+                    className="flex items-center justify-between bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-xl p-4 hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors"
+                  >
+                    <div>
+                      <p className="font-semibold text-gray-900 dark:text-white text-sm">{job.title}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{formatRelativeDate(job.createdAt)}</p>
+                    </div>
+                    <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300 whitespace-nowrap">
+                      Under Review
+                    </span>
+                  </Link>
+                ))}
+            </div>
+          )}
 
           {/* Notification banner */}
           {totalNewQuotes > 0 && (

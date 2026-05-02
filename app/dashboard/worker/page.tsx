@@ -36,14 +36,21 @@ interface RecentApplication {
   budgetType: 'fixed' | 'hourly'
 }
 
+function toISO(v: unknown): string {
+  if (v && typeof v === 'object' && 'toDate' in v) {
+    return (v as { toDate: () => Date }).toDate().toISOString()
+  }
+  return typeof v === 'string' ? v : new Date().toISOString()
+}
+
 function docToApplication(id: string, data: DocumentData): Application {
-  const toISO = (v: unknown) =>
-    v && typeof v === 'object' && 'toDate' in v
-      ? (v as { toDate: () => Date }).toDate().toISOString()
-      : typeof v === 'string'
-      ? v
-      : new Date().toISOString()
   return { ...data, id, createdAt: toISO(data.createdAt), updatedAt: toISO(data.updatedAt) } as Application
+}
+
+interface DisputedWorkerJob {
+  id: string
+  title: string
+  lastModified: string
 }
 
 export default function WorkerDashboardPage() {
@@ -60,6 +67,7 @@ export default function WorkerDashboardPage() {
   const [placementConfirmed, setPlacementConfirmed] = useState(false)
   const [placementEnded, setPlacementEnded] = useState(false)
   const [confirmingPlacement, setConfirmingPlacement] = useState(false)
+  const [disputedJobs, setDisputedJobs] = useState<DisputedWorkerJob[]>([])
 
   useEffect(() => {
     if (!loading && !user) {
@@ -96,6 +104,33 @@ export default function WorkerDashboardPage() {
       }
     }
     fetchApplications()
+  }, [user])
+
+  // Fetch disputed jobs where this worker is assigned
+  useEffect(() => {
+    if (!user?.uid || !db) return
+    async function fetchDisputedJobs() {
+      try {
+        const jobsRef = collection(db!, 'jobs')
+        const q = query(
+          jobsRef,
+          where('assignedWorkerId', '==', user!.uid),
+          where('status', '==', 'disputed'),
+          orderBy('updatedAt', 'desc')
+        )
+        const snapshot = await getDocs(q)
+        setDisputedJobs(
+          snapshot.docs.map((d) => ({
+            id: d.id,
+            title: d.data().title ?? 'Untitled job',
+            lastModified: toISO(d.data().updatedAt ?? d.data().createdAt),
+          }))
+        )
+      } catch {
+        setDisputedJobs([])
+      }
+    }
+    fetchDisputedJobs()
   }, [user])
 
   // Fetch reviews received by this worker
@@ -337,6 +372,28 @@ export default function WorkerDashboardPage() {
           </div>
 
           {/* Jobs For You */}
+          {/* Disputed Jobs Banner */}
+          {disputedJobs.length > 0 && (
+            <div className="mb-6 space-y-3">
+              <p className="text-base font-semibold text-orange-700 dark:text-orange-400">⚠️ Jobs Under Dispute</p>
+              {disputedJobs.map((job) => (
+                <Link
+                  key={job.id}
+                  href={`/jobs/${job.id}`}
+                  className="flex items-center justify-between bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-xl p-4 hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors"
+                >
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-white text-sm">{job.title}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{formatRelativeDate(job.lastModified)}</p>
+                  </div>
+                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300 whitespace-nowrap">
+                    Under Review
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
+
           <Card className="mb-8">
             <CardHeader>
               <div className="flex items-center justify-between flex-wrap gap-2">

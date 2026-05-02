@@ -11,7 +11,7 @@ import RatingStars from '@/components/reviews/RatingStars'
 import toast from 'react-hot-toast'
 import {
   MapPin, Clock, DollarSign, Users, AlertCircle, ArrowLeft,
-  Calendar, Star, CheckCircle, Send, Camera, ClipboardList, Eye, MessageSquare, Sparkles, LayoutList, Columns
+  Calendar, Star, CheckCircle, Send, Camera, ClipboardList, Eye, MessageSquare, Sparkles, LayoutList, Columns, AlertTriangle
 } from 'lucide-react'
 import { formatCurrency, formatRelativeDate, JOB_CATEGORIES, URGENCY_LABELS } from '@/lib/utils'
 import type { Job, JobPhoto, Quote } from '@/types'
@@ -450,6 +450,17 @@ export default function JobDetailPage() {
                   </div>
                 </div>
 
+                {/* Dispute banner — shown when job is under dispute */}
+                {effectiveStatus === 'disputed' && (
+                  <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700 rounded-xl p-4 flex items-start gap-3">
+                    <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-amber-800 dark:text-amber-300 text-sm">This job is under dispute</p>
+                      <p className="text-amber-700 dark:text-amber-400 text-sm mt-0.5">Our team is reviewing — we&apos;ll be in touch within 24 hours.</p>
+                    </div>
+                  </div>
+                )}
+
                 <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
                   <h2 className="font-semibold text-gray-900 dark:text-white mb-3">Job Description</h2>
                   <div className="prose prose-sm dark:prose-invert max-w-none text-gray-600 dark:text-gray-400 whitespace-pre-line">
@@ -832,6 +843,27 @@ export default function JobDetailPage() {
                   <div className="mt-4 flex items-center gap-2 text-green-600 dark:text-green-400 text-sm font-medium justify-center">
                     <CheckCircle className="h-4 w-4" />
                     Job Completed ✓
+                  </div>
+                )}
+
+                {/* Raise a Dispute — visible to both parties when in_progress or completed */}
+                {(isEmployer || profile?.role === 'worker') && (effectiveStatus === 'in_progress' || effectiveStatus === 'completed') && (
+                  <Link href={`/jobs/${job.id}/dispute`} className="block mt-4">
+                    <Button
+                      variant="outline"
+                      className="w-full flex items-center justify-center gap-2 text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                    >
+                      <AlertTriangle className="h-4 w-4" />
+                      Raise a Dispute
+                    </Button>
+                  </Link>
+                )}
+
+                {/* Dispute in progress — shown when job is already disputed */}
+                {(isEmployer || profile?.role === 'worker') && effectiveStatus === 'disputed' && (
+                  <div className="mt-4 flex items-center gap-2 text-amber-600 dark:text-amber-400 text-sm font-medium justify-center">
+                    <AlertTriangle className="h-4 w-4" />
+                    Dispute Under Review
                   </div>
                 )}
               </div>
