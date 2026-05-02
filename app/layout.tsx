@@ -9,6 +9,7 @@ import { GoogleAnalytics } from '@next/third-parties/google'
 import { SITE_URL } from '@/lib/seo/config'
 
 const SupportChatbot = dynamic(() => import('@/components/chat/SupportChatbot'), { ssr: false })
+const PWAInstallPrompt = dynamic(() => import('@/components/PWAInstallPrompt'), { ssr: false })
 
 export const metadata: Metadata = {
   title: {
@@ -49,6 +50,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en-NZ" suppressHydrationWarning>
       <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="WorkerConnect" />
+        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
         <link rel="preconnect" href="https://firestore.googleapis.com" />
         <link rel="preconnect" href="https://identitytoolkit.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -104,6 +110,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               {children}
               <Toaster position="top-right" />
               <SupportChatbot />
+              <PWAInstallPrompt />
             </RoleProvider>
           </AuthProvider>
         </ThemeProvider>

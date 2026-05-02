@@ -1,10 +1,18 @@
 import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
+import { rateLimit } from '@/lib/rateLimit'
 
 /** Platform fee charged on every Connect payment (5 %). */
 const PLATFORM_FEE_RATE = 0.05
 
 export async function POST(request: Request) {
+  if (rateLimit(request, { max: 20, windowMs: 60_000 })) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please wait a moment before trying again.' },
+      { status: 429 }
+    )
+  }
+
   try {
     const body = await request.json()
     const { amount, currency, jobId, employerId, workerId, workerStripeAccountId } = body as {

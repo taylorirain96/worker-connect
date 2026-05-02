@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { rateLimit } from '@/lib/rateLimit'
 
 export const dynamic = 'force-dynamic'
 
@@ -74,6 +75,13 @@ Keep it under 300 words. Write in first person for the summary, third person for
 }
 
 export async function POST(request: NextRequest) {
+  if (rateLimit(request, { max: 10, windowMs: 60_000 })) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please wait a moment before trying again.' },
+      { status: 429 }
+    )
+  }
+
   try {
     const body = await request.json() as WriteRequest
     const { type, userId, userRole, inputs } = body

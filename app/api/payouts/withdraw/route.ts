@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
 import { STRIPE_CONNECT_CONFIG } from '@/lib/stripe/stripeConnect'
+import { rateLimit } from '@/lib/rateLimit'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,6 +13,13 @@ export const dynamic = 'force-dynamic'
  * Body: { amount: number, currency?: string }
  */
 export async function POST(request: NextRequest) {
+  if (rateLimit(request, { max: 20, windowMs: 60_000 })) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please wait a moment before trying again.' },
+      { status: 429 }
+    )
+  }
+
   try {
     const userId = request.headers.get('x-user-id')
     if (!userId) {

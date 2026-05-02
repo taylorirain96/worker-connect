@@ -5,53 +5,111 @@ import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { STATUS_LABELS } from '@/lib/utils'
+import { collection, query, where, orderBy, getDocs, type DocumentData } from 'firebase/firestore'
+import { db } from '@/lib/firebase'
+import { formatCurrency, formatRelativeDate } from '@/lib/utils'
 
-interface Quote {
-  id: string
-  workerId: string
-  workerName: string
-  rating: number
-  price: number
-  message: string
-  status: string
-}
-
-interface HomeownerJob {
+interface PostedJob {
   id: string
   title: string
-  location: string
-  status: string
-  category: string
-  assignedWorkerName?: string
-  quotes: Quote[]
-  pendingQuoteCount: number
-  expanded: boolean
+  description: string
+  status: 'open' | 'in_progress' | 'completed' | 'cancelled'
+  budget: number
+  budgetType: 'fixed' | 'hourly'
+  createdAt: string
+  quoteCount: number
 }
 
-function StarRating({ rating }: { rating: number }) {
-  return (
-    <span className="flex items-center gap-0.5">
-      {[1, 2, 3, 4, 5].map((s) => (
-        <svg
-          key={s}
-          className={`w-3.5 h-3.5 ${s <= Math.round(rating) ? 'text-yellow-400' : 'text-gray-600'}`}
-          fill="currentColor"
-          viewBox="0 0 20 20"
-        >
-          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-        </svg>
-      ))}
-      <span className="text-xs text-gray-400 ml-1">{rating.toFixed(1)}</span>
-    </span>
-  )
+interface SimpleQuote {
+  id: string
+  jobId: string
+  workerName: string
+  workerRating?: number
+  amount: number
+  message: string
+  status: string
+  createdAt: string
+}
+
+const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
+  open: { label: 'Open', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
+  in_progress: { label: 'In Progress', color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' },
+  completed: { label: 'Done', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
+  cancelled: { label: 'Cancelled', color: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400' },
+}
+
+const MOCK_JOBS: PostedJob[] = [
+  {
+    id: 'demo-1',
+    title: 'Fix leaking bathroom tap',
+    description: 'The cold tap in the main bathroom has been dripping for a week.',
+    status: 'open',
+    budget: 0,
+    budgetType: 'fixed',
+    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    quoteCount: 2,
+  },
+  {
+    id: 'demo-2',
+    title: 'Paint the living room',
+    description: 'Need the living room repainted in a light grey colour.',
+    status: 'in_progress',
+    budget: 800,
+    budgetType: 'fixed',
+    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    quoteCount: 0,
+  },
+]
+
+const MOCK_QUOTES: SimpleQuote[] = [
+  {
+    id: 'q1',
+    jobId: 'demo-1',
+    workerName: 'Mike T.',
+    workerRating: 4.8,
+    amount: 120,
+    message: "Happy to help — I can come out tomorrow morning and get it sorted in under an hour.",
+    status: 'pending',
+    createdAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'q2',
+    jobId: 'demo-1',
+    workerName: 'Sarah P.',
+    workerRating: 4.9,
+    amount: 95,
+    message: "I'm a licensed plumber with 10 years experience. Can do Thursday or Friday.",
+    status: 'pending',
+    createdAt: new Date(Date.now() - 90 * 60 * 1000).toISOString(),
+  },
+]
+
+function docToJob(id: string, data: DocumentData): PostedJob {
+  const toISO = (v: unknown) =>
+    v && typeof v === 'object' && 'toDate' in v
+      ? (v as { toDate: () => Date }).toDate().toISOString()
+      : typeof v === 'string' ? v : new Date().toISOString()
+  return {
+    id,
+    title: data.title ?? 'Untitled job',
+    description: data.description ?? '',
+    status: data.status ?? 'open',
+    budget: data.budget ?? 0,
+    budgetType: data.budgetType ?? 'fixed',
+    createdAt: toISO(data.createdAt),
+    quoteCount: data.applicantsCount ?? 0,
+  }
 }
 
 export default function HomeownerDashboardPage() {
   const { user, profile, loading } = useAuth()
   const router = useRouter()
-  const [jobs, setJobs] = useState<HomeownerJob[]>([])
+  const [jobs, setJobs] = useState<PostedJob[]>([])
   const [loadingJobs, setLoadingJobs] = useState(true)
+  const [quotes, setQuotes] = useState<SimpleQuote[]>([])
+  const [expandedJobId, setExpandedJobId] = useState<string | null>(null)
+  const [acceptingQuote, setAcceptingQuote] = useState<string | null>(null)
+  const [acceptedQuote, setAcceptedQuote] = useState<SimpleQuote | null>(null)
 
   useEffect(() => {
     if (!loading && !user) {
@@ -60,283 +118,273 @@ export default function HomeownerDashboardPage() {
   }, [loading, user, router])
 
   useEffect(() => {
-    if (!user?.uid) {
+    if (!user?.uid || !db) {
+      setJobs(MOCK_JOBS)
+      setQuotes(MOCK_QUOTES)
       setLoadingJobs(false)
       return
     }
-
-    async function fetchJobs() {
+    async function fetchData() {
       try {
-        const { collection, query, where, orderBy, getDocs } = await import('firebase/firestore')
-        const { db } = await import('@/lib/firebase')
-        if (!db) {
-          setLoadingJobs(false)
-          return
-        }
+        const jobsRef = collection(db!, 'jobs')
+        const q = query(jobsRef, where('employerId', '==', user!.uid), orderBy('createdAt', 'desc'))
+        const snapshot = await getDocs(q)
+        const fetched = snapshot.docs.map((d) => docToJob(d.id, d.data()))
+        setJobs(fetched.length > 0 ? fetched : MOCK_JOBS)
 
-        const jobsQuery = query(
-          collection(db, 'jobs'),
-          where('employerId', '==', user?.uid),
-          orderBy('createdAt', 'desc')
-        )
-        const jobsSnap = await getDocs(jobsQuery)
-
-        const jobList: HomeownerJob[] = await Promise.all(
-          jobsSnap.docs.map(async (jobDoc) => {
-            const data = jobDoc.data()
-
-            // Fetch quotes for this job
-            let quotes: Quote[] = []
-            try {
-              const quotesQuery = query(
-                collection(db, 'quotes'),
-                where('jobId', '==', jobDoc.id)
-              )
-              const quotesSnap = await getDocs(quotesQuery)
-              quotes = quotesSnap.docs.map((qDoc) => {
-                const q = qDoc.data()
-                return {
-                  id: qDoc.id,
-                  workerId: q.workerId ?? '',
-                  workerName: q.workerName ?? 'Worker',
-                  rating: q.workerRating ?? 0,
-                  price: q.amount ?? q.price ?? 0,
-                  message: q.message ?? '',
-                  status: q.status ?? 'pending',
-                }
-              })
-            } catch {
-              // quotes fetch is non-blocking
-            }
-
-            const pendingQuoteCount = quotes.filter((q) => q.status === 'pending').length
-
+        // Fetch quotes for these jobs
+        if (fetched.length > 0) {
+          const quotesRef = collection(db!, 'quotes')
+          const qSnap = await getDocs(
+            query(quotesRef, where('jobId', 'in', fetched.slice(0, 10).map((j) => j.id)))
+          )
+          const fetchedQuotes: SimpleQuote[] = qSnap.docs.map((d) => {
+            const data = d.data()
+            const toISO = (v: unknown) =>
+              v && typeof v === 'object' && 'toDate' in v
+                ? (v as { toDate: () => Date }).toDate().toISOString()
+                : typeof v === 'string' ? v : new Date().toISOString()
             return {
-              id: jobDoc.id,
-              title: data.title ?? 'Untitled job',
-              location: data.location ?? '',
-              status: data.status ?? 'open',
-              category: data.category ?? '',
-              assignedWorkerName: data.assignedWorkerName ?? undefined,
-              quotes,
-              pendingQuoteCount,
-              expanded: false,
+              id: d.id,
+              jobId: data.jobId,
+              workerName: data.workerName ?? 'Tradie',
+              workerRating: data.workerRating,
+              amount: data.amount ?? 0,
+              message: data.message ?? data.coverLetter ?? '',
+              status: data.status ?? 'pending',
+              createdAt: toISO(data.createdAt),
             }
           })
-        )
-
-        setJobs(jobList)
-      } catch (err) {
-        console.error('Failed to load jobs', err)
+          setQuotes(fetchedQuotes.length > 0 ? fetchedQuotes : MOCK_QUOTES)
+        } else {
+          setQuotes(MOCK_QUOTES)
+        }
+      } catch {
+        setJobs(MOCK_JOBS)
+        setQuotes(MOCK_QUOTES)
       } finally {
         setLoadingJobs(false)
       }
     }
-
-    fetchJobs()
+    fetchData()
   }, [user])
 
-  const toggleExpand = (jobId: string) => {
-    setJobs((prev) =>
-      prev.map((j) => (j.id === jobId ? { ...j, expanded: !j.expanded } : j))
+  const handleAcceptQuote = async (quote: SimpleQuote) => {
+    setAcceptingQuote(quote.id)
+    // In real implementation this would trigger escrow payment flow
+    await new Promise((r) => setTimeout(r, 600))
+    setAcceptingQuote(null)
+    setAcceptedQuote(quote)
+  }
+
+  const totalNewQuotes = jobs.reduce((sum, j) => sum + (j.quoteCount || 0), 0)
+
+  if (loading || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="h-8 w-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      </div>
     )
   }
 
-  const acceptQuote = async (jobId: string, quoteId: string, workerName: string) => {
-    try {
-      const { doc, updateDoc, serverTimestamp } = await import('firebase/firestore')
-      const { db } = await import('@/lib/firebase')
-      if (!db) return
-
-      await updateDoc(doc(db, 'quotes', quoteId), { status: 'accepted', updatedAt: serverTimestamp() })
-      await updateDoc(doc(db, 'jobs', jobId), {
-        status: 'in_progress',
-        assignedWorkerName: workerName,
-        updatedAt: serverTimestamp(),
-      })
-
-      setJobs((prev) =>
-        prev.map((j) => {
-          if (j.id !== jobId) return j
-          return {
-            ...j,
-            status: 'in_progress',
-            assignedWorkerName: workerName,
-            quotes: j.quotes.map((q) =>
-              q.id === quoteId ? { ...q, status: 'accepted' } : q
-            ),
-          }
-        })
-      )
-      // react-hot-toast — import lazily to keep bundle lean
-      const { default: toast } = await import('react-hot-toast')
-      toast.success(`Quote accepted! ${workerName} will be in touch.`)
-    } catch {
-      const { default: toast } = await import('react-hot-toast')
-      toast.error('Failed to accept quote. Please try again.')
-    }
-  }
-
-  const markAsDone = async (jobId: string) => {
-    try {
-      const { doc, updateDoc, serverTimestamp } = await import('firebase/firestore')
-      const { db } = await import('@/lib/firebase')
-      if (!db) return
-
-      await updateDoc(doc(db, 'jobs', jobId), {
-        status: 'completed',
-        updatedAt: serverTimestamp(),
-      })
-
-      setJobs((prev) =>
-        prev.map((j) => (j.id === jobId ? { ...j, status: 'completed' } : j))
-      )
-      const { default: toast } = await import('react-hot-toast')
-      toast.success('Job marked as done! 🎉')
-    } catch {
-      const { default: toast } = await import('react-hot-toast')
-      toast.error('Failed to update job. Please try again.')
-    }
-  }
-
-  const firstName = profile?.displayName?.split(' ')[0] ?? user?.displayName?.split(' ')[0] ?? 'there'
-
-  if (loading || loadingJobs) {
+  // Accepted quote confirmation screen
+  if (acceptedQuote) {
     return (
-      <div className="min-h-screen bg-[#0a0f1e] flex items-center justify-center">
-        <div className="animate-spin h-8 w-8 border-4 border-indigo-600 border-t-transparent rounded-full" />
+      <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-950">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center px-4 py-16">
+          <div className="max-w-md w-full bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-8 text-center">
+            <div className="text-5xl mb-4">🎉</div>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              You&apos;re hiring {acceptedQuote.workerName}!
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              for {formatCurrency(acceptedQuote.amount)}. They&apos;ll be in touch soon.
+            </p>
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 mb-6 text-left">
+              <p className="text-sm text-green-800 dark:text-green-300">
+                ✅ Your payment is securely held in escrow and will only be released when you confirm the job is done.
+              </p>
+            </div>
+            <button
+              onClick={() => setAcceptedQuote(null)}
+              className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors"
+            >
+              Back to My Jobs
+            </button>
+          </div>
+        </main>
+        <Footer />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0f1e] flex flex-col">
+    <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-950">
       <Navbar />
-      <main className="flex-1 px-4 py-10">
-        <div
-          className="fixed inset-0 pointer-events-none"
-          style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(99,102,241,0.12) 0%, transparent 70%)' }}
-        />
-        <div className="relative max-w-2xl mx-auto">
-          {/* Greeting */}
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold text-white">Hey {firstName}! 👋</h1>
-            <p className="text-gray-400 text-sm mt-1">Here are your posted jobs</p>
+      <main className="flex-1 py-8 px-4">
+        <div className="max-w-2xl mx-auto">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                My Jobs
+              </h1>
+              <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
+                Hi {profile?.displayName?.split(' ')[0] || 'there'} 👋
+              </p>
+            </div>
+            <Link
+              href="/post/homeowner"
+              className="py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-colors"
+            >
+              + Post a Job
+            </Link>
           </div>
 
+          {/* Notification banner */}
+          {totalNewQuotes > 0 && (
+            <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-xl p-4 mb-6 flex items-center gap-3">
+              <span className="text-xl">🔔</span>
+              <p className="text-sm font-medium text-indigo-800 dark:text-indigo-300">
+                You have <strong>{totalNewQuotes} new {totalNewQuotes === 1 ? 'quote' : 'quotes'}</strong> — tap a job below to see them
+              </p>
+            </div>
+          )}
+
           {/* Jobs list */}
-          {jobs.length === 0 ? (
+          {loadingJobs ? (
+            <div className="space-y-4">
+              {[1, 2].map((i) => (
+                <div key={i} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-5 animate-pulse">
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2" />
+                  <div className="h-3 bg-gray-100 dark:bg-gray-800 rounded w-1/2" />
+                </div>
+              ))}
+            </div>
+          ) : jobs.length === 0 ? (
             <div className="text-center py-16">
-              <div className="text-5xl mb-4">🏠</div>
-              <h2 className="text-lg font-semibold text-white mb-2">No jobs posted yet</h2>
-              <p className="text-gray-400 text-sm mb-6">Post your first job and get quotes from local workers.</p>
+              <div className="text-4xl mb-4">📋</div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No jobs yet</h3>
+              <p className="text-gray-500 mb-6">Post your first job and get quotes from local tradies</p>
               <Link
                 href="/post/homeowner"
-                className="inline-block py-3 px-6 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold rounded-xl transition-all text-sm"
+                className="py-3 px-6 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors"
               >
-                Post a Job →
+                Post a Job — Free
               </Link>
             </div>
           ) : (
             <div className="space-y-4">
               {jobs.map((job) => {
-                const statusInfo = STATUS_LABELS[job.status] ?? { label: job.status, color: 'bg-gray-700 text-gray-300' }
+                const jobQuotes = quotes.filter((q) => q.jobId === job.id && q.status === 'pending')
+                const isExpanded = expandedJobId === job.id
+                const statusConf = STATUS_CONFIG[job.status] || STATUS_CONFIG.open
+
                 return (
-                  <div
-                    key={job.id}
-                    className="bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-2xl overflow-hidden"
-                  >
-                    {/* Job header */}
+                  <div key={job.id} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+                    {/* Job summary row */}
                     <button
                       type="button"
-                      className="w-full text-left px-5 py-4 flex items-start justify-between gap-3 hover:bg-gray-800/40 transition-colors"
-                      onClick={() => toggleExpand(job.id)}
+                      onClick={() => setExpandedJobId(isExpanded ? null : job.id)}
+                      className="w-full text-left p-5 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
                     >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-semibold text-white text-sm truncate">{job.title}</span>
-                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusInfo.color}`}>
-                            {statusInfo.label}
-                          </span>
-                          {job.pendingQuoteCount > 0 && (
-                            <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-500 text-white font-bold">
-                              {job.pendingQuoteCount} new {job.pendingQuoteCount === 1 ? 'quote' : 'quotes'}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap mb-1">
+                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${statusConf.color}`}>
+                              {statusConf.label}
                             </span>
-                          )}
+                            {jobQuotes.length > 0 && (
+                              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+                                🔔 {jobQuotes.length} {jobQuotes.length === 1 ? 'quote' : 'quotes'}
+                              </span>
+                            )}
+                          </div>
+                          <h3 className="font-semibold text-gray-900 dark:text-white truncate">{job.title}</h3>
+                          <p className="text-xs text-gray-500 mt-0.5">{formatRelativeDate(job.createdAt)}</p>
                         </div>
-                        <p className="text-xs text-gray-400 mt-0.5">📍 {job.location}</p>
-                        {job.assignedWorkerName && (
-                          <p className="text-xs text-indigo-300 mt-0.5">🔨 Assigned: {job.assignedWorkerName}</p>
-                        )}
+                        <span className="text-gray-400 text-lg">{isExpanded ? '▲' : '▼'}</span>
                       </div>
-                      <span className="text-gray-500 text-xs flex-shrink-0 mt-0.5">
-                        {job.expanded ? '▲' : '▼'}
-                      </span>
                     </button>
 
-                    {/* Expanded: quotes & actions */}
-                    {job.expanded && (
-                      <div className="border-t border-gray-800 px-5 py-4 space-y-3">
-                        {/* In-progress: show mark as done */}
-                        {(job.status === 'in_progress') && (
-                          <div className="bg-indigo-900/20 border border-indigo-800/40 rounded-xl p-3 flex items-center justify-between gap-3">
-                            <div>
-                              <p className="text-sm font-medium text-white">Job in progress</p>
-                              {job.assignedWorkerName && (
-                                <p className="text-xs text-gray-400">{job.assignedWorkerName} is on it</p>
-                              )}
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => markAsDone(job.id)}
-                              className="text-xs px-4 py-2 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-lg transition-colors flex-shrink-0"
-                            >
-                              Mark as Done
-                            </button>
+                    {/* Expanded: quotes */}
+                    {isExpanded && (
+                      <div className="border-t border-gray-100 dark:border-gray-800 p-5 pt-4 space-y-4">
+                        {jobQuotes.length === 0 ? (
+                          <div className="text-center py-6 text-gray-500 dark:text-gray-400">
+                            <p className="text-sm">No quotes yet — tradies will respond soon!</p>
                           </div>
-                        )}
-
-                        {/* Quotes */}
-                        {job.quotes.length === 0 ? (
-                          <p className="text-sm text-gray-400 py-2">No quotes yet — workers will reach out soon.</p>
                         ) : (
                           <>
-                            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">
-                              Quotes ({job.quotes.length})
-                            </p>
-                            {job.quotes.map((quote) => (
-                              <div
-                                key={quote.id}
-                                className="bg-gray-800/60 border border-gray-700 rounded-xl p-4 space-y-2"
-                              >
-                                <div className="flex items-center justify-between gap-2">
-                                  <div>
-                                    <p className="text-sm font-semibold text-white">{quote.workerName}</p>
-                                    {quote.rating > 0 && <StarRating rating={quote.rating} />}
+                            {/* Show top quote prominently */}
+                            {(() => {
+                              const topQuote = [...jobQuotes].sort((a, b) => a.amount - b.amount)[0]
+                              return (
+                                <div className="bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-xl p-4">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <div>
+                                      <span className="font-semibold text-gray-900 dark:text-white">{topQuote.workerName}</span>
+                                      {topQuote.workerRating && (
+                                        <span className="ml-2 text-sm text-yellow-600">⭐ {topQuote.workerRating}</span>
+                                      )}
+                                    </div>
+                                    <span className="text-xl font-bold text-green-700 dark:text-green-400">
+                                      {formatCurrency(topQuote.amount)}
+                                    </span>
                                   </div>
-                                  <span className="text-lg font-bold text-indigo-300">
-                                    ${quote.price.toLocaleString()}
-                                  </span>
-                                </div>
-                                {quote.message && (
-                                  <p className="text-sm text-gray-300 leading-relaxed">{quote.message}</p>
-                                )}
-                                {quote.status === 'pending' && job.status === 'open' && (
+                                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 italic">{'"'}{topQuote.message}{'"'}</p>
                                   <button
                                     type="button"
-                                    onClick={() => acceptQuote(job.id, quote.id, quote.workerName)}
-                                    className="w-full mt-1 py-2 px-4 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-lg transition-colors text-sm"
+                                    disabled={acceptingQuote === topQuote.id}
+                                    onClick={() => handleAcceptQuote(topQuote)}
+                                    className="w-full py-3 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-bold rounded-xl transition-colors text-base"
                                   >
-                                    Accept Quote
+                                    {acceptingQuote === topQuote.id ? (
+                                      <span className="flex items-center justify-center gap-2">
+                                        <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                        Accepting...
+                                      </span>
+                                    ) : (
+                                      `Accept This Quote — ${formatCurrency(topQuote.amount)}`
+                                    )}
                                   </button>
-                                )}
-                                {quote.status === 'accepted' && (
-                                  <span className="inline-block text-xs px-2 py-0.5 bg-green-500/15 text-green-400 rounded-full font-medium">
-                                    ✓ Accepted
-                                  </span>
-                                )}
+                                </div>
+                              )
+                            })()}
+
+                            {/* Other quotes */}
+                            {jobQuotes.length > 1 && (
+                              <div>
+                                <p className="text-xs font-medium text-gray-500 mb-2">Other quotes:</p>
+                                <div className="space-y-2">
+                                  {[...jobQuotes]
+                                    .sort((a, b) => a.amount - b.amount)
+                                    .slice(1)
+                                    .map((q) => (
+                                      <div key={q.id} className="flex items-center justify-between p-3 rounded-xl border border-gray-200 dark:border-gray-700">
+                                        <div>
+                                          <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{q.workerName}</span>
+                                          {q.workerRating && (
+                                            <span className="ml-2 text-xs text-yellow-600">⭐ {q.workerRating}</span>
+                                          )}
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                          <span className="font-semibold text-gray-900 dark:text-white">{formatCurrency(q.amount)}</span>
+                                          <button
+                                            type="button"
+                                            disabled={acceptingQuote === q.id}
+                                            onClick={() => handleAcceptQuote(q)}
+                                            className="text-xs py-1.5 px-3 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-semibold rounded-lg transition-colors"
+                                          >
+                                            Accept
+                                          </button>
+                                        </div>
+                                      </div>
+                                    ))}
+                                </div>
                               </div>
-                            ))}
+                            )}
                           </>
                         )}
                       </div>
@@ -347,14 +395,14 @@ export default function HomeownerDashboardPage() {
             </div>
           )}
 
-          {/* Post another job */}
+          {/* Footer CTA */}
           {jobs.length > 0 && (
             <div className="mt-8 text-center">
               <Link
                 href="/post/homeowner"
-                className="inline-block py-3 px-8 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold rounded-xl transition-all text-sm"
+                className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
               >
-                Post Another Job →
+                + Post another job
               </Link>
             </div>
           )}

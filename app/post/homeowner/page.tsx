@@ -1,204 +1,164 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import toast from 'react-hot-toast'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { useAuth } from '@/components/providers/AuthProvider'
+import toast from 'react-hot-toast'
 
 const CATEGORIES = [
   { id: 'plumbing', label: 'Plumbing', emoji: '🔧' },
   { id: 'electrical', label: 'Electrical', emoji: '⚡' },
-  { id: 'building', label: 'Building', emoji: '🏗️' },
-  { id: 'painting', label: 'Painting', emoji: '🎨' },
+  { id: 'carpentry', label: 'Building', emoji: '🔨' },
+  { id: 'painting', label: 'Painting', emoji: '🖌️' },
   { id: 'cleaning', label: 'Cleaning', emoji: '🧹' },
-  { id: 'garden', label: 'Garden', emoji: '🌿' },
-  { id: 'other', label: 'Other', emoji: '🛠️' },
+  { id: 'landscaping', label: 'Garden', emoji: '🌿' },
+  { id: 'general', label: 'Other', emoji: '🛠️' },
 ]
 
-const URGENCY_OPTIONS = [
-  { id: 'asap', label: 'ASAP' },
-  { id: 'this_week', label: 'This week' },
-  { id: 'flexible', label: 'Flexible' },
+const TIMING_OPTIONS = [
+  { id: 'asap', label: 'ASAP', desc: 'As soon as possible' },
+  { id: 'this_week', label: 'This week', desc: 'Within the next 7 days' },
+  { id: 'flexible', label: "I'm flexible", desc: 'No rush, when available' },
 ]
 
-const MAX_TITLE_LENGTH = 80
-
-export default function HomeownerPostPage() {
-  const router = useRouter()
+export default function HomeownerJobFormPage() {
   const { user } = useAuth()
+  const router = useRouter()
 
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState('')
   const [location, setLocation] = useState('')
-  const [urgency, setUrgency] = useState('')
+  const [timing, setTiming] = useState('')
   const [budget, setBudget] = useState('')
-  const [budgetUnsure, setBudgetUnsure] = useState(false)
-  const [name, setName] = useState('')
-  const [contact, setContact] = useState('')
+  const [notSureBudget, setNotSureBudget] = useState(false)
+  const [guestName, setGuestName] = useState('')
+  const [guestContact, setGuestContact] = useState('')
   const [submitting, setSubmitting] = useState(false)
+
+  const isLoggedIn = !!user
+
+  const isValid =
+    description.trim().length >= 10 &&
+    category &&
+    location.trim().length >= 2 &&
+    timing &&
+    (isLoggedIn || (guestName.trim().length >= 2 && guestContact.trim().length >= 3))
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!description.trim()) {
-      toast.error('Please describe what needs doing')
-      return
-    }
-    if (!category) {
-      toast.error('Please choose a category')
-      return
-    }
-    if (!location.trim()) {
-      toast.error('Please enter your location')
-      return
-    }
-    if (!urgency) {
-      toast.error('Please select when you need it done')
-      return
-    }
-    if (!user && (!name.trim() || !contact.trim())) {
-      toast.error('Please enter your name and contact details')
-      return
-    }
-
+    if (!isValid) return
     setSubmitting(true)
+
     try {
-      const { collection, addDoc, serverTimestamp, doc, setDoc } = await import('firebase/firestore')
-      const { db } = await import('@/lib/firebase')
-      if (!db) {
-        toast.error('Service unavailable. Please try again.')
-        setSubmitting(false)
-        return
-      }
+      let uid = user?.uid
+      let displayName = user?.displayName || user?.email || 'Homeowner'
+      let email = user?.email || null
 
-      let uid = user?.uid ?? null
-      let posterName = user?.displayName ?? name.trim()
+      // If not logged in, create a silent homeowner account
+      if (!isLoggedIn) {
+        displayName = guestName.trim()
+        const isEmail = guestContact.includes('@')
+        email = isEmail ? guestContact.trim() : null
+        const phone = !isEmail ? guestContact.trim() : undefined
 
-      // If not logged in, create a Firebase auth account and Firestore user doc.
-      // A cryptographically random temporary password is generated; users can
-      // reset it via the standard "Forgot Password" flow if they want full access later.
-      if (!user) {
-        const email = contact.includes('@') ? contact.trim() : null
-        const phone = !contact.includes('@') ? contact.trim() : null
-        // Use a UUID-based synthetic email to avoid collisions with phone-based contacts
-        const randomId = crypto.randomUUID().replace(/-/g, '').slice(0, 12)
-        const loginEmail = email ?? `guest-${randomId}@workerconnect.nz`
-        // Generate a cryptographically secure temporary password with required character types
-        // distributed randomly throughout (not appended as a fixed suffix).
-        const pwBytes = new Uint8Array(20)
-        crypto.getRandomValues(pwBytes)
-        const lowerChars = 'abcdefghijklmnopqrstuvwxyz'
-        const upperChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-        const digitChars = '0123456789'
-        const specialChars = '!@#$%^&*'
-        const allChars = lowerChars + upperChars + digitChars + specialChars
-        // Build base password from random bytes
-        const pwArr = Array.from(pwBytes.slice(0, 16), (b) => allChars[b % allChars.length])
-        // Ensure at least one of each required type, replacing positions at random indices
-        const reqBytes = new Uint8Array(4)
-        crypto.getRandomValues(reqBytes)
-        pwArr[reqBytes[0] % 16] = upperChars[reqBytes[0] % upperChars.length]
-        pwArr[reqBytes[1] % 16] = lowerChars[reqBytes[1] % lowerChars.length]
-        pwArr[reqBytes[2] % 16] = digitChars[reqBytes[2] % digitChars.length]
-        pwArr[reqBytes[3] % 16] = specialChars[reqBytes[3] % specialChars.length]
-        const tempPassword = pwArr.join('')
-
+        // Create account silently
         const { createUserWithEmailAndPassword, updateProfile } = await import('firebase/auth')
         const { auth } = await import('@/lib/firebase')
-        if (!auth) {
-          toast.error('Authentication service not available.')
-          setSubmitting(false)
-          return
-        }
-        const cred = await createUserWithEmailAndPassword(auth, loginEmail, tempPassword)
-        await updateProfile(cred.user, { displayName: name.trim() })
-        uid = cred.user.uid
-        posterName = name.trim()
+        if (!auth) throw new Error('Auth not available')
 
-        const now = serverTimestamp()
-        await setDoc(doc(db, 'users', uid), {
-          uid,
-          email: loginEmail,
-          displayName: posterName,
-          photoURL: null,
-          role: 'homeowner',
-          phone: phone ?? '',
-          createdAt: now,
-          updatedAt: now,
-          profileComplete: true,
-          verified: false,
-        })
+        // Generate a cryptographically secure random password for the silent account
+        const randomBytes = new Uint8Array(24)
+        crypto.getRandomValues(randomBytes)
+        const tempPassword = Array.from(randomBytes, (b) => b.toString(16).padStart(2, '0')).join('')
+        const randomId = crypto.randomUUID().replace(/-/g, '')
+        const randomEmail = email || `ho-${randomId}@quicktrade-guest.nz`
+
+        const cred = await createUserWithEmailAndPassword(auth, randomEmail, tempPassword)
+        await updateProfile(cred.user, { displayName })
+
+        // Create minimal profile in Firestore
+        const { doc, setDoc, serverTimestamp } = await import('firebase/firestore')
+        const { db } = await import('@/lib/firebase')
+        if (db) {
+          await setDoc(doc(db, 'users', cred.user.uid), {
+            uid: cred.user.uid,
+            email: randomEmail,
+            displayName,
+            photoURL: null,
+            role: 'homeowner',
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+            profileComplete: true,
+            verified: false,
+            ...(phone ? { phone } : {}),
+          })
+        }
+        uid = cred.user.uid
+        email = randomEmail
       }
 
-      // Save the job to Firestore
-      await addDoc(collection(db, 'jobs'), {
-        title: description.trim().slice(0, MAX_TITLE_LENGTH),
+      if (!uid) throw new Error('No user ID')
+
+      // Post the job
+      const { saveJob } = await import('@/lib/services/jobService')
+      const _jobId = await saveJob({
+        title: description.trim().slice(0, 80) || 'Home job',
         description: description.trim(),
-        category,
+        category: category as import('@/types').JobCategory,
         location: location.trim(),
-        urgency,
-        budget: budgetUnsure ? null : (budget ? Number(budget) : null),
-        budgetUnsure,
+        budget: notSureBudget || !budget ? 0 : Number(budget),
         budgetType: 'fixed',
-        status: 'open',
-        jobType: 'homeowner',
+        urgency: timing === 'asap' ? 'high' : timing === 'this_week' ? 'medium' : 'low',
+        skills: [],
         employerId: uid,
-        employerName: posterName,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        applicantsCount: 0,
+        employerName: displayName,
+        status: 'open',
       })
 
-      toast.success('Job posted! Workers will be in touch soon.')
+      toast.success("Your job is posted! You'll get notified when tradies send you quotes.")
       router.push('/dashboard/homeowner')
-    } catch (err: unknown) {
-      const e = err as { code?: string; message?: string }
-      if (e.code === 'auth/email-already-in-use') {
-        toast.error('An account with that email already exists. Please sign in.')
-      } else {
-        toast.error('Something went wrong. Please try again.')
-      }
+    } catch {
+      toast.error('Something went wrong. Please try again.')
     } finally {
       setSubmitting(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0f1e] flex flex-col">
+    <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-950">
       <Navbar />
-      <main className="flex-1 px-4 py-10">
-        {/* Radial glow */}
-        <div
-          className="fixed inset-0 pointer-events-none"
-          style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(99,102,241,0.12) 0%, transparent 70%)' }}
-        />
-        <div className="relative max-w-xl mx-auto">
-          <Link href="/post" className="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-white mb-6 transition-colors">
-            ← Back
-          </Link>
-          <h1 className="text-2xl font-bold text-white mb-1">Tell us what you need done</h1>
-          <p className="text-gray-400 text-sm mb-8">It&apos;s free to post — workers come to you.</p>
+      <main className="flex-1 py-10 px-4">
+        <div className="max-w-xl mx-auto">
+          <div className="mb-8 text-center">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              What do you need done?
+            </h1>
+            <p className="text-gray-500 dark:text-gray-400">
+              Tell us about your job and get quotes from local tradies — free!
+            </p>
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Description */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                What needs doing? <span className="text-red-400">*</span>
+            {/* Step 1: Description */}
+            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6">
+              <label className="block text-base font-semibold text-gray-900 dark:text-white mb-3">
+                1. Describe the job
               </label>
               <textarea
                 rows={4}
+                placeholder="e.g. I need a leaking tap fixed in the bathroom. It's been dripping for a week."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="e.g. I need a plumber to fix a leaking tap in the kitchen..."
-                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 text-white placeholder:text-gray-500 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors resize-none"
+                className="w-full rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                required
               />
             </div>
 
-            {/* Category */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Category <span className="text-red-400">*</span>
+            {/* Step 2: Category */}
+            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6">
+              <label className="block text-base font-semibold text-gray-900 dark:text-white mb-3">
+                2. What type of job is it?
               </label>
               <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
                 {CATEGORIES.map((cat) => (
@@ -206,124 +166,132 @@ export default function HomeownerPostPage() {
                     key={cat.id}
                     type="button"
                     onClick={() => setCategory(cat.id)}
-                    className={`flex flex-col items-center gap-1 p-3 rounded-xl border-2 transition-all ${
+                    className={`flex flex-col items-center gap-1 p-3 rounded-xl border-2 text-center transition-all ${
                       category === cat.id
-                        ? 'border-indigo-500 bg-indigo-500/10'
-                        : 'border-gray-700 hover:border-gray-600 bg-gray-800/50'
+                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                     }`}
                   >
                     <span className="text-2xl">{cat.emoji}</span>
-                    <span className="text-xs text-gray-300 font-medium">{cat.label}</span>
+                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300 leading-tight">{cat.label}</span>
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Location */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Where are you? <span className="text-red-400">*</span>
+            {/* Step 3: Location */}
+            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6">
+              <label className="block text-base font-semibold text-gray-900 dark:text-white mb-3">
+                3. Where are you?
               </label>
               <input
                 type="text"
+                placeholder="e.g. Blenheim, Marlborough"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                placeholder="e.g. Auckland Central, Wellington..."
-                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 text-white placeholder:text-gray-500 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+                className="w-full rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                required
               />
             </div>
 
-            {/* Urgency */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                When do you need it? <span className="text-red-400">*</span>
+            {/* Step 4: Timing */}
+            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6">
+              <label className="block text-base font-semibold text-gray-900 dark:text-white mb-3">
+                4. When do you need it?
               </label>
-              <div className="flex gap-3">
-                {URGENCY_OPTIONS.map((opt) => (
+              <div className="grid grid-cols-3 gap-3">
+                {TIMING_OPTIONS.map((opt) => (
                   <button
                     key={opt.id}
                     type="button"
-                    onClick={() => setUrgency(opt.id)}
-                    className={`flex-1 py-2.5 px-3 rounded-xl border-2 text-sm font-medium transition-all ${
-                      urgency === opt.id
-                        ? 'border-indigo-500 bg-indigo-500/10 text-white'
-                        : 'border-gray-700 hover:border-gray-600 text-gray-300 bg-gray-800/50'
+                    onClick={() => setTiming(opt.id)}
+                    className={`p-3 rounded-xl border-2 text-center transition-all ${
+                      timing === opt.id
+                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                     }`}
                   >
-                    {opt.label}
+                    <div className="font-semibold text-sm text-gray-900 dark:text-white">{opt.label}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{opt.desc}</div>
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Budget */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Budget (optional)
+            {/* Step 5: Budget (optional) */}
+            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6">
+              <label className="block text-base font-semibold text-gray-900 dark:text-white mb-1">
+                5. Rough budget? <span className="text-gray-400 font-normal text-sm">(optional)</span>
               </label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">$</span>
-                <input
-                  type="number"
-                  value={budget}
-                  onChange={(e) => setBudget(e.target.value)}
-                  disabled={budgetUnsure}
-                  placeholder="e.g. 300"
-                  min="0"
-                  className="w-full pl-8 pr-4 py-3 bg-gray-800 border border-gray-700 text-white placeholder:text-gray-500 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                />
-              </div>
-              <label className="flex items-center gap-2 mt-2 cursor-pointer">
+              <p className="text-sm text-gray-500 mb-3">Tradies can still quote even if you skip this</p>
+              <label className="flex items-center gap-2 mb-3 cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={budgetUnsure}
+                  checked={notSureBudget}
                   onChange={(e) => {
-                    setBudgetUnsure(e.target.checked)
+                    setNotSureBudget(e.target.checked)
                     if (e.target.checked) setBudget('')
                   }}
-                  className="rounded border-gray-600 bg-gray-800 text-indigo-500 focus:ring-indigo-500"
+                  className="w-4 h-4 rounded accent-indigo-600"
                 />
-                <span className="text-sm text-gray-400">Not sure yet</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300">Not sure yet</span>
               </label>
+              {!notSureBudget && (
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm">$</span>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    value={budget}
+                    onChange={(e) => setBudget(e.target.value)}
+                    className="w-full pl-8 pr-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+              )}
             </div>
 
-            {/* Contact details — only shown when not logged in */}
-            {!user && (
-              <div className="bg-gray-800/40 border border-gray-700 rounded-xl p-4 space-y-4">
-                <p className="text-sm font-medium text-gray-300">Your details so workers can reach you</p>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">
-                    Your name <span className="text-red-400">*</span>
-                  </label>
+            {/* Step 6: Contact info (only if not logged in) */}
+            {!isLoggedIn && (
+              <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6">
+                <label className="block text-base font-semibold text-gray-900 dark:text-white mb-3">
+                  6. How can tradies reach you?
+                </label>
+                <div className="space-y-3">
                   <input
                     type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="First name"
-                    className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 text-white placeholder:text-gray-500 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+                    placeholder="Your name"
+                    value={guestName}
+                    onChange={(e) => setGuestName(e.target.value)}
+                    className="w-full rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    required
                   />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">
-                    Phone or email <span className="text-red-400">*</span>
-                  </label>
                   <input
                     type="text"
-                    value={contact}
-                    onChange={(e) => setContact(e.target.value)}
-                    placeholder="021 123 4567 or name@email.com"
-                    className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 text-white placeholder:text-gray-500 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+                    placeholder="Phone number or email"
+                    value={guestContact}
+                    onChange={(e) => setGuestContact(e.target.value)}
+                    className="w-full rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    required
                   />
                 </div>
+                <p className="text-xs text-gray-400 mt-2">We&apos;ll create a free account so you can track your quotes</p>
               </div>
             )}
 
             <button
               type="submit"
-              disabled={submitting}
-              className="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed text-base"
+              disabled={!isValid || submitting}
+              className="w-full py-4 px-6 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-2xl text-lg transition-colors"
             >
-              {submitting ? 'Posting…' : 'Post My Job →'}
+              {submitting ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Posting your job...
+                </span>
+              ) : (
+                'Post My Job — Free 🚀'
+              )}
             </button>
           </form>
         </div>

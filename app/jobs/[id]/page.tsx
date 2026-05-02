@@ -24,6 +24,7 @@ import { hasWorkerAI } from '@/lib/subscriptions'
 import AIWorkerMatches from '@/components/ai/AIWorkerMatches'
 import QuoteList from '@/components/quotes/QuoteList'
 import QuoteComparison from '@/components/quotes/QuoteComparison'
+import { trackEvent } from '@/lib/analytics'
 
 const MOCK_JOBS: Record<string, Job & { employerRating?: number; employerJobs?: number }> = {
   '1': {
@@ -228,12 +229,14 @@ export default function JobDetailPage() {
   }
 
   const handleAcceptQuote = async (quoteId: string) => {
+    const acceptedQuote = jobQuotes.find((q) => q.id === quoteId)
     const res = await fetch(`/api/quotes/${quoteId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'x-user-id': user?.uid ?? '' },
       body: JSON.stringify({ status: 'accepted' }),
     })
     if (!res.ok) throw new Error('Failed to accept quote')
+    trackEvent('quote_accepted', { quote_id: quoteId, job_id: params.id as string, value: acceptedQuote?.totalPrice ?? acceptedQuote?.basePrice })
     setJobQuotes((prev) => prev.map((q) => q.id === quoteId ? { ...q, status: 'accepted' as const } : q))
   }
 
@@ -372,6 +375,7 @@ export default function JobDetailPage() {
         if (data.alreadyCompleted) {
           toast.success('Job is already marked as complete.')
         } else {
+          trackEvent('payment_completed', { job_id: params.id as string })
           toast.success('Job marked as complete! Payment has been released to the worker.')
         }
       } else {

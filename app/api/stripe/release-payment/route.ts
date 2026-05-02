@@ -5,10 +5,10 @@
  * Called when the employer marks the job as complete, or automatically after 7 days.
  *
  * Commission tiers (deducted from escrow before paying worker):
- *   New Worker (0–5 jobs):     10%
- *   Established (6–20 jobs):    8%
- *   Pro Worker (21–50 jobs):    6%
- *   Elite Worker (50+ jobs):    5%
+ *   New Worker (0–5 jobs):     18%
+ *   Established (6–20 jobs):   15%
+ *   Pro Worker (21–50 jobs):   12%
+ *   Elite Worker (51+ jobs):   10%
  *
  * TODO: Replace STRIPE_SECRET_KEY with your live key when going live.
  * TODO: In production, use Stripe Connect Transfer to pay the worker directly.
@@ -17,8 +17,16 @@ import { NextResponse } from 'next/server'
 import { getWorkerTier } from '@/types'
 import { isStripeConfigured } from '@/lib/stripe'
 import Stripe from 'stripe'
+import { rateLimit } from '@/lib/rateLimit'
 
 export async function POST(request: Request) {
+  if (rateLimit(request, { max: 20, windowMs: 60_000 })) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please wait a moment before trying again.' },
+      { status: 429 }
+    )
+  }
+
   try {
     const body = await request.json() as {
       paymentIntentId?: string

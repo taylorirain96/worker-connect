@@ -14,6 +14,7 @@ import { JOB_CATEGORIES } from '@/lib/utils'
 import { Briefcase, Sparkles } from 'lucide-react'
 import { hasEmployerAI } from '@/lib/subscriptions'
 import AIUpgradePrompt from '@/components/ui/AIUpgradePrompt'
+import { trackEvent } from '@/lib/analytics'
 
 const jobSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters').max(100),
@@ -113,6 +114,7 @@ export default function CreateJobPage() {
         ...(data.deadline ? { deadline: data.deadline } : {}),
       })
       toast.success('Job posted successfully!')
+      trackEvent('job_posted', { job_id: jobId, category: data.category, budget: data.budget })
       router.push(`/jobs/${jobId}`)
     } catch {
       toast.error('Failed to post job. Please try again.')
