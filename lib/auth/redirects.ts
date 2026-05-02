@@ -9,6 +9,5 @@ export function getDashboardPath(profile: UserProfile | null): string {
   if (profile.role === 'homeowner') return '/dashboard/homeowner'
   if (profile.role === 'employer') return '/dashboard/employer'
   if (profile.role === 'admin') return '/admin'
-  if (profile.role === 'homeowner') return '/dashboard/homeowner'
   return '/dashboard/worker'
 }
