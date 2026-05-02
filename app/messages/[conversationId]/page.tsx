@@ -88,7 +88,7 @@ export default function ConversationPage() {
     if (participantIds.length < 2) return
     Promise.all(participantIds.map((id) => getUserProfile(id)))
       .then((profiles) => {
-        setBothWorkers(profiles.every((p) => p?.role === 'worker'))
+        setBothWorkers(profiles.every((p) => p !== null && p.role === 'worker'))
       })
       .catch((err) => {
         console.error('Failed to fetch participant profiles:', err)

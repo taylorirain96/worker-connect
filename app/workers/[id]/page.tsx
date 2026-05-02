@@ -244,7 +244,6 @@ export default function WorkerProfilePage({ params }: { params: { id: string } }
                     } catch (err) {
                       console.error('Failed to open conversation:', err)
                       toast.error('Could not open conversation. Please try again.')
-                      router.push('/messages')
                     } finally {
                       setMessaging(false)
                     }
