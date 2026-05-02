@@ -95,8 +95,9 @@ export async function POST(req: NextRequest) {
       let homeownerName: string | undefined
       if (adminDb) {
         const employerSnap = await adminDb.collection('users').doc(employerId).get()
-        homeownerEmail = employerSnap.data()?.email as string | undefined
-        homeownerName = (employerSnap.data()?.displayName ?? employerSnap.data()?.name) as string | undefined
+        const employerData = employerSnap.data()
+        homeownerEmail = employerData?.email as string | undefined
+        homeownerName = (employerData?.displayName ?? employerData?.name) as string | undefined
       }
       if (homeownerEmail) {
         await sendQuoteReceivedEmail({

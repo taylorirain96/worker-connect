@@ -124,8 +124,9 @@ export async function POST(request: NextRequest) {
           adminDb.collection('users').doc(escrow.workerId).get(),
           adminDb.collection('jobs').doc(escrow.jobId).get(),
         ])
-        workerEmail = workerSnap.data()?.email as string | undefined
-        workerName = (workerSnap.data()?.displayName ?? workerSnap.data()?.name) as string | undefined
+        const workerData = workerSnap.data()
+        workerEmail = workerData?.email as string | undefined
+        workerName = (workerData?.displayName ?? workerData?.name) as string | undefined
         jobTitle = jobSnap.data()?.title as string | undefined
       }
       if (workerEmail) {

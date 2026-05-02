@@ -12,8 +12,18 @@ import { Resend } from 'resend'
 const FROM = process.env.RESEND_FROM_EMAIL ?? 'QuickTrade <hello@quicktrade.co.nz>'
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://quicktrade.co.nz'
 
-function getResend(): Resend {
-  return new Resend(process.env.RESEND_API_KEY)
+// Lazy singleton — avoids creating a new Resend instance on every call
+let _resend: Resend | null = null
+
+function getResend(): Resend | null {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('RESEND_API_KEY is not set — transactional emails will not be sent')
+    return null
+  }
+  if (!_resend) {
+    _resend = new Resend(process.env.RESEND_API_KEY)
+  }
+  return _resend
 }
 
 // ─── Shared HTML helpers ──────────────────────────────────────────────────────
@@ -88,6 +98,7 @@ export async function sendJobAcceptedEmail(opts: {
   `)
 
   const resend = getResend()
+  if (!resend) return
   await resend.emails.send({
     from: FROM,
     to: workerEmail,
@@ -127,6 +138,7 @@ export async function sendPaymentReleasedEmail(opts: {
   `)
 
   const resend = getResend()
+  if (!resend) return
   await resend.emails.send({
     from: FROM,
     to: workerEmail,
@@ -164,6 +176,7 @@ export async function sendQuoteReceivedEmail(opts: {
   `)
 
   const resend = getResend()
+  if (!resend) return
   await resend.emails.send({
     from: FROM,
     to: homeownerEmail,
