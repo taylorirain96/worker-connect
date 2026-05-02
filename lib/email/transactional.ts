@@ -3,9 +3,13 @@
  * Sends via Resend using the RESEND_API_KEY environment variable.
  *
  * Emails:
- *   sendJobAcceptedEmail    — sent to worker when their quote is accepted
- *   sendPaymentReleasedEmail — sent to worker when escrow payment is released
- *   sendQuoteReceivedEmail  — sent to homeowner when a worker submits a quote
+ *   sendJobAcceptedEmail       — sent to worker when their quote is accepted
+ *   sendPaymentReleasedEmail   — sent to worker when escrow payment is released
+ *   sendQuoteReceivedEmail     — sent to homeowner when a worker submits a quote
+ *   sendMessageReceivedEmail   — sent to recipient when they receive a message (30+ min inactive)
+ *   sendApplicationUpdateEmail — sent to jobseeker when employer views/updates their application
+ *   sendReviewReceivedEmail    — sent to user when they receive a new review
+ *   sendJobMatchesEmail        — sent to workers when a new job matches their trade/location
  */
 import { Resend } from 'resend'
 
@@ -183,6 +187,164 @@ export async function sendQuoteReceivedEmail(opts: {
     from: FROM,
     to: homeownerEmail,
     subject: `New quote from ${workerName} — ${jobTitle}`,
+    html,
+  })
+}
+
+// ─── Email 4: Message Received ────────────────────────────────────────────────
+
+/**
+ * Sent to a user when they receive a message and haven't been active for 30+ minutes.
+ */
+export async function sendMessageReceivedEmail(opts: {
+  recipientEmail: string
+  recipientName: string
+  senderName: string
+  messagePreview: string
+  conversationId: string
+}): Promise<void> {
+  const { recipientEmail, recipientName, senderName, messagePreview, conversationId } = opts
+  const replyUrl = `${APP_URL}/messages?conversation=${conversationId}`
+
+  const html = emailWrapper(`
+    <h1 style="font-size:24px;font-weight:700;color:#fff;margin:0 0 8px;">You've got a new message 💬</h1>
+    <p style="color:#94a3b8;line-height:1.6;margin:0 0 20px;">G'day ${recipientName}, <strong style="color:#e2e8f0;">${senderName}</strong> sent you a message:</p>
+    <div style="background:#1e293b;border-left:4px solid #4f46e5;border-radius:8px;padding:16px 20px;margin:20px 0;">
+      <p style="color:#e2e8f0;font-size:15px;line-height:1.6;margin:0;font-style:italic;">"${messagePreview}"</p>
+    </div>
+    ${ctaButton(replyUrl, 'Reply Now →')}
+    <p style="color:#64748b;font-size:13px;text-align:center;margin:0;">Don't leave them hanging — reply to keep the job moving.</p>
+  `)
+
+  const resend = getResend()
+  if (!resend) return
+  await resend.emails.send({
+    from: FROM,
+    to: recipientEmail,
+    subject: `New message from ${senderName}`,
+    html,
+  })
+}
+
+// ─── Email 5: Application Update ──────────────────────────────────────────────
+
+/**
+ * Sent to a jobseeker when an employer views or updates their application status.
+ */
+export async function sendApplicationUpdateEmail(opts: {
+  applicantEmail: string
+  applicantName: string
+  jobTitle: string
+  newStatus: string
+  applicationId: string
+}): Promise<void> {
+  const { applicantEmail, applicantName, jobTitle, newStatus, applicationId } = opts
+  const appUrl = `${APP_URL}/applications/${applicationId}`
+
+  const statusLabel: Record<string, string> = {
+    pending: 'Under Review',
+    accepted: '🎉 Accepted',
+    rejected: 'Not Selected',
+    withdrawn: 'Withdrawn',
+  }
+  const statusDisplay = statusLabel[newStatus] ?? newStatus
+
+  const html = emailWrapper(`
+    <h1 style="font-size:24px;font-weight:700;color:#fff;margin:0 0 8px;">Application update 📋</h1>
+    <p style="color:#94a3b8;line-height:1.6;margin:0 0 20px;">Kia ora ${applicantName}, there's an update on your application for <strong style="color:#e2e8f0;">${jobTitle}</strong>.</p>
+    ${infoTable(`
+      ${infoRow('Job', jobTitle)}
+      ${infoRow('Status', statusDisplay)}
+    `)}
+    ${ctaButton(appUrl, 'View Application →')}
+    <p style="color:#64748b;font-size:13px;text-align:center;margin:0;">Log in to see the full details and next steps.</p>
+  `)
+
+  const resend = getResend()
+  if (!resend) return
+  await resend.emails.send({
+    from: FROM,
+    to: applicantEmail,
+    subject: `Application update — ${jobTitle}`,
+    html,
+  })
+}
+
+// ─── Email 6: Review Received ─────────────────────────────────────────────────
+
+/**
+ * Sent to a user when they receive a new review.
+ */
+export async function sendReviewReceivedEmail(opts: {
+  revieweeEmail: string
+  revieweeName: string
+  reviewerName: string
+  rating: number
+  reviewSnippet: string
+  revieweeId: string
+}): Promise<void> {
+  const { revieweeEmail, revieweeName, reviewerName, rating, reviewSnippet, revieweeId } = opts
+  const profileUrl = `${APP_URL}/workers/${revieweeId}`
+  const stars = '⭐'.repeat(Math.min(5, Math.max(1, rating)))
+
+  const html = emailWrapper(`
+    <h1 style="font-size:24px;font-weight:700;color:#fff;margin:0 0 8px;">You've got a new review! ⭐</h1>
+    <p style="color:#94a3b8;line-height:1.6;margin:0 0 20px;">Ka pai, ${revieweeName}! <strong style="color:#e2e8f0;">${reviewerName}</strong> left you a review.</p>
+    ${infoTable(`
+      ${infoRow('From', reviewerName)}
+      ${infoRow('Rating', `${stars} (${rating}/5)`)}
+    `)}
+    <div style="background:#1e293b;border-left:4px solid #4f46e5;border-radius:8px;padding:16px 20px;margin:20px 0;">
+      <p style="color:#e2e8f0;font-size:15px;line-height:1.6;margin:0;font-style:italic;">"${reviewSnippet}"</p>
+    </div>
+    ${ctaButton(profileUrl, 'View Your Profile →')}
+    <p style="color:#64748b;font-size:13px;text-align:center;margin:0;">Great reviews help you win more jobs — keep up the awesome work!</p>
+  `)
+
+  const resend = getResend()
+  if (!resend) return
+  await resend.emails.send({
+    from: FROM,
+    to: revieweeEmail,
+    subject: `${reviewerName} left you a ${rating}-star review`,
+    html,
+  })
+}
+
+// ─── Email 7: Job Matches ─────────────────────────────────────────────────────
+
+/**
+ * Sent to matching workers when a new job is posted in their trade/location.
+ */
+export async function sendJobMatchesEmail(opts: {
+  workerEmail: string
+  workerName: string
+  jobTitle: string
+  location: string
+  budget: number
+  jobId: string
+}): Promise<void> {
+  const { workerEmail, workerName, jobTitle, location, budget, jobId } = opts
+  const jobUrl = `${APP_URL}/jobs/${jobId}`
+
+  const html = emailWrapper(`
+    <h1 style="font-size:24px;font-weight:700;color:#fff;margin:0 0 8px;">New job in your area 🔔</h1>
+    <p style="color:#94a3b8;line-height:1.6;margin:0 0 20px;">G'day ${workerName}, a new job matching your skills just landed near you — be one of the first to quote!</p>
+    ${infoTable(`
+      ${infoRow('Job', jobTitle)}
+      ${infoRow('Location', location)}
+      ${infoRow('Budget', formatNzd(budget))}
+    `)}
+    ${ctaButton(jobUrl, 'View Job & Quote →')}
+    <p style="color:#64748b;font-size:13px;text-align:center;margin:0;">Early quotes get seen first — don't miss out!</p>
+  `)
+
+  const resend = getResend()
+  if (!resend) return
+  await resend.emails.send({
+    from: FROM,
+    to: workerEmail,
+    subject: `New job near you — ${jobTitle} in ${location}`,
     html,
   })
 }
