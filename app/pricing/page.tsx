@@ -13,120 +13,23 @@ import {
   Zap,
   FileText,
   Trophy,
-  Users,
   Building2,
 } from 'lucide-react'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const GIG_TIERS = [
-  {
-    label: 'Small Job',
-    value: 'Under $500 NZD',
-    fee: '$14.99',
-    description: 'Minor repairs, small installations, quick fixes',
-  },
-  {
-    label: 'Medium Job',
-    value: '$500–$2,000 NZD',
-    fee: '$29.99',
-    description: 'Bathroom renos, deck builds, major repairs',
-    popular: true,
-  },
-  {
-    label: 'Large Job',
-    value: '$2,000–$10,000 NZD',
-    fee: '$54.99',
-    description: 'Full renovations, large landscaping, new builds',
-  },
-  {
-    label: 'Commercial',
-    value: '$10,000+ NZD',
-    fee: '$89.99',
-    description: 'Commercial fit-outs, major construction projects',
-  },
-]
-
-const GIG_INCLUDES = [
-  'Access to vetted, reviewed workers',
-  'Quote management dashboard',
-  'Escrow payment protection',
-  'Auto-generated legal contract',
-  'Dispute resolution service',
-  'QuickTrade Guarantee',
-]
-
-interface EmployerSubscriptionPlan {
-  id: string
-  name: string
-  monthlyPrice: number
-  yearlyPrice: number
-  popular?: boolean
-  features: string[]
-  cta: string
-}
-
-const EMPLOYER_SUBSCRIPTION_PLANS: EmployerSubscriptionPlan[] = [
-  {
-    id: 'pro',
-    name: 'Pro',
-    monthlyPrice: 79,
-    yearlyPrice: 63,
-    features: [
-      'Unlimited job postings',
-      '2 featured listings/month',
-      'Analytics dashboard',
-      'Verified employer badge',
-      'Priority applicant matching',
-      'Chat support',
-    ],
-    cta: 'Get Pro',
-  },
-  {
-    id: 'business',
-    name: 'Business',
-    monthlyPrice: 159,
-    yearlyPrice: 127,
-    popular: true,
-    features: [
-      'Everything in Pro',
-      '3 team seats',
-      'Bulk job posting tools',
-      'Contract templates library',
-      'Advanced analytics & ROI reports',
-      'Dedicated account manager',
-    ],
-    cta: 'Get Business',
-  },
-  {
-    id: 'enterprise',
-    name: 'Enterprise',
-    monthlyPrice: 0,
-    yearlyPrice: 0,
-    features: [
-      'Everything in Business',
-      'API access & custom integrations',
-      'White-label option',
-      'Unlimited team seats',
-      'Custom SLA',
-      'Priority onboarding',
-    ],
-    cta: 'Contact Us',
-  },
-]
-
-const RECRUITMENT_OPTIONS = [
-  { role: 'Casual / Part-time', postingFee: '$79', successFee: '$479', successLabel: 'if hired' },
-  { role: 'Full-time Trade', postingFee: '$79', successFee: '$1,279', successLabel: 'if hired' },
-  { role: 'Full-time Professional', postingFee: '$79', successFee: '$1,919', successLabel: 'if hired' },
-  { role: 'Contract Role', postingFee: '$79', successFee: '$959', successLabel: 'if hired' },
+const HOW_IT_WORKS = [
+  { step: '1', title: 'Post FREE', desc: 'Post your job in minutes. No credit card, no fees.' },
+  { step: '2', title: 'Get Quotes FREE', desc: 'Verified workers send you competitive quotes.' },
+  { step: '3', title: 'Pay When Done', desc: 'Funds held securely in escrow. Only released when you approve.' },
+  { step: '4', title: 'We Take a Small %', desc: 'We deduct a small commission from the worker — not from you.' },
 ]
 
 const WORKER_COMMISSION_TIERS = [
-  { tier: 'New Worker', jobs: '0–5 jobs', commission: '10%', color: 'text-slate-300' },
-  { tier: 'Established', jobs: '6–20 jobs', commission: '8%', color: 'text-emerald-300' },
-  { tier: 'Pro Worker', jobs: '21–50 jobs', commission: '6%', color: 'text-emerald-400' },
-  { tier: 'Elite Worker', jobs: '51+ jobs', commission: '5%', color: 'text-emerald-300' },
+  { tier: 'New Worker', jobs: '0–5 jobs', commission: '18%', color: 'text-slate-300' },
+  { tier: 'Established', jobs: '6–20 jobs', commission: '15%', color: 'text-emerald-300' },
+  { tier: 'Pro Worker', jobs: '21–50 jobs', commission: '12%', color: 'text-emerald-400' },
+  { tier: 'Elite Worker', jobs: '51+ jobs', commission: '10%', color: 'text-emerald-300' },
 ]
 
 interface WorkerPlan {
@@ -143,18 +46,19 @@ const WORKER_PRO_PLANS: WorkerPlan[] = [
     monthlyPrice: 0,
     yearlyPrice: 0,
     features: [
-      'Standard commission rates (10% → 5%)',
+      'Sliding scale commission (18% → 10%)',
       'Browse & apply to all jobs',
       'Receive reviews & ratings',
+      'Full escrow payment protection',
     ],
   },
   {
     name: 'Pro Worker',
-    monthlyPrice: 29,
-    yearlyPrice: 24,
+    monthlyPrice: 49,
+    yearlyPrice: 39,
     highlight: true,
     features: [
-      'Flat 4% commission on every job',
+      'Flat 8% commission on every job',
       'Profile boost included',
       'Early job alerts (30 min head start)',
       'Commission savings pay for themselves after just 2 jobs/month',
@@ -162,13 +66,13 @@ const WORKER_PRO_PLANS: WorkerPlan[] = [
   },
   {
     name: 'Elite Worker',
-    monthlyPrice: 59,
-    yearlyPrice: 49,
+    monthlyPrice: 89,
+    yearlyPrice: 71,
     features: [
-      'Flat 3% commission on every job',
+      'Flat 6% commission on every job',
       'Featured profile placement',
       'Priority notifications',
-      'Verified badge included',
+      'Verified elite badge',
     ],
   },
 ]
@@ -209,7 +113,7 @@ const ACHIEVEMENT_BADGES = [
   { badge: '💎 High Value', how: 'Complete a $5,000+ job', reward: '$5 credit' },
   { badge: '🔄 Consistent', how: '1 job every 30 days for 3 months', reward: '$5 credit' },
   { badge: '⭐ Trusted', how: '5 jobs all rated 4.5+ stars', reward: '$5 credit + free verified badge' },
-  { badge: '💰 Big Earner', how: 'Earn $5,000 in a month', reward: 'Drop to 4% commission that month' },
+  { badge: '💰 Big Earner', how: 'Earn $5,000 in a month', reward: 'Bonus: drop to 8% commission that month' },
   { badge: '🎯 10 Jobs', how: 'Complete 10 jobs', reward: '$5 credit' },
   { badge: '💼 50 Jobs', how: 'Complete 50 jobs', reward: '$20 credit' },
   { badge: '🔥 Loyal', how: '30 day login streak', reward: '$3 credit' },
@@ -218,8 +122,8 @@ const ACHIEVEMENT_BADGES = [
 
 const FAQS = [
   {
-    q: "Can I get a refund if I don't find a worker?",
-    a: "Yes. If your job receives no expressions of interest within 14 days, you're entitled to a full refund of your posting fee. Our team will also work with you to relist or adjust the job to attract more responses.",
+    q: "Do homeowners pay anything to post a job?",
+    a: "No — posting a job is completely free. You only pay the agreed job price through escrow when the work is done. There are no posting fees, no sign-up fees, and no credit card required to get started.",
   },
   {
     q: 'When exactly does QuickTrade take commission?',
@@ -231,11 +135,11 @@ const FAQS = [
   },
   {
     q: 'Can I post multiple jobs?',
-    a: 'Yes — each job post is priced individually by size, so you only pay for what you post. If you post frequently, our Pro Employer plan ($79/month) gives you unlimited posts and is the best value for regular hirers.',
+    a: 'Yes — posting jobs is always free for homeowners. Post as many as you need. Workers can quote on any job that suits their skills.',
   },
   {
-    q: "What is the recruitment success fee?",
-    a: "The success fee is only charged when a worker is actually hired through your recruitment posting. You pay the flat $79 listing fee upfront, and the success fee only applies if the placement is made. No hire = no success fee.",
+    q: "How does the worker commission tier system work?",
+    a: "Workers start at 18% commission and earn their way down to just 10% as they complete more jobs. This rewards loyal, active workers and gives everyone a clear path to better take-home pay.",
   },
   {
     q: 'How does the 30-day hire guarantee work?',
@@ -246,8 +150,8 @@ const FAQS = [
     a: "Yes! Workers earn credits by completing jobs, achieving milestones, and maintaining streaks. Credits can only be spent on QuickTrade platform features like profile boosts and add-ons — they can't be withdrawn as cash.",
   },
   {
-    q: "What's the difference between a one-off job and hiring full-time?",
-    a: "A one-off job is completed through the platform — you pay a posting fee and the worker pays a small commission from their earnings. Hiring full-time is for bringing someone on long-term — you pay a flat posting fee plus a success fee only if you hire someone.",
+    q: "What's included in the Pro Worker subscription?",
+    a: "Pro Worker ($49 NZD/month) gives you a flat 8% commission rate on every job — down from the standard 18% starting rate. If you're doing 3+ jobs a month, Pro easily pays for itself. Elite Worker ($89/month) drops your rate to 6%.",
   },
 ]
 
@@ -257,15 +161,6 @@ export default function PricingPage() {
   const [billing, setBilling] = useState<'monthly' | 'yearly'>('monthly')
 
   const yearlyMonthlySavingPct = 20
-
-  function displayPrice(plan: { monthlyPrice: number; yearlyPrice: number }): string {
-    if (plan.monthlyPrice === 0) return 'Custom'
-    return billing === 'monthly' ? `$${plan.monthlyPrice}` : `$${plan.yearlyPrice}`
-  }
-
-  function yearlySaving(plan: { monthlyPrice: number; yearlyPrice: number }): number {
-    return (plan.monthlyPrice - plan.yearlyPrice) * 12
-  }
 
   return (
     <div className="flex flex-col min-h-screen luxury-bg">
@@ -283,21 +178,21 @@ export default function PricingPage() {
               <span>Simple, Fair Pricing</span>
             </div>
             <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4 tracking-tight">
-              You only pay when{' '}
+              Free to post. Free to quote.{' '}
               <span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
-                value is delivered
+                Only pay when you get paid.
               </span>
             </h1>
             <p className="text-lg text-slate-400 max-w-2xl mx-auto mb-10">
-              Whether you need a sparky for the weekend or a full-time builder — or you are one — pricing is simple, fair, and built for New Zealand.
+              Post your job FREE. Workers quote FREE. You only pay when the work is done — and we take a small % from the worker, not from you.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-6 text-slate-300 text-sm font-medium">
               <span className="flex items-center gap-1.5">
-                <HardHat className="h-4 w-4 text-emerald-400" /> Workers always free
+                <HardHat className="h-4 w-4 text-emerald-400" /> Workers always free to start
               </span>
               <span className="text-slate-600">·</span>
               <span className="flex items-center gap-1.5">
-                <Briefcase className="h-4 w-4 text-indigo-400" /> Post any job, any size
+                <Briefcase className="h-4 w-4 text-indigo-400" /> Post any job, 100% FREE
               </span>
               <span className="text-slate-600">·</span>
               <span className="flex items-center gap-1.5">
@@ -336,206 +231,54 @@ export default function PricingPage() {
           </div>
         </section>
 
-        {/* ── Section 1: One-off Job Pricing ── */}
-        <section className="py-16 px-4" id="one-off">
+        {/* ── Section 1: How It Works ── */}
+        <section className="py-16 px-4" id="how-it-works">
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-10">
               <span className="border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 rounded-full px-4 py-1.5 text-sm font-medium inline-flex items-center gap-2">
-                <Briefcase className="h-4 w-4" /> One-off Jobs
+                <Briefcase className="h-4 w-4" /> For Homeowners
               </span>
-              <h2 className="text-3xl font-bold text-white mt-4 mb-2">Post a Job</h2>
+              <h2 className="text-3xl font-bold text-white mt-4 mb-2">Post your job FREE</h2>
               <p className="text-slate-400 max-w-xl mx-auto">
-                Need something done? One small fee to reach hundreds of vetted workers.
+                Post your job FREE. Get Quotes FREE. Only pay when the work is done.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-              {GIG_TIERS.map((tier) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+              {HOW_IT_WORKS.map((item) => (
                 <div
-                  key={tier.label}
-                  className={`relative rounded-2xl p-6 flex flex-col border transition-all hover:shadow-[0_0_24px_rgba(99,102,241,0.2)] ${
-                    tier.popular
-                      ? 'bg-indigo-900/40 border-indigo-500 shadow-[0_0_24px_rgba(99,102,241,0.15)]'
-                      : 'bg-slate-900/70 border-slate-700/50 hover:border-indigo-500/40'
-                  }`}
+                  key={item.step}
+                  className="relative rounded-2xl p-6 flex flex-col items-center text-center border bg-slate-900/70 border-slate-700/50 hover:border-indigo-500/40 transition-all"
                 >
-                  {tier.popular && (
-                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-indigo-600 text-white text-xs font-bold whitespace-nowrap">
-                      Most Popular
-                    </span>
-                  )}
-                  <p className="text-indigo-300 text-sm font-semibold mb-1">{tier.label}</p>
-                  <p className="text-slate-400 text-xs mb-4">{tier.value}</p>
-                  <p className="text-4xl font-bold text-white mb-1">{tier.fee}</p>
-                  <p className="text-slate-500 text-xs mb-4">one-off posting fee</p>
-                  <p className="text-slate-400 text-sm flex-1">{tier.description}</p>
-                  <Link
-                    href="/auth/register"
-                    className="mt-6 block text-center py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors"
-                  >
-                    Post This Job
-                  </Link>
+                  <div className="h-12 w-12 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-xl mb-4 flex-shrink-0">
+                    {item.step}
+                  </div>
+                  <p className="text-white font-bold text-lg mb-2">{item.title}</p>
+                  <p className="text-slate-400 text-sm">{item.desc}</p>
                 </div>
               ))}
             </div>
 
-            <div className="rounded-2xl bg-slate-900/70 border border-slate-700/50 p-6 sm:p-8">
-              <h3 className="text-white font-semibold mb-4">Every job post includes:</h3>
-              <ul className="grid sm:grid-cols-2 gap-3">
-                {GIG_INCLUDES.map((item) => (
-                  <li key={item} className="flex items-center gap-2 text-sm text-slate-300">
-                    <CheckCircle className="h-4 w-4 text-indigo-400 flex-shrink-0" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </section>
-
-        {/* ── Section 2: Posting Jobs Regularly / Subscriptions ── */}
-        <section className="py-16 px-4 bg-slate-800/30" id="subscriptions">
-          <div className="max-w-5xl mx-auto">
-            <div className="text-center mb-10">
-              <span className="border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 rounded-full px-4 py-1.5 text-sm font-medium inline-flex items-center gap-2">
-                <Building2 className="h-4 w-4" /> Posting Jobs Regularly?
-              </span>
-              <h2 className="text-3xl font-bold text-white mt-4 mb-2">For Businesses & Regular Hirers</h2>
-              <p className="text-slate-400 max-w-xl mx-auto">
-                Post as often as you need. Subscription plans are optional — they make sense once you&apos;re posting jobs regularly.
+            <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-6 text-center">
+              <p className="text-emerald-300 font-semibold text-lg mb-2">
+                Homeowners pay nothing to post. Ever.
               </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {EMPLOYER_SUBSCRIPTION_PLANS.map((plan) => (
-                <div
-                  key={plan.id}
-                  className={`relative rounded-2xl p-6 flex flex-col border transition-all ${
-                    plan.popular
-                      ? 'bg-indigo-900/40 border-indigo-500 shadow-[0_0_24px_rgba(99,102,241,0.2)]'
-                      : 'bg-slate-900/70 border-slate-700/50 hover:border-indigo-500/40'
-                  }`}
-                >
-                  {plan.popular && (
-                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-indigo-600 text-white text-xs font-bold whitespace-nowrap">
-                      Most Popular
-                    </span>
-                  )}
-                  <p className="text-indigo-300 text-sm font-semibold mb-2">{plan.name}</p>
-                  {plan.monthlyPrice === 0 ? (
-                    <p className="text-4xl font-bold text-white mb-1">Custom</p>
-                  ) : (
-                    <>
-                      <p className="text-4xl font-bold text-white mb-1">{displayPrice(plan)}</p>
-                      <p className="text-slate-500 text-xs mb-1">/month{billing === 'yearly' ? ', billed yearly' : ''}</p>
-                      {billing === 'yearly' && (
-                        <p className="text-emerald-400 text-xs font-semibold mb-3">
-                          Save ${yearlySaving(plan)}/year
-                        </p>
-                      )}
-                    </>
-                  )}
-                  <ul className="space-y-2 mt-4 flex-1">
-                    {plan.features.map((f) => (
-                      <li key={f} className="flex items-start gap-2 text-sm text-slate-300">
-                        <CheckCircle className="h-4 w-4 text-indigo-400 flex-shrink-0 mt-0.5" />
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-                  <Link
-                    href={plan.id === 'enterprise' ? '/contact' : '/auth/register'}
-                    className={`mt-6 block text-center py-2.5 px-4 rounded-xl text-sm font-semibold transition-colors ${
-                      plan.popular
-                        ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                        : 'border border-slate-600 hover:border-indigo-500/60 text-slate-300 hover:text-white'
-                    }`}
-                  >
-                    {plan.cta}
-                  </Link>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ── Section 3: Recruitment Track ── */}
-        <section className="py-16 px-4" id="recruitment">
-          <div className="max-w-5xl mx-auto">
-            <div className="text-center mb-10">
-              <span className="border border-violet-500/30 bg-violet-500/10 text-violet-300 rounded-full px-4 py-1.5 text-sm font-medium inline-flex items-center gap-2">
-                <Users className="h-4 w-4" /> Recruitment Track — Hire Someone Full-time
-              </span>
-              <h2 className="text-3xl font-bold text-white mt-4 mb-2">Recruit at a Fraction of Agency Cost</h2>
-              <p className="text-slate-400 max-w-xl mx-auto">
-                Post your role for a flat fee. Only pay a success fee if you actually hire someone.
+              <p className="text-slate-400 text-sm max-w-xl mx-auto">
+                No posting fees. No sign-up fees. No credit card required to post a job.
+                You only pay the worker when the job is done — through our secure escrow system.
               </p>
-            </div>
-
-            {/* Savings comparison */}
-            <div className="rounded-2xl bg-gradient-to-r from-violet-900/40 to-indigo-900/40 border border-violet-500/30 p-6 sm:p-8 mb-10">
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div>
-                  <p className="text-slate-400 text-xs mb-1">Traditional Recruiter</p>
-                  <p className="text-2xl font-bold text-white line-through opacity-60">$9,600</p>
-                  <p className="text-slate-500 text-xs">avg fee (NZ)</p>
-                </div>
-                <div>
-                  <p className="text-slate-400 text-xs mb-1">QuickTrade</p>
-                  <p className="text-2xl font-bold text-emerald-400">$1,279</p>
-                  <p className="text-slate-500 text-xs">full-time trade hire</p>
-                </div>
-                <div>
-                  <p className="text-slate-400 text-xs mb-1">You Save</p>
-                  <p className="text-2xl font-bold text-violet-300">$8,321</p>
-                  <p className="text-slate-500 text-xs">on average</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Recruitment table */}
-            <div className="rounded-2xl bg-slate-900/70 border border-slate-700/50 overflow-hidden mb-8">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-slate-700/50 bg-slate-800/50">
-                      <th className="text-left py-3 px-6 text-slate-400 font-medium">Role Type</th>
-                      <th className="text-center py-3 px-4 text-slate-400 font-medium">Posting Fee</th>
-                      <th className="text-right py-3 px-6 text-slate-400 font-medium">Success Fee</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-700/30">
-                    {RECRUITMENT_OPTIONS.map((row) => (
-                      <tr key={row.role} className="hover:bg-slate-800/30 transition-colors">
-                        <td className="py-4 px-6 text-slate-300 font-medium">{row.role}</td>
-                        <td className="py-4 px-4 text-center">
-                          <span className="text-slate-400">{row.postingFee}</span>
-                        </td>
-                        <td className="py-4 px-6 text-right">
-                          <span className="text-white font-bold">{row.successFee}</span>
-                          <span className="text-slate-500 text-xs ml-1">{row.successLabel}</span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Guarantee badge */}
-            <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-5 flex items-start gap-4">
-              <Shield className="h-8 w-8 text-emerald-400 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-white font-semibold mb-1">30-Day Hire Guarantee</p>
-                <p className="text-slate-400 text-sm">
-                  If your hire doesn&apos;t work out within 30 days, we&apos;ll re-list your job for free. You only pay the success fee if the hire sticks.
-                </p>
-              </div>
+              <Link
+                href="/jobs/create"
+                className="inline-flex items-center justify-center gap-2 mt-6 px-8 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition-colors"
+              >
+                <Briefcase className="h-5 w-5" />
+                Post your job FREE
+              </Link>
             </div>
           </div>
         </section>
 
-        {/* ── Section 4: Worker Tiers ── */}
+        {/* ── Section 2: Worker Tiers ── */}
         <section className="py-16 px-4 bg-slate-800/30" id="workers">
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-10">

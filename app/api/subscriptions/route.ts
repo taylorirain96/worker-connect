@@ -27,8 +27,7 @@ export async function GET(req: NextRequest) {
       status: 'active',
       billingInterval: 'month',
       amount: 0,
-      currency: 'usd',
-      currentPeriodStart: new Date(Date.now() - 15 * 86400000).toISOString(),
+      currency: 'nzd',
       currentPeriodEnd: new Date(Date.now() + 15 * 86400000).toISOString(),
       cancelAtPeriodEnd: false,
       createdAt: new Date(Date.now() - 30 * 86400000).toISOString(),
@@ -83,8 +82,8 @@ export async function POST(req: NextRequest) {
 
     const PLAN_AMOUNTS: Record<SubscriptionPlan, Record<string, number>> = {
       free: { month: 0, year: 0 },
-      pro: { month: 29, year: 26 },
-      enterprise: { month: 99, year: 89 },
+      pro: { month: 49, year: 39 },
+      enterprise: { month: 89, year: 71 },
     }
 
     const amount = PLAN_AMOUNTS[plan][billingInterval] ?? 0
@@ -97,8 +96,7 @@ export async function POST(req: NextRequest) {
         status: 'active',
         billingInterval,
         amount,
-        currency: 'usd',
-        stripeSubscriptionId: `sub_stripe_mock_${Date.now()}`,
+        currency: 'nzd',
         currentPeriodStart: new Date().toISOString(),
         currentPeriodEnd: new Date(
           Date.now() + (billingInterval === 'year' ? 365 : 30) * 86400000
