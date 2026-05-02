@@ -12,15 +12,38 @@ export interface SendEmailOptions {
   html: string
   /** Override the default FROM address. */
   from?: string
+  /** Email type used for admin email log (e.g. 'job_accepted'). */
+  type?: string
 }
 
 /**
  * Send a transactional email via Resend.
  * Silently no-ops when RESEND_API_KEY is not configured so that local dev
  * and CI environments never hard-crash on missing credentials.
+ * Also writes a log entry to Firestore `emailLogs` collection for the admin dashboard.
  */
-export async function sendEmail({ to, subject, html, from }: SendEmailOptions): Promise<void> {
+export async function sendEmail({ to, subject, html, from, type }: SendEmailOptions): Promise<void> {
   const resend = getResendClient()
-  if (!resend) return
-  await resend.emails.send({ from: from ?? FROM, to, subject, html })
+  let status = 'sent'
+  if (resend) {
+    try {
+      await resend.emails.send({ from: from ?? FROM, to, subject, html })
+    } catch {
+      status = 'failed'
+    }
+  }
+
+  // Write log to Firestore asynchronously (non-blocking)
+  try {
+    const { adminDb } = await import('@/lib/firebase-admin')
+    await adminDb.collection('emailLogs').add({
+      recipient: to,
+      type: type ?? 'transactional',
+      subject,
+      status,
+      sentAt: new Date().toISOString(),
+    })
+  } catch {
+    // Log write failures are silent — email delivery is not affected
+  }
 }
