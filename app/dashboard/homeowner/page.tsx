@@ -270,14 +270,15 @@ export default function HomeownerDashboardPage() {
           )}
 
           {/* Jobs awaiting your completion confirmation */}
-          {!loadingJobs && jobs.filter((j) => j.status === 'in_progress').length > 0 && (
-            <div className="mb-6 space-y-3">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-base font-semibold text-green-700 dark:text-green-400">✅ Jobs Awaiting Your Confirmation</span>
-              </div>
-              {jobs
-                .filter((j) => j.status === 'in_progress')
-                .map((job) => (
+          {(() => {
+            const inProgressJobs = !loadingJobs ? jobs.filter((j) => j.status === 'in_progress') : []
+            if (inProgressJobs.length === 0) return null
+            return (
+              <div className="mb-6 space-y-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-base font-semibold text-green-700 dark:text-green-400">✅ Jobs Awaiting Your Confirmation</span>
+                </div>
+                {inProgressJobs.map((job) => (
                   <Link
                     key={job.id}
                     href={`/jobs/${job.id}`}
@@ -292,8 +293,9 @@ export default function HomeownerDashboardPage() {
                     </span>
                   </Link>
                 ))}
-            </div>
-          )}
+              </div>
+            )
+          })()}
 
           {/* Notification banner */}
           {totalNewQuotes > 0 && (

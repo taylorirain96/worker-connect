@@ -425,11 +425,12 @@ export default function JobDetailPage() {
   }
 
   // 7-day auto-completion banner: job is in_progress and deadline was 7+ days ago
+  const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000
   const sevenDayBannerVisible =
     effectiveStatus === 'in_progress' &&
     isEmployer &&
     job.deadline != null &&
-    Date.now() - new Date(job.deadline).getTime() > 7 * 24 * 60 * 60 * 1000
+    Date.now() - new Date(job.deadline).getTime() > SEVEN_DAYS_MS
 
   return (
     <div className="flex flex-col min-h-screen">
