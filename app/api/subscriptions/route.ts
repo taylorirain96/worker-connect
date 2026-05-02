@@ -28,6 +28,7 @@ export async function GET(req: NextRequest) {
       billingInterval: 'month',
       amount: 0,
       currency: 'nzd',
+      currentPeriodStart: new Date(Date.now() - 15 * 86400000).toISOString(),
       currentPeriodEnd: new Date(Date.now() + 15 * 86400000).toISOString(),
       cancelAtPeriodEnd: false,
       createdAt: new Date(Date.now() - 30 * 86400000).toISOString(),
