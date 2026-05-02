@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
+import { rateLimit } from '@/lib/rateLimit'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
+  if (rateLimit(request, { max: 10, windowMs: 60_000 })) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please wait a moment before trying again.' },
+      { status: 429 }
+    )
+  }
+
   try {
     const { jobId, jobTitle, jobDescription, jobCategory, jobLocation } = await request.json()
 

@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server'
 import { createPaymentIntent } from '@/lib/stripe'
 import { BUNDLE_PRICING } from '@/types/payment'
 import type { BundleType } from '@/types/payment'
+import { rateLimit } from '@/lib/rateLimit'
 
 /**
  * POST /api/payments/create-intent
@@ -10,6 +11,13 @@ import type { BundleType } from '@/types/payment'
  * Supports bundle pricing via the optional `bundleType` parameter.
  */
 export async function POST(req: NextRequest) {
+  if (rateLimit(req, { max: 20, windowMs: 60_000 })) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please wait a moment before trying again.' },
+      { status: 429 }
+    )
+  }
+
   try {
     const body = await req.json() as {
       amount?: number

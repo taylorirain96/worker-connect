@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { SubscriptionPlan } from '@/types/payment'
+import { rateLimit } from '@/lib/rateLimit'
 
 /**
  * GET  /api/subscriptions?userId=xxx  — get user's current subscription
@@ -43,6 +44,13 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  if (rateLimit(req, { max: 20, windowMs: 60_000 })) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please wait a moment before trying again.' },
+      { status: 429 }
+    )
+  }
+
   try {
     const body = await req.json() as {
       userId?: string
