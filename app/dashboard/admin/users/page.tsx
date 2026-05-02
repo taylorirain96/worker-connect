@@ -83,6 +83,9 @@ export default function AdminUsersPage() {
 
   async function handleAction(uid: string, action: 'suspend' | 'unsuspend' | 'ban' | 'unban') {
     setActionLoading(`${uid}-${action}`)
+    const actionLabels: Record<string, string> = {
+      suspend: 'suspended', unsuspend: 'unsuspended', ban: 'banned', unban: 'unbanned',
+    }
     try {
       const res = await fetch('/api/dashboard/admin/users', {
         method: 'PUT',
@@ -90,7 +93,7 @@ export default function AdminUsersPage() {
         body: JSON.stringify({ uid, action }),
       })
       if (!res.ok) throw new Error('Action failed')
-      toast.success(`User ${action}ned`)
+      toast.success(`User ${actionLabels[action] ?? action}`)
       loadUsers()
     } catch {
       toast.error('Action failed')

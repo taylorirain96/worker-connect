@@ -62,7 +62,6 @@ function downloadCSV(payments: AdminPayment[]) {
 
 export default function AdminPaymentsPage() {
   const [payments, setPayments] = useState<AdminPayment[]>([])
-  const [allPayments, setAllPayments] = useState<AdminPayment[]>([])
   const [total, setTotal] = useState(0)
   const [totalCommission, setTotalCommission] = useState(0)
   const [page, setPage] = useState(1)
@@ -73,27 +72,23 @@ export default function AdminPaymentsPage() {
   const limit = 20
   const totalPages = Math.ceil(total / limit)
 
-  const loadPayments = useCallback(async (exportAll = false) => {
-    if (!exportAll) setLoading(true)
+  const loadPayments = useCallback(async () => {
+    setLoading(true)
     try {
       const params = new URLSearchParams({
-        page: exportAll ? '1' : String(page),
-        limit: exportAll ? '1000' : String(limit),
+        page: String(page),
+        limit: String(limit),
         ...(statusFilter !== 'all' && { status: statusFilter }),
       })
       const res = await fetch(`/api/dashboard/admin/payments?${params}`)
       const data = await res.json()
-      if (exportAll) {
-        setAllPayments(data.payments ?? [])
-      } else {
-        setPayments(data.payments ?? [])
-        setTotal(data.total ?? 0)
-        setTotalCommission(data.totalCommission ?? 0)
-      }
+      setPayments(data.payments ?? [])
+      setTotal(data.total ?? 0)
+      setTotalCommission(data.totalCommission ?? 0)
     } catch {
       toast.error('Failed to load payments')
     } finally {
-      if (!exportAll) setLoading(false)
+      setLoading(false)
     }
   }, [page, statusFilter])
 
@@ -101,9 +96,6 @@ export default function AdminPaymentsPage() {
   useEffect(() => { setPage(1) }, [statusFilter])
 
   async function handleExportCSV() {
-    await loadPayments(true)
-    // allPayments will be set after the call; we need to wait for state update
-    // Instead: fetch directly and download
     try {
       const params = new URLSearchParams({ page: '1', limit: '1000', ...(statusFilter !== 'all' && { status: statusFilter }) })
       const res = await fetch(`/api/dashboard/admin/payments?${params}`)

@@ -3,6 +3,9 @@ import { adminDb } from '@/lib/firebase-admin'
 
 export const dynamic = 'force-dynamic'
 
+// Deterministic pseudo-random generator for consistent mock data across renders.
+// Uses a simple sine-based hash — NOT for security use.
+// Spread across 5–10 minutes per email (300_000–600_000 ms offsets).
 function seeded(seed: number, scale: number): number {
   return Math.abs(Math.sin(seed * 9301 + 49297) * scale)
 }
@@ -33,7 +36,7 @@ function buildMockLogs(count: number) {
       type,
       subject: SUBJECTS[type],
       status: i % 12 === 0 ? 'failed' : 'sent',
-      sentAt: new Date(Date.now() - Math.round(seeded(i, i * 600000 + 300000))).toISOString(),
+      sentAt: new Date(Date.now() - Math.round(seeded(i, i * 600_000 + 300_000))).toISOString(),
     }
   })
 }

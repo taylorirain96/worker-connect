@@ -4,6 +4,8 @@ import { adminDb } from '@/lib/firebase-admin'
 export const dynamic = 'force-dynamic'
 
 // Simple deterministic helper (no Math.random in production code paths)
+// Deterministic pseudo-random generator for consistent mock data across renders.
+// Uses a simple sine-based hash — NOT for security use.
 function seeded(seed: number, scale: number): number {
   return Math.abs(Math.sin(seed * 9301 + 49297) * scale)
 }

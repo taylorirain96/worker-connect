@@ -28,9 +28,13 @@ export async function sendEmail({ to, subject, html, from, type }: SendEmailOpti
   if (resend) {
     try {
       await resend.emails.send({ from: from ?? FROM, to, subject, html })
-    } catch {
+    } catch (err) {
+      console.error('[sendEmail] Resend delivery failed:', err)
       status = 'failed'
     }
+  } else {
+    // API key not configured — email skipped (no-op in dev/CI)
+    status = 'skipped'
   }
 
   // Write log to Firestore asynchronously (non-blocking)
