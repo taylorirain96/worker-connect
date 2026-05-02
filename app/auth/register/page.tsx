@@ -18,7 +18,7 @@ const registerSchema = z
     email: z.string().email('Please enter a valid email'),
     password: z.string().min(8, 'Password must be at least 8 characters'),
     confirmPassword: z.string(),
-    role: z.enum(['worker', 'employer']),
+    role: z.enum(['worker', 'employer', 'homeowner']),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Passwords do not match',
@@ -30,7 +30,7 @@ type RegisterFormData = z.infer<typeof registerSchema>
 function RegisterForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const defaultRole = (searchParams.get('role') as 'worker' | 'employer') || 'worker'
+  const defaultRole = (searchParams.get('role') as 'worker' | 'employer' | 'homeowner') || 'worker'
   const refCode = searchParams.get('ref') ?? ''
   const { user, profile, loading } = useAuth()
 
@@ -57,7 +57,7 @@ function RegisterForm() {
 
   const selectedRole = watch('role')
 
-  const createUserProfile = async (uid: string, email: string | null, displayName: string, role: 'worker' | 'employer') => {
+  const createUserProfile = async (uid: string, email: string | null, displayName: string, role: 'worker' | 'employer' | 'homeowner', phone?: string) => {
     const { doc, setDoc, serverTimestamp } = await import('firebase/firestore')
     const { db } = await import('@/lib/firebase')
     if (!db) {
@@ -65,6 +65,22 @@ function RegisterForm() {
       return
     }
     const now = serverTimestamp()
+    // Homeowners get a minimal silent profile — no public shop front needed
+    if (role === 'homeowner') {
+      await setDoc(doc(db, 'users', uid), {
+        uid,
+        email,
+        displayName,
+        photoURL: null,
+        role: 'homeowner',
+        createdAt: now,
+        updatedAt: now,
+        profileComplete: true,
+        verified: false,
+        ...(phone ? { phone } : {}),
+      })
+      return
+    }
     const baseFields = {
       uid,
       email,
@@ -127,7 +143,11 @@ function RegisterForm() {
       }).catch(() => {}) // silently ignore if email fails
       trackEvent('user_registered', { method: 'email', role: data.role })
       toast.success('Account created successfully!')
-      router.push(data.role === 'employer' ? '/dashboard/employer' : '/dashboard/worker')
+      if (data.role === 'homeowner') {
+        router.push('/dashboard/homeowner')
+      } else {
+        router.push(data.role === 'employer' ? '/dashboard/employer' : '/dashboard/worker')
+      }
     } catch (error: unknown) {
       const err = error as { code?: string }
       if (err.code === 'auth/email-already-in-use') {
@@ -166,7 +186,11 @@ function RegisterForm() {
       }).catch(() => {}) // silently ignore if email fails
       trackEvent('user_registered', { method: 'google', role: selectedRole })
       toast.success('Account created successfully!')
-      router.push(selectedRole === 'employer' ? '/dashboard/employer' : '/dashboard/worker')
+      if (selectedRole === 'homeowner') {
+        router.push('/dashboard/homeowner')
+      } else {
+        router.push(selectedRole === 'employer' ? '/dashboard/employer' : '/dashboard/worker')
+      }
     } catch (error: unknown) {
       const err = error as { code?: string }
       console.error('Google sign-up error:', error)
@@ -215,24 +239,29 @@ function RegisterForm() {
             <label className="block text-sm font-medium text-gray-300 mb-2">
               I want to...
             </label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3">
               {[
-                { value: 'worker', label: 'Find Work', emoji: '👷', desc: 'I am a skilled worker' },
-                { value: 'employer', label: 'Hire Workers', emoji: '🏢', desc: 'I need work done' },
+                { value: 'homeowner', label: 'Get work done', emoji: '🏠', desc: 'Post a job and get quotes from local tradies' },
+                { value: 'worker', label: 'Find work', emoji: '👷', desc: 'I\'m a tradie or skilled worker' },
+                { value: 'employer', label: 'Hire staff', emoji: '🏢', desc: 'I\'m a business looking to hire' },
               ].map(({ value, label, emoji, desc }) => (
                 <button
                   key={value}
                   type="button"
-                  onClick={() => setValue('role', value as 'worker' | 'employer')}
+                  onClick={() => setValue('role', value as 'worker' | 'employer' | 'homeowner')}
                   className={`p-4 rounded-xl border-2 text-left transition-all ${
                     selectedRole === value
                       ? 'border-indigo-500 bg-indigo-500/10'
                       : 'border-gray-700 hover:border-gray-600'
                   }`}
                 >
-                  <div className="text-2xl mb-1">{emoji}</div>
-                  <div className="font-semibold text-sm text-white">{label}</div>
-                  <div className="text-xs text-gray-400 mt-0.5">{desc}</div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">{emoji}</span>
+                    <div>
+                      <div className="font-semibold text-sm text-white">{label}</div>
+                      <div className="text-xs text-gray-400 mt-0.5">{desc}</div>
+                    </div>
+                  </div>
                 </button>
               ))}
             </div>
