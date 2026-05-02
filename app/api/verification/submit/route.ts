@@ -33,8 +33,6 @@ export async function POST(request: NextRequest) {
       frontUrl,
       selfieUrl,
       submittedAt: FieldValue.serverTimestamp(),
-      rejectionReason: null,
-      reviewedAt: null,
     }
     if (backUrl) doc.backUrl = backUrl
 

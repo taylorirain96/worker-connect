@@ -169,6 +169,7 @@ export default function AdminVerificationPage() {
           <button
             key={key}
             onClick={() => setFilter(key as typeof filter)}
+            aria-pressed={filter === key}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${color} ${
               filter === key ? 'ring-2 ring-white/30' : ''
             } text-white`}
