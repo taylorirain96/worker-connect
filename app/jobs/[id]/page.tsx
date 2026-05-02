@@ -1,6 +1,6 @@
 'use client'
-import { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { useAuth } from '@/components/providers/AuthProvider'
@@ -93,9 +93,10 @@ const RATING_LABELS: Record<number, string> = {
   1: 'Poor',
 }
 
-export default function JobDetailPage() {
+function JobDetailInner() {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { user, profile } = useAuth()
   const [applying, setApplying] = useState(false)
   const [showApplyForm, setShowApplyForm] = useState(false)
@@ -135,6 +136,18 @@ export default function JobDetailPage() {
   // Effective job status — updated optimistically after Mark as Complete
   const effectiveStatus = localStatus ?? job.status
   const effectiveCompletedAt = localCompletedAt ?? job.completedAt
+
+  // Show "Thanks for your review!" toast when returning from the dedicated review page
+  useEffect(() => {
+    if (searchParams.get('reviewed') === 'true') {
+      toast.success('Thanks for your review! 🌟')
+      setAlreadyReviewed(true)
+      const url = new URL(window.location.href)
+      url.searchParams.delete('reviewed')
+      window.history.replaceState({}, '', url.toString())
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     if (!isEmployer) return
@@ -636,70 +649,20 @@ export default function JobDetailPage() {
                       <CheckCircle className="h-4 w-4" />
                       You&apos;ve reviewed this job ✓
                     </div>
-                  ) : !showReviewForm ? (
+                  ) : (
                     <div>
                       <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                        How did the worker do? Your feedback helps build trust in the community.
+                        How did the tradie do? Your feedback helps build trust in the community.
                       </p>
-                      <Button
-                        size="sm"
-                        onClick={() => setShowReviewForm(true)}
-                        className="flex items-center gap-2"
-                      >
-                        <MessageSquare className="h-4 w-4" />
-                        Write a Review
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Star Rating
-                        </label>
-                        <RatingStars
-                          rating={reviewRating}
-                          interactive
-                          size="lg"
-                          onRate={setReviewRating}
-                        />
-                        {reviewRating > 0 && (
-                          <p className="mt-1 text-xs text-gray-500">
-                            {RATING_LABELS[reviewRating] ?? ''}
-                          </p>
-                        )}
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Your Review
-                          <span className="text-gray-400 font-normal"> (10–500 characters)</span>
-                        </label>
-                        <textarea
-                          rows={4}
-                          value={reviewComment}
-                          onChange={(e) => setReviewComment(e.target.value)}
-                          placeholder="Describe your experience working with this worker..."
-                          maxLength={500}
-                          className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                        />
-                        <p className="text-xs text-gray-400 mt-1 text-right">{reviewComment.length}/500</p>
-                      </div>
-                      <div className="flex gap-3">
+                      <Link href={`/jobs/${params.id as string}/review`}>
                         <Button
-                          variant="outline"
-                          onClick={handleCancelReview}
-                          className="flex-1"
+                          size="sm"
+                          className="flex items-center gap-2"
                         >
-                          Cancel
+                          <MessageSquare className="h-4 w-4" />
+                          Write a Review
                         </Button>
-                        <Button
-                          onClick={handleSubmitReview}
-                          loading={submittingReview}
-                          className="flex-1"
-                        >
-                          <Send className="h-4 w-4" />
-                          Submit Review
-                        </Button>
-                      </div>
+                      </Link>
                     </div>
                   )}
                 </div>
@@ -727,14 +690,15 @@ export default function JobDetailPage() {
                           <p className="text-sm text-green-700 dark:text-green-400 mb-2">
                             How did everything go? Leave a review to help build trust in the community.
                           </p>
-                          <Button
-                            size="sm"
-                            onClick={() => setShowReviewForm(true)}
-                            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white border-0"
-                          >
-                            <Star className="h-4 w-4" />
-                            Leave a Review
-                          </Button>
+                          <Link href={`/jobs/${params.id as string}/review`}>
+                            <Button
+                              size="sm"
+                              className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white border-0"
+                            >
+                              <Star className="h-4 w-4" />
+                              Leave a Review
+                            </Button>
+                          </Link>
                         </div>
                       )}
                     </div>
@@ -896,5 +860,13 @@ export default function JobDetailPage() {
       </main>
       <Footer />
     </div>
+  )
+}
+
+export default function JobDetailPage() {
+  return (
+    <Suspense>
+      <JobDetailInner />
+    </Suspense>
   )
 }

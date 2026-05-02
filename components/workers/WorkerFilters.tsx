@@ -12,6 +12,7 @@ interface WorkerFiltersProps {
     maxRate: string
     minRating: string
     availability: string
+    sortBy: string
   }
   onChange: (key: string, value: string) => void
   onReset: () => void
@@ -134,6 +135,20 @@ export default function WorkerFilters({ filters, onChange, onReset }: WorkerFilt
           <option value="available">Available Now</option>
           <option value="busy">Busy</option>
           <option value="unavailable">Unavailable</option>
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wide">
+          Sort By
+        </label>
+        <select
+          value={filters.sortBy}
+          onChange={(e) => onChange('sortBy', e.target.value)}
+          className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+        >
+          <option value="">Best Match</option>
+          <option value="highest_rated">Highest Rated ⭐</option>
         </select>
       </div>
 
