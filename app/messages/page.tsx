@@ -1,4 +1,5 @@
 'use client'
+
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -8,22 +9,22 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import { MessageSquare, Loader2 } from 'lucide-react'
 import { getInitials } from '@/lib/utils'
 import { formatDistanceToNow } from 'date-fns'
-import { onConversations } from '@/lib/messaging'
-import type { ChatConversation } from '@/types'
+import { subscribeToConversations } from '@/lib/services/messagingService'
+import type { Conversation } from '@/types'
 
-function getOtherParticipantId(conv: ChatConversation, uid: string): string {
-  return Object.keys(conv.participants).find((id) => id !== uid) ?? ''
-}
-
-function formatTs(ts?: number): string {
-  if (!ts) return ''
-  return formatDistanceToNow(new Date(ts), { addSuffix: true })
+function formatTs(iso?: string): string {
+  if (!iso) return ''
+  try {
+    return formatDistanceToNow(new Date(iso), { addSuffix: true })
+  } catch {
+    return ''
+  }
 }
 
 export default function MessagesPage() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
-  const [conversations, setConversations] = useState<ChatConversation[]>([])
+  const [conversations, setConversations] = useState<Conversation[]>([])
   const [loadingConvs, setLoadingConvs] = useState(true)
 
   useEffect(() => {
@@ -35,7 +36,7 @@ export default function MessagesPage() {
   useEffect(() => {
     if (!user) return
     setLoadingConvs(true)
-    const unsub = onConversations(user.uid, (convs) => {
+    const unsub = subscribeToConversations(user.uid, (convs) => {
       setConversations(convs)
       setLoadingConvs(false)
     })
@@ -86,21 +87,22 @@ export default function MessagesPage() {
                 No messages yet
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                No messages yet. Apply to a job to start chatting!
+                No messages yet. Apply to a job or contact a tradie to start chatting!
               </p>
             </div>
           ) : (
             <div className="space-y-2">
               {conversations.map((conv) => {
-                const otherId = getOtherParticipantId(conv, user.uid)
+                const otherId = conv.participants.find((id) => id !== user.uid) ?? ''
                 const otherName = conv.participantNames?.[otherId] || 'Unknown User'
                 const otherAvatar = conv.participantAvatars?.[otherId] ?? null
                 const unread = conv.unreadCount?.[user.uid] ?? 0
+                const chatHref = conv.jobId ? `/messages/${conv.jobId}` : `/messages/${conv.id}`
 
                 return (
                   <Link
                     key={conv.id}
-                    href={`/messages/${conv.id}`}
+                    href={chatHref}
                     className="flex items-center gap-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                   >
                     {/* Avatar */}
@@ -127,7 +129,13 @@ export default function MessagesPage() {
                     {/* Details */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
-                        <span className={`font-semibold text-sm truncate ${unread > 0 ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>
+                        <span
+                          className={`font-semibold text-sm truncate ${
+                            unread > 0
+                              ? 'text-gray-900 dark:text-white'
+                              : 'text-gray-700 dark:text-gray-300'
+                          }`}
+                        >
                           {otherName}
                         </span>
                         {conv.lastMessageAt && (
@@ -142,7 +150,13 @@ export default function MessagesPage() {
                         </p>
                       )}
                       {conv.lastMessage && (
-                        <p className={`text-xs truncate mt-0.5 ${unread > 0 ? 'text-gray-600 dark:text-gray-400 font-medium' : 'text-gray-400'}`}>
+                        <p
+                          className={`text-xs truncate mt-0.5 ${
+                            unread > 0
+                              ? 'text-gray-600 dark:text-gray-400 font-medium'
+                              : 'text-gray-400'
+                          }`}
+                        >
                           {conv.lastMessage}
                         </p>
                       )}

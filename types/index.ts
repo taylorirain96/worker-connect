@@ -139,6 +139,7 @@ export interface Message {
   senderAvatar?: string
   content: string
   type: 'text' | 'image' | 'file'
+  imageUrls?: string[]
   read: boolean
   createdAt: string
 }
