@@ -1,12 +1,14 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import JobCard from '@/components/jobs/JobCard'
 import JobFilters from '@/components/jobs/JobFilters'
+import JobsForYouFeed from '@/components/jobs/JobsForYouFeed'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import Link from 'next/link'
-import { Plus, Briefcase } from 'lucide-react'
+import { Plus, Briefcase, Sparkles } from 'lucide-react'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { getJobs } from '@/lib/services/jobService'
 import type { Job } from '@/types'
@@ -116,10 +118,14 @@ const MOCK_JOBS: Job[] = [
   },
 ]
 
-export default function JobsPage() {
+function JobsPageContent() {
   const { profile } = useAuth()
+  const searchParams = useSearchParams()
   const [jobs, setJobs] = useState<Job[]>([])
   const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState<'all' | 'for-you'>(
+    searchParams.get('tab') === 'for-you' ? 'for-you' : 'all'
+  )
   const [filters, setFilters] = useState({
     search: '',
     category: '',
@@ -197,7 +203,7 @@ export default function JobsPage() {
                   Browse Jobs
                 </h1>
                 <p className="text-gray-500 dark:text-gray-400 mt-1">
-                  {filteredJobs.length} job{filteredJobs.length !== 1 ? 's' : ''} available
+                  {activeTab === 'all' ? `${filteredJobs.length} job${filteredJobs.length !== 1 ? 's' : ''} available` : 'Jobs matched to your skills'}
                 </p>
               </div>
               {profile?.role === 'employer' && (
@@ -209,48 +215,94 @@ export default function JobsPage() {
                 </Link>
               )}
             </div>
+
+            {/* Tabs — only shown to workers */}
+            {profile?.role === 'worker' && (
+              <div className="flex gap-1 mt-5 border-b border-gray-200 dark:border-gray-700 -mb-8 pb-0">
+                <button
+                  onClick={() => setActiveTab('all')}
+                  className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                    activeTab === 'all'
+                      ? 'border-primary-600 text-primary-600'
+                      : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                  }`}
+                >
+                  All Jobs
+                </button>
+                <button
+                  onClick={() => setActiveTab('for-you')}
+                  className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                    activeTab === 'for-you'
+                      ? 'border-primary-600 text-primary-600'
+                      : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                  }`}
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  For You
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-col lg:flex-row gap-6">
-            {/* Filters Sidebar */}
-            <div className="lg:w-72 flex-shrink-0">
-              <div className="sticky top-20">
-                <JobFilters
-                  filters={filters}
-                  onChange={handleFilterChange}
-                  onReset={handleFilterReset}
-                />
+          {activeTab === 'for-you' && profile?.role === 'worker' ? (
+            <JobsForYouFeed />
+          ) : (
+            <div className="flex flex-col lg:flex-row gap-6">
+              {/* Filters Sidebar */}
+              <div className="lg:w-72 flex-shrink-0">
+                <div className="sticky top-20">
+                  <JobFilters
+                    filters={filters}
+                    onChange={handleFilterChange}
+                    onReset={handleFilterReset}
+                  />
+                </div>
+              </div>
+
+              {/* Job Listings */}
+              <div className="flex-1">
+                {filteredJobs.length === 0 ? (
+                  <div className="text-center py-16">
+                    <Briefcase className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No jobs found</h3>
+                    <p className="text-gray-500 dark:text-gray-400">
+                      Try adjusting your filters or{' '}
+                      <button onClick={handleFilterReset} className="text-primary-600 hover:underline">
+                        clear all filters
+                      </button>
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid gap-4">
+                    {filteredJobs.map((job) => (
+                      <JobCard key={job.id} job={job} />
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
-
-            {/* Job Listings */}
-            <div className="flex-1">
-              {filteredJobs.length === 0 ? (
-                <div className="text-center py-16">
-                  <Briefcase className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No jobs found</h3>
-                  <p className="text-gray-500 dark:text-gray-400">
-                    Try adjusting your filters or{' '}
-                    <button onClick={handleFilterReset} className="text-primary-600 hover:underline">
-                      clear all filters
-                    </button>
-                  </p>
-                </div>
-              ) : (
-                <div className="grid gap-4">
-                  {filteredJobs.map((job) => (
-                    <JobCard key={job.id} job={job} />
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+          )}
         </div>
       </main>
       <Footer />
     </div>
+  )
+}
+
+export default function JobsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex flex-col min-h-screen">
+        <Navbar />
+        <div className="flex-1 flex items-center justify-center">
+          <LoadingSpinner size="lg" />
+        </div>
+      </div>
+    }>
+      <JobsPageContent />
+    </Suspense>
   )
 }
 
