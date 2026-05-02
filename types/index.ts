@@ -49,7 +49,7 @@ export interface Job {
   budget: number
   budgetType: 'fixed' | 'hourly'
   urgency: 'low' | 'medium' | 'high' | 'emergency'
-  status: 'open' | 'in_progress' | 'completed' | 'cancelled'
+  status: 'open' | 'in_progress' | 'completed' | 'cancelled' | 'disputed'
   skills: string[]
   applicantsCount: number
   completionCount?: number
