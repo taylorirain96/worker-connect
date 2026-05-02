@@ -37,6 +37,8 @@ export interface UserProfile {
   companyName?: string
   workerSubscriptionTier?: 'free' | 'pro' | 'elite'
   employerSubscriptionTier?: 'free' | 'pro' | 'business' | 'enterprise'
+  /** Array of worker UIDs this homeowner has favourited */
+  favourites?: string[]
   /** Referral code unique to this user, stored in Firestore */
   referralCode?: string
   /** UID of the user who referred this user */
@@ -47,6 +49,22 @@ export interface UserProfile {
   credit?: number
   /** Legacy referral credits field (kept for backwards compatibility) */
   referralCredits?: number
+}
+
+export interface DirectRequest {
+  id: string
+  homeownerId: string
+  homeownerName: string
+  homeownerEmail: string
+  workerId: string
+  workerName: string
+  workerEmail: string
+  description: string
+  date: string
+  address: string
+  status: 'pending' | 'accepted' | 'declined'
+  createdAt: string
+  updatedAt: string
 }
 
 export interface Job {
@@ -131,6 +149,7 @@ export interface Message {
   senderAvatar?: string
   content: string
   type: 'text' | 'image' | 'file'
+  imageUrls?: string[]
   read: boolean
   createdAt: string
 }

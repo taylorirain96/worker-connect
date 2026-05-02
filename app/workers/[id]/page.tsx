@@ -16,6 +16,7 @@ import { getReviewAggregates } from '@/lib/reviews/firebase'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { getOrCreateConversation } from '@/lib/messaging'
 import toast from 'react-hot-toast'
+import FavouriteButton from '@/components/workers/FavouriteButton'
 
 export default function WorkerProfilePage({ params }: { params: { id: string } }) {
   const router = useRouter()
@@ -361,10 +362,20 @@ export default function WorkerProfilePage({ params }: { params: { id: string } }
                     </Button>
                   </Link>
                 )}
-                <Button variant="outline" className="w-full">
+                <Button variant="outline" className="w-full mb-3">
                   <Calendar className="h-4 w-4" />
                   Request Quote
                 </Button>
+                {user && user.uid !== worker.uid && currentProfile?.role === 'homeowner' && (
+                  <div className="flex items-center justify-center pt-1">
+                    <FavouriteButton
+                      workerId={worker.uid}
+                      initialFavourited={currentProfile?.favourites?.includes(worker.uid) ?? false}
+                      size="md"
+                    />
+                    <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">Save to favourites</span>
+                  </div>
+                )}
               </div>
 
               <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">

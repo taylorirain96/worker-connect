@@ -11,6 +11,7 @@ import { SITE_URL } from '@/lib/seo/config'
 
 const SupportChatbot = dynamic(() => import('@/components/chat/SupportChatbot'), { ssr: false })
 const PWAInstallPrompt = dynamic(() => import('@/components/PWAInstallPrompt'), { ssr: false })
+const MobileTabBar = dynamic(() => import('@/components/MobileTabBar'), { ssr: false })
 const PushPermissionPrompt = dynamic(
   () => import('@/components/notifications/PushPermissionPrompt'),
   { ssr: false }
@@ -56,10 +57,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en-NZ" suppressHydrationWarning>
       <head>
         <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#6366f1" />
+        <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="WorkerConnect" />
-        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+        <link rel="apple-touch-icon" href="/icons/icon-152.png" />
+        <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152.png" />
+        <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png" />
         <link rel="preconnect" href="https://firestore.googleapis.com" />
         <link rel="preconnect" href="https://identitytoolkit.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -117,6 +122,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <Toaster position="top-right" />
                 <SupportChatbot />
                 <PWAInstallPrompt />
+                <MobileTabBar />
                 <PushPermissionPrompt />
               </NotificationProvider>
             </RoleProvider>

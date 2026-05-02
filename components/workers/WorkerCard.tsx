@@ -10,12 +10,17 @@ import Badge from '@/components/ui/Badge'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { getOrCreateConversation } from '@/lib/messaging'
 import toast from 'react-hot-toast'
+import FavouriteButton from '@/components/workers/FavouriteButton'
 
 interface WorkerCardProps {
   worker: UserProfile
+  /** Whether this worker is already in the homeowner's favourites list */
+  isFavourited?: boolean
+  /** Called when the favourite state changes */
+  onFavouriteToggle?: (workerId: string, favourited: boolean) => void
 }
 
-export default function WorkerCard({ worker }: WorkerCardProps) {
+export default function WorkerCard({ worker, isFavourited = false, onFavouriteToggle }: WorkerCardProps) {
   const { user, profile } = useAuth()
   const router = useRouter()
   const [messaging, setMessaging] = useState(false)
@@ -116,6 +121,14 @@ export default function WorkerCard({ worker }: WorkerCardProps) {
             >
               {worker.availability === 'available' ? 'Available' : worker.availability === 'busy' ? 'Busy' : 'Unavailable'}
             </Badge>
+            <div className="mt-2 flex justify-end">
+              <FavouriteButton
+                workerId={worker.uid}
+                initialFavourited={isFavourited}
+                onToggle={(fav) => onFavouriteToggle?.(worker.uid, fav)}
+                size="sm"
+              />
+            </div>
           </div>
         </div>
 
