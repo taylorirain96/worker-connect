@@ -23,6 +23,8 @@ const URGENCY_OPTIONS = [
   { id: 'flexible', label: 'Flexible' },
 ]
 
+const MAX_TITLE_LENGTH = 80
+
 export default function HomeownerPostPage() {
   const router = useRouter()
   const { user } = useAuth()
@@ -82,10 +84,25 @@ export default function HomeownerPostPage() {
         // Use a UUID-based synthetic email to avoid collisions with phone-based contacts
         const randomId = crypto.randomUUID().replace(/-/g, '').slice(0, 12)
         const loginEmail = email ?? `guest-${randomId}@workerconnect.nz`
-        // Generate a cryptographically secure temporary password
-        const randomBytes = new Uint8Array(16)
-        crypto.getRandomValues(randomBytes)
-        const tempPassword = Array.from(randomBytes, (b) => b.toString(16).padStart(2, '0')).join('') + 'Aa1!'
+        // Generate a cryptographically secure temporary password with required character types
+        // distributed randomly throughout (not appended as a fixed suffix).
+        const pwBytes = new Uint8Array(20)
+        crypto.getRandomValues(pwBytes)
+        const lowerChars = 'abcdefghijklmnopqrstuvwxyz'
+        const upperChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        const digitChars = '0123456789'
+        const specialChars = '!@#$%^&*'
+        const allChars = lowerChars + upperChars + digitChars + specialChars
+        // Build base password from random bytes
+        const pwArr = Array.from(pwBytes.slice(0, 16), (b) => allChars[b % allChars.length])
+        // Ensure at least one of each required type, replacing positions at random indices
+        const reqBytes = new Uint8Array(4)
+        crypto.getRandomValues(reqBytes)
+        pwArr[reqBytes[0] % 16] = upperChars[reqBytes[0] % upperChars.length]
+        pwArr[reqBytes[1] % 16] = lowerChars[reqBytes[1] % lowerChars.length]
+        pwArr[reqBytes[2] % 16] = digitChars[reqBytes[2] % digitChars.length]
+        pwArr[reqBytes[3] % 16] = specialChars[reqBytes[3] % specialChars.length]
+        const tempPassword = pwArr.join('')
 
         const { createUserWithEmailAndPassword, updateProfile } = await import('firebase/auth')
         const { auth } = await import('@/lib/firebase')
@@ -113,8 +130,6 @@ export default function HomeownerPostPage() {
           verified: false,
         })
       }
-
-      const MAX_TITLE_LENGTH = 80
 
       // Save the job to Firestore
       await addDoc(collection(db, 'jobs'), {
