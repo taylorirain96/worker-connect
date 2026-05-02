@@ -11,7 +11,7 @@ import RatingStars from '@/components/reviews/RatingStars'
 import Link from 'next/link'
 import {
   Briefcase, DollarSign, Star, Clock, TrendingUp,
-  CheckCircle, AlertCircle, Search, Settings, FileText, MessageSquare, Send, Sparkles
+  CheckCircle, AlertCircle, Search, Settings, FileText, MessageSquare, Send, Sparkles, ShieldCheck
 } from 'lucide-react'
 import { formatCurrency, STATUS_LABELS, formatRelativeDate } from '@/lib/utils'
 import { collection, query, where, orderBy, getDocs, type DocumentData } from 'firebase/firestore'
@@ -612,6 +612,36 @@ export default function WorkerDashboardPage() {
                     {applications.filter((a) => a.status === 'pending').length > 0 && (
                       <span className="ml-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-medium px-1.5 py-0.5 rounded-full">
                         {applications.filter((a) => a.status === 'pending').length} pending
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs text-primary-600">→</span>
+                </div>
+              </Link>
+
+              {/* Verify Identity link */}
+              <Link href="/dashboard/worker/verify">
+                <div className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
+                  <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <ShieldCheck className="h-4 w-4 text-green-600" />
+                    {profile?.verified ? (
+                      <span className="flex items-center gap-1">
+                        Identity Verified
+                        <span className="text-green-600 font-semibold text-xs">✓</span>
+                      </span>
+                    ) : profile?.verificationStatus === 'pending' ? (
+                      <span className="flex items-center gap-1">
+                        Verification Pending
+                        <span className="ml-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-xs font-medium px-1.5 py-0.5 rounded-full">
+                          Review in progress
+                        </span>
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1">
+                        Verify Your Identity
+                        <span className="ml-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-medium px-1.5 py-0.5 rounded-full">
+                          Get Verified
+                        </span>
                       </span>
                     )}
                   </div>
