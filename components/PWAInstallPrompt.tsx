@@ -101,7 +101,7 @@ export default function PWAInstallPrompt() {
           </div>
           <p className="text-gray-300 leading-snug">
             Tap{' '}
-            <span className="inline-block font-semibold text-white">
+            <span className="inline-block font-semibold text-white" aria-label="the Share button">
               Share ↑
             </span>{' '}
             then{' '}

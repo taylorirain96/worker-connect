@@ -28,7 +28,8 @@ export default function MobileTabBar() {
   return (
     <nav
       aria-label="Mobile navigation"
-      className="fixed bottom-0 inset-x-0 z-40 md:hidden bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 safe-area-inset-bottom"
+      className="fixed bottom-0 inset-x-0 z-40 md:hidden bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <ul className="flex items-center justify-around h-16 px-1">
         {tabs.map(({ label, href, icon: Icon }) => {

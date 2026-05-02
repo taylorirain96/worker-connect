@@ -41,13 +41,14 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return
   const url = new URL(event.request.url)
 
-  // Skip API routes, auth calls, and Firebase endpoints
+  // Skip API routes, auth calls, and Firebase endpoints — let the browser handle them
   if (
     url.pathname.startsWith('/api/') ||
     url.hostname.includes('firebase') ||
     url.hostname.includes('googleapis') ||
     url.hostname.includes('stripe')
   ) {
+    event.respondWith(fetch(event.request))
     return
   }
 
