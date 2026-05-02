@@ -26,6 +26,9 @@ import QuoteList from '@/components/quotes/QuoteList'
 import QuoteComparison from '@/components/quotes/QuoteComparison'
 import { trackEvent } from '@/lib/analytics'
 
+/** 7 days in milliseconds — used for the auto-completion banner threshold */
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000
+
 const MOCK_JOBS: Record<string, Job & { employerRating?: number; employerJobs?: number }> = {
   '1': {
     id: '1',
@@ -425,7 +428,6 @@ export default function JobDetailPage() {
   }
 
   // 7-day auto-completion banner: job is in_progress and deadline was 7+ days ago
-  const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000
   const sevenDayBannerVisible =
     effectiveStatus === 'in_progress' &&
     isEmployer &&

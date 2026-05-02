@@ -220,7 +220,7 @@ export async function POST(
     })
 
     // ── Send emails (non-blocking) ───────────────────────────────────────────
-    void (async () => {
+    ;(async () => {
       try {
         // Look up worker + employer email addresses
         const [workerSnap, employerSnap] = await Promise.all([
@@ -257,7 +257,9 @@ export async function POST(
       } catch (emailErr) {
         console.error('Failed to send job completion emails:', emailErr)
       }
-    })()
+    })().catch((err) => {
+      console.error('Unhandled error in job completion email task:', err)
+    })
 
     return NextResponse.json({
       success: true,

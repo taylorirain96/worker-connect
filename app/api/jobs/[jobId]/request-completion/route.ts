@@ -16,6 +16,9 @@ import { sendNotification } from '@/lib/notificationService'
 import { sendPaymentReleaseRequestEmail } from '@/lib/email/transactional'
 import { rateLimit } from '@/lib/rateLimit'
 
+/** 48 hours in milliseconds — how long before admin is notified of an unresponded completion request */
+const FORTY_EIGHT_HOURS_MS = 48 * 60 * 60 * 1000
+
 export const dynamic = 'force-dynamic'
 
 export async function POST(
@@ -74,7 +77,6 @@ export async function POST(
 
     const requestedAt = new Date().toISOString()
     // Admin is notified if homeowner doesn't respond within 48 hours
-    const FORTY_EIGHT_HOURS_MS = 48 * 60 * 60 * 1000
     const adminNotifyAfter = new Date(Date.now() + FORTY_EIGHT_HOURS_MS).toISOString()
 
     // ── Record the request on the job document ────────────────────────────────
