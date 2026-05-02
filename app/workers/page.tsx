@@ -187,10 +187,10 @@ export default function WorkersPage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
               <Users className="h-6 w-6 text-primary-600" />
-              Find Workers
+              Find a Tradie
             </h1>
             <p className="text-gray-500 dark:text-gray-400 mt-1">
-              {filteredWorkers.length} skilled worker{filteredWorkers.length !== 1 ? 's' : ''} available
+              {filteredWorkers.length} skilled tradie{filteredWorkers.length !== 1 ? 's' : ''} available — browse and message any tradie directly
             </p>
           </div>
         </div>

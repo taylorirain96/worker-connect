@@ -71,6 +71,11 @@ export default function Navbar() {
                 </Link>
               </>
             )}
+            {user && !isEmployer && (
+              <Link href="/workers" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
+                Find a Tradie
+              </Link>
+            )}
             <Link href="/services" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
               Services
             </Link>
@@ -261,6 +266,11 @@ export default function Navbar() {
                     Listings
                   </Link>
                 </>
+              )}
+              {user && !isEmployer && (
+                <Link href="/workers" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 px-3 py-2 rounded-lg transition-colors" onClick={() => setMenuOpen(false)}>
+                  Find a Tradie
+                </Link>
               )}
               <Link href="/services" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 px-3 py-2 rounded-lg transition-colors" onClick={() => setMenuOpen(false)}>
                 Services

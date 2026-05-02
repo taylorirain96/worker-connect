@@ -13,13 +13,17 @@ import Link from 'next/link'
 import { getUserProfile } from '@/lib/users/getProfile'
 import ReviewSummary from '@/components/reviews/ReviewSummary'
 import { getReviewAggregates } from '@/lib/reviews/firebase'
+import { useAuth } from '@/components/providers/AuthProvider'
+import { getOrCreateConversation } from '@/lib/messaging'
 
 export default function WorkerProfilePage({ params }: { params: { id: string } }) {
   const router = useRouter()
+  const { user, profile: currentProfile } = useAuth()
   const [worker, setWorker] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
   const [reviewAgg, setReviewAgg] = useState<ReviewAggregates | null>(null)
+  const [messaging, setMessaging] = useState(false)
 
   useEffect(() => {
     async function fetchWorker() {
@@ -220,9 +224,31 @@ export default function WorkerProfilePage({ params }: { params: { id: string } }
             {/* Sidebar */}
             <div className="space-y-4">
               <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-                <Button className="w-full mb-3" onClick={() => router.push('/messages')}>
+                <Button
+                  className="w-full mb-3"
+                  disabled={messaging || user?.uid === worker.uid}
+                  onClick={async () => {
+                    if (!user) { router.push('/auth/login?redirect=/workers/' + worker.uid); return }
+                    setMessaging(true)
+                    try {
+                      const convId = await getOrCreateConversation(
+                        user.uid,
+                        currentProfile?.displayName || user.displayName || user.email || 'User',
+                        currentProfile?.photoURL ?? user.photoURL ?? null,
+                        worker.uid,
+                        worker.displayName || 'Worker',
+                        worker.photoURL ?? null,
+                      )
+                      router.push(`/messages/${convId}`)
+                    } catch {
+                      router.push('/messages')
+                    } finally {
+                      setMessaging(false)
+                    }
+                  }}
+                >
                   <MessageSquare className="h-4 w-4" />
-                  Send Message
+                  {messaging ? 'Opening…' : 'Send Message'}
                 </Button>
                 <Button variant="outline" className="w-full">
                   <Calendar className="h-4 w-4" />

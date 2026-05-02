@@ -1,18 +1,56 @@
+'use client'
 import Link from 'next/link'
 import Image from 'next/image'
-import { MapPin, Star, CheckCircle, Briefcase, DollarSign } from 'lucide-react'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { MapPin, Star, CheckCircle, Briefcase, DollarSign, MessageSquare } from 'lucide-react'
 import type { UserProfile } from '@/types'
 import { getInitials } from '@/lib/utils'
 import Badge from '@/components/ui/Badge'
+import { useAuth } from '@/components/providers/AuthProvider'
+import { getOrCreateConversation } from '@/lib/messaging'
 
 interface WorkerCardProps {
   worker: UserProfile
 }
 
 export default function WorkerCard({ worker }: WorkerCardProps) {
+  const { user, profile } = useAuth()
+  const router = useRouter()
+  const [messaging, setMessaging] = useState(false)
+
+  const handleMessage = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    if (!user) {
+      router.push(`/auth/login?redirect=/workers`)
+      return
+    }
+
+    if (user.uid === worker.uid) return
+
+    setMessaging(true)
+    try {
+      const convId = await getOrCreateConversation(
+        user.uid,
+        profile?.displayName || user.displayName || user.email || 'User',
+        profile?.photoURL ?? user.photoURL ?? null,
+        worker.uid,
+        worker.displayName || 'Worker',
+        worker.photoURL ?? null,
+      )
+      router.push(`/messages/${convId}`)
+    } catch {
+      router.push('/messages')
+    } finally {
+      setMessaging(false)
+    }
+  }
+
   return (
-    <Link href={`/workers/${worker.uid}`}>
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 hover:shadow-md hover:border-primary-300 dark:hover:border-primary-700 transition-all cursor-pointer group">
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 hover:shadow-md hover:border-primary-300 dark:hover:border-primary-700 transition-all group flex flex-col">
+      <Link href={`/workers/${worker.uid}`} className="flex-1">
         <div className="flex items-start gap-4 mb-4">
           <div className="relative flex-shrink-0">
             {worker.photoURL ? (
@@ -84,7 +122,7 @@ export default function WorkerCard({ worker }: WorkerCardProps) {
         )}
 
         {worker.skills && worker.skills.length > 0 && (
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1 mb-3">
             {worker.skills.slice(0, 4).map((skill) => (
               <span key={skill} className="text-xs bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400 px-2 py-0.5 rounded-full">
                 {skill}
@@ -95,7 +133,25 @@ export default function WorkerCard({ worker }: WorkerCardProps) {
             )}
           </div>
         )}
+      </Link>
+
+      {/* Action buttons */}
+      <div className="flex gap-2 pt-3 border-t border-gray-100 dark:border-gray-700 mt-auto">
+        <button
+          onClick={handleMessage}
+          disabled={messaging || user?.uid === worker.uid}
+          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white transition-colors"
+        >
+          <MessageSquare className="h-3.5 w-3.5" />
+          {messaging ? 'Opening…' : 'Message'}
+        </button>
+        <Link
+          href={`/workers/${worker.uid}`}
+          className="flex-1 flex items-center justify-center px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+        >
+          View Profile
+        </Link>
       </div>
-    </Link>
+    </div>
   )
 }
