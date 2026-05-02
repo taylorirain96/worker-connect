@@ -1374,6 +1374,8 @@ export interface Quote {
   counterOfferPrice?: number
   counterOfferNote?: string
   counterOfferAt?: string
+  /** Up to 3 portfolio photos attached as "examples of my work" */
+  portfolioPhotos?: { id: string; url: string; title: string }[]
 }
 
 export interface QuoteRequest {
@@ -1969,5 +1971,20 @@ export interface EscrowRecord {
   updatedAt: string
   releasedAt?: string
   autoReleaseAt?: string
+}
+
+// ─── Worker Portfolio Photo Types ─────────────────────────────────────────────
+
+/** A single photo in a worker's portfolio (stored at portfolio/{uid}/photos/{photoId}) */
+export interface PortfolioPhoto {
+  id: string
+  uid: string
+  url: string
+  thumbnailUrl?: string
+  title: string
+  category: string
+  description?: string
+  order: number
+  createdAt: string
 }
 
