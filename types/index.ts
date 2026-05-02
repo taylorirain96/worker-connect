@@ -1756,10 +1756,10 @@ export interface CommissionTierConfig {
 }
 
 export const COMMISSION_TIERS: CommissionTierConfig[] = [
-  { tier: 'new',         label: 'New Worker',   minJobs: 0,  maxJobs: 5,  rate: 0.10, nextTier: 'established' },
-  { tier: 'established', label: 'Established',  minJobs: 6,  maxJobs: 20, rate: 0.08, nextTier: 'pro'         },
-  { tier: 'pro',         label: 'Pro Worker',   minJobs: 21, maxJobs: 50, rate: 0.06, nextTier: 'elite'       },
-  { tier: 'elite',       label: 'Elite Worker', minJobs: 51, maxJobs: null, rate: 0.05 },
+  { tier: 'new',         label: 'New Worker',   minJobs: 0,  maxJobs: 5,  rate: 0.18, nextTier: 'established' },
+  { tier: 'established', label: 'Established',  minJobs: 6,  maxJobs: 20, rate: 0.15, nextTier: 'pro'         },
+  { tier: 'pro',         label: 'Pro Worker',   minJobs: 21, maxJobs: 50, rate: 0.12, nextTier: 'elite'       },
+  { tier: 'elite',       label: 'Elite Worker', minJobs: 51, maxJobs: null, rate: 0.10 },
 ]
 
 /** An escrow record stored in Firestore */
@@ -1852,10 +1852,10 @@ export interface WorkerTierInfo {
 }
 
 export const WORKER_TIERS: WorkerTierInfo[] = [
-  { tier: 'new',         label: 'New Worker',    minJobs: 0,  maxJobs: 5,  commissionRate: 0.10, description: '0–5 jobs completed' },
-  { tier: 'established', label: 'Established',   minJobs: 6,  maxJobs: 20, commissionRate: 0.08, description: '6–20 jobs completed' },
-  { tier: 'pro',         label: 'Pro Worker',    minJobs: 21, maxJobs: 50, commissionRate: 0.06, description: '21–50 jobs completed' },
-  { tier: 'elite',       label: 'Elite Worker',  minJobs: 51, maxJobs: null, commissionRate: 0.05, description: '50+ jobs completed' },
+  { tier: 'new',         label: 'New Worker',    minJobs: 0,  maxJobs: 5,  commissionRate: 0.18, description: '0–5 jobs completed' },
+  { tier: 'established', label: 'Established',   minJobs: 6,  maxJobs: 20, commissionRate: 0.15, description: '6–20 jobs completed' },
+  { tier: 'pro',         label: 'Pro Worker',    minJobs: 21, maxJobs: 50, commissionRate: 0.12, description: '21–50 jobs completed' },
+  { tier: 'elite',       label: 'Elite Worker',  minJobs: 51, maxJobs: null, commissionRate: 0.10, description: '51+ jobs completed' },
 ]
 
 export function getWorkerTier(completedJobs: number): WorkerTierInfo {

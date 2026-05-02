@@ -10,6 +10,7 @@ import { Mail, Lock, User, Eye, EyeOff } from 'lucide-react'
 import { Suspense } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { getDashboardPath } from '@/lib/auth/redirects'
+import { trackEvent } from '@/lib/analytics'
 
 const registerSchema = z
   .object({
@@ -30,6 +31,7 @@ function RegisterForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const defaultRole = (searchParams.get('role') as 'worker' | 'employer' | 'homeowner') || 'worker'
+  const refCode = searchParams.get('ref') ?? ''
   const { user, profile, loading } = useAuth()
 
   // Redirect away if already logged in
@@ -105,6 +107,21 @@ function RegisterForm() {
     await setDoc(doc(db, 'users', uid), { ...baseFields, ...workerFields })
   }
 
+  // Non-blocking helper — attributes a referral after signup
+  const attributeReferral = (uid: string, email: string, name: string) => {
+    if (!refCode) return
+    fetch('/api/referrals/record', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        referralCode: refCode,
+        referredUserId: uid,
+        referredEmail: email,
+        referredName: name,
+      }),
+    }).catch((err) => console.error('Referral attribution failed:', err))
+  }
+
   const onSubmit = async (data: RegisterFormData) => {
     try {
       const { createUserWithEmailAndPassword, updateProfile } = await import('firebase/auth')
@@ -116,12 +133,15 @@ function RegisterForm() {
       const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password)
       await updateProfile(userCredential.user, { displayName: data.displayName })
       await createUserProfile(userCredential.user.uid, data.email, data.displayName, data.role)
+      // Record referral if user arrived via a referral link (non-blocking)
+      attributeReferral(userCredential.user.uid, data.email, data.displayName)
       // Fire welcome email (non-blocking)
       fetch('/api/emails/welcome', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: data.email, name: data.displayName, role: data.role }),
       }).catch(() => {}) // silently ignore if email fails
+      trackEvent('user_registered', { method: 'email', role: data.role })
       toast.success('Account created successfully!')
       if (data.role === 'homeowner') {
         router.push('/dashboard/homeowner')
@@ -156,12 +176,15 @@ function RegisterForm() {
         user.displayName || 'User',
         selectedRole
       )
+      // Record referral if user arrived via a referral link (non-blocking)
+      attributeReferral(user.uid, user.email ?? '', user.displayName || 'User')
       // Fire welcome email (non-blocking)
       fetch('/api/emails/welcome', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: user.email, name: user.displayName || 'User', role: selectedRole }),
       }).catch(() => {}) // silently ignore if email fails
+      trackEvent('user_registered', { method: 'google', role: selectedRole })
       toast.success('Account created successfully!')
       if (selectedRole === 'homeowner') {
         router.push('/dashboard/homeowner')

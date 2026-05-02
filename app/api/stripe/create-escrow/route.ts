@@ -13,8 +13,16 @@ import { NextResponse } from 'next/server'
 import { getWorkerTier } from '@/types'
 import { isStripeConfigured } from '@/lib/stripe'
 import Stripe from 'stripe'
+import { rateLimit } from '@/lib/rateLimit'
 
 export async function POST(request: Request) {
+  if (rateLimit(request, { max: 20, windowMs: 60_000 })) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please wait a moment before trying again.' },
+      { status: 429 }
+    )
+  }
+
   try {
     const body = await request.json() as {
       jobId?: string
