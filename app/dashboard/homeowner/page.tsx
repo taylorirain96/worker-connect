@@ -76,7 +76,7 @@ export default function HomeownerDashboardPage() {
 
         const jobsQuery = query(
           collection(db, 'jobs'),
-          where('employerId', '==', user!.uid),
+          where('employerId', '==', user?.uid),
           orderBy('createdAt', 'desc')
         )
         const jobsSnap = await getDocs(jobsQuery)
@@ -89,7 +89,7 @@ export default function HomeownerDashboardPage() {
             let quotes: Quote[] = []
             try {
               const quotesQuery = query(
-                collection(db!, 'quotes'),
+                collection(db, 'quotes'),
                 where('jobId', '==', jobDoc.id)
               )
               const quotesSnap = await getDocs(quotesQuery)

@@ -73,12 +73,19 @@ export default function HomeownerPostPage() {
       let uid = user?.uid ?? null
       let posterName = user?.displayName ?? name.trim()
 
-      // If not logged in, create a Firebase auth account and Firestore user doc
+      // If not logged in, create a Firebase auth account and Firestore user doc.
+      // A cryptographically random temporary password is generated; users can
+      // reset it via the standard "Forgot Password" flow if they want full access later.
       if (!user) {
         const email = contact.includes('@') ? contact.trim() : null
         const phone = !contact.includes('@') ? contact.trim() : null
-        const loginEmail = email ?? `${contact.trim().replace(/\s+/g, '')}@workerconnect.nz`
-        const tempPassword = Math.random().toString(36).slice(-10) + 'Aa1!'
+        // Use a UUID-based synthetic email to avoid collisions with phone-based contacts
+        const randomId = crypto.randomUUID().replace(/-/g, '').slice(0, 12)
+        const loginEmail = email ?? `guest-${randomId}@workerconnect.nz`
+        // Generate a cryptographically secure temporary password
+        const randomBytes = new Uint8Array(16)
+        crypto.getRandomValues(randomBytes)
+        const tempPassword = Array.from(randomBytes, (b) => b.toString(16).padStart(2, '0')).join('') + 'Aa1!'
 
         const { createUserWithEmailAndPassword, updateProfile } = await import('firebase/auth')
         const { auth } = await import('@/lib/firebase')
@@ -107,9 +114,11 @@ export default function HomeownerPostPage() {
         })
       }
 
+      const MAX_TITLE_LENGTH = 80
+
       // Save the job to Firestore
       await addDoc(collection(db, 'jobs'), {
-        title: description.trim().slice(0, 80),
+        title: description.trim().slice(0, MAX_TITLE_LENGTH),
         description: description.trim(),
         category,
         location: location.trim(),
