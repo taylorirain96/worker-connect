@@ -12,6 +12,7 @@ import { getStripe, isStripeConfigured, toCents } from '@/lib/stripe'
 import { getEscrowById, updateEscrowStatus } from '@/lib/services/escrowService'
 import { adminDb } from '@/lib/firebase-admin'
 import { sendNotification } from '@/lib/notificationService'
+import { sendPaymentReleasedEmail } from '@/lib/email/transactional'
 
 export async function POST(request: NextRequest) {
   try {
@@ -112,6 +113,35 @@ export async function POST(request: NextRequest) {
         amount: escrow.workerAmount,
       },
     })
+
+    // Send "Payment Released" email to worker (non-fatal)
+    try {
+      let workerEmail: string | undefined
+      let workerName: string | undefined
+      let jobTitle: string | undefined
+      if (adminDb) {
+        const [workerSnap, jobSnap] = await Promise.all([
+          adminDb.collection('users').doc(escrow.workerId).get(),
+          adminDb.collection('jobs').doc(escrow.jobId).get(),
+        ])
+        workerEmail = workerSnap.data()?.email as string | undefined
+        workerName = (workerSnap.data()?.displayName ?? workerSnap.data()?.name) as string | undefined
+        jobTitle = jobSnap.data()?.title as string | undefined
+      }
+      if (workerEmail) {
+        await sendPaymentReleasedEmail({
+          workerEmail,
+          workerName: workerName ?? 'there',
+          jobTitle: jobTitle ?? `Job #${escrow.jobId.slice(-6)}`,
+          grossAmount: escrow.amount,
+          commissionAmount: escrow.commissionAmount,
+          workerAmount: escrow.workerAmount,
+          jobId: escrow.jobId,
+        })
+      }
+    } catch (emailErr) {
+      console.error('Failed to send payment-released email:', emailErr)
+    }
 
     return NextResponse.json({
       success: true,

@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { adminDb } from '@/lib/firebase-admin'
+import { sendQuoteReceivedEmail } from '@/lib/email/transactional'
 
 export const dynamic = 'force-dynamic'
 
@@ -86,6 +88,29 @@ export async function POST(req: NextRequest) {
       conditions,
       attachments,
     })
+
+    // Send "Quote Received" email to the homeowner (non-fatal)
+    try {
+      let homeownerEmail: string | undefined
+      let homeownerName: string | undefined
+      if (adminDb) {
+        const employerSnap = await adminDb.collection('users').doc(employerId).get()
+        homeownerEmail = employerSnap.data()?.email as string | undefined
+        homeownerName = (employerSnap.data()?.displayName ?? employerSnap.data()?.name) as string | undefined
+      }
+      if (homeownerEmail) {
+        await sendQuoteReceivedEmail({
+          homeownerEmail,
+          homeownerName: homeownerName ?? 'there',
+          workerName,
+          jobTitle,
+          amount: totalPrice,
+          jobId,
+        })
+      }
+    } catch (emailErr) {
+      console.error('Failed to send quote-received email:', emailErr)
+    }
 
     return NextResponse.json({ id: quoteId, totalPrice }, { status: 201 })
   } catch (err) {
