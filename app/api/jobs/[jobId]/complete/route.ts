@@ -14,6 +14,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
 import { sendNotification } from '@/lib/notificationService'
 import { getStripe, isStripeConfigured, toCents } from '@/lib/stripe'
+import {
+  sendJobCompletedWorkerEmail,
+  sendJobCompletedHomeownerEmail,
+} from '@/lib/email/transactional'
 
 export const dynamic = 'force-dynamic'
 
@@ -204,6 +208,56 @@ export async function POST(
         actionUrl: `/jobs/${jobId}`,
       })
     }
+
+    // ── Notify homeowner ─────────────────────────────────────────────────────
+    await sendNotification({
+      userId: completedBy,
+      type: 'job_completed',
+      title: 'Job Marked as Complete ✓',
+      message: `You've marked "${jobData.title as string}" as complete. Payment has been released to the worker.`,
+      metadata: { jobId, completedAt },
+      actionUrl: `/jobs/${jobId}`,
+    })
+
+    // ── Send emails (non-blocking) ───────────────────────────────────────────
+    void (async () => {
+      try {
+        // Look up worker + employer email addresses
+        const [workerSnap, employerSnap] = await Promise.all([
+          workerIdToNotify && adminDb ? adminDb.collection('users').doc(workerIdToNotify).get() : Promise.resolve(null),
+          adminDb ? adminDb.collection('users').doc(completedBy).get() : Promise.resolve(null),
+        ])
+
+        const workerEmail = workerSnap?.data()?.email as string | undefined
+        const workerName = (workerSnap?.data()?.displayName as string | undefined) ?? 'Worker'
+        const homeownerEmail = employerSnap?.data()?.email as string | undefined
+        const homeownerName = (employerSnap?.data()?.displayName as string | undefined) ?? 'Homeowner'
+        const jobTitle = jobData.title as string
+
+        if (workerEmail && workerIdToNotify) {
+          await sendJobCompletedWorkerEmail({
+            workerEmail,
+            workerName,
+            homeownerName,
+            jobTitle,
+            jobId,
+            paymentAmount: workerAmount ?? 0,
+          })
+        }
+
+        if (homeownerEmail) {
+          await sendJobCompletedHomeownerEmail({
+            homeownerEmail,
+            homeownerName,
+            workerName,
+            jobTitle,
+            jobId,
+          })
+        }
+      } catch (emailErr) {
+        console.error('Failed to send job completion emails:', emailErr)
+      }
+    })()
 
     return NextResponse.json({
       success: true,
