@@ -70,8 +70,9 @@ export default function HomeownerJobFormPage() {
         // Generate a cryptographically secure random password for the silent account
         const randomBytes = new Uint8Array(24)
         crypto.getRandomValues(randomBytes)
-        const tempPassword = Array.from(randomBytes, (b) => b.toString(16).padStart(2, '0')).join('') + 'A1!'
-        const randomEmail = email || `homeowner-${Date.now()}@quicktrade-guest.nz`
+        const tempPassword = Array.from(randomBytes, (b) => b.toString(16).padStart(2, '0')).join('')
+        const randomId = crypto.randomUUID().replace(/-/g, '')
+        const randomEmail = email || `ho-${randomId}@quicktrade-guest.nz`
 
         const cred = await createUserWithEmailAndPassword(auth, randomEmail, tempPassword)
         await updateProfile(cred.user, { displayName })
