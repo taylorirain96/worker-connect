@@ -9,6 +9,7 @@ import { getInitials } from '@/lib/utils'
 import Badge from '@/components/ui/Badge'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { getOrCreateConversation } from '@/lib/messaging'
+import toast from 'react-hot-toast'
 
 interface WorkerCardProps {
   worker: UserProfile
@@ -41,7 +42,9 @@ export default function WorkerCard({ worker }: WorkerCardProps) {
         worker.photoURL ?? null,
       )
       router.push(`/messages/${convId}`)
-    } catch {
+    } catch (err) {
+      console.error('Failed to open conversation:', err)
+      toast.error('Could not open conversation. Please try again.')
       router.push('/messages')
     } finally {
       setMessaging(false)

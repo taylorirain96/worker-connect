@@ -90,7 +90,9 @@ export default function ConversationPage() {
       .then((profiles) => {
         setBothWorkers(profiles.every((p) => p?.role === 'worker'))
       })
-      .catch(() => {})
+      .catch((err) => {
+        console.error('Failed to fetch participant profiles:', err)
+      })
   }, [conversation])
 
   const handleSend = useCallback(async () => {

@@ -15,6 +15,7 @@ import ReviewSummary from '@/components/reviews/ReviewSummary'
 import { getReviewAggregates } from '@/lib/reviews/firebase'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { getOrCreateConversation } from '@/lib/messaging'
+import toast from 'react-hot-toast'
 
 export default function WorkerProfilePage({ params }: { params: { id: string } }) {
   const router = useRouter()
@@ -240,7 +241,9 @@ export default function WorkerProfilePage({ params }: { params: { id: string } }
                         worker.photoURL ?? null,
                       )
                       router.push(`/messages/${convId}`)
-                    } catch {
+                    } catch (err) {
+                      console.error('Failed to open conversation:', err)
+                      toast.error('Could not open conversation. Please try again.')
                       router.push('/messages')
                     } finally {
                       setMessaging(false)
