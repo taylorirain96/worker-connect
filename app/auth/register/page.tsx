@@ -18,7 +18,7 @@ const registerSchema = z
     email: z.string().email('Please enter a valid email'),
     password: z.string().min(8, 'Password must be at least 8 characters'),
     confirmPassword: z.string(),
-    role: z.enum(['worker', 'employer', 'homeowner']),
+    role: z.enum(['worker', 'employer', 'homeowner', 'jobseeker']),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Passwords do not match',
@@ -30,7 +30,7 @@ type RegisterFormData = z.infer<typeof registerSchema>
 function RegisterForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const defaultRole = (searchParams.get('role') as 'worker' | 'employer' | 'homeowner') || 'worker'
+  const defaultRole = (searchParams.get('role') as 'worker' | 'employer' | 'homeowner' | 'jobseeker') || 'worker'
   const refCode = searchParams.get('ref') ?? ''
   const { user, profile, loading } = useAuth()
 
@@ -57,7 +57,7 @@ function RegisterForm() {
 
   const selectedRole = watch('role')
 
-  const createUserProfile = async (uid: string, email: string | null, displayName: string, role: 'worker' | 'employer' | 'homeowner', phone?: string) => {
+  const createUserProfile = async (uid: string, email: string | null, displayName: string, role: 'worker' | 'employer' | 'homeowner' | 'jobseeker', phone?: string) => {
     const { doc, setDoc, serverTimestamp } = await import('firebase/firestore')
     const { db } = await import('@/lib/firebase')
     if (!db) {
@@ -77,6 +77,27 @@ function RegisterForm() {
         updatedAt: now,
         profileComplete: true,
         verified: false,
+        ...(phone ? { phone } : {}),
+      })
+      return
+    }
+    // Jobseekers get a CV-style profile with employment fields
+    if (role === 'jobseeker') {
+      await setDoc(doc(db, 'users', uid), {
+        uid,
+        email,
+        displayName,
+        photoURL: null,
+        role: 'jobseeker',
+        createdAt: now,
+        updatedAt: now,
+        profileComplete: false,
+        verified: false,
+        skills: [],
+        bio: '',
+        location: '',
+        availabilityStatus: 'available',
+        desiredWorkType: [],
         ...(phone ? { phone } : {}),
       })
       return
@@ -145,6 +166,8 @@ function RegisterForm() {
       toast.success('Account created successfully!')
       if (data.role === 'homeowner') {
         router.push('/dashboard/homeowner')
+      } else if (data.role === 'jobseeker') {
+        router.push('/dashboard/jobseeker')
       } else {
         router.push(data.role === 'employer' ? '/dashboard/employer' : '/dashboard/worker')
       }
@@ -188,6 +211,8 @@ function RegisterForm() {
       toast.success('Account created successfully!')
       if (selectedRole === 'homeowner') {
         router.push('/dashboard/homeowner')
+      } else if (selectedRole === 'jobseeker') {
+        router.push('/dashboard/jobseeker')
       } else {
         router.push(selectedRole === 'employer' ? '/dashboard/employer' : '/dashboard/worker')
       }
@@ -244,11 +269,12 @@ function RegisterForm() {
                 { value: 'homeowner', label: 'Get work done', emoji: '🏠', desc: 'Post a job and get quotes from local tradies' },
                 { value: 'worker', label: 'Find work', emoji: '👷', desc: 'I\'m a tradie or skilled worker' },
                 { value: 'employer', label: 'Hire staff', emoji: '🏢', desc: 'I\'m a business looking to hire' },
+                { value: 'jobseeker', label: 'Find employment', emoji: '🎯', desc: 'I\'m looking for full-time or part-time work' },
               ].map(({ value, label, emoji, desc }) => (
                 <button
                   key={value}
                   type="button"
-                  onClick={() => setValue('role', value as 'worker' | 'employer' | 'homeowner')}
+                  onClick={() => setValue('role', value as 'worker' | 'employer' | 'homeowner' | 'jobseeker')}
                   className={`p-4 rounded-xl border-2 text-left transition-all ${
                     selectedRole === value
                       ? 'border-indigo-500 bg-indigo-500/10'
