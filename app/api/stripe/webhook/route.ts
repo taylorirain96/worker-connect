@@ -22,6 +22,7 @@ import {
   getJobPostingPaymentBySession,
   updateJobPostingPayment,
 } from '@/lib/services/escrowService'
+import { REFERRAL_CREDIT_REWARD } from '@/lib/referrals/constants'
 
 export const dynamic = 'force-dynamic'
 
@@ -334,7 +335,7 @@ export async function POST(req: NextRequest) {
               const refDoc = await adminDb.collection('referrals').doc(workerId).get()
 
               if (refDoc.exists && refDoc.data()?.referrerId === referredBy && refDoc.data()?.status === 'signed_up') {
-                const CREDIT_AMOUNT = 10 // NZ$10 credit for both parties
+                const CREDIT_AMOUNT = REFERRAL_CREDIT_REWARD
                 const now = new Date().toISOString()
 
                 await refDoc.ref.update({

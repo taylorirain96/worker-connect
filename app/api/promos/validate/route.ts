@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
 
     const discountAmount =
       promo.discountType === 'percent'
-        ? Math.round((amount * promo.discountAmount) / 100 * 100) / 100
+        ? Math.round((amount * promo.discountAmount / 100) * 100) / 100
         : Math.min(promo.discountAmount, amount)
 
     const discountedAmount = Math.max(0, amount - discountAmount)

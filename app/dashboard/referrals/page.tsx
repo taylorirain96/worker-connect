@@ -7,6 +7,7 @@ import Button from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { ensureReferralCode, fetchReferrals } from '@/lib/referrals/referralService'
+import { REFERRAL_CREDIT_REWARD } from '@/lib/referrals/constants'
 import type { Referral, CreditTransaction } from '@/types'
 import { Users, Copy, CheckCircle, Gift, Share2, Mail, DollarSign } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -78,7 +79,7 @@ export default function ReferralDashboardPage() {
 
   const shareWhatsApp = () => {
     const text = encodeURIComponent(
-      `Join WorkerConnect and get NZ$10 credit on your first job! Sign up here: ${referralUrl}`,
+      `Join WorkerConnect and get NZ$${REFERRAL_CREDIT_REWARD} credit on your first job! Sign up here: ${referralUrl}`,
     )
     window.open(`https://wa.me/?text=${text}`, '_blank')
   }
@@ -91,9 +92,9 @@ export default function ReferralDashboardPage() {
   }
 
   const shareEmail = () => {
-    const subject = encodeURIComponent('Join WorkerConnect — Get NZ$10 Credit!')
+    const subject = encodeURIComponent(`Join WorkerConnect — Get NZ$${REFERRAL_CREDIT_REWARD} Credit!`)
     const body = encodeURIComponent(
-      `Hey!\n\nI've been using WorkerConnect to find great tradespeople in NZ. Use my referral link to sign up and we'll both get NZ$10 credit when you complete your first job.\n\n${referralUrl}\n\nSee you there!`,
+      `Hey!\n\nI've been using WorkerConnect to find great tradespeople in NZ. Use my referral link to sign up and we'll both get NZ$${REFERRAL_CREDIT_REWARD} credit when you complete your first job.\n\n${referralUrl}\n\nSee you there!`,
     )
     window.open(`mailto:?subject=${subject}&body=${body}`)
   }
@@ -122,7 +123,7 @@ export default function ReferralDashboardPage() {
               Refer a Friend
             </h1>
             <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">
-              Give NZ$10 credit, get NZ$10 credit — for every friend who completes their first job.
+              Give NZ${REFERRAL_CREDIT_REWARD} credit, get NZ${REFERRAL_CREDIT_REWARD} credit — for every friend who completes their first job.
             </p>
           </div>
 
@@ -232,8 +233,8 @@ export default function ReferralDashboardPage() {
                   },
                   {
                     step: '3',
-                    title: 'Both get NZ$10',
-                    desc: 'When they complete their first job, you each receive NZ$10 credit automatically.',
+                    title: `Both get NZ$${REFERRAL_CREDIT_REWARD}`,
+                    desc: `When they complete their first job, you each receive NZ$${REFERRAL_CREDIT_REWARD} credit automatically.`,
                   },
                 ].map(({ step, title, desc }) => (
                   <li key={step} className="flex gap-3">

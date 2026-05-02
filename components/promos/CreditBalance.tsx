@@ -2,6 +2,8 @@
 import { useEffect, useState } from 'react'
 import { DollarSign } from 'lucide-react'
 
+type LoadState = 'loading' | 'loaded' | 'error'
+
 interface CreditBalanceProps {
   userId: string
   /** When true, shows a compact inline badge */
@@ -9,17 +11,26 @@ interface CreditBalanceProps {
 }
 
 export default function CreditBalance({ userId, compact = false }: CreditBalanceProps) {
-  const [credit, setCredit] = useState<number | null>(null)
+  const [credit, setCredit] = useState<number>(0)
+  const [state, setState] = useState<LoadState>('loading')
 
   useEffect(() => {
     if (!userId) return
+    setState('loading')
     fetch(`/api/credits/balance?userId=${userId}`)
       .then((r) => r.json())
-      .then((d) => setCredit(d.credit ?? 0))
-      .catch(() => setCredit(0))
+      .then((d) => {
+        setCredit(d.credit ?? 0)
+        setState('loaded')
+      })
+      .catch(() => {
+        setCredit(0)
+        setState('error')
+      })
   }, [userId])
 
-  if (credit === null || credit <= 0) return null
+  // Show nothing while loading or on error or when balance is zero
+  if (state !== 'loaded' || credit <= 0) return null
 
   const formatted = new Intl.NumberFormat('en-NZ', {
     style: 'currency',

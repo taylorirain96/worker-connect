@@ -224,8 +224,9 @@ export default function AdminPromosPage() {
               <input
                 type="number"
                 required
-                min="0.01"
-                step="0.01"
+                min={form.discountType === 'percent' ? '1' : '0.01'}
+                max={form.discountType === 'percent' ? '100' : undefined}
+                step={form.discountType === 'percent' ? '1' : '0.01'}
                 value={form.discountAmount}
                 onChange={(e) => setForm((f) => ({ ...f, discountAmount: e.target.value }))}
                 placeholder={form.discountType === 'percent' ? '20' : '10'}
