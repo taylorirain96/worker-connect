@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server'
 import { getReviewsForEntity } from '@/lib/reviews/firebase'
 import { adminDb } from '@/lib/firebase-admin'
 import { sendReviewReceivedEmail } from '@/lib/email/transactional'
+import { sendAdminNotification } from '@/lib/notifications/admin'
 import admin from '@/lib/firebase-admin'
 
 export const dynamic = 'force-dynamic'
@@ -154,6 +155,15 @@ export async function POST(request: NextRequest) {
               revieweeId,
             })
           }
+
+          // Push notification to reviewee
+          await sendAdminNotification({
+            userId: revieweeId,
+            title: `New ${rating}-star review ⭐`,
+            body: `${reviewerName} left you a review: "${snippet}"`,
+            type: 'new_review',
+            link: `/workers/${revieweeId}`,
+          })
         } catch (emailErr) {
           console.error('Failed to send review-received email:', emailErr)
         }

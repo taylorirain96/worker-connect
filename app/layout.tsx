@@ -3,6 +3,7 @@ import './globals.css'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
 import { AuthProvider } from '@/components/providers/AuthProvider'
 import { RoleProvider } from '@/context/RoleContext'
+import { NotificationProvider } from '@/context/NotificationContext'
 import { Toaster } from 'react-hot-toast'
 import dynamic from 'next/dynamic'
 import { GoogleAnalytics } from '@next/third-parties/google'
@@ -10,6 +11,10 @@ import { SITE_URL } from '@/lib/seo/config'
 
 const SupportChatbot = dynamic(() => import('@/components/chat/SupportChatbot'), { ssr: false })
 const PWAInstallPrompt = dynamic(() => import('@/components/PWAInstallPrompt'), { ssr: false })
+const PushPermissionPrompt = dynamic(
+  () => import('@/components/notifications/PushPermissionPrompt'),
+  { ssr: false }
+)
 
 export const metadata: Metadata = {
   title: {
@@ -107,10 +112,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <AuthProvider>
             <RoleProvider>
-              {children}
-              <Toaster position="top-right" />
-              <SupportChatbot />
-              <PWAInstallPrompt />
+              <NotificationProvider>
+                {children}
+                <Toaster position="top-right" />
+                <SupportChatbot />
+                <PWAInstallPrompt />
+                <PushPermissionPrompt />
+              </NotificationProvider>
             </RoleProvider>
           </AuthProvider>
         </ThemeProvider>

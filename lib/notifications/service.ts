@@ -114,10 +114,10 @@ export async function sendNotification(opts: SendNotificationOptions): Promise<s
     }
 
     if (categoryPrefs.push && prefs.channels.push) {
-      fetch('/api/notifications/push', {
+      fetch('/api/notifications/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: opts.userId, notificationId: id, title: opts.title, message: opts.message, actionUrl: opts.actionUrl }),
+        body: JSON.stringify({ userId: opts.userId, title: opts.title, body: opts.message, actionUrl: opts.actionUrl }),
       }).catch(() => {})
     }
 
