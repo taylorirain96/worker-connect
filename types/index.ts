@@ -24,6 +24,8 @@ export interface UserProfile {
   badges?: string[]
   level?: 'bronze' | 'silver' | 'gold' | 'platinum'
   verified?: boolean
+  verificationStatus?: 'pending' | 'approved' | 'rejected'
+  verificationRejectionReason?: string
   verifiedDetails?: {
     id: boolean
     responded: boolean

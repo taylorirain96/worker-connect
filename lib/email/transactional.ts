@@ -311,7 +311,70 @@ export async function sendReviewReceivedEmail(opts: {
   })
 }
 
-// ─── Email 7: Job Matches ─────────────────────────────────────────────────────
+// ─── Email 7: Verification Approved ──────────────────────────────────────────
+
+/**
+ * Sent to a worker when their identity verification is approved.
+ */
+export async function sendVerificationApprovedEmail(opts: {
+  workerEmail: string
+  workerName: string
+}): Promise<void> {
+  const { workerEmail, workerName } = opts
+  const dashboardUrl = `${APP_URL}/dashboard/worker`
+
+  const html = emailWrapper(`
+    <h1 style="font-size:24px;font-weight:700;color:#fff;margin:0 0 8px;">You're verified! ✓</h1>
+    <p style="color:#94a3b8;line-height:1.6;margin:0 0 20px;">Ka pai, ${workerName}! Your identity has been verified and you now have the <strong style="color:#22c55e;">✓ Verified</strong> badge on your profile. This helps you stand out and win more jobs.</p>
+    ${ctaButton(dashboardUrl, 'View Your Profile →')}
+    <p style="color:#64748b;font-size:13px;text-align:center;margin:0;">Thanks for helping make WorkerConnect a trusted platform for everyone in New Zealand.</p>
+  `)
+
+  const resend = getResend()
+  if (!resend) return
+  await resend.emails.send({
+    from: FROM,
+    to: workerEmail,
+    subject: '✓ Your identity is verified — WorkerConnect',
+    html,
+  })
+}
+
+// ─── Email 8: Verification Rejected ──────────────────────────────────────────
+
+/**
+ * Sent to a worker when their identity verification is rejected.
+ */
+export async function sendVerificationRejectedEmail(opts: {
+  workerEmail: string
+  workerName: string
+  rejectionReason: string
+}): Promise<void> {
+  const { workerEmail, workerName, rejectionReason } = opts
+  const verifyUrl = `${APP_URL}/dashboard/worker/verify`
+
+  const html = emailWrapper(`
+    <h1 style="font-size:24px;font-weight:700;color:#fff;margin:0 0 8px;">Verification unsuccessful</h1>
+    <p style="color:#94a3b8;line-height:1.6;margin:0 0 20px;">Hi ${workerName}, unfortunately we weren't able to verify your identity this time.</p>
+    ${infoTable(`
+      ${infoRow('Reason', rejectionReason)}
+    `)}
+    <p style="color:#94a3b8;line-height:1.6;margin:16px 0 20px;">You're welcome to resubmit with clearer photos. Make sure your ID is fully visible and the selfie clearly shows you holding the ID.</p>
+    ${ctaButton(verifyUrl, 'Resubmit Verification →')}
+    <p style="color:#64748b;font-size:13px;text-align:center;margin:0;">If you have any questions, reply to this email.</p>
+  `)
+
+  const resend = getResend()
+  if (!resend) return
+  await resend.emails.send({
+    from: FROM,
+    to: workerEmail,
+    subject: 'Verification update — WorkerConnect',
+    html,
+  })
+}
+
+// ─── Email 9: Job Matches ─────────────────────────────────────────────────────
 
 /**
  * Sent to matching workers when a new job is posted in their trade/location.
