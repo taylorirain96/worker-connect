@@ -720,6 +720,47 @@ export interface BankAccount {
   createdAt: string
 }
 
+// ─── Worker Availability & Booking Types ─────────────────────────────────────
+
+export interface DayAvailability {
+  available: boolean
+  start: string  // e.g. '08:00'
+  end: string    // e.g. '17:00'
+}
+
+export interface WorkerAvailability {
+  monday: DayAvailability
+  tuesday: DayAvailability
+  wednesday: DayAvailability
+  thursday: DayAvailability
+  friday: DayAvailability
+  saturday: DayAvailability
+  sunday: DayAvailability
+  blockedDates: string[]  // ISO date strings e.g. '2026-06-01'
+  minNoticeHours: number
+}
+
+export type BookingStatus = 'pending' | 'confirmed' | 'declined'
+
+export interface BookingRequest {
+  id: string
+  workerId: string
+  workerName: string
+  workerEmail: string
+  homeownerId: string
+  homeownerName: string
+  homeownerEmail: string
+  requestedDate: string   // ISO date e.g. '2026-06-15'
+  requestedTime: string   // e.g. '09:00'
+  duration: number        // hours
+  description: string
+  address: string
+  status: BookingStatus
+  workerMessage?: string
+  createdAt: string
+  updatedAt?: string
+}
+
 export interface EarningsSummary {
   totalLifetime: number
   totalThisMonth: number

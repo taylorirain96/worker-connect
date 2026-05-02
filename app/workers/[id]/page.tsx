@@ -25,6 +25,7 @@ export default function WorkerProfilePage({ params }: { params: { id: string } }
   const [notFound, setNotFound] = useState(false)
   const [reviewAgg, setReviewAgg] = useState<ReviewAggregates | null>(null)
   const [messaging, setMessaging] = useState(false)
+  const [hasAvailability, setHasAvailability] = useState(false)
 
   useEffect(() => {
     async function fetchWorker() {
@@ -37,6 +38,17 @@ export default function WorkerProfilePage({ params }: { params: { id: string } }
         setNotFound(true)
       } else {
         setWorker(profile)
+        // Check if worker has set availability
+        fetch(`/api/availability/${params.id}`)
+          .then((r) => r.json())
+          .then((data) => {
+            if (data.availability) {
+              const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const
+              const hasAny = days.some((d) => data.availability[d]?.available)
+              setHasAvailability(hasAny)
+            }
+          })
+          .catch(() => {})
       }
       setReviewAgg(agg)
       setLoading(false)
@@ -255,6 +267,14 @@ export default function WorkerProfilePage({ params }: { params: { id: string } }
                   <MessageSquare className="h-4 w-4" />
                   {messaging ? 'Opening…' : 'Send Message'}
                 </Button>
+                {hasAvailability && user?.uid !== worker.uid && (
+                  <Link href={`/workers/${worker.uid}/book`} className="block mb-3">
+                    <Button variant="secondary" className="w-full">
+                      <Calendar className="h-4 w-4" />
+                      Check Availability &amp; Book
+                    </Button>
+                  </Link>
+                )}
                 <Button variant="outline" className="w-full">
                   <Calendar className="h-4 w-4" />
                   Request Quote
