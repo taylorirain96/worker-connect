@@ -697,3 +697,43 @@ export async function sendJobMatchesEmail(opts: {
     html,
   })
 }
+
+// ─── Email 17: Direct Job Request ────────────────────────────────────────────
+
+/**
+ * Sent to the worker when a homeowner sends them a direct rebook request.
+ */
+export async function sendDirectJobRequestEmail(opts: {
+  workerEmail: string
+  workerName: string
+  homeownerName: string
+  description: string
+  date: string
+  address: string
+  requestId: string
+}): Promise<void> {
+  const { workerEmail, workerName, homeownerName, description, date, address, requestId } = opts
+  const dashboardUrl = `${APP_URL}/dashboard/worker`
+
+  const html = emailWrapper(`
+    <h1 style="font-size:24px;font-weight:700;color:#fff;margin:0 0 8px;">Someone wants to book you again! ❤️</h1>
+    <p style="color:#94a3b8;line-height:1.6;margin:0 0 20px;">G'day ${workerName}, <strong style="color:#e2e8f0;">${homeownerName}</strong> has sent you a direct job request. They've had a great experience with you and want to book you directly!</p>
+    ${infoTable(`
+      ${infoRow('From', homeownerName)}
+      ${infoRow('Date needed', date)}
+      ${infoRow('Address', address)}
+      ${infoRow('Description', description.slice(0, 120) + (description.length > 120 ? '…' : ''))}
+    `)}
+    ${ctaButton(dashboardUrl, 'View Request on Dashboard →')}
+    <p style="color:#64748b;font-size:13px;text-align:center;margin:0;">Log in to your dashboard to accept or decline this request. Request ID: ${requestId}</p>
+  `)
+
+  const resend = getResend()
+  if (!resend) return
+  await resend.emails.send({
+    from: FROM,
+    to: workerEmail,
+    subject: `${homeownerName} wants to book you again!`,
+    html,
+  })
+}
