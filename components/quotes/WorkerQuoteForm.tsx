@@ -1,14 +1,15 @@
 'use client'
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useForm, useFieldArray } from 'react-hook-form'
 import Button from '@/components/ui/Button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { formatCurrency } from '@/lib/utils'
-import { Plus, Trash2, Paperclip, X, FileText } from 'lucide-react'
+import { Plus, Trash2, Paperclip, X, FileText, Camera, CheckSquare, Square } from 'lucide-react'
 import AIPriceSuggestion from './AIPriceSuggestion'
 import { storage } from '@/lib/firebase'
 import { ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
 import { trackEvent } from '@/lib/analytics'
+import type { PortfolioPhoto } from '@/types'
 
 interface WorkerQuoteFormProps {
   jobId: string
@@ -65,6 +66,40 @@ export default function WorkerQuoteForm({
   const [error, setError] = useState<string | null>(null)
   const [attachments, setAttachments] = useState<AttachmentFile[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Portfolio photo attachment (up to 3)
+  const [portfolioPhotos, setPortfolioPhotos] = useState<PortfolioPhoto[]>([])
+  const [selectedPortfolioIds, setSelectedPortfolioIds] = useState<Set<string>>(new Set())
+  const [loadingPortfolio, setLoadingPortfolio] = useState(false)
+  const [showPortfolioPicker, setShowPortfolioPicker] = useState(false)
+
+  const MAX_PORTFOLIO_ATTACH = 3
+
+  useEffect(() => {
+    if (!workerId) return
+    setLoadingPortfolio(true)
+    fetch(`/api/portfolio?uid=${workerId}`)
+      .then((r) => r.json())
+      .then((data: { photos?: PortfolioPhoto[] }) => {
+        if (data.photos && data.photos.length > 0) {
+          setPortfolioPhotos(data.photos)
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoadingPortfolio(false))
+  }, [workerId])
+
+  const togglePortfolioPhoto = (id: string) => {
+    setSelectedPortfolioIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else if (next.size < MAX_PORTFOLIO_ATTACH) {
+        next.add(id)
+      }
+      return next
+    })
+  }
 
   const { register, control, watch, handleSubmit, setValue, formState: { errors } } = useForm<FormValues>({
     defaultValues: {
@@ -182,6 +217,10 @@ export default function WorkerQuoteForm({
           type: (a.file.type.startsWith('image/') ? 'image' : 'document') as 'image' | 'document',
         }))
 
+      const selectedPortfolioPhotos = portfolioPhotos
+        .filter((p) => selectedPortfolioIds.has(p.id))
+        .map((p) => ({ id: p.id, url: p.url, title: p.title }))
+
       const res = await fetch('/api/quotes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-user-id': workerId },
@@ -207,6 +246,7 @@ export default function WorkerQuoteForm({
           availability: data.availability || undefined,
           conditions: data.conditions || undefined,
           attachments: uploadedAttachments.length > 0 ? uploadedAttachments : undefined,
+          portfolioPhotos: selectedPortfolioPhotos.length > 0 ? selectedPortfolioPhotos : undefined,
         }),
       })
       if (!res.ok) {
@@ -468,6 +508,97 @@ export default function WorkerQuoteForm({
               Up to {MAX_FILES} files, 10 MB each. Images or PDFs.
             </p>
           </div>
+
+          {/* Portfolio Photos — Examples of my work */}
+          {portfolioPhotos.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Attach Portfolio Examples
+                  <span className="ml-1 text-xs text-gray-400">({selectedPortfolioIds.size}/{MAX_PORTFOLIO_ATTACH})</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowPortfolioPicker((v) => !v)}
+                  className="text-sm text-primary-600 hover:text-primary-700 flex items-center gap-1"
+                >
+                  <Camera className="h-4 w-4" />
+                  {showPortfolioPicker ? 'Hide' : 'Choose photos'}
+                </button>
+              </div>
+              {showPortfolioPicker && (
+                <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-800">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                    Select up to {MAX_PORTFOLIO_ATTACH} photos from your portfolio to show as examples of your work.
+                  </p>
+                  {loadingPortfolio ? (
+                    <div className="text-xs text-gray-400">Loading…</div>
+                  ) : (
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                      {portfolioPhotos.map((photo) => {
+                        const selected = selectedPortfolioIds.has(photo.id)
+                        const disabled = !selected && selectedPortfolioIds.size >= MAX_PORTFOLIO_ATTACH
+                        return (
+                          <button
+                            key={photo.id}
+                            type="button"
+                            disabled={disabled}
+                            onClick={() => togglePortfolioPhoto(photo.id)}
+                            className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${
+                              selected
+                                ? 'border-primary-500 opacity-100'
+                                : disabled
+                                ? 'border-gray-200 dark:border-gray-700 opacity-40 cursor-not-allowed'
+                                : 'border-gray-200 dark:border-gray-700 hover:border-primary-300 opacity-80 hover:opacity-100'
+                            }`}
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={photo.url} alt={photo.title} className="w-full h-full object-cover" />
+                            <div className={`absolute inset-0 flex items-end ${selected ? 'bg-primary-500/20' : ''}`}>
+                              <div className="w-full bg-gradient-to-t from-black/60 to-transparent p-1.5">
+                                <p className="text-white text-xs truncate leading-tight">{photo.title}</p>
+                              </div>
+                            </div>
+                            <div className="absolute top-1 right-1">
+                              {selected
+                                ? <CheckSquare className="h-4 w-4 text-white drop-shadow" />
+                                : <Square className="h-4 w-4 text-white/70 drop-shadow" />
+                              }
+                            </div>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+              {selectedPortfolioIds.size > 0 && !showPortfolioPicker && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {portfolioPhotos
+                    .filter((p) => selectedPortfolioIds.has(p.id))
+                    .map((p) => (
+                      <div key={p.id} className="relative w-14 h-14 rounded-lg overflow-hidden border border-primary-300 dark:border-primary-700">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={p.url} alt={p.title} className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => togglePortfolioPhoto(p.id)}
+                          className="absolute top-0.5 right-0.5 bg-red-500 rounded-full p-0.5 text-white"
+                        >
+                          <X className="h-2.5 w-2.5" />
+                        </button>
+                      </div>
+                    ))}
+                  <p className="self-center text-xs text-gray-500 dark:text-gray-400">
+                    {selectedPortfolioIds.size} example{selectedPortfolioIds.size !== 1 ? 's' : ''} of my work attached
+                  </p>
+                </div>
+              )}
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                Show homeowners examples of your best work to increase your chances of winning this job.
+              </p>
+            </div>
+          )}
 
           {/* Total Summary */}
           <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 space-y-2">
