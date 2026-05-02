@@ -10,7 +10,15 @@
 import { createHmac } from 'crypto'
 
 function getSecret(): string {
-  return process.env.UNSUBSCRIBE_SECRET ?? process.env.RESEND_API_KEY ?? 'dev-unsubscribe-secret'
+  const secret = process.env.UNSUBSCRIBE_SECRET ?? process.env.RESEND_API_KEY
+  if (!secret) {
+    console.error(
+      'Neither UNSUBSCRIBE_SECRET nor RESEND_API_KEY is set. ' +
+      'Unsubscribe tokens will use an insecure fallback — set UNSUBSCRIBE_SECRET in production.'
+    )
+    return 'dev-unsubscribe-secret'
+  }
+  return secret
 }
 
 function toBase64Url(value: string): string {

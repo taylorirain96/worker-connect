@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
         const html = applicationReceivedTemplate({
           employerName,
           applicantName: workerName ?? 'A worker',
-          applicantHeadline: coverLetter.slice(0, 120),
+          coverLetterPreview: coverLetter.slice(0, 120),
           jobTitle: jobTitle ?? 'your job',
           applicationId: docRef.id,
           unsubscribeUrl,

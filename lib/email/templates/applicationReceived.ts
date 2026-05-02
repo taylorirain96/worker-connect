@@ -4,14 +4,15 @@ import { APP_URL } from '../resendClient'
 export interface ApplicationReceivedTemplateData {
   employerName: string
   applicantName: string
-  applicantHeadline: string
+  /** Short excerpt from the cover letter shown in the email. */
+  coverLetterPreview: string
   jobTitle: string
   applicationId: string
   unsubscribeUrl?: string
 }
 
 export function applicationReceivedTemplate(data: ApplicationReceivedTemplateData): string {
-  const { employerName, applicantName, applicantHeadline, jobTitle, applicationId, unsubscribeUrl } = data
+  const { employerName, applicantName, coverLetterPreview, jobTitle, applicationId, unsubscribeUrl } = data
   const viewUrl = `${APP_URL}/dashboard/employer?applicationId=${applicationId}`
 
   return emailWrapper(`
@@ -22,7 +23,7 @@ export function applicationReceivedTemplate(data: ApplicationReceivedTemplateDat
     </p>
     ${infoTable(`
       ${infoRow('Applicant', applicantName)}
-      ${infoRow('Headline', applicantHeadline)}
+      ${infoRow('Message', coverLetterPreview)}
       ${infoRow('Job', jobTitle)}
     `)}
     ${ctaButton(viewUrl, 'View Application →')}

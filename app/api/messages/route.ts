@@ -13,6 +13,20 @@ const MESSAGE_EMAIL_COOLDOWN_MS = 60 * 60 * 1000
 /** 15 minutes — if user was active this recently, skip the email */
 const ACTIVE_COOLDOWN_MS = 15 * 60 * 1000
 
+/**
+ * Parse a Firestore Timestamp, ISO string, or epoch ms into Unix ms.
+ * Returns 0 if the value cannot be parsed.
+ */
+function parseTimestampMs(value: unknown): number {
+  if (!value) return 0
+  if (typeof value === 'object' && value !== null && typeof (value as { toMillis?: unknown }).toMillis === 'function') {
+    return (value as { toMillis: () => number }).toMillis()
+  }
+  if (typeof value === 'string') return Date.parse(value) || 0
+  if (typeof value === 'number') return value
+  return 0
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -65,14 +79,14 @@ export async function POST(request: NextRequest) {
         const recipientData = recipientSnap.data()
         if (recipientData) {
           const lastActiveRaw = recipientData.lastActive
-          const lastActiveMs = lastActiveRaw?.toMillis?.() ?? (typeof lastActiveRaw === 'string' ? Date.parse(lastActiveRaw) : 0)
+          const lastActiveMs = parseTimestampMs(lastActiveRaw)
           if (now - lastActiveMs < ACTIVE_COOLDOWN_MS) {
             // User is currently active — skip email
           } else {
             // 2. Check per-conversation email cooldown
             const cooldownRef = adminDb.collection('emailCooldowns').doc(`msg_${conversationId}`)
             const cooldownSnap = await cooldownRef.get()
-            const lastEmailMs: number = cooldownSnap.data()?.lastEmailSentAt?.toMillis?.() ?? 0
+            const lastEmailMs: number = parseTimestampMs(cooldownSnap.data()?.lastEmailSentAt)
 
             if (now - lastEmailMs >= MESSAGE_EMAIL_COOLDOWN_MS) {
               const recipientEmail = recipientData.email as string | undefined

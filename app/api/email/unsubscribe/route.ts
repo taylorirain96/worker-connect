@@ -11,6 +11,16 @@ import { adminDb } from '@/lib/firebase-admin'
 
 export const dynamic = 'force-dynamic'
 
+/** Escape characters that have special meaning in HTML to prevent XSS. */
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 function unsubscribedPage(message: string, isError = false): NextResponse {
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -65,9 +75,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       )
     }
 
-    const typeLabel = type === 'all'
-      ? 'all WorkerConnect emails'
-      : `"${type.replace(/([A-Z])/g, ' $1').toLowerCase()}" emails`
+    const typeLabel = escapeHtml(
+      type === 'all'
+        ? 'all WorkerConnect emails'
+        : `"${type.replace(/([A-Z])/g, ' $1').toLowerCase()}" emails`
+    )
 
     return unsubscribedPage(`You will no longer receive ${typeLabel}. You can re-enable notifications any time from your account settings.`)
   } catch (err) {
