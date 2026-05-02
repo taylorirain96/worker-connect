@@ -35,14 +35,15 @@ export async function POST(request: NextRequest) {
         if (!convSnap.exists) return
         const participants: string[] = convSnap.data()?.participants ?? []
         const recipients = participants.filter((uid) => uid !== senderId)
-        const preview = typeof content === 'string' && content.length > 80
-          ? content.slice(0, 80) + '…'
-          : content
+        const contentStr = typeof content === 'string' ? content : String(content)
+        const preview = contentStr.length > 80 ? contentStr.slice(0, 80) + '…' : contentStr
+        // Truncate senderName to avoid oversized notification titles
+        const displayName = String(senderName).slice(0, 50)
         await Promise.all(
           recipients.map((uid) =>
             sendAdminNotification({
               userId: uid,
-              title: `New message from ${senderName}`,
+              title: `New message from ${displayName}`,
               body: preview,
               type: 'new_message',
               link: '/messages',

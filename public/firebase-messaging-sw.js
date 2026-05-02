@@ -17,6 +17,29 @@ self.addEventListener('message', (event) => {
 
 let messagingInitialised = false
 
+/** Show a notification from an FCM payload object. */
+function showFCMNotification(payload) {
+  const {
+    title = 'QuickTrade',
+    body = 'You have a new notification.',
+    icon,
+    badge,
+  } = payload.notification ?? {}
+
+  const clickAction =
+    payload.data?.actionUrl || payload.data?.link || payload.data?.click_action || '/'
+
+  self.registration.showNotification(title, {
+    body,
+    icon: icon || '/icon-192.png',
+    badge: badge || '/badge-72.png',
+    data: { url: clickAction, ...payload.data },
+    vibrate: [200, 100, 200],
+    requireInteraction: payload.data?.requireInteraction === 'true',
+    tag: payload.data?.tag || 'quicktrade-notification',
+  })
+}
+
 function initFirebase(config) {
   if (messagingInitialised) return
   if (!config || !config.apiKey || !config.projectId) return
@@ -27,62 +50,20 @@ function initFirebase(config) {
     messagingInitialised = true
 
     // Handle background FCM messages
-    messaging.onBackgroundMessage((payload) => {
-      const {
-        title = 'QuickTrade',
-        body = 'You have a new notification.',
-        icon,
-        badge,
-      } = payload.notification ?? {}
-
-      const clickAction =
-        payload.data?.actionUrl || payload.data?.link || payload.data?.click_action || '/'
-
-      self.registration.showNotification(title, {
-        body,
-        icon: icon || '/icon-192.png',
-        badge: badge || '/badge-72.png',
-        data: { url: clickAction, ...payload.data },
-        vibrate: [200, 100, 200],
-        requireInteraction: payload.data?.requireInteraction === 'true',
-        tag: payload.data?.tag || 'quicktrade-notification',
-      })
-    })
+    messaging.onBackgroundMessage(showFCMNotification)
   } catch {
     // Firebase may already be initialised by service-worker.js
   }
 }
 
-// Attempt init immediately using meta tags injected by Next.js (optional)
+// Attempt init immediately if a Firebase app is already registered
 if (typeof firebase !== 'undefined') {
   try {
-    // Config may be available from a prior importScripts call in some setups
     const existing = firebase.apps?.[0]
     if (existing) {
       const messaging = firebase.messaging()
       messagingInitialised = true
-
-      messaging.onBackgroundMessage((payload) => {
-        const {
-          title = 'QuickTrade',
-          body = 'You have a new notification.',
-          icon,
-          badge,
-        } = payload.notification ?? {}
-
-        const clickAction =
-          payload.data?.actionUrl || payload.data?.link || payload.data?.click_action || '/'
-
-        self.registration.showNotification(title, {
-          body,
-          icon: icon || '/icon-192.png',
-          badge: badge || '/badge-72.png',
-          data: { url: clickAction, ...payload.data },
-          vibrate: [200, 100, 200],
-          requireInteraction: payload.data?.requireInteraction === 'true',
-          tag: payload.data?.tag || 'quicktrade-notification',
-        })
-      })
+      messaging.onBackgroundMessage(showFCMNotification)
     }
   } catch {
     // Silently ignore — config will be sent via postMessage

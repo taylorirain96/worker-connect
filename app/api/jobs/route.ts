@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
             .limit(50)
             .get()
 
-          const emailPromises: Promise<void>[] = []
+          const notificationTasks: Promise<void | null>[] = []
           for (const workerDoc of workersSnap.docs) {
             const workerData = workerDoc.data()
             // Skip workers with no email
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
             if (categoryMatch || locationMatch) {
               const workerName = (workerData?.displayName ?? workerData?.name ?? 'there') as string
               const workerId = workerDoc.id
-              emailPromises.push(
+              notificationTasks.push(
                 sendJobMatchesEmail({
                   workerEmail,
                   workerName,
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
                 })
               )
               // Push notification to matching worker
-              emailPromises.push(
+              notificationTasks.push(
                 sendAdminNotification({
                   userId: workerId,
                   title: '🔔 New job matching your skills',
@@ -139,8 +139,8 @@ export async function POST(request: NextRequest) {
             }
           }
 
-          if (emailPromises.length > 0) {
-            await Promise.allSettled(emailPromises)
+          if (notificationTasks.length > 0) {
+            await Promise.allSettled(notificationTasks)
           }
         } catch (matchErr) {
           console.error('Failed to send job-match emails:', matchErr)
