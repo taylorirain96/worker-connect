@@ -3,13 +3,18 @@
  * Sends via Resend using the RESEND_API_KEY environment variable.
  *
  * Emails:
- *   sendJobAcceptedEmail       — sent to worker when their quote is accepted
- *   sendPaymentReleasedEmail   — sent to worker when escrow payment is released
- *   sendQuoteReceivedEmail     — sent to homeowner when a worker submits a quote
- *   sendMessageReceivedEmail   — sent to recipient when they receive a message (30+ min inactive)
- *   sendApplicationUpdateEmail — sent to jobseeker when employer views/updates their application
- *   sendReviewReceivedEmail    — sent to user when they receive a new review
- *   sendJobMatchesEmail        — sent to workers when a new job matches their trade/location
+ *   sendJobAcceptedEmail          — sent to worker when their quote is accepted
+ *   sendPaymentReleasedEmail      — sent to worker when escrow payment is released
+ *   sendQuoteReceivedEmail        — sent to homeowner when a worker submits a quote
+ *   sendMessageReceivedEmail      — sent to recipient when they receive a message (30+ min inactive)
+ *   sendApplicationUpdateEmail    — sent to jobseeker when employer views/updates their application
+ *   sendReviewReceivedEmail       — sent to user when they receive a new review
+ *   sendVerificationApprovedEmail — sent to worker when their identity is verified
+ *   sendVerificationRejectedEmail — sent to worker when their verification is rejected
+ *   sendBookingRequestEmail       — sent to worker when a homeowner requests a booking
+ *   sendBookingConfirmedEmail     — sent to homeowner when worker confirms a booking
+ *   sendBookingDeclinedEmail      — sent to homeowner when worker declines a booking
+ *   sendJobMatchesEmail           — sent to workers when a new job matches their trade/location
  */
 import { Resend } from 'resend'
 
@@ -311,7 +316,70 @@ export async function sendReviewReceivedEmail(opts: {
   })
 }
 
-// ─── Email 8: Booking Request (to Worker) ────────────────────────────────────
+// ─── Email 7: Verification Approved ──────────────────────────────────────────
+
+/**
+ * Sent to a worker when their identity verification is approved.
+ */
+export async function sendVerificationApprovedEmail(opts: {
+  workerEmail: string
+  workerName: string
+}): Promise<void> {
+  const { workerEmail, workerName } = opts
+  const dashboardUrl = `${APP_URL}/dashboard/worker`
+
+  const html = emailWrapper(`
+    <h1 style="font-size:24px;font-weight:700;color:#fff;margin:0 0 8px;">You're verified! ✓</h1>
+    <p style="color:#94a3b8;line-height:1.6;margin:0 0 20px;">Ka pai, ${workerName}! Your identity has been verified and you now have the <strong style="color:#22c55e;">✓ Verified</strong> badge on your profile. This helps you stand out and win more jobs.</p>
+    ${ctaButton(dashboardUrl, 'View Your Profile →')}
+    <p style="color:#64748b;font-size:13px;text-align:center;margin:0;">Thanks for helping make WorkerConnect a trusted platform for everyone in New Zealand.</p>
+  `)
+
+  const resend = getResend()
+  if (!resend) return
+  await resend.emails.send({
+    from: FROM,
+    to: workerEmail,
+    subject: '✓ Your identity is verified — WorkerConnect',
+    html,
+  })
+}
+
+// ─── Email 8: Verification Rejected ──────────────────────────────────────────
+
+/**
+ * Sent to a worker when their identity verification is rejected.
+ */
+export async function sendVerificationRejectedEmail(opts: {
+  workerEmail: string
+  workerName: string
+  rejectionReason: string
+}): Promise<void> {
+  const { workerEmail, workerName, rejectionReason } = opts
+  const verifyUrl = `${APP_URL}/dashboard/worker/verify`
+
+  const html = emailWrapper(`
+    <h1 style="font-size:24px;font-weight:700;color:#fff;margin:0 0 8px;">Verification unsuccessful</h1>
+    <p style="color:#94a3b8;line-height:1.6;margin:0 0 20px;">Hi ${workerName}, unfortunately we weren't able to verify your identity this time.</p>
+    ${infoTable(`
+      ${infoRow('Reason', rejectionReason)}
+    `)}
+    <p style="color:#94a3b8;line-height:1.6;margin:16px 0 20px;">You're welcome to resubmit with clearer photos. Make sure your ID is fully visible and the selfie clearly shows you holding the ID.</p>
+    ${ctaButton(verifyUrl, 'Resubmit Verification →')}
+    <p style="color:#64748b;font-size:13px;text-align:center;margin:0;">If you have any questions, reply to this email.</p>
+  `)
+
+  const resend = getResend()
+  if (!resend) return
+  await resend.emails.send({
+    from: FROM,
+    to: workerEmail,
+    subject: 'Verification update — WorkerConnect',
+    html,
+  })
+}
+
+// ─── Email 9: Booking Request (to Worker) ────────────────────────────────────
 
 /**
  * Sent to the worker when a homeowner requests a booking.
@@ -357,7 +425,7 @@ export async function sendBookingRequestEmail(opts: {
   })
 }
 
-// ─── Email 9: Booking Confirmed (to Homeowner) ───────────────────────────────
+// ─── Email 10: Booking Confirmed (to Homeowner) ──────────────────────────────
 
 /**
  * Sent to the homeowner when the worker confirms their booking.
@@ -404,7 +472,7 @@ export async function sendBookingConfirmedEmail(opts: {
   })
 }
 
-// ─── Email 10: Booking Declined (to Homeowner) ───────────────────────────────
+// ─── Email 11: Booking Declined (to Homeowner) ───────────────────────────────
 
 /**
  * Sent to the homeowner when the worker declines their booking.
@@ -443,7 +511,7 @@ export async function sendBookingDeclinedEmail(opts: {
   })
 }
 
-// ─── Email 7: Job Matches ─────────────────────────────────────────────────────
+// ─── Email 12: Job Matches ────────────────────────────────────────────────────
 
 /**
  * Sent to matching workers when a new job is posted in their trade/location.

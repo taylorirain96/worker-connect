@@ -6,16 +6,17 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import {
   LayoutDashboard, Users, Briefcase, DollarSign,
-  AlertTriangle, Mail, Shield, Menu, X, ChevronRight,
+  AlertTriangle, Mail, Shield, Menu, X, ChevronRight, ShieldCheck,
 } from 'lucide-react'
 
 const NAV_ITEMS = [
-  { label: 'Overview',       href: '/dashboard/admin',           icon: LayoutDashboard },
-  { label: 'Users',          href: '/dashboard/admin/users',     icon: Users },
-  { label: 'Jobs',           href: '/dashboard/admin/jobs',      icon: Briefcase },
-  { label: 'Payments',       href: '/dashboard/admin/payments',  icon: DollarSign },
-  { label: 'Disputes',       href: '/dashboard/admin/disputes',  icon: AlertTriangle },
-  { label: 'Email Logs',     href: '/dashboard/admin/emails',    icon: Mail },
+  { label: 'Overview',       href: '/dashboard/admin',                    icon: LayoutDashboard },
+  { label: 'Users',          href: '/dashboard/admin/users',              icon: Users },
+  { label: 'Jobs',           href: '/dashboard/admin/jobs',               icon: Briefcase },
+  { label: 'Payments',       href: '/dashboard/admin/payments',           icon: DollarSign },
+  { label: 'Disputes',       href: '/dashboard/admin/disputes',           icon: AlertTriangle },
+  { label: 'Verification',   href: '/dashboard/admin/verification',       icon: ShieldCheck },
+  { label: 'Email Logs',     href: '/dashboard/admin/emails',             icon: Mail },
 ]
 
 function AdminSidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
