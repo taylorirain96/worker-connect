@@ -330,17 +330,10 @@ export async function POST(req: NextRequest) {
             const referredBy: string | undefined = workerData?.referredBy
 
             if (referredBy) {
-              // Find the open referral record for this worker
-              const refSnap = await adminDb
-                .collection('referrals')
-                .where('referrerId', '==', referredBy)
-                .where('referredId', '==', workerId)
-                .where('status', '==', 'signed_up')
-                .limit(1)
-                .get()
+              // Referral document uses referredUserId as document ID (atomic, no duplicates)
+              const refDoc = await adminDb.collection('referrals').doc(workerId).get()
 
-              if (!refSnap.empty) {
-                const refDoc = refSnap.docs[0]
+              if (refDoc.exists && refDoc.data()?.referrerId === referredBy && refDoc.data()?.status === 'signed_up') {
                 const REWARD_AMOUNT = 25 // NZ$25 on first paid job
                 const now = new Date().toISOString()
 

@@ -40,6 +40,7 @@ export async function fetchReferrals(userId: string): Promise<Referral[]> {
 /**
  * Records a new referral after a user signs up via a referral link.
  * Called client-side from the register page.
+ * Throws if the API call fails.
  */
 export async function recordReferral(params: {
   referralCode: string
@@ -47,9 +48,13 @@ export async function recordReferral(params: {
   referredEmail: string
   referredName: string
 }): Promise<void> {
-  await fetch('/api/referrals/record', {
+  const res = await fetch('/api/referrals/record', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(params),
   })
+  if (!res.ok && res.status !== 200) {
+    const data = await res.json().catch(() => ({}))
+    throw new Error((data as { error?: string }).error ?? 'Failed to record referral')
+  }
 }

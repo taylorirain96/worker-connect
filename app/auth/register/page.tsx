@@ -90,6 +90,21 @@ function RegisterForm() {
     await setDoc(doc(db, 'users', uid), { ...baseFields, ...workerFields })
   }
 
+  // Non-blocking helper — attributes a referral after signup
+  const attributeReferral = (uid: string, email: string, name: string) => {
+    if (!refCode) return
+    fetch('/api/referrals/record', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        referralCode: refCode,
+        referredUserId: uid,
+        referredEmail: email,
+        referredName: name,
+      }),
+    }).catch(() => {})
+  }
+
   const onSubmit = async (data: RegisterFormData) => {
     try {
       const { createUserWithEmailAndPassword, updateProfile } = await import('firebase/auth')
@@ -102,18 +117,7 @@ function RegisterForm() {
       await updateProfile(userCredential.user, { displayName: data.displayName })
       await createUserProfile(userCredential.user.uid, data.email, data.displayName, data.role)
       // Record referral if user arrived via a referral link (non-blocking)
-      if (refCode) {
-        fetch('/api/referrals/record', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            referralCode: refCode,
-            referredUserId: userCredential.user.uid,
-            referredEmail: data.email,
-            referredName: data.displayName,
-          }),
-        }).catch(() => {})
-      }
+      attributeReferral(userCredential.user.uid, data.email, data.displayName)
       // Fire welcome email (non-blocking)
       fetch('/api/emails/welcome', {
         method: 'POST',
@@ -151,18 +155,7 @@ function RegisterForm() {
         selectedRole
       )
       // Record referral if user arrived via a referral link (non-blocking)
-      if (refCode) {
-        fetch('/api/referrals/record', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            referralCode: refCode,
-            referredUserId: user.uid,
-            referredEmail: user.email ?? '',
-            referredName: user.displayName || 'User',
-          }),
-        }).catch(() => {})
-      }
+      attributeReferral(user.uid, user.email ?? '', user.displayName || 'User')
       // Fire welcome email (non-blocking)
       fetch('/api/emails/welcome', {
         method: 'POST',

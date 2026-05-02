@@ -33,28 +33,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Cannot refer yourself' }, { status: 400 })
     }
 
-    // Check for duplicate — one referral per referred user
-    const existingSnap = await adminDb
-      .collection('referrals')
-      .where('referredId', '==', referredUserId)
-      .limit(1)
-      .get()
-
-    if (!existingSnap.empty) {
-      return NextResponse.json({ message: 'Referral already recorded' }, { status: 200 })
-    }
-
     const now = new Date().toISOString()
-    await adminDb.collection('referrals').add({
-      referrerId,
-      referredId: referredUserId,
-      referralCode,
-      status: 'signed_up',
-      createdAt: now,
-      updatedAt: now,
-      earnedAmount: 0,
-      ...(referredName ? { referredName } : {}),
-      ...(referredEmail ? { referredEmail } : {}),
+    // Use referredUserId as the document ID — guarantees one referral per user atomically
+    const referralRef = adminDb.collection('referrals').doc(referredUserId)
+    await adminDb.runTransaction(async (tx) => {
+      const existing = await tx.get(referralRef)
+      if (existing.exists) return // already recorded — idempotent
+      tx.set(referralRef, {
+        referrerId,
+        referredId: referredUserId,
+        referralCode,
+        status: 'signed_up',
+        createdAt: now,
+        updatedAt: now,
+        earnedAmount: 0,
+        ...(referredName ? { referredName } : {}),
+        ...(referredEmail ? { referredEmail } : {}),
+      })
     })
 
     // Also store referredByCode on the new user's profile for future reward processing
