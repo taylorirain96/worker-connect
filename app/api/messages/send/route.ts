@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { conversationId, senderId, senderName, content, type, senderAvatar, imageUrls } = body
 
-    if (!conversationId || !senderId || !senderName || !content) {
+    if (!conversationId || !senderId || !senderName || (!content && !Array.isArray(imageUrls))) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 

@@ -250,7 +250,11 @@ export default function JobChatPage() {
           return
         }
         setPendingImages([])
-        setImagePreviews((prev) => { prev.forEach((u) => URL.revokeObjectURL(u)); return [] })
+        // Revoke object URLs outside the setState callback to avoid side effects
+        setImagePreviews((prev) => {
+          prev.forEach((u) => URL.revokeObjectURL(u))
+          return []
+        })
       }
 
       const msgType: Message['type'] = imageUrls.length > 0 ? 'image' : 'text'
