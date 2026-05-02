@@ -144,7 +144,10 @@ export default function JobChatPage() {
     if (ids.length < 2) return
     let mounted = true
     Promise.all(ids.map((id) => getUserProfile(id))).then((profiles) => {
-      if (mounted) setBothWorkers(profiles.every((p) => p?.role === 'worker'))
+      if (mounted) {
+        const validProfiles = profiles.filter(Boolean)
+        setBothWorkers(validProfiles.length === ids.length && validProfiles.every((p) => p?.role === 'worker'))
+      }
     }).catch(() => {})
     return () => { mounted = false }
   }, [conversation])
@@ -250,9 +253,10 @@ export default function JobChatPage() {
           return
         }
         setPendingImages([])
-        // Revoke object URLs outside the setState callback to avoid side effects
+        // Capture current previews and revoke before clearing state
         setImagePreviews((prev) => {
-          prev.forEach((u) => URL.revokeObjectURL(u))
+          const toRevoke = prev.slice()
+          queueMicrotask(() => toRevoke.forEach((u) => URL.revokeObjectURL(u)))
           return []
         })
       }
