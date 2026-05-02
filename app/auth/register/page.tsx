@@ -10,6 +10,7 @@ import { Mail, Lock, User, Eye, EyeOff } from 'lucide-react'
 import { Suspense } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { getDashboardPath } from '@/lib/auth/redirects'
+import { trackEvent } from '@/lib/analytics'
 
 const registerSchema = z
   .object({
@@ -106,6 +107,7 @@ function RegisterForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: data.email, name: data.displayName, role: data.role }),
       }).catch(() => {}) // silently ignore if email fails
+      trackEvent('user_registered', { method: 'email', role: data.role })
       toast.success('Account created successfully!')
       router.push(data.role === 'employer' ? '/dashboard/employer' : '/dashboard/worker')
     } catch (error: unknown) {
@@ -142,6 +144,7 @@ function RegisterForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: user.email, name: user.displayName || 'User', role: selectedRole }),
       }).catch(() => {}) // silently ignore if email fails
+      trackEvent('user_registered', { method: 'google', role: selectedRole })
       toast.success('Account created successfully!')
       router.push(selectedRole === 'employer' ? '/dashboard/employer' : '/dashboard/worker')
     } catch (error: unknown) {

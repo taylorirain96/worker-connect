@@ -8,6 +8,7 @@ import { Plus, Trash2, Paperclip, X, FileText } from 'lucide-react'
 import AIPriceSuggestion from './AIPriceSuggestion'
 import { storage } from '@/lib/firebase'
 import { ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
+import { trackEvent } from '@/lib/analytics'
 
 interface WorkerQuoteFormProps {
   jobId: string
@@ -213,6 +214,7 @@ export default function WorkerQuoteForm({
         throw new Error(err.error ?? 'Failed to submit quote')
       }
       const result = await res.json()
+      trackEvent('quote_submitted', { job_id: jobId, job_title: jobTitle, value: Number(data.basePrice) })
       onSuccess?.(result.id)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong')
