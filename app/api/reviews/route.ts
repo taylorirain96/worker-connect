@@ -4,6 +4,7 @@ import { getReviewsForEntity } from '@/lib/reviews/firebase'
 import { adminDb } from '@/lib/firebase-admin'
 import { sendReviewReceivedEmail } from '@/lib/email/transactional'
 import { sendAdminNotification } from '@/lib/notifications/admin'
+import admin from '@/lib/firebase-admin'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,7 +32,16 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { jobId, reviewerId, revieweeId, rating, comment } = body
+    const {
+      jobId,
+      reviewerId,
+      revieweeId,
+      rating,
+      comment,
+      tags,
+      reviewerName: bodyReviewerName,
+      reviewerAvatar,
+    } = body
 
     if (!jobId || !reviewerId || !revieweeId || !rating || !comment) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -41,28 +51,88 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Rating must be between 1 and 5' }, { status: 400 })
     }
 
-    if (comment.trim().length < 10) {
-      return NextResponse.json({ error: 'Comment must be at least 10 characters' }, { status: 400 })
+    const trimmedComment = String(comment).trim()
+    if (trimmedComment.length < 20) {
+      return NextResponse.json({ error: 'Review must be at least 20 characters' }, { status: 400 })
     }
 
-    if (comment.length > 500) {
-      return NextResponse.json({ error: 'Comment must be 500 characters or fewer' }, { status: 400 })
+    if (trimmedComment.length > 500) {
+      return NextResponse.json({ error: 'Review must be 500 characters or fewer' }, { status: 400 })
     }
 
-    const review = {
-      id: `review_${Date.now()}`,
+    const sanitisedTags: string[] = Array.isArray(tags) ? tags.filter((t) => typeof t === 'string') : []
+
+    // Prevent duplicate reviews — one review per job per reviewer
+    if (adminDb) {
+      const existingSnap = await adminDb
+        .collection('reviews')
+        .where('jobId', '==', jobId)
+        .where('reviewerId', '==', reviewerId)
+        .limit(1)
+        .get()
+
+      if (!existingSnap.empty) {
+        return NextResponse.json({ error: 'You have already reviewed this job' }, { status: 409 })
+      }
+    }
+
+    const createdAt = new Date().toISOString()
+
+    // Build review document
+    const reviewData: Record<string, unknown> = {
       jobId,
+      workerId: revieweeId,
+      homeownerId: reviewerId,
       reviewerId,
       revieweeId,
       rating,
-      comment,
-      createdAt: new Date().toISOString(),
+      review: trimmedComment,
+      comment: trimmedComment,
+      tags: sanitisedTags,
+      createdAt,
+      reviewerName: bodyReviewerName ?? null,
+      reviewerAvatar: reviewerAvatar ?? null,
     }
 
-    // In production, save to Firestore and update user's average rating
+    let reviewId = `review_${Date.now()}`
 
-    // Send "Review Received" email to reviewee (non-blocking)
+    // Save to Firestore and recalculate worker rating
     if (adminDb) {
+      const docRef = await adminDb.collection('reviews').add(reviewData)
+      reviewId = docRef.id
+
+      // Mark the job as having a review left
+      try {
+        await adminDb.collection('jobs').doc(jobId).update({ reviewLeft: true })
+      } catch {
+        // Non-fatal
+      }
+
+      // Recalculate the worker's aggregate rating
+      try {
+        const reviewsSnap = await adminDb
+          .collection('reviews')
+          .where('revieweeId', '==', revieweeId)
+          .get()
+        const count = reviewsSnap.size
+        let ratingSum = 0
+        for (const d of reviewsSnap.docs) {
+          const r = d.data().rating
+          if (typeof r === 'number') ratingSum += r
+        }
+        const sum = ratingSum
+        const avg = count > 0 ? Math.round((sum / count) * 10) / 10 : 0
+        await adminDb.collection('users').doc(revieweeId).update({
+          rating: avg,
+          reviewCount: count,
+          averageRating: avg,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        })
+      } catch {
+        // Non-fatal: aggregate update failure should not block review submission
+      }
+
+      // Send "Review Received" email to reviewee (non-blocking)
       ;(async () => {
         try {
           const [revieweeSnap, reviewerSnap] = await Promise.all([
@@ -73,8 +143,8 @@ export async function POST(request: NextRequest) {
           const reviewerData = reviewerSnap.exists ? reviewerSnap.data() : null
           const revieweeEmail = revieweeData?.email as string | undefined
           const revieweeName = (revieweeData?.displayName ?? revieweeData?.name ?? 'there') as string
-          const reviewerName = (reviewerData?.displayName ?? reviewerData?.name ?? 'Someone') as string
-          const snippet = comment.length > 150 ? `${comment.slice(0, 150)}\u2026` : comment
+          const reviewerName = (reviewerData?.displayName ?? reviewerData?.name ?? bodyReviewerName ?? 'Someone') as string
+          const snippet = trimmedComment.length > 150 ? `${trimmedComment.slice(0, 150)}\u2026` : trimmedComment
           if (revieweeEmail) {
             await sendReviewReceivedEmail({
               revieweeEmail,
@@ -100,7 +170,7 @@ export async function POST(request: NextRequest) {
       })().catch(() => {})
     }
 
-    return NextResponse.json(review, { status: 201 })
+    return NextResponse.json({ ...reviewData, id: reviewId }, { status: 201 })
   } catch (error) {
     console.error('Create review error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

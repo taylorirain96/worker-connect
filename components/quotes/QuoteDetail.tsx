@@ -381,6 +381,33 @@ export default function QuoteDetail({ quote, isEmployer = false, userId, onAccep
               </div>
             )}
 
+            {/* Portfolio Photos — examples of my work */}
+            {quote.portfolioPhotos && quote.portfolioPhotos.length > 0 && (
+              <div>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Examples of My Work
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  {quote.portfolioPhotos.map((photo) => (
+                    <button
+                      key={photo.id}
+                      type="button"
+                      onClick={() => { setLightboxSrc(photo.url); setLightboxAlt(photo.title) }}
+                      className="relative w-20 h-20 rounded-lg border border-gray-200 dark:border-gray-600 overflow-hidden bg-gray-100 dark:bg-gray-700 hover:opacity-80 transition-opacity group"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={photo.url} alt={photo.title} className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-end">
+                        <div className="w-full bg-gradient-to-t from-black/60 to-transparent p-1.5">
+                          <p className="text-white text-[10px] truncate leading-tight">{photo.title}</p>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Expiry */}
             {quote.status !== 'countered' && (
               <p className={`text-xs ${isExpired ? 'text-red-500' : 'text-gray-400 dark:text-gray-500'}`}>
