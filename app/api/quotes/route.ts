@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
 import { sendQuoteReceivedEmail } from '@/lib/email/transactional'
+import { sendAdminNotification } from '@/lib/notifications/admin'
 
 export const dynamic = 'force-dynamic'
 
@@ -113,6 +114,15 @@ export async function POST(req: NextRequest) {
           jobId,
         })
       }
+
+      // Push notification to homeowner
+      await sendAdminNotification({
+        userId: employerId,
+        title: 'New quote received 📋',
+        body: `${workerName} submitted a quote of NZ$${totalPrice.toFixed(2)} for "${jobTitle}".`,
+        type: 'application_received',
+        link: `/jobs/${jobId}`,
+      })
     } catch (emailErr) {
       console.error('Failed to send quote-received email:', emailErr)
     }

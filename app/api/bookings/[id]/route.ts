@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
 import { sendBookingConfirmedEmail, sendBookingDeclinedEmail } from '@/lib/email/transactional'
+import { sendAdminNotification } from '@/lib/notifications/admin'
 import type { BookingStatus } from '@/types'
 
 export const dynamic = 'force-dynamic'
@@ -107,6 +108,15 @@ export async function PUT(
         workerMessage: workerMessage,
         bookingId: params.id,
       }).catch((err) => console.error('sendBookingConfirmedEmail failed:', err))
+
+      // Push notification to homeowner
+      sendAdminNotification({
+        userId: booking.homeownerId,
+        title: 'Booking Confirmed ✅',
+        body: `${booking.workerName} confirmed your booking for ${booking.requestedDate}.`,
+        type: 'job_status_change',
+        link: `/dashboard/homeowner/bookings`,
+      }).catch(() => {})
     } else {
       sendBookingDeclinedEmail({
         homeownerEmail: booking.homeownerEmail,
@@ -116,6 +126,15 @@ export async function PUT(
         workerMessage: workerMessage,
         bookingId: params.id,
       }).catch((err) => console.error('sendBookingDeclinedEmail failed:', err))
+
+      // Push notification to homeowner
+      sendAdminNotification({
+        userId: booking.homeownerId,
+        title: 'Booking Declined',
+        body: `${booking.workerName} was unable to accept your booking for ${booking.requestedDate}.`,
+        type: 'job_status_change',
+        link: `/dashboard/homeowner/bookings`,
+      }).catch(() => {})
     }
 
     return NextResponse.json({ success: true })

@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server'
 import { categoriseJob } from '@/lib/ai/categorise-job'
 import { adminDb } from '@/lib/firebase-admin'
 import { sendJobMatchesEmail } from '@/lib/email/transactional'
+import { sendAdminNotification } from '@/lib/notifications/admin'
 
 export async function GET(request: NextRequest) {
   try {
@@ -114,6 +115,7 @@ export async function POST(request: NextRequest) {
 
             if (categoryMatch || locationMatch) {
               const workerName = (workerData?.displayName ?? workerData?.name ?? 'there') as string
+              const workerId = workerDoc.id
               emailPromises.push(
                 sendJobMatchesEmail({
                   workerEmail,
@@ -122,6 +124,16 @@ export async function POST(request: NextRequest) {
                   location,
                   budget: parseFloat(budget),
                   jobId,
+                })
+              )
+              // Push notification to matching worker
+              emailPromises.push(
+                sendAdminNotification({
+                  userId: workerId,
+                  title: '🔔 New job matching your skills',
+                  body: `"${title}" in ${location} — NZ$${parseFloat(budget).toFixed(0)} budget.`,
+                  type: 'new_job',
+                  link: `/jobs/${jobId}`,
                 })
               )
             }

@@ -20,6 +20,7 @@ import Stripe from 'stripe'
 import { rateLimit } from '@/lib/rateLimit'
 import { sendPaymentReleasedEmail } from '@/lib/email/transactional'
 import { adminDb } from '@/lib/firebase-admin'
+import { sendAdminNotification } from '@/lib/notifications/admin'
 
 export async function POST(request: Request) {
   if (rateLimit(request, { max: 20, windowMs: 60_000 })) {
@@ -126,6 +127,17 @@ export async function POST(request: Request) {
 
     // Fire-and-forget payment email regardless of Stripe mode (non-blocking)
     sendPaymentEmail().catch(() => {})
+
+    // Push notification to worker: payment released (non-blocking)
+    if (workerId) {
+      sendAdminNotification({
+        userId: workerId,
+        title: 'Payment released 💰',
+        body: `NZ$${workerReceives.toFixed(2)} has been released for "${jobTitle ?? jobId}".`,
+        type: 'payment_received',
+        link: `/jobs/${jobId}`,
+      }).catch(() => {})
+    }
 
     const responsePayload = {
       success: true,
