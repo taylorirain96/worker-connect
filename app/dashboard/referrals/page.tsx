@@ -270,9 +270,9 @@ export default function ReferralDashboardPage() {
                           {r.status === 'signed_up' ? 'Signed up — awaiting first job' : 'First job completed ✓'}
                         </p>
                       </div>
-                      {r.earnedAmount > 0 && (
+                      {(r.earnedAmount ?? 0) > 0 && (
                         <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex-shrink-0">
-                          +{formatNZD(r.earnedAmount)}
+                          +{formatNZD(r.earnedAmount ?? 0)}
                         </span>
                       )}
                     </li>

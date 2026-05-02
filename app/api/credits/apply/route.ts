@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
         userId,
         amount: -creditUsed,
         type: 'promo_applied',
-        description: `NZ$${creditUsed.toFixed(2)} credit applied at checkout`,
+        description: `NZ$${roundCurrency(creditUsed)} credit applied at checkout`,
         ...(jobId ? { jobId } : {}),
         createdAt: now,
       }
