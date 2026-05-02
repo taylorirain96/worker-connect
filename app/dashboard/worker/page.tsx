@@ -11,7 +11,7 @@ import RatingStars from '@/components/reviews/RatingStars'
 import Link from 'next/link'
 import {
   Briefcase, DollarSign, Star, Clock, TrendingUp,
-  CheckCircle, AlertCircle, Search, Settings, FileText, MessageSquare, Send
+  CheckCircle, AlertCircle, Search, Settings, FileText, MessageSquare, Send, Sparkles
 } from 'lucide-react'
 import { formatCurrency, STATUS_LABELS, formatRelativeDate } from '@/lib/utils'
 import { collection, query, where, orderBy, getDocs, type DocumentData } from 'firebase/firestore'
@@ -21,6 +21,7 @@ import { getWorkerReviews, respondToReview } from '@/lib/reviews/index'
 import { getWorkerActivePlacement, type Placement } from '@/lib/placements/firebase'
 import toast from 'react-hot-toast'
 import QuoteStats from '@/components/quotes/QuoteStats'
+import JobsForYouFeed from '@/components/jobs/JobsForYouFeed'
 
 const MAX_DISPLAYED_REVIEWS = 10
 const MS_PER_DAY = 86_400_000
@@ -334,6 +335,25 @@ export default function WorkerDashboardPage() {
               </Card>
             ))}
           </div>
+
+          {/* Jobs For You */}
+          <Card className="mb-8">
+            <CardHeader>
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-indigo-400" />
+                  <CardTitle>Jobs For You</CardTitle>
+                  <span className="text-xs bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full font-medium">AI-powered</span>
+                </div>
+                <Link href="/jobs?tab=for-you" className="text-sm text-primary-600 hover:text-primary-700">
+                  See all matches →
+                </Link>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <JobsForYouFeed limit={3} />
+            </CardContent>
+          </Card>
 
           <div className="grid lg:grid-cols-3 gap-6">
             {/* Applied Jobs */}
