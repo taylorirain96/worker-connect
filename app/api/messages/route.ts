@@ -1,5 +1,17 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { adminDb } from '@/lib/firebase-admin'
+import { sendEmail } from '@/lib/email/sendEmail'
+import { newMessageTemplate } from '@/lib/email/templates/newMessage'
+import { createUnsubscribeToken } from '@/lib/email/unsubscribeToken'
+
+export const dynamic = 'force-dynamic'
+
+/** 1 hour cooldown between "new message" notification emails per conversation */
+const MESSAGE_EMAIL_COOLDOWN_MS = 60 * 60 * 1000
+
+/** 15 minutes — if user was active this recently, skip the email */
+const ACTIVE_COOLDOWN_MS = 15 * 60 * 1000
 
 export async function GET(request: NextRequest) {
   try {
@@ -23,7 +35,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { conversationId, senderId, senderName, content, type } = body
+    const { conversationId, senderId, senderName, recipientId, content, type } = body
 
     if (!conversationId || !senderId || !senderName || !content) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -42,6 +54,59 @@ export async function POST(request: NextRequest) {
 
     // Messages are persisted client-side via Firestore SDK for real-time delivery.
     // This endpoint can be used for server-to-server or admin message creation.
+
+    // ── Send "new message" email notification to recipient (non-fatal) ────────
+    if (recipientId && adminDb) {
+      try {
+        const now = Date.now()
+
+        // 1. Check if recipient was recently active (skip if active in last 15 min)
+        const recipientSnap = await adminDb.collection('users').doc(recipientId).get()
+        const recipientData = recipientSnap.data()
+        if (recipientData) {
+          const lastActiveRaw = recipientData.lastActive
+          const lastActiveMs = lastActiveRaw?.toMillis?.() ?? (typeof lastActiveRaw === 'string' ? Date.parse(lastActiveRaw) : 0)
+          if (now - lastActiveMs < ACTIVE_COOLDOWN_MS) {
+            // User is currently active — skip email
+          } else {
+            // 2. Check per-conversation email cooldown
+            const cooldownRef = adminDb.collection('emailCooldowns').doc(`msg_${conversationId}`)
+            const cooldownSnap = await cooldownRef.get()
+            const lastEmailMs: number = cooldownSnap.data()?.lastEmailSentAt?.toMillis?.() ?? 0
+
+            if (now - lastEmailMs >= MESSAGE_EMAIL_COOLDOWN_MS) {
+              const recipientEmail = recipientData.email as string | undefined
+              const recipientName = (recipientData.displayName ?? recipientData.name ?? 'there') as string
+
+              // Check if user has opted out of newMessage emails
+              const optedOut = recipientData.emailNotifications?.newMessage === false ||
+                               recipientData.emailNotifications?.all === false
+
+              if (recipientEmail && !optedOut) {
+                const unsubscribeUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/api/email/unsubscribe?token=${createUnsubscribeToken(recipientId, 'newMessage')}`
+                const html = newMessageTemplate({
+                  recipientName,
+                  senderName,
+                  messagePreview: content,
+                  conversationId,
+                  unsubscribeUrl,
+                })
+                await sendEmail({
+                  to: recipientEmail,
+                  subject: `New message from ${senderName}`,
+                  html,
+                })
+                // Record the cooldown timestamp
+                await cooldownRef.set({ lastEmailSentAt: new Date() }, { merge: true })
+              }
+            }
+          }
+        }
+      } catch (emailErr) {
+        console.error('Failed to send new-message email:', emailErr)
+      }
+    }
+
     return NextResponse.json(message, { status: 201 })
   } catch (error) {
     console.error('Send message error:', error)
