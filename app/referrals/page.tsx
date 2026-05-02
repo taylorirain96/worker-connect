@@ -1,5 +1,5 @@
 'use client'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
@@ -9,12 +9,12 @@ import ReferralCard from '@/components/referrals/ReferralCard'
 import ReferralQRCode from '@/components/referrals/ReferralQRCode'
 import { useAuth } from '@/components/providers/AuthProvider'
 import {
-  generateReferralCode,
   getReferralUrl,
   buildReferralStats,
   MILESTONE_BONUSES,
   REFERRAL_BONUSES,
 } from '@/lib/referrals/referralLogic'
+import { ensureReferralCode, fetchReferrals } from '@/lib/referrals/referralService'
 import { formatCurrency } from '@/lib/utils'
 import type { Referral } from '@/types'
 import {
@@ -22,75 +22,45 @@ import {
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
-// ─── Mock data (replace with Firestore calls) ─────────────────────────────────
-const MOCK_REFERRALS: Referral[] = [
-  {
-    id: '1',
-    referrerId: 'worker1',
-    referredId: 'worker2',
-    referralCode: 'QT-AB12-XYZ',
-    status: 'completed_3',
-    createdAt: new Date(Date.now() - 30 * 86400000).toISOString(),
-    updatedAt: new Date(Date.now() - 15 * 86400000).toISOString(),
-    earnedAmount: 25,
-    referredName: 'Marcus Johnson',
-    jobsCompleted: 5,
-  },
-  {
-    id: '2',
-    referrerId: 'worker1',
-    referredId: 'worker3',
-    referralCode: 'QT-AB12-XYZ',
-    status: 'signed_up',
-    createdAt: new Date(Date.now() - 10 * 86400000).toISOString(),
-    updatedAt: new Date(Date.now() - 10 * 86400000).toISOString(),
-    earnedAmount: 0,
-    referredName: 'Sarah Williams',
-    jobsCompleted: 0,
-  },
-  {
-    id: '3',
-    referrerId: 'worker1',
-    referredId: undefined,
-    referralCode: 'QT-AB12-XYZ',
-    status: 'pending',
-    createdAt: new Date(Date.now() - 3 * 86400000).toISOString(),
-    updatedAt: new Date(Date.now() - 3 * 86400000).toISOString(),
-    earnedAmount: 0,
-    referredEmail: 'tom@example.com',
-  },
-  {
-    id: '4',
-    referrerId: 'worker1',
-    referredId: 'worker4',
-    referralCode: 'QT-AB12-XYZ',
-    status: 'trusted_pro',
-    createdAt: new Date(Date.now() - 180 * 86400000).toISOString(),
-    updatedAt: new Date(Date.now() - 30 * 86400000).toISOString(),
-    earnedAmount: 175,
-    referredName: 'Elena Rodriguez',
-    jobsCompleted: 60,
-  },
-]
-
 export default function ReferralsPage() {
   const { user } = useAuth()
-  const referralCode = useMemo(
-    () => (user?.uid ? generateReferralCode(user.uid) : 'QT-DEMO-CODE'),
-    [user?.uid]
-  )
-  const referralUrl = getReferralUrl(referralCode)
 
+  const [referralCode, setReferralCode] = useState<string>('—')
+  const [referrals, setReferrals] = useState<Referral[]>([])
+  const [loadingData, setLoadingData] = useState(true)
   const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all')
   const [copied, setCopied] = useState(false)
 
-  const stats = useMemo(() => buildReferralStats(MOCK_REFERRALS), [])
+  const referralUrl = useMemo(() => getReferralUrl(referralCode), [referralCode])
+
+  const loadData = useCallback(async () => {
+    if (!user?.uid) return
+    setLoadingData(true)
+    try {
+      const [code, refs] = await Promise.all([
+        ensureReferralCode(user.uid),
+        fetchReferrals(user.uid),
+      ])
+      setReferralCode(code)
+      setReferrals(refs)
+    } catch {
+      toast.error('Could not load referral data')
+    } finally {
+      setLoadingData(false)
+    }
+  }, [user?.uid])
+
+  useEffect(() => {
+    loadData()
+  }, [loadData])
+
+  const stats = useMemo(() => buildReferralStats(referrals), [referrals])
 
   const filtered = useMemo(() => {
-    if (filter === 'active') return MOCK_REFERRALS.filter((r) => r.status === 'pending' || r.status === 'signed_up')
-    if (filter === 'completed') return MOCK_REFERRALS.filter((r) => r.status !== 'pending' && r.status !== 'signed_up')
-    return MOCK_REFERRALS
-  }, [filter])
+    if (filter === 'active') return referrals.filter((r) => r.status === 'pending' || r.status === 'signed_up')
+    if (filter === 'completed') return referrals.filter((r) => r.status !== 'pending' && r.status !== 'signed_up')
+    return referrals
+  }, [filter, referrals])
 
   const copyCode = async () => {
     await navigator.clipboard.writeText(referralCode)
@@ -131,6 +101,12 @@ export default function ReferralsPage() {
             </div>
           </div>
 
+          {loadingData ? (
+            <div className="flex justify-center py-16">
+              <div className="animate-spin h-8 w-8 border-4 border-primary-600 border-t-transparent rounded-full" />
+            </div>
+          ) : (
+            <>
           {/* Stats row */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
@@ -293,6 +269,8 @@ export default function ReferralsPage() {
               View your full earnings dashboard →
             </Link>
           </div>
+          </>
+          )}
         </div>
       </main>
       <Footer />

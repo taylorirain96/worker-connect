@@ -14,6 +14,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import type Stripe from 'stripe'
 import { constructWebhookEvent } from '@/lib/stripe'
 import { adminDb } from '@/lib/firebase-admin'
+import { FieldValue } from 'firebase-admin/firestore'
 import { sendNotification } from '@/lib/notificationService'
 import {
   getEscrowByPaymentIntent,
@@ -321,6 +322,51 @@ export async function POST(req: NextRequest) {
               ...(paymentIntentId ? { stripePaymentIntentId: paymentIntentId } : {}),
             },
           })
+
+          // ── Referral reward: credit referrer on first paid job ─────────────
+          try {
+            const workerDoc = await adminDb.collection('users').doc(workerId).get()
+            const workerData = workerDoc.data()
+            const referredBy: string | undefined = workerData?.referredBy
+
+            if (referredBy) {
+              // Find the open referral record for this worker
+              const refSnap = await adminDb
+                .collection('referrals')
+                .where('referrerId', '==', referredBy)
+                .where('referredId', '==', workerId)
+                .where('status', '==', 'signed_up')
+                .limit(1)
+                .get()
+
+              if (!refSnap.empty) {
+                const refDoc = refSnap.docs[0]
+                const REWARD_AMOUNT = 25 // NZ$25 on first paid job
+                const now = new Date().toISOString()
+
+                await refDoc.ref.update({
+                  status: 'completed_3',
+                  earnedAmount: REWARD_AMOUNT,
+                  updatedAt: now,
+                })
+
+                // Use FieldValue to increment referralCredits atomically
+                await adminDb.collection('users').doc(referredBy).update({
+                  referralCredits: FieldValue.increment(REWARD_AMOUNT),
+                })
+
+                await sendNotification({
+                  userId: referredBy,
+                  type: 'payment_received',
+                  title: '🎉 Referral Reward Earned!',
+                  message: `Your referral completed their first paid job — you've earned NZ$${REWARD_AMOUNT} in referral credits!`,
+                  metadata: { referralId: refDoc.id, rewardAmount: REWARD_AMOUNT },
+                })
+              }
+            }
+          } catch (rewardErr) {
+            console.error('Referral reward processing failed (non-fatal):', rewardErr)
+          }
         }
         break
       }

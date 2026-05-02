@@ -30,6 +30,7 @@ function RegisterForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const defaultRole = (searchParams.get('role') as 'worker' | 'employer') || 'worker'
+  const refCode = searchParams.get('ref') ?? ''
   const { user, profile, loading } = useAuth()
 
   // Redirect away if already logged in
@@ -100,6 +101,19 @@ function RegisterForm() {
       const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password)
       await updateProfile(userCredential.user, { displayName: data.displayName })
       await createUserProfile(userCredential.user.uid, data.email, data.displayName, data.role)
+      // Record referral if user arrived via a referral link (non-blocking)
+      if (refCode) {
+        fetch('/api/referrals/record', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            referralCode: refCode,
+            referredUserId: userCredential.user.uid,
+            referredEmail: data.email,
+            referredName: data.displayName,
+          }),
+        }).catch(() => {})
+      }
       // Fire welcome email (non-blocking)
       fetch('/api/emails/welcome', {
         method: 'POST',
@@ -136,6 +150,19 @@ function RegisterForm() {
         user.displayName || 'User',
         selectedRole
       )
+      // Record referral if user arrived via a referral link (non-blocking)
+      if (refCode) {
+        fetch('/api/referrals/record', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            referralCode: refCode,
+            referredUserId: user.uid,
+            referredEmail: user.email ?? '',
+            referredName: user.displayName || 'User',
+          }),
+        }).catch(() => {})
+      }
       // Fire welcome email (non-blocking)
       fetch('/api/emails/welcome', {
         method: 'POST',
