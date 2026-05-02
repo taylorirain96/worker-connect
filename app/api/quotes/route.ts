@@ -95,9 +95,13 @@ export async function POST(req: NextRequest) {
       let homeownerName: string | undefined
       if (adminDb) {
         const employerSnap = await adminDb.collection('users').doc(employerId).get()
-        const employerData = employerSnap.data()
-        homeownerEmail = employerData?.email as string | undefined
-        homeownerName = (employerData?.displayName ?? employerData?.name) as string | undefined
+        if (!employerSnap.exists) {
+          console.warn(`Quote-received email: employer document not found for id ${employerId}`)
+        } else {
+          const employerData = employerSnap.data()
+          homeownerEmail = employerData?.email as string | undefined
+          homeownerName = (employerData?.displayName ?? employerData?.name) as string | undefined
+        }
       }
       if (homeownerEmail) {
         await sendQuoteReceivedEmail({

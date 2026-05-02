@@ -110,7 +110,11 @@ export async function PUT(
         let workerEmail: string | undefined
         if (adminDb) {
           const workerSnap = await adminDb.collection('users').doc(quote.workerId).get()
-          workerEmail = workerSnap.data()?.email as string | undefined
+          if (!workerSnap.exists) {
+            console.warn(`Job-accepted email: worker document not found for id ${quote.workerId}`)
+          } else {
+            workerEmail = workerSnap.data()?.email as string | undefined
+          }
         }
         if (workerEmail) {
           await sendJobAcceptedEmail({

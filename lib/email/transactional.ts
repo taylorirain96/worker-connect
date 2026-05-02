@@ -67,8 +67,10 @@ function infoTable(rows: string): string {
   `
 }
 
+const nzdFormatter = new Intl.NumberFormat('en-NZ', { style: 'currency', currency: 'NZD' })
+
 function formatNzd(amount: number): string {
-  return new Intl.NumberFormat('en-NZ', { style: 'currency', currency: 'NZD' }).format(amount)
+  return nzdFormatter.format(amount)
 }
 
 // ─── Email 1: Job Accepted ────────────────────────────────────────────────────

@@ -124,10 +124,18 @@ export async function POST(request: NextRequest) {
           adminDb.collection('users').doc(escrow.workerId).get(),
           adminDb.collection('jobs').doc(escrow.jobId).get(),
         ])
-        const workerData = workerSnap.data()
-        workerEmail = workerData?.email as string | undefined
-        workerName = (workerData?.displayName ?? workerData?.name) as string | undefined
-        jobTitle = jobSnap.data()?.title as string | undefined
+        if (!workerSnap.exists) {
+          console.warn(`Payment-released email: worker document not found for id ${escrow.workerId}`)
+        } else {
+          const workerData = workerSnap.data()
+          workerEmail = workerData?.email as string | undefined
+          workerName = (workerData?.displayName ?? workerData?.name) as string | undefined
+        }
+        if (!jobSnap.exists) {
+          console.warn(`Payment-released email: job document not found for id ${escrow.jobId}`)
+        } else {
+          jobTitle = jobSnap.data()?.title as string | undefined
+        }
       }
       if (workerEmail) {
         await sendPaymentReleasedEmail({
