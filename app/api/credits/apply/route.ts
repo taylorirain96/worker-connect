@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
       const txData: Omit<CreditTransaction, 'id'> = {
         userId,
         amount: -creditUsed,
-        type: 'promo_applied',
+        type: 'credit_applied',
         description: `NZ$${roundCurrency(creditUsed)} credit applied at checkout`,
         ...(jobId ? { jobId } : {}),
         createdAt: now,

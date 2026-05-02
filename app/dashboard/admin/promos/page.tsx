@@ -57,6 +57,11 @@ export default function AdminPromosPage() {
   const [form, setForm] = useState<CreateForm>(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
 
+  const handleCancel = () => {
+    setShowForm(false)
+    setForm(EMPTY_FORM)
+  }
+
   const loadCodes = useCallback(async () => {
     if (!user) return
     setLoading(true)
@@ -172,7 +177,7 @@ export default function AdminPromosPage() {
           >
             <RefreshCw className="h-4 w-4" />
           </button>
-          <Button onClick={() => setShowForm((v) => !v)} size="sm">
+          <Button onClick={() => (showForm ? handleCancel() : setShowForm(true))} size="sm">
             <Plus className="h-4 w-4 mr-1" />
             New Code
           </Button>
@@ -288,7 +293,7 @@ export default function AdminPromosPage() {
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => { setShowForm(false); setForm(EMPTY_FORM) }}
+              onClick={handleCancel}
             >
               Cancel
             </Button>

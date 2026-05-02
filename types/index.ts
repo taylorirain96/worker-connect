@@ -2021,7 +2021,7 @@ export interface PromoCode {
 
 // ─── Credit Transaction Types ─────────────────────────────────────────────────
 
-export type CreditTransactionType = 'referral_reward' | 'promo_applied' | 'manual_adjustment' | 'referral_signup'
+export type CreditTransactionType = 'referral_reward' | 'credit_applied' | 'manual_adjustment' | 'referral_signup'
 
 export interface CreditTransaction {
   id: string

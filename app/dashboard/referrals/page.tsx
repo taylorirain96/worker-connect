@@ -78,10 +78,10 @@ export default function ReferralDashboardPage() {
   }
 
   const shareWhatsApp = () => {
-    const text = encodeURIComponent(
+    const whatsappMessage = encodeURIComponent(
       `Join WorkerConnect and get NZ$${REFERRAL_CREDIT_REWARD} credit on your first job! Sign up here: ${referralUrl}`,
     )
-    window.open(`https://wa.me/?text=${text}`, '_blank')
+    window.open(`https://wa.me/?text=${whatsappMessage}`, '_blank')
   }
 
   const shareFacebook = () => {

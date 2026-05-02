@@ -29,8 +29,8 @@ export default function PromoCodeInput({ userId, amount, onApply, onRemove }: Pr
     new Intl.NumberFormat('en-NZ', { style: 'currency', currency: 'NZD', minimumFractionDigits: 0 }).format(n)
 
   const handleApply = async () => {
-    if (!code.trim()) return
     const normalisedCode = code.trim().toUpperCase()
+    if (!normalisedCode) return
     setLoading(true)
     try {
       const res = await fetch('/api/promos/validate', {

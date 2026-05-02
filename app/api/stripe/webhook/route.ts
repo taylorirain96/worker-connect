@@ -333,8 +333,9 @@ export async function POST(req: NextRequest) {
             if (referredBy) {
               // Referral document uses referredUserId as document ID (atomic, no duplicates)
               const refDoc = await adminDb.collection('referrals').doc(workerId).get()
+              const refData = refDoc.data()
 
-              if (refDoc.exists && refDoc.data()?.referrerId === referredBy && refDoc.data()?.status === 'signed_up') {
+              if (refDoc.exists && refData?.referrerId === referredBy && refData?.status === 'signed_up') {
                 const now = new Date().toISOString()
 
                 await refDoc.ref.update({
