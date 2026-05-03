@@ -66,6 +66,8 @@ async function buildDashboardData(): Promise<DashboardResult> {
   let totalUsers = 0
   let homeownerCount = 0
   let workerCount = 0
+  let newUsersThisMonth = 0
+  let newUsersLastMonth = 0
   let totalJobsThisMonth = 0
   let totalJobsLastMonth = 0
   let revenueThisMonth = 0
@@ -91,15 +93,20 @@ async function buildDashboardData(): Promise<DashboardResult> {
     // Real Firestore aggregation
     const usersSnap = await adminDb.collection('users').get()
     totalUsers = usersSnap.size
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString()
     usersSnap.forEach((doc) => {
       const role = doc.data().role as string
+      const createdAt = doc.data().createdAt as string | undefined
       if (role === 'homeowner') homeownerCount++
       else if (role === 'worker' || role === 'tradie') workerCount++
+      if (createdAt) {
+        if (createdAt >= monthStart) newUsersThisMonth++
+        else if (createdAt >= lastMonthStart && createdAt < monthStart) newUsersLastMonth++
+      }
     })
 
     const jobsSnap = await adminDb.collection('jobs').get()
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
-    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString()
 
     const cityCounts: Record<string, number> = {}
     const categoryCounts: Record<string, number> = {}
@@ -213,6 +220,8 @@ async function buildDashboardData(): Promise<DashboardResult> {
     totalUsers = 1284
     homeownerCount = 521
     workerCount = 612
+    newUsersThisMonth = 87
+    newUsersLastMonth = 74
     totalJobsThisMonth = 318
     totalJobsLastMonth = 274
     revenueThisMonth = 9820
@@ -291,8 +300,8 @@ async function buildDashboardData(): Promise<DashboardResult> {
     recentActivity.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
   }
 
-  const growthPct = totalUsers > 0
-    ? parseFloat((((homeownerCount + workerCount) / totalUsers) * 100 - 85).toFixed(1))
+  const userGrowthPct = newUsersLastMonth > 0
+    ? parseFloat((((newUsersThisMonth - newUsersLastMonth) / newUsersLastMonth) * 100).toFixed(1))
     : 0
   const jobsGrowthPct = totalJobsLastMonth > 0
     ? parseFloat((((totalJobsThisMonth - totalJobsLastMonth) / totalJobsLastMonth) * 100).toFixed(1))
@@ -306,7 +315,7 @@ async function buildDashboardData(): Promise<DashboardResult> {
       totalUsers,
       homeownerCount,
       workerCount,
-      userGrowthPct: growthPct,
+      userGrowthPct,
       totalJobsThisMonth,
       totalJobsLastMonth,
       jobsGrowthPct,
