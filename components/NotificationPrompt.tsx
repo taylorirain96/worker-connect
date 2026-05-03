@@ -1,46 +1,55 @@
 'use client'
 /**
- * PushPermissionPrompt
+ * NotificationPrompt
  *
- * Shown once after a user logs in. Asks them to enable browser push notifications.
- * Stored in localStorage so it only appears once per device.
+ * Banner shown after login asking users to enable browser push notifications.
+ * "Enable" triggers FCM permission request.
+ * "Maybe later" dismisses for 7 days (timestamp stored in localStorage).
+ *
+ * Shown on worker and homeowner dashboards (and globally after login).
+ * Gracefully handles browsers that do not support the Notifications API.
  */
 import { useState, useEffect } from 'react'
 import { Bell, X } from 'lucide-react'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { requestFCMPermission } from '@/lib/fcm'
+import { requestPermission } from '@/lib/fcm/requestPermission'
 
-const STORAGE_KEY = 'wc_push_prompt_dismissed'
+const STORAGE_KEY = 'wc_notif_prompt_snoozed'
 const SNOOZE_DAYS = 7
 
-export default function PushPermissionPrompt() {
+export default function NotificationPrompt() {
   const { user } = useAuth()
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
     if (!user) return
     if (typeof window === 'undefined') return
+    // Gracefully handle browsers that don't support the Notifications API
     if (!('Notification' in window)) return
+    // Already granted or permanently denied — no need to prompt
     if (Notification.permission !== 'default') return
-    // Check if snooze is still active
+
+    // Check if the user snoozed the prompt and the snooze hasn't expired yet
     const snoozedUntil = localStorage.getItem(STORAGE_KEY)
     if (snoozedUntil && Date.now() < parseInt(snoozedUntil, 10)) return
 
-    // Show the prompt 2 seconds after login
+    // Show prompt 2 seconds after page load to avoid jarring the user
     const timer = setTimeout(() => setVisible(true), 2000)
     return () => clearTimeout(timer)
   }, [user])
 
+  /** Dismiss and snooze for SNOOZE_DAYS days. */
   const dismiss = () => {
     setVisible(false)
     const snoozedUntil = Date.now() + SNOOZE_DAYS * 24 * 60 * 60 * 1000
     localStorage.setItem(STORAGE_KEY, String(snoozedUntil))
   }
 
+  /** Request FCM permission and hide the prompt. */
   const enable = async () => {
-    dismiss()
+    setVisible(false)
     if (!user) return
-    await requestFCMPermission(user.uid)
+    await requestPermission(user.uid)
   }
 
   if (!visible) return null
@@ -54,19 +63,20 @@ export default function PushPermissionPrompt() {
       <div className="flex-shrink-0 bg-indigo-100 dark:bg-indigo-900/40 rounded-full p-2">
         <Bell className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
       </div>
+
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-gray-900 dark:text-white">
           Enable notifications
         </p>
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-          Get alerted instantly when new jobs match your skills, quotes arrive, or bookings are confirmed.
+          Get instant alerts for new jobs, quotes, messages, and booking updates.
         </p>
         <div className="flex items-center gap-2 mt-3">
           <button
             onClick={enable}
             className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
           >
-            Enable notifications
+            Enable
           </button>
           <button
             onClick={dismiss}
@@ -76,10 +86,11 @@ export default function PushPermissionPrompt() {
           </button>
         </div>
       </div>
+
       <button
         onClick={dismiss}
         className="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors -mt-1 -mr-1"
-        aria-label="Dismiss"
+        aria-label="Dismiss notification prompt"
       >
         <X className="h-4 w-4" />
       </button>

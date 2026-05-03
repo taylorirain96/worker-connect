@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
 import { sendJobAcceptedEmail } from '@/lib/email/transactional'
+import { sendAdminNotification } from '@/lib/notifications/admin'
 
 export const dynamic = 'force-dynamic'
 
@@ -125,6 +126,15 @@ export async function PUT(
             jobId: quote.jobId,
           })
         }
+
+        // Push notification to worker: quote accepted
+        sendAdminNotification({
+          userId: quote.workerId,
+          title: 'Your quote was accepted! 🎉',
+          body: `Your quote for "${quote.jobTitle}" has been accepted. View job details to get started.`,
+          type: 'job_status_change',
+          link: `/jobs/${quote.jobId}`,
+        }).catch((err) => console.warn('[quotes/accept] Failed to send worker push notification:', err))
       } catch (emailErr) {
         console.error('Failed to send job-accepted email:', emailErr)
       }

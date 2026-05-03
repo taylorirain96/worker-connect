@@ -12,8 +12,8 @@ import { SITE_URL } from '@/lib/seo/config'
 const SupportChatbot = dynamic(() => import('@/components/chat/SupportChatbot'), { ssr: false })
 const PWAInstallPrompt = dynamic(() => import('@/components/PWAInstallPrompt'), { ssr: false })
 const MobileTabBar = dynamic(() => import('@/components/MobileTabBar'), { ssr: false })
-const PushPermissionPrompt = dynamic(
-  () => import('@/components/notifications/PushPermissionPrompt'),
+const NotificationPrompt = dynamic(
+  () => import('@/components/NotificationPrompt'),
   { ssr: false }
 )
 
@@ -123,7 +123,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <SupportChatbot />
                 <PWAInstallPrompt />
                 <MobileTabBar />
-                <PushPermissionPrompt />
+                <NotificationPrompt />
               </NotificationProvider>
             </RoleProvider>
           </AuthProvider>
