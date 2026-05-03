@@ -69,7 +69,7 @@ export default function NotificationPrompt() {
           Enable notifications
         </p>
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-          Get instant alerts for new jobs and messages, quotes, and booking updates.
+          Get instant alerts for new jobs, quotes, messages, and booking updates.
         </p>
         <div className="flex items-center gap-2 mt-3">
           <button
