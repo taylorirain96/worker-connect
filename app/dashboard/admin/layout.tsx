@@ -6,11 +6,12 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import {
   LayoutDashboard, Users, Briefcase, DollarSign,
-  AlertTriangle, Mail, Shield, Menu, X, ChevronRight, ShieldCheck,
+  AlertTriangle, Mail, Shield, Menu, X, ChevronRight, ShieldCheck, BarChart2,
 } from 'lucide-react'
 
 const NAV_ITEMS = [
   { label: 'Overview',       href: '/dashboard/admin',                    icon: LayoutDashboard },
+  { label: 'Analytics',      href: '/dashboard/admin/analytics',          icon: BarChart2 },
   { label: 'Users',          href: '/dashboard/admin/users',              icon: Users },
   { label: 'Jobs',           href: '/dashboard/admin/jobs',               icon: Briefcase },
   { label: 'Payments',       href: '/dashboard/admin/payments',           icon: DollarSign },
