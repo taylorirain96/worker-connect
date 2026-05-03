@@ -39,6 +39,16 @@ export interface UserProfile {
   employerSubscriptionTier?: 'free' | 'pro' | 'business' | 'enterprise'
   /** Array of worker UIDs this homeowner has favourited */
   favourites?: string[]
+  /** Referral code unique to this user, stored in Firestore */
+  referralCode?: string
+  /** UID of the user who referred this user */
+  referredBy?: string
+  /** Referral code used when this user signed up */
+  referredByCode?: string
+  /** NZD credit balance available to spend at checkout */
+  credit?: number
+  /** Legacy referral credits field (kept for backwards compatibility) */
+  referralCredits?: number
 }
 
 export interface DirectRequest {
@@ -676,6 +686,8 @@ export interface Referral {
   referredName?: string
   referredEmail?: string
   jobsCompleted?: number
+  /** Set to true once referral credit has been awarded to both parties */
+  creditAwarded?: boolean
 }
 
 export interface ReferralStats {
@@ -2004,6 +2016,41 @@ export interface PortfolioPhoto {
   category: string
   description?: string
   order: number
+  createdAt: string
+}
+
+// ─── Promo Code Types ─────────────────────────────────────────────────────────
+
+export type PromoDiscountType = 'percent' | 'fixed'
+export type PromoApplicableTo = 'first_job' | 'all_jobs' | string
+
+export interface PromoCode {
+  code: string
+  discountType: PromoDiscountType
+  discountAmount: number
+  maxUses: number
+  usedCount: number
+  expiresAt: string | null
+  createdBy: string
+  active: boolean
+  applicableTo: PromoApplicableTo
+  createdAt: string
+  updatedAt?: string
+}
+
+// ─── Credit Transaction Types ─────────────────────────────────────────────────
+
+export type CreditTransactionType = 'referral_reward' | 'credit_applied' | 'manual_adjustment' | 'referral_signup'
+
+export interface CreditTransaction {
+  id: string
+  userId: string
+  amount: number
+  type: CreditTransactionType
+  description: string
+  jobId?: string
+  referralId?: string
+  promoCode?: string
   createdAt: string
 }
 

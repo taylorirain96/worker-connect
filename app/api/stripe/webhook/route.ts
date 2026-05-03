@@ -22,6 +22,7 @@ import {
   getJobPostingPaymentBySession,
   updateJobPostingPayment,
 } from '@/lib/services/escrowService'
+import { REFERRAL_CREDIT_REWARD } from '@/lib/referrals/constants'
 
 export const dynamic = 'force-dynamic'
 
@@ -323,7 +324,7 @@ export async function POST(req: NextRequest) {
             },
           })
 
-          // ── Referral reward: credit referrer on first paid job ─────────────
+          // ── Referral reward: credit referrer AND referred user on first paid job ─────────────
           try {
             const workerDoc = await adminDb.collection('users').doc(workerId).get()
             const workerData = workerDoc.data()
@@ -332,28 +333,71 @@ export async function POST(req: NextRequest) {
             if (referredBy) {
               // Referral document uses referredUserId as document ID (atomic, no duplicates)
               const refDoc = await adminDb.collection('referrals').doc(workerId).get()
+              const refData = refDoc.data()
 
-              if (refDoc.exists && refDoc.data()?.referrerId === referredBy && refDoc.data()?.status === 'signed_up') {
-                const REWARD_AMOUNT = 25 // NZ$25 on first paid job
+              if (refDoc.exists && refData?.referrerId === referredBy && refData?.status === 'signed_up') {
                 const now = new Date().toISOString()
 
                 await refDoc.ref.update({
                   status: 'completed_3',
-                  earnedAmount: REWARD_AMOUNT,
+                  earnedAmount: REFERRAL_CREDIT_REWARD,
+                  creditAwarded: true,
                   updatedAt: now,
                 })
 
-                // Use FieldValue to increment referralCredits atomically
+                // Award credit to the referrer
                 await adminDb.collection('users').doc(referredBy).update({
-                  referralCredits: FieldValue.increment(REWARD_AMOUNT),
+                  credit: FieldValue.increment(REFERRAL_CREDIT_REWARD),
+                  referralCredits: FieldValue.increment(REFERRAL_CREDIT_REWARD),
                 })
+
+                // Log credit transaction for referrer
+                await adminDb
+                  .collection('creditTransactions')
+                  .doc(referredBy)
+                  .collection('items')
+                  .add({
+                    userId: referredBy,
+                    amount: REFERRAL_CREDIT_REWARD,
+                    type: 'referral_reward',
+                    description: `NZ$${REFERRAL_CREDIT_REWARD} referral reward — your referred contact completed their first job`,
+                    referralId: refDoc.id,
+                    createdAt: now,
+                  })
+
+                // Award credit to the referred user (worker)
+                await adminDb.collection('users').doc(workerId).update({
+                  credit: FieldValue.increment(REFERRAL_CREDIT_REWARD),
+                })
+
+                // Log credit transaction for referred user
+                await adminDb
+                  .collection('creditTransactions')
+                  .doc(workerId)
+                  .collection('items')
+                  .add({
+                    userId: workerId,
+                    amount: REFERRAL_CREDIT_REWARD,
+                    type: 'referral_signup',
+                    description: `NZ$${REFERRAL_CREDIT_REWARD} credit for completing your first job via referral`,
+                    referralId: refDoc.id,
+                    createdAt: now,
+                  })
 
                 await sendNotification({
                   userId: referredBy,
                   type: 'payment_received',
                   title: '🎉 Referral Reward Earned!',
-                  message: `Your referral completed their first paid job — you've earned NZ$${REWARD_AMOUNT} in referral credits!`,
-                  metadata: { referralId: refDoc.id, rewardAmount: REWARD_AMOUNT },
+                  message: `Your referral completed their first paid job — you've earned NZ$${REFERRAL_CREDIT_REWARD} credit!`,
+                  metadata: { referralId: refDoc.id, rewardAmount: REFERRAL_CREDIT_REWARD },
+                })
+
+                await sendNotification({
+                  userId: workerId,
+                  type: 'payment_received',
+                  title: '🎉 Welcome Bonus Credit!',
+                  message: `You've earned NZ$${REFERRAL_CREDIT_REWARD} credit for completing your first job — use it on your next payment!`,
+                  metadata: { referralId: refDoc.id, rewardAmount: REFERRAL_CREDIT_REWARD },
                 })
               }
             }
