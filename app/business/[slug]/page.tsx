@@ -483,18 +483,26 @@ export default function BusinessProfilePage({ params }: { params: { slug: string
                         </Badge>
                       </div>
                     )}
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-400">Public Liability</span>
-                      <Badge variant={(biz.hasPublicLiability ?? biz.hasGeneralLiability) ? 'success' : 'danger'}>
-                        {(biz.hasPublicLiability ?? biz.hasGeneralLiability) ? 'Active' : 'None'}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-400">ACC / Workplace Insurance</span>
-                      <Badge variant={(biz.hasACCEmployerLevy ?? biz.hasWorkersComp) ? 'success' : 'danger'}>
-                        {(biz.hasACCEmployerLevy ?? biz.hasWorkersComp) ? 'Active' : 'None'}
-                      </Badge>
-                    </div>
+                    {(() => {
+                      const hasLiability = biz.hasPublicLiability ?? biz.hasGeneralLiability
+                      const hasACC = biz.hasACCEmployerLevy ?? biz.hasWorkersComp
+                      return (
+                        <>
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-600 dark:text-gray-400">Public Liability</span>
+                            <Badge variant={hasLiability ? 'success' : 'danger'}>
+                              {hasLiability ? 'Active' : 'None'}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-600 dark:text-gray-400">ACC / Workplace Insurance</span>
+                            <Badge variant={hasACC ? 'success' : 'danger'}>
+                              {hasACC ? 'Active' : 'None'}
+                            </Badge>
+                          </div>
+                        </>
+                      )
+                    })()}
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-600 dark:text-gray-400">Background Check</span>
                       <Badge variant={biz.backgroundCheckStatus === 'clear' ? 'success' : 'warning'}>

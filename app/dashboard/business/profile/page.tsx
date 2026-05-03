@@ -52,7 +52,7 @@ const NZ_REGIONS = [
   'Dunedin, Otago',
   'Invercargill, Southland',
   'Queenstown, Otago',
-  'Napier/Hastings, Hawke\'s Bay',
+  "Napier/Hastings, Hawke's Bay",
   'Palmerston North, Manawatū',
   'New Plymouth, Taranaki',
   'Rotorua, Bay of Plenty',
@@ -534,7 +534,7 @@ export default function EditBusinessProfilePage() {
                       <p className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-primary-600 transition-colors">
                         Rated Trader
                       </p>
-                      <p className="text-xs text-gray-500">I am a Rated Traders verified member</p>
+                      <p className="text-xs text-gray-500">I am a Rated Trader verified member</p>
                     </div>
                   </label>
                 </div>
