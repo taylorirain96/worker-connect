@@ -23,20 +23,40 @@ import toast from 'react-hot-toast'
 import { slugify } from '@/lib/utils'
 
 const INDUSTRIES = [
-  'General Contractor',
-  'Facility Management',
-  'Hospital / Healthcare',
-  'Hospitality / Hotel',
-  'Property Management',
-  'Construction Company',
-  'Electrical Contractor',
-  'Plumbing Contractor',
-  'HVAC Contractor',
-  'Roofing Contractor',
-  'Landscaping / Grounds',
+  'General Contractor / Builder',
+  'Plumbing & Gasfitting',
+  'Electrical',
+  'Carpentry & Joinery',
+  'HVAC / Heat Pumps',
+  'Roofing',
+  'Landscaping / Garden',
+  'Painting & Decorating',
+  'Flooring',
   'Cleaning / Janitorial',
+  'Moving & Relocation',
+  'Building & Construction',
+  'Facility Management',
+  'Property Management',
   'Government / Public Works',
   'Other',
+]
+
+const NZ_REGIONS = [
+  'Blenheim, Marlborough',
+  'Nelson',
+  'Christchurch, Canterbury',
+  'Wellington',
+  'Auckland',
+  'Hamilton, Waikato',
+  'Tauranga, Bay of Plenty',
+  'Dunedin, Otago',
+  'Invercargill, Southland',
+  'Queenstown, Otago',
+  'Napier/Hastings, Hawke\'s Bay',
+  'Palmerston North, Manawatū',
+  'New Plymouth, Taranaki',
+  'Rotorua, Bay of Plenty',
+  'Whangarei, Northland',
 ]
 
 const COMPANY_SIZES = [
@@ -47,14 +67,20 @@ const COMPANY_SIZES = [
 ]
 
 const CERTIFICATIONS = [
-  'OSHA 10',
-  'OSHA 30',
-  'EPA Lead-Safe',
-  'LEED Green Associate',
-  'LEED AP',
-  'AIA Member',
-  'NFPA Certified',
-  'NABCEP Certified',
+  'Site Safe Passport',
+  'Site Safe Gold Card',
+  'First Aid Certificate',
+  'Asbestos Awareness Certificate',
+  'Height Safety Certified',
+  'Electrical Practising Licence (EPL)',
+  'Plumber / Gasfitter / Drainlayer Licence',
+  'Licensed Building Practitioner (LBP)',
+  'Master Builder Member',
+  'Registered Architect (NZIA)',
+  'NZ Certificate in Construction (NZQA)',
+  'Health & Safety Representative (HSR)',
+  'Trade Qualified (NZQA)',
+  'Working at Heights (WAH) Certified',
 ]
 
 interface FormState {
@@ -68,9 +94,9 @@ interface FormState {
   description: string
   missionStatement: string
   licenseNumber: string
-  hasGeneralLiability: boolean
-  hasWorkersComp: boolean
-  bbbRating: string
+  hasPublicLiability: boolean
+  hasACCEmployerLevy: boolean
+  isRatedTrader: boolean
   certifications: string[]
   serviceAreas: string[]
 }
@@ -86,14 +112,14 @@ const DEFAULT_FORM: FormState = {
   description: '',
   missionStatement: '',
   licenseNumber: '',
-  hasGeneralLiability: false,
-  hasWorkersComp: false,
-  bbbRating: '',
+  hasPublicLiability: false,
+  hasACCEmployerLevy: false,
+  isRatedTrader: false,
   certifications: [],
   serviceAreas: [],
 }
 
-function ProfileCompletionBar({ pct }: { pct: number }) {
+function ProfileCompletionBar({ pct, missing }: { pct: number; missing: string[] }) {
   return (
     <div>
       <div className="flex justify-between text-sm mb-1">
@@ -106,30 +132,71 @@ function ProfileCompletionBar({ pct }: { pct: number }) {
           style={{ width: `${pct}%` }}
         />
       </div>
-      {pct < 100 && (
-        <p className="text-xs text-gray-500 mt-1">
-          Complete your profile to build trust with workers and enterprises.
-        </p>
+      {missing.length > 0 && (
+        <div className="mt-2">
+          <p className="text-xs text-gray-500 mb-1">Still needed to complete your profile:</p>
+          <ul className="flex flex-wrap gap-1">
+            {missing.map((m) => (
+              <li key={m} className="text-xs bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 px-2 py-0.5 rounded-full">
+                {m}
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </div>
   )
 }
 
-function computeCompletion(form: FormState): number {
-  const stringFields: Array<keyof FormState> = [
-    'companyName', 'industry', 'companySize', 'yearsInBusiness',
-    'description', 'licenseNumber',
+function computeCompletion(form: FormState): { pct: number; missing: string[] } {
+  const requiredFields: Array<{ key: keyof FormState; label: string }> = [
+    { key: 'industry', label: 'Industry' },
+    { key: 'companySize', label: 'Company Size' },
+    { key: 'yearsInBusiness', label: 'Years in Business' },
+    { key: 'description', label: 'Company Description' },
   ]
-  const optionalStringFields: Array<keyof FormState> = [
-    'website', 'linkedIn', 'missionStatement',
+  const optionalFields: Array<{ key: keyof FormState; label: string }> = [
+    { key: 'companyName', label: 'Business / Trading Name' },
+    { key: 'licenseNumber', label: 'Licence Number' },
+    { key: 'website', label: 'Website' },
+    { key: 'linkedIn', label: 'LinkedIn' },
+    { key: 'missionStatement', label: 'Mission Statement' },
   ]
+  const missing: string[] = []
   let score = 0
-  const total = stringFields.length + optionalStringFields.length + 2 // +2 for serviceAreas & certifications
-  stringFields.forEach((f) => { if (String(form[f]).trim()) score++ })
-  optionalStringFields.forEach((f) => { if (String(form[f]).trim()) score++ })
-  if (form.serviceAreas.length > 0) score++
-  if (form.certifications.length > 0) score++
-  return Math.round((score / total) * 100)
+  const total = requiredFields.length + optionalFields.length + 3 // +3 for serviceAreas, certifications, insurance
+
+  requiredFields.forEach(({ key, label }) => {
+    if (String(form[key]).trim()) {
+      score++
+    } else {
+      missing.push(label)
+    }
+  })
+  optionalFields.forEach(({ key, label }) => {
+    if (String(form[key]).trim()) {
+      score++
+    } else {
+      missing.push(label)
+    }
+  })
+  if (form.serviceAreas.length > 0) {
+    score++
+  } else {
+    missing.push('Service Areas')
+  }
+  if (form.certifications.length > 0) {
+    score++
+  } else {
+    missing.push('Certifications')
+  }
+  if (form.hasPublicLiability || form.hasACCEmployerLevy) {
+    score++
+  } else {
+    missing.push('Insurance')
+  }
+
+  return { pct: Math.round((score / total) * 100), missing }
 }
 
 export default function EditBusinessProfilePage() {
@@ -137,7 +204,7 @@ export default function EditBusinessProfilePage() {
   const [saving, setSaving] = useState(false)
   const [newArea, setNewArea] = useState('')
 
-  const completionPct = computeCompletion(form)
+  const { pct: completionPct, missing: completionMissing } = computeCompletion(form)
 
   function handleChange(field: keyof FormState, value: string | boolean) {
     setForm((prev) => ({ ...prev, [field]: value }))
@@ -164,10 +231,6 @@ export default function EditBusinessProfilePage() {
   }
 
   async function handleSave() {
-    if (!form.companyName.trim()) {
-      toast.error('Company name is required')
-      return
-    }
     setSaving(true)
     // TODO: save to Firestore businesses collection
     await new Promise((r) => setTimeout(r, 800))
@@ -219,7 +282,7 @@ export default function EditBusinessProfilePage() {
           {/* Completion bar */}
           <Card className="mb-6">
             <CardContent className="pt-4 pb-4">
-              <ProfileCompletionBar pct={completionPct} />
+              <ProfileCompletionBar pct={completionPct} missing={completionMissing} />
             </CardContent>
           </Card>
 
@@ -233,13 +296,14 @@ export default function EditBusinessProfilePage() {
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="sm:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Company Name <span className="text-red-500">*</span>
+                      Business / Trading Name <span className="text-gray-400 font-normal">(optional)</span>
                     </label>
                     <Input
-                      placeholder="e.g. Apex General Contracting"
+                      placeholder="e.g. Marlborough Plumbing & Gas"
                       value={form.companyName}
                       onChange={(e) => handleChange('companyName', e.target.value)}
                     />
+                    <p className="text-xs text-gray-400 mt-1">Leave blank if you operate under your own name</p>
                   </div>
 
                   <div>
@@ -288,10 +352,10 @@ export default function EditBusinessProfilePage() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      License Number
+                      Licence Number
                     </label>
                     <Input
-                      placeholder="e.g. GC-445821-NY"
+                      placeholder="e.g. LBP-123456"
                       value={form.licenseNumber}
                       onChange={(e) => handleChange('licenseNumber', e.target.value)}
                     />
@@ -365,12 +429,31 @@ export default function EditBusinessProfilePage() {
                 <CardTitle>Service Areas</CardTitle>
               </CardHeader>
               <CardContent>
+                {/* Quick-add NZ regions */}
+                <div className="mb-3">
+                  <label className="block text-xs text-gray-500 mb-1">Quick-add a common NZ region:</label>
+                  <select
+                    value=""
+                    onChange={(e) => {
+                      const val = e.target.value
+                      if (val && !form.serviceAreas.includes(val)) {
+                        setForm((prev) => ({ ...prev, serviceAreas: [...prev.serviceAreas, val] }))
+                      }
+                    }}
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  >
+                    <option value="">Select a region…</option>
+                    {NZ_REGIONS.map((r) => (
+                      <option key={r} value={r} disabled={form.serviceAreas.includes(r)}>{r}</option>
+                    ))}
+                  </select>
+                </div>
                 <div className="flex gap-2 mb-3">
                   <div className="flex-1 relative">
                     <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <input
                       className="w-full pl-9 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                      placeholder="City, State (e.g. New York, NY)"
+                      placeholder="e.g. Blenheim, Marlborough"
                       value={newArea}
                       onChange={(e) => setNewArea(e.target.value)}
                       onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addServiceArea() } }}
@@ -415,42 +498,45 @@ export default function EditBusinessProfilePage() {
                   <label className="flex items-center gap-3 cursor-pointer group">
                     <input
                       type="checkbox"
-                      checked={form.hasGeneralLiability}
-                      onChange={(e) => handleChange('hasGeneralLiability', e.target.checked)}
+                      checked={form.hasPublicLiability}
+                      onChange={(e) => handleChange('hasPublicLiability', e.target.checked)}
                       className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                     />
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-primary-600 transition-colors">
-                        General Liability Insurance
+                        Public Liability Insurance
                       </p>
-                      <p className="text-xs text-gray-500">I have active general liability insurance</p>
+                      <p className="text-xs text-gray-500">I have active public liability insurance</p>
                     </div>
                   </label>
                   <label className="flex items-center gap-3 cursor-pointer group">
                     <input
                       type="checkbox"
-                      checked={form.hasWorkersComp}
-                      onChange={(e) => handleChange('hasWorkersComp', e.target.checked)}
+                      checked={form.hasACCEmployerLevy}
+                      onChange={(e) => handleChange('hasACCEmployerLevy', e.target.checked)}
                       className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                     />
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-primary-600 transition-colors">
-                        Workers&apos; Compensation Insurance
+                        ACC Employer Levy / Workplace Insurance
                       </p>
-                      <p className="text-xs text-gray-500">I have active workers&apos; comp coverage</p>
+                      <p className="text-xs text-gray-500">I have ACC employer levy coverage or workplace insurance</p>
                     </div>
                   </label>
-                </div>
-                <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    BBB Rating (optional)
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={form.isRatedTrader}
+                      onChange={(e) => handleChange('isRatedTrader', e.target.checked)}
+                      className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-primary-600 transition-colors">
+                        Rated Trader
+                      </p>
+                      <p className="text-xs text-gray-500">I am a Rated Traders verified member</p>
+                    </div>
                   </label>
-                  <Input
-                    placeholder="e.g. A+"
-                    value={form.bbbRating}
-                    onChange={(e) => handleChange('bbbRating', e.target.value)}
-                    className="max-w-xs"
-                  />
                 </div>
               </CardContent>
             </Card>
