@@ -51,6 +51,7 @@ export default function JobCompletePage() {
   const [job, setJob] = useState<Job | null>(null)
   const [worker, setWorker] = useState<UserProfile | null>(null)
   const [loadingJob, setLoadingJob] = useState(true)
+  const [jobError, setJobError] = useState<string | null>(null)
   const [marking, setMarking] = useState(false)
   const [completed, setCompleted] = useState(false)
   const [completedAt, setCompletedAt] = useState<string | null>(null)
@@ -68,9 +69,12 @@ export default function JobCompletePage() {
         const snap = await getDoc(doc(firestore, 'jobs', jobId))
         if (snap.exists()) {
           setJob({ id: snap.id, ...snap.data() } as Job)
+        } else {
+          setJobError('Job not found.')
         }
-      } catch {
-        // Firestore unavailable
+      } catch (err) {
+        console.error('Failed to load job:', err)
+        setJobError('Unable to load job details. Please try again.')
       } finally {
         setLoadingJob(false)
       }
@@ -144,6 +148,31 @@ export default function JobCompletePage() {
     )
   }
 
+  // ── Error loading job ─────────────────────────────────────────────────────────
+  if (jobError) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Navbar />
+        <main className="flex-1">
+          <div className="max-w-2xl mx-auto px-4 py-16 text-center">
+            <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
+            <p className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+              {jobError}
+            </p>
+            <Link
+              href="/dashboard/homeowner"
+              className="inline-flex items-center gap-2 mt-4 text-primary-600 hover:underline text-sm"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to dashboard
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    )
+  }
+
   // ── Auth guard ───────────────────────────────────────────────────────────────
   if (!authLoading && !user) {
     router.push(`/auth/login?redirect=/dashboard/jobs/${jobId}/complete`)
@@ -210,7 +239,7 @@ export default function JobCompletePage() {
               </span>
               .{disputeDeadline
                 ? ` The tradie may raise a dispute until ${formatDisputeDeadline(disputeDeadline)}.`
-                : ' The tradie has 24 hours to raise a dispute if needed.'
+                : ' The tradie has a short window to raise a dispute if needed.'
               }
             </p>
 
@@ -365,7 +394,7 @@ export default function JobCompletePage() {
                 <ul className="text-sm text-amber-700 dark:text-amber-400 space-y-1 list-disc list-inside">
                   <li>The job will be marked as complete</li>
                   <li>Payment will be released to the tradie</li>
-                  <li>The tradie has 24 hours to raise a dispute if needed</li>
+                  <li>The tradie has a 24-hour window to raise a dispute if needed</li>
                   <li>You&apos;ll be prompted to leave a review</li>
                 </ul>
               </div>
