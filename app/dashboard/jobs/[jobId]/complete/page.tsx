@@ -32,6 +32,15 @@ function formatNZD(amount: number): string {
   }).format(amount)
 }
 
+function formatDisputeDeadline(dateString: string): string {
+  return new Date(dateString).toLocaleString('en-NZ', {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
 export default function JobCompletePage() {
   const params = useParams()
   const router = useRouter()
@@ -200,7 +209,7 @@ export default function JobCompletePage() {
                 {worker?.displayName ?? 'the tradie'}
               </span>
               .{disputeDeadline
-                ? ` The tradie may raise a dispute until ${new Date(disputeDeadline).toLocaleString('en-NZ', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}.`
+                ? ` The tradie may raise a dispute until ${formatDisputeDeadline(disputeDeadline)}.`
                 : ' The tradie has 24 hours to raise a dispute if needed.'
               }
             </p>

@@ -43,15 +43,17 @@ export async function POST(request: NextRequest) {
   const now = new Date()
   const results: Array<{ jobId: string; status: 'auto_released' | 'already_released' | 'error'; message?: string }> = []
 
+  // Escrow statuses that are still awaiting release — shared between query and in-process check
+  const RELEASABLE_ESCROW_STATUSES = ['pending', 'held', 'in_escrow', 'pending_deposit'] as const
+
   try {
-    // Find completed jobs whose dispute window has passed and escrow is not yet released.
-    // We query on status='completed' only; the deadline and escrowStatus filters are
-    // applied in-process because Firestore doesn't support inequality on multiple fields
-    // without composite indexes that may not be configured in all environments.
+    // Find completed jobs whose escrow has not yet been released.
+    // The workerDisputeDeadline check is applied in-process (line 67) because Firestore
+    // doesn't support inequality filters on multiple fields without composite indexes.
     const jobsSnap = await adminDb
       .collection('jobs')
       .where('status', '==', 'completed')
-      .where('escrowStatus', 'in', ['pending', 'held', 'in_escrow', 'pending_deposit'])
+      .where('escrowStatus', 'in', [...RELEASABLE_ESCROW_STATUSES])
       .get()
 
     for (const jobDoc of jobsSnap.docs) {
@@ -80,14 +82,8 @@ export async function POST(request: NextRequest) {
           const escrowDoc = escrowSnap.docs[0]
           const escrow = escrowDoc.data()
 
-          // Only release if it hasn't been released or disputed
-          const isReleasable =
-            escrow.status === 'pending_deposit' ||
-            escrow.status === 'in_escrow' ||
-            escrow.status === 'held' ||
-            escrow.status === 'pending'
-
-          if (isReleasable) {
+          // Release only statuses that are still awaiting release (matches query filter)
+          if ((RELEASABLE_ESCROW_STATUSES as ReadonlyArray<string>).includes(escrow.status as string)) {
             await escrowDoc.ref.update({
               status: 'released',
               releasedAt,

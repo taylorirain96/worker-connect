@@ -456,6 +456,15 @@ function JobDetailInner() {
     workerDisputeDeadlineStr != null &&
     Date.now() < new Date(workerDisputeDeadlineStr).getTime()
 
+  const formattedDisputeDeadline = workerDisputeDeadlineStr
+    ? new Date(workerDisputeDeadlineStr).toLocaleString('en-NZ', {
+        day: 'numeric',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : null
+
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
@@ -988,12 +997,7 @@ function JobDetailInner() {
                   <div className="mt-4 space-y-2">
                     <p className="text-xs text-amber-600 dark:text-amber-400 text-center">
                       Dispute window closes{' '}
-                      {new Date(workerDisputeDeadlineStr!).toLocaleString('en-NZ', {
-                        day: 'numeric',
-                        month: 'short',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
+                      {formattedDisputeDeadline}
                     </p>
                     <Link href={`/jobs/${job.id}/dispute`} className="block">
                       <Button
