@@ -949,8 +949,50 @@ function JobDetailInner() {
                   </div>
                 )}
 
-                {/* Raise a Dispute — visible to both parties when in_progress or completed */}
-                {(isEmployer || profile?.role === 'worker') && (effectiveStatus === 'in_progress' || effectiveStatus === 'completed') && (
+                {/* Raise a Dispute — homeowner: always visible when in_progress or completed
+                                     worker: only visible within the 24h dispute window */}
+                {isEmployer && (effectiveStatus === 'in_progress' || effectiveStatus === 'completed') && (
+                  <Link href={`/jobs/${job.id}/dispute`} className="block mt-4">
+                    <Button
+                      variant="outline"
+                      className="w-full flex items-center justify-center gap-2 text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                    >
+                      <AlertTriangle className="h-4 w-4" />
+                      Raise a Dispute
+                    </Button>
+                  </Link>
+                )}
+                {profile?.role === 'worker' && user?.uid === job.assignedWorkerId && effectiveStatus === 'completed' && (
+                  (() => {
+                    const deadline = (job as { workerDisputeDeadline?: string }).workerDisputeDeadline
+                    const withinWindow = deadline ? Date.now() < new Date(deadline).getTime() : false
+                    if (!withinWindow) return null
+                    return (
+                      <div className="mt-4 space-y-2">
+                        <p className="text-xs text-amber-600 dark:text-amber-400 text-center">
+                          Dispute window closes{' '}
+                          {new Date(deadline!).toLocaleString('en-NZ', {
+                            day: 'numeric',
+                            month: 'short',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </p>
+                        <Link href={`/jobs/${job.id}/dispute`} className="block">
+                          <Button
+                            variant="outline"
+                            className="w-full flex items-center justify-center gap-2 text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                          >
+                            <AlertTriangle className="h-4 w-4" />
+                            Raise a Dispute
+                          </Button>
+                        </Link>
+                      </div>
+                    )
+                  })()
+                )}
+                {/* Worker can also dispute while job is in_progress */}
+                {profile?.role === 'worker' && user?.uid === job.assignedWorkerId && effectiveStatus === 'in_progress' && (
                   <Link href={`/jobs/${job.id}/dispute`} className="block mt-4">
                     <Button
                       variant="outline"
