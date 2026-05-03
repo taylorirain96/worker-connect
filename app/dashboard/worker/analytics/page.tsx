@@ -138,7 +138,7 @@ export default function WorkerAnalyticsPage() {
             if (typeof raw === 'string') {
               releasedAt = new Date(raw)
             } else if (typeof raw.toDate === 'function') {
-              releasedAt = raw.toDate!()
+              releasedAt = raw.toDate?.() ?? null
             }
           }
           if (!releasedAt) return
@@ -328,7 +328,7 @@ export default function WorkerAnalyticsPage() {
             />
             <StatsCard
               label="Avg Rating"
-              value={avgRating > 0 ? `${avgRating.toFixed(1)} ★` : '—'}
+              value={avgRating > 0 ? avgRating.toFixed(1) : '—'}
               subtitle={
                 avgRating > 0
                   ? `${profile?.reviewCount ?? 0} review${(profile?.reviewCount ?? 0) === 1 ? '' : 's'}`

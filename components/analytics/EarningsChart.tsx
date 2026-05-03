@@ -28,9 +28,8 @@ function fmtNZD(n: number) {
   }).format(n)
 }
 
-const BAR_COLORS = [
-  '#6366f1', '#6366f1', '#6366f1', '#6366f1', '#6366f1', '#818cf8',
-]
+const BAR_COLOR = '#6366f1'
+const BAR_COLOR_DIM = '#818cf8'
 
 export default function EarningsChart({ data, height = 260 }: EarningsChartProps) {
   if (!data.length) {
@@ -78,7 +77,7 @@ export default function EarningsChart({ data, height = 260 }: EarningsChartProps
           {data.map((entry, index) => (
             <Cell
               key={`cell-${index}`}
-              fill={entry.amount === maxAmount ? '#6366f1' : BAR_COLORS[index % BAR_COLORS.length]}
+              fill={entry.amount === maxAmount ? BAR_COLOR : BAR_COLOR_DIM}
               fillOpacity={entry.amount === maxAmount ? 1 : 0.65}
             />
           ))}

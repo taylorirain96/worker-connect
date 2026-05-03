@@ -699,7 +699,7 @@ export default function WorkerDashboardPage() {
                 <div className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
                   <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                     <BarChart2 className="h-4 w-4 text-indigo-500" />
-                    Analytics &amp; Stats
+                    Analytics & Stats
                   </div>
                   <span className="text-xs text-primary-600">→</span>
                 </div>
