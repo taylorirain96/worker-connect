@@ -47,16 +47,14 @@ export default function FilterPanel({
         </span>
         <span className="flex items-center gap-2">
           {activeCount > 0 && onReset && (
-            <span
-              role="button"
-              tabIndex={0}
+            <button
+              type="button"
               onClick={(e) => { e.stopPropagation(); onReset() }}
-              onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); onReset?.() } }}
               className="flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700"
             >
               <X className="h-3 w-3" />
               Clear
-            </span>
+            </button>
           )}
           {mobileOpen
             ? <ChevronUp className="h-4 w-4" aria-hidden />

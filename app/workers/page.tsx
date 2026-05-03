@@ -156,7 +156,7 @@ function WorkersPageContent() {
   // Sync filters → URL params
   const syncUrl = useCallback((newFilters: typeof filters) => {
     const params = new URLSearchParams()
-    Object.entries(newFilters).forEach(([k, v]) => { if (v) params.set(k, v) })
+    Object.entries(newFilters).forEach(([key, value]) => { if (value) params.set(key, value) })
     const qs = params.toString()
     router.replace(`${pathname}${qs ? `?${qs}` : ''}`, { scroll: false })
   }, [router, pathname])

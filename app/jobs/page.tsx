@@ -162,7 +162,7 @@ function JobsPageContent() {
   const syncUrl = useCallback((newFilters: typeof filters, tab: 'all' | 'for-you') => {
     const params = new URLSearchParams()
     if (tab === 'for-you') params.set('tab', 'for-you')
-    Object.entries(newFilters).forEach(([k, v]) => { if (v) params.set(k, v) })
+    Object.entries(newFilters).forEach(([key, value]) => { if (value) params.set(key, value) })
     const qs = params.toString()
     router.replace(`${pathname}${qs ? `?${qs}` : ''}`, { scroll: false })
   }, [router, pathname])

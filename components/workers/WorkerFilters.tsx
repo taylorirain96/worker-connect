@@ -94,7 +94,7 @@ export default function WorkerFilters({ filters, onChange, onReset }: WorkerFilt
       <div>
         <label className={labelCls}>Minimum Rating</label>
         <div className="flex gap-2">
-          {([0, 3, 3.5, 4, 4.5] as const).map((rating) => (
+          {([0, 3, 3.5, 4, 4.5]).map((rating) => (
             <button
               key={rating}
               type="button"
