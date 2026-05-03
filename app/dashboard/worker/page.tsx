@@ -694,6 +694,22 @@ export default function WorkerDashboardPage() {
                 </div>
               </Link>
 
+              {/* My Reviews link */}
+              <Link href="/dashboard/reviews">
+                <div className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
+                  <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <Star className="h-4 w-4 text-yellow-500 fill-yellow-400" />
+                    My Reviews
+                    {(profile?.reviewCount ?? 0) > 0 && (
+                      <span className="ml-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-medium px-1.5 py-0.5 rounded-full">
+                        {profile?.reviewCount}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs text-primary-600">→</span>
+                </div>
+              </Link>
+
               {/* Analytics link */}
               <Link href="/dashboard/worker/analytics">
                 <div className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
