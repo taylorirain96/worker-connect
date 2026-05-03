@@ -20,7 +20,7 @@ let messagingInitialised = false
 /** Show a notification from an FCM payload object. */
 function showFCMNotification(payload) {
   const {
-    title = 'QuickTrade',
+    title = 'WorkerConnect',
     body = 'You have a new notification.',
     icon,
     badge,
@@ -36,7 +36,7 @@ function showFCMNotification(payload) {
     data: { url: clickAction, ...payload.data },
     vibrate: [200, 100, 200],
     requireInteraction: payload.data?.requireInteraction === 'true',
-    tag: payload.data?.tag || 'quicktrade-notification',
+    tag: payload.data?.tag || 'workerconnect-notification',
   })
 }
 
