@@ -128,7 +128,6 @@ const DEFAULT_FORM: FormState = {
   serviceAreas: [],
 }
 
-
 function ProfileCompletionBar({ pct, missing }: { pct: number; missing: string[] }) {
   return (
     <div>
@@ -272,7 +271,7 @@ export default function EditBusinessProfilePage() {
               </p>
             </div>
             <div className="hidden sm:flex items-center gap-2">
-              {form.companyName.trim() && (
+              {form.companyName?.trim() && (
                 <Link
                   href={`/business/${slugify(form.companyName)}`}
                   className="text-sm text-primary-600 hover:text-primary-700 flex items-center gap-1"
