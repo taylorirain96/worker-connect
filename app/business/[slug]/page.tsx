@@ -29,26 +29,25 @@ const MOCK_BUSINESSES: Record<string, BusinessProfile> = {
   'apex-general-contracting': {
     id: 'b1',
     userId: 'u1',
-    companyName: 'Apex General Contracting',
+    companyName: 'Apex Building & Trades',
     slug: 'apex-general-contracting',
-    industry: 'General Contractor',
+    industry: 'Building & Construction',
     companySize: '11-50',
     yearsInBusiness: 12,
-    serviceAreas: ['New York, NY', 'Newark, NJ', 'Jersey City, NJ', 'Hoboken, NJ'],
-    website: 'https://apexgc.example.com',
-    linkedIn: 'https://linkedin.com/company/apexgc',
+    serviceAreas: ['Blenheim', 'Marlborough', 'Nelson', 'Picton'],
+    website: 'https://apexbuildingtradesde.example.com',
+    linkedIn: 'https://linkedin.com/company/apexbuildingtrades',
     description:
-      'Apex General Contracting has been delivering high-quality construction and renovation projects across the tri-state area for over 12 years. We specialize in commercial renovations, multi-family residential builds, and facility management for enterprise clients.',
+      'Apex Building & Trades has been delivering high-quality construction and renovation projects across the Marlborough and Nelson regions for over 12 years. We specialise in residential builds, commercial renovations, and property maintenance for both residential and commercial clients.',
     missionStatement:
       'Building lasting relationships through quality craftsmanship, on-time delivery, and transparent communication.',
-    licenseNumber: 'GC-445821-NY',
+    licenseNumber: 'LBP-112345',
     licenseVerified: true,
     hasGeneralLiability: true,
     hasWorkersComp: true,
     backgroundCheckStatus: 'clear',
-    bbbRating: 'A+',
     googleRating: 4.8,
-    certifications: ['OSHA 30', 'EPA Lead-Safe', 'LEED Green Associate'],
+    certifications: ['Licensed Building Practitioner (LBP)', 'Site Safe Passport', 'First Aid Certificate'],
     subscriptionTier: 'enterprise',
     isVerifiedContractor: true,
     isEnterprisePartner: true,
@@ -482,13 +481,13 @@ export default function BusinessProfilePage({ params }: { params: { slug: string
                       </div>
                     )}
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-400">General Liability</span>
+                      <span className="text-gray-600 dark:text-gray-400">Public Liability</span>
                       <Badge variant={biz.hasGeneralLiability ? 'success' : 'danger'}>
                         {biz.hasGeneralLiability ? 'Active' : 'None'}
                       </Badge>
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-400">Workers&apos; Comp</span>
+                      <span className="text-gray-600 dark:text-gray-400">ACC Levy</span>
                       <Badge variant={biz.hasWorkersComp ? 'success' : 'danger'}>
                         {biz.hasWorkersComp ? 'Active' : 'None'}
                       </Badge>
@@ -503,12 +502,6 @@ export default function BusinessProfilePage({ params }: { params: { slug: string
                           : 'Not Done'}
                       </Badge>
                     </div>
-                    {biz.bbbRating && (
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600 dark:text-gray-400">BBB Rating</span>
-                        <span className="font-semibold text-green-600">{biz.bbbRating}</span>
-                      </div>
-                    )}
                     {biz.googleRating && (
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-gray-600 dark:text-gray-400">Google Rating</span>
