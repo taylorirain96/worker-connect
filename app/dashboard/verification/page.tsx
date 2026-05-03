@@ -44,12 +44,13 @@ export default function VerificationCentrePage() {
   // Load existing verification status from workerVerifications collection
   useEffect(() => {
     if (!user) return
+    const uid = user.uid
     async function loadStatus() {
       try {
         const { db } = await import('@/lib/firebase')
         if (!db) { setDocLoading(false); return }
         const { doc, getDoc } = await import('firebase/firestore')
-        const snap = await getDoc(doc(db, 'workerVerifications', user!.uid))
+        const snap = await getDoc(doc(db, 'workerVerifications', uid))
         if (snap.exists()) {
           const data = snap.data() as WorkerVerificationDoc & {
             submittedAt?: { toDate?: () => Date } | string

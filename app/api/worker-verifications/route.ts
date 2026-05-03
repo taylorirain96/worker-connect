@@ -16,8 +16,7 @@ export async function GET() {
       .get()
 
     const verifications = await Promise.all(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      snap.docs.map(async (docSnap: any) => {
+      snap.docs.map(async (docSnap) => {
         const data = docSnap.data()
         const uid = docSnap.id
 
