@@ -11,6 +11,33 @@ import type { PortfolioPhoto } from '@/types'
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5 MB
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 
+/** Generate a unique ID with fallback for environments where crypto.randomUUID() is unavailable */
+function generateId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+  // Fallback: combine high-resolution time with multiple random segments for sufficient entropy
+  const time = typeof performance !== 'undefined' ? performance.now().toString(36) : Date.now().toString(36)
+  const r1 = Math.random().toString(36).slice(2, 10)
+  const r2 = Math.random().toString(36).slice(2, 10)
+  const r3 = Math.random().toString(36).slice(2, 10)
+  return `${time}-${r1}-${r2}-${r3}`
+}
+
+/** Type guard that validates a value looks like a PortfolioPhoto */
+function isPortfolioPhoto(v: unknown): v is PortfolioPhoto {
+  if (!v || typeof v !== 'object') return false
+  const o = v as Record<string, unknown>
+  return (
+    typeof o.id === 'string' &&
+    typeof o.uid === 'string' &&
+    typeof o.url === 'string' &&
+    typeof o.title === 'string' &&
+    typeof o.category === 'string' &&
+    typeof o.order === 'number'
+  )
+}
+
 export const PORTFOLIO_CATEGORIES = [
   'Plumbing',
   'Electrical',
@@ -71,16 +98,22 @@ export default function PortfolioUploadModal({
   const handleFileSelect = (fileList: FileList | null) => {
     if (!fileList) return
     const toAdd = Array.from(fileList).slice(0, remaining - files.length)
+    const errors: string[] = []
+    const valid: File[] = []
     for (const file of toAdd) {
       const err = validateFile(file)
       if (err) {
-        toast.error(err)
-        return
+        errors.push(err)
+      } else {
+        valid.push(file)
       }
     }
-    const now = Date.now()
-    const newFiles: UploadingFile[] = toAdd.map((file, i) => ({
-      id: `${now}_${i}_${Math.random().toString(36).slice(2)}`,
+    if (errors.length > 0) {
+      errors.forEach((e) => toast.error(e))
+    }
+    if (valid.length === 0) return
+    const newFiles: UploadingFile[] = valid.map((file) => ({
+      id: generateId(),
       file,
       preview: URL.createObjectURL(file),
       progress: 0,
@@ -120,7 +153,7 @@ export default function PortfolioUploadModal({
 
     for (let i = 0; i < files.length; i++) {
       const uploadFile = files[i]
-      const photoId = `${Date.now()}_${i}_${Math.random().toString(36).slice(2)}`
+      const photoId = generateId()
       const path = `portfolio/${uid}/${photoId}`
       const sRef = storageRef(storage, path)
       const task = uploadBytesResumable(sRef, uploadFile.file)
@@ -161,14 +194,19 @@ export default function PortfolioUploadModal({
                 }),
               })
               if (res.ok) {
-                const data = await res.json() as { photo: PortfolioPhoto }
-                saved.push(data.photo)
+                const data = await res.json() as { photo?: unknown }
+                if (isPortfolioPhoto(data.photo)) {
+                  saved.push(data.photo)
+                } else {
+                  toast.error('Unexpected response from server')
+                }
               } else {
                 const data = await res.json() as { error?: string }
                 toast.error(data.error ?? 'Failed to save photo')
               }
-            } catch {
-              toast.error(`Failed to upload ${uploadFile.file.name}`)
+            } catch (err) {
+              const msg = err instanceof Error ? err.message : 'Unknown error'
+              toast.error(`Failed to upload ${uploadFile.file.name}: ${msg}`)
             } finally {
               resolve()
             }
