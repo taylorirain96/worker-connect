@@ -18,6 +18,7 @@ import { requestPermission } from '@/lib/fcm/requestPermission'
 
 const STORAGE_KEY = 'wc_notif_prompt_snoozed'
 const SNOOZE_DAYS = 7
+const MS_PER_DAY = 24 * 60 * 60 * 1000
 
 export default function NotificationPrompt() {
   const { user } = useAuth()
@@ -43,7 +44,7 @@ export default function NotificationPrompt() {
   /** Dismiss and snooze for SNOOZE_DAYS days. */
   const dismiss = () => {
     setVisible(false)
-    const snoozedUntil = Date.now() + SNOOZE_DAYS * 24 * 60 * 60 * 1000
+    const snoozedUntil = Date.now() + SNOOZE_DAYS * MS_PER_DAY
     localStorage.setItem(STORAGE_KEY, String(snoozedUntil))
   }
 
@@ -71,7 +72,7 @@ export default function NotificationPrompt() {
           Enable notifications
         </p>
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-          Enable notifications to get instant job alerts for new jobs, quotes, messages, and booking updates.
+          Get instant job alerts for new jobs, quotes, messages, and booking updates.
         </p>
         <div className="flex items-center gap-2 mt-3">
           <button
