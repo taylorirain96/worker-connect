@@ -43,7 +43,7 @@ export default function StarRating({
     >
       {Array.from({ length: max }, (_, i) => {
         const starValue = i + 1
-        const filled = starValue <= Math.round(value)
+        const filled = starValue <= Math.floor(value)
         const partial = !filled && starValue - 0.5 <= value
 
         return (

@@ -13,7 +13,7 @@ import ReviewCard from '@/components/reviews/ReviewCard'
 import { getWorkerReviews } from '@/lib/reviews/index'
 import { getReviewAggregates } from '@/lib/reviews/firebase'
 import { formatRating, getRatingLabel, getRatingColor } from '@/lib/reviews/service'
-import type { DetailedReview, ReviewAggregates } from '@/types'
+import type { DetailedReview, ReviewAggregates, CategoryRatings } from '@/types'
 import { cn } from '@/lib/utils'
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -233,8 +233,8 @@ export default function WorkerReviewsDashboardPage() {
                           Category Breakdown
                         </p>
                         <div className="space-y-2">
-                          {(Object.keys(CATEGORY_LABELS) as string[]).map((key) => {
-                            const value = (categoryAverages as Record<string, number>)[key] ?? 0
+                          {(Object.keys(CATEGORY_LABELS) as (keyof CategoryRatings)[]).map((key) => {
+                            const value = (categoryAverages as CategoryRatings)[key] ?? 0
                             const pct = (value / 5) * 100
                             return (
                               <div key={key} className="flex items-center gap-3">
