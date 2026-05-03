@@ -35,7 +35,7 @@ const MOCK_BUSINESSES: Record<string, BusinessProfile> = {
     companySize: '11-50',
     yearsInBusiness: 12,
     serviceAreas: ['Blenheim', 'Marlborough', 'Nelson', 'Picton'],
-    website: 'https://apexbuildingtradesde.example.com',
+    website: 'https://apexbuildingtrades.example.com',
     linkedIn: 'https://linkedin.com/company/apexbuildingtrades',
     description:
       'Apex Building & Trades has been delivering high-quality construction and renovation projects across the Marlborough and Nelson regions for over 12 years. We specialise in residential builds, commercial renovations, and property maintenance for both residential and commercial clients.',
