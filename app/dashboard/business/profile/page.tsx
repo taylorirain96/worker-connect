@@ -183,12 +183,18 @@ function ProfileCompletionBar({ pct, missing }: { pct: number; missing: string[]
           style={{ width: `${pct}%` }}
         />
       </div>
-      {pct < 100 && (
-        <p className="text-xs text-gray-500 mt-1">
-          {missing.length > 0
-            ? `Still needed: ${missing.join(', ')}`
-            : 'Complete your profile to build trust with workers and clients.'}
-        </p>
+      {pct < 100 && missing.length > 0 && (
+        <div className="mt-2">
+          <p className="text-xs text-gray-500 font-medium mb-1">What&apos;s missing:</p>
+          <ul className="text-xs text-gray-500 space-y-0.5">
+            {missing.map((item) => (
+              <li key={item} className="flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-gray-400 flex-shrink-0" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </div>
   )
@@ -294,7 +300,7 @@ export default function EditBusinessProfilePage() {
                       Business / Trading Name
                     </label>
                     <Input
-                      placeholder="e.g. Apex Plumbing & Gas"
+                      placeholder="e.g. Apex Building & Trades"
                       value={form.companyName}
                       onChange={(e) => handleChange('companyName', e.target.value)}
                     />
