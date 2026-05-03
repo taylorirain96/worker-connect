@@ -45,6 +45,7 @@ export default function JobCompletePage() {
   const [marking, setMarking] = useState(false)
   const [completed, setCompleted] = useState(false)
   const [completedAt, setCompletedAt] = useState<string | null>(null)
+  const [disputeDeadline, setDisputeDeadline] = useState<string | null>(null)
 
   // Load job from Firestore
   useEffect(() => {
@@ -101,6 +102,7 @@ export default function JobCompletePage() {
         // Partial success — job marked complete but escrow release had issues
         setCompleted(true)
         setCompletedAt(data.completedAt ?? new Date().toISOString())
+        if (data.workerDisputeDeadline) setDisputeDeadline(data.workerDisputeDeadline)
         toast.error(
           data.error ??
             'Job marked complete but payment release encountered an issue — please contact support.'
@@ -108,6 +110,7 @@ export default function JobCompletePage() {
       } else if (res.ok && data.success) {
         setCompleted(true)
         setCompletedAt(data.completedAt ?? new Date().toISOString())
+        if (data.workerDisputeDeadline) setDisputeDeadline(data.workerDisputeDeadline)
         toast.success('Job marked as complete! Payment has been released to the tradie.')
       } else {
         toast.error(data.error ?? 'Failed to mark job as complete. Please try again.')
@@ -196,7 +199,10 @@ export default function JobCompletePage() {
               <span className="font-medium text-gray-800 dark:text-gray-200">
                 {worker?.displayName ?? 'the tradie'}
               </span>
-              . The tradie has 24 hours to raise a dispute if needed.
+              .{disputeDeadline
+                ? ` The tradie may raise a dispute until ${new Date(disputeDeadline).toLocaleString('en-NZ', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}.`
+                : ' The tradie has 24 hours to raise a dispute if needed.'
+              }
             </p>
 
             <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 mb-6 text-left">

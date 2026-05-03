@@ -44,11 +44,14 @@ export async function POST(request: NextRequest) {
   const results: Array<{ jobId: string; status: 'auto_released' | 'already_released' | 'error'; message?: string }> = []
 
   try {
-    // Find all completed jobs whose worker dispute window has passed
-    // and whose escrow has not yet been released
+    // Find completed jobs whose dispute window has passed and escrow is not yet released.
+    // We query on status='completed' only; the deadline and escrowStatus filters are
+    // applied in-process because Firestore doesn't support inequality on multiple fields
+    // without composite indexes that may not be configured in all environments.
     const jobsSnap = await adminDb
       .collection('jobs')
       .where('status', '==', 'completed')
+      .where('escrowStatus', 'in', ['pending', 'held', 'in_escrow', 'pending_deposit'])
       .get()
 
     for (const jobDoc of jobsSnap.docs) {
@@ -62,12 +65,6 @@ export async function POST(request: NextRequest) {
 
       // Skip if the 24-hour window has not yet expired
       if (now < deadline) continue
-
-      // Skip if escrow is already released
-      if (job.escrowStatus === 'released') {
-        results.push({ jobId, status: 'already_released' })
-        continue
-      }
 
       try {
         // Find the escrow record for this job in the 'escrows' collection

@@ -447,6 +447,15 @@ function JobDetailInner() {
     job.deadline != null &&
     Date.now() - new Date(job.deadline).getTime() > SEVEN_DAYS_MS
 
+  // Worker dispute window — derived once for use in the sidebar
+  const workerDisputeDeadlineStr = (job as { workerDisputeDeadline?: string }).workerDisputeDeadline
+  const withinWorkerDisputeWindow =
+    profile?.role === 'worker' &&
+    user?.uid === job.assignedWorkerId &&
+    effectiveStatus === 'completed' &&
+    workerDisputeDeadlineStr != null &&
+    Date.now() < new Date(workerDisputeDeadlineStr).getTime()
+
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
@@ -962,36 +971,7 @@ function JobDetailInner() {
                     </Button>
                   </Link>
                 )}
-                {profile?.role === 'worker' && user?.uid === job.assignedWorkerId && effectiveStatus === 'completed' && (
-                  (() => {
-                    const deadline = (job as { workerDisputeDeadline?: string }).workerDisputeDeadline
-                    const withinWindow = deadline ? Date.now() < new Date(deadline).getTime() : false
-                    if (!withinWindow) return null
-                    return (
-                      <div className="mt-4 space-y-2">
-                        <p className="text-xs text-amber-600 dark:text-amber-400 text-center">
-                          Dispute window closes{' '}
-                          {new Date(deadline!).toLocaleString('en-NZ', {
-                            day: 'numeric',
-                            month: 'short',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </p>
-                        <Link href={`/jobs/${job.id}/dispute`} className="block">
-                          <Button
-                            variant="outline"
-                            className="w-full flex items-center justify-center gap-2 text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20"
-                          >
-                            <AlertTriangle className="h-4 w-4" />
-                            Raise a Dispute
-                          </Button>
-                        </Link>
-                      </div>
-                    )
-                  })()
-                )}
-                {/* Worker can also dispute while job is in_progress */}
+                {/* Worker: dispute available while job is in_progress */}
                 {profile?.role === 'worker' && user?.uid === job.assignedWorkerId && effectiveStatus === 'in_progress' && (
                   <Link href={`/jobs/${job.id}/dispute`} className="block mt-4">
                     <Button
@@ -1002,6 +982,29 @@ function JobDetailInner() {
                       Raise a Dispute
                     </Button>
                   </Link>
+                )}
+                {/* Worker: dispute available within 24h window after completion */}
+                {withinWorkerDisputeWindow && (
+                  <div className="mt-4 space-y-2">
+                    <p className="text-xs text-amber-600 dark:text-amber-400 text-center">
+                      Dispute window closes{' '}
+                      {new Date(workerDisputeDeadlineStr!).toLocaleString('en-NZ', {
+                        day: 'numeric',
+                        month: 'short',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </p>
+                    <Link href={`/jobs/${job.id}/dispute`} className="block">
+                      <Button
+                        variant="outline"
+                        className="w-full flex items-center justify-center gap-2 text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                      >
+                        <AlertTriangle className="h-4 w-4" />
+                        Raise a Dispute
+                      </Button>
+                    </Link>
+                  </div>
                 )}
 
                 {/* Dispute in progress — shown when job is already disputed */}
