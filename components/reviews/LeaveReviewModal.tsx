@@ -83,7 +83,7 @@ export default function LeaveReviewModal({
         <div className="px-6 pt-4 pb-2">
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Share your experience for <span className="font-medium text-gray-700 dark:text-gray-300">{jobTitle}</span>.
-            Your honest feedback helps others find great tradies.
+            Your honest feedback helps others find great tradespeople.
           </p>
         </div>
 
