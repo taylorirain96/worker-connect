@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
 
       const deadline = new Date(job.workerDisputeDeadline)
 
-      // Skip if the 24-hour window has not yet expired
+      // Skip if the deadline has not yet been reached
       if (now < deadline) continue
 
       try {
