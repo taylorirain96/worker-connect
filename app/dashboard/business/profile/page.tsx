@@ -45,22 +45,22 @@ const INDUSTRIES = [
   'Pest Control',
 ]
 
-const NZ_TOWNS = [
+const NZ_REGIONS = [
   'Auckland',
   'Wellington',
-  'Christchurch',
-  'Blenheim',
+  'Christchurch (Canterbury)',
+  'Blenheim (Marlborough)',
   'Nelson',
-  'Hamilton',
-  'Tauranga',
-  'Dunedin',
-  'Queenstown',
-  'Invercargill',
-  'Napier',
-  'Palmerston North',
-  'New Plymouth',
-  'Rotorua',
-  'Whangarei',
+  'Hamilton (Waikato)',
+  'Tauranga (Bay of Plenty)',
+  'Dunedin (Otago)',
+  'Queenstown (Otago)',
+  'Invercargill (Southland)',
+  "Napier/Hastings (Hawke's Bay)",
+  'Palmerston North (Manawatū)',
+  'New Plymouth (Taranaki)',
+  'Rotorua (Bay of Plenty)',
+  'Whangarei (Northland)',
 ]
 
 const COMPANY_SIZES = [
@@ -82,7 +82,7 @@ const CERTIFICATIONS = [
   'Master Builder Member',
   'Registered Architect (NZIA)',
   'NZ Certificate in Construction (NZQA)',
-  'Health and Safety Representative (HSR)',
+  'Health & Safety Representative (HSR)',
   'Trade Qualified (NZQA)',
   'Working at Heights (WAH) Certified',
 ]
@@ -123,6 +123,53 @@ const DEFAULT_FORM: FormState = {
   serviceAreas: [],
 }
 
+function computeCompletion(form: FormState): { pct: number; missing: string[] } {
+  const requiredFields: Array<{ key: keyof FormState; label: string }> = [
+    { key: 'industry', label: 'Industry' },
+    { key: 'companySize', label: 'Company Size' },
+    { key: 'yearsInBusiness', label: 'Years in Business' },
+    { key: 'description', label: 'Description' },
+  ]
+  const optionalFields: Array<{ key: keyof FormState; label: string }> = [
+    { key: 'companyName', label: 'Business Name' },
+    { key: 'licenseNumber', label: 'Licence Number' },
+    { key: 'website', label: 'Website' },
+    { key: 'linkedIn', label: 'LinkedIn' },
+    { key: 'missionStatement', label: 'Mission Statement' },
+  ]
+  let score = 0
+  const missing: string[] = []
+  const total = requiredFields.length + optionalFields.length + 3 // +2 serviceAreas & certifications +1 insurance
+
+  requiredFields.forEach(({ key, label }) => {
+    if (String(form[key]).trim()) {
+      score++
+    } else {
+      missing.push(label)
+    }
+  })
+  optionalFields.forEach(({ key }) => {
+    if (String(form[key]).trim()) score++
+  })
+  if (form.serviceAreas.length > 0) {
+    score++
+  } else {
+    missing.push('Service Area')
+  }
+  if (form.certifications.length > 0) {
+    score++
+  } else {
+    missing.push('Certifications')
+  }
+  if (form.hasGeneralLiability || form.hasWorkersComp) {
+    score++
+  } else {
+    missing.push('Insurance')
+  }
+
+  return { pct: Math.round((score / total) * 100), missing }
+}
+
 function ProfileCompletionBar({ pct, missing }: { pct: number; missing: string[] }) {
   return (
     <div>
@@ -153,58 +200,12 @@ function ProfileCompletionBar({ pct, missing }: { pct: number; missing: string[]
   )
 }
 
-function computeCompletion(form: FormState): { pct: number; missing: string[] } {
-  const missing: string[] = []
-  let score = 0
-
-  // Required scoring fields
-  const required: Array<{ key: keyof FormState; label: string }> = [
-    { key: 'industry', label: 'Industry / Category' },
-    { key: 'companySize', label: 'Company Size' },
-    { key: 'yearsInBusiness', label: 'Years in Business' },
-    { key: 'description', label: 'Company Description' },
-  ]
-  required.forEach(({ key, label }) => {
-    if (String(form[key]).trim()) score++
-    else missing.push(label)
-  })
-
-  // Optional contributing fields
-  const optional: Array<{ key: keyof FormState; label: string }> = [
-    { key: 'companyName', label: 'Business / Trading Name' },
-    { key: 'website', label: 'Website' },
-    { key: 'linkedIn', label: 'LinkedIn' },
-    { key: 'missionStatement', label: 'Mission Statement' },
-    { key: 'licenseNumber', label: 'Licence Number' },
-  ]
-  optional.forEach(({ key, label }) => {
-    if (String(form[key]).trim()) score++
-    else missing.push(label)
-  })
-
-  // Service areas
-  if (form.serviceAreas.length > 0) score++
-  else missing.push('Service Areas (at least one)')
-
-  // Certifications
-  if (form.certifications.length > 0) score++
-  else missing.push('Certifications (at least one)')
-
-  // Insurance — either checkbox counts as one point
-  if (form.hasGeneralLiability || form.hasWorkersComp) score++
-  else missing.push('Insurance (Public Liability or ACC Levy)')
-
-  const total = 12 // 4 required + 5 optional + serviceAreas + certifications + insurance
-  return { pct: Math.round((score / total) * 100), missing }
-}
-
 export default function EditBusinessProfilePage() {
   const [form, setForm] = useState<FormState>(DEFAULT_FORM)
   const [saving, setSaving] = useState(false)
   const [newArea, setNewArea] = useState('')
-  const [quickTown, setQuickTown] = useState('')
 
-  const { pct: completionPct, missing: completionMissing } = computeCompletion(form)
+  const { pct: completionPct, missing: missingFields } = computeCompletion(form)
 
   function handleChange(field: keyof FormState, value: string | boolean) {
     setForm((prev) => ({ ...prev, [field]: value }))
@@ -262,7 +263,7 @@ export default function EditBusinessProfilePage() {
               </p>
             </div>
             <div className="hidden sm:flex items-center gap-2">
-              {form.companyName && (
+              {form.companyName.trim() && (
                 <Link
                   href={`/business/${slugify(form.companyName)}`}
                   className="text-sm text-primary-600 hover:text-primary-700 flex items-center gap-1"
@@ -282,7 +283,7 @@ export default function EditBusinessProfilePage() {
           {/* Completion bar */}
           <Card className="mb-6">
             <CardContent className="pt-4 pb-4">
-              <ProfileCompletionBar pct={completionPct} missing={completionMissing} />
+              <ProfileCompletionBar pct={completionPct} missing={missingFields} />
             </CardContent>
           </Card>
 
@@ -355,7 +356,7 @@ export default function EditBusinessProfilePage() {
                       License Number
                     </label>
                     <Input
-                      placeholder="e.g. LBP-112345"
+                      placeholder="e.g. LBP-123456"
                       value={form.licenseNumber}
                       onChange={(e) => handleChange('licenseNumber', e.target.value)}
                     />
@@ -445,24 +446,20 @@ export default function EditBusinessProfilePage() {
                     Add
                   </Button>
                 </div>
-                {/* Quick-select NZ towns */}
                 <div className="mb-3">
                   <select
-                    value={quickTown}
+                    value=""
                     onChange={(e) => {
-                      const town = e.target.value
-                      setQuickTown('')
-                      if (town && !form.serviceAreas.includes(town)) {
-                        setForm((prev) => ({ ...prev, serviceAreas: [...prev.serviceAreas, town] }))
+                      if (!e.target.value) return
+                      if (!form.serviceAreas.includes(e.target.value)) {
+                        setForm((prev) => ({ ...prev, serviceAreas: [...prev.serviceAreas, e.target.value] }))
                       }
                     }}
                     className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                   >
-                    <option value="">Quick-add NZ town…</option>
-                    {NZ_TOWNS.map((town) => (
-                      <option key={town} value={town} disabled={form.serviceAreas.includes(town)}>
-                        {town}
-                      </option>
+                    <option value="">Quick pick a NZ region…</option>
+                    {NZ_REGIONS.map((r) => (
+                      <option key={r} value={r}>{r}</option>
                     ))}
                   </select>
                 </div>
@@ -522,7 +519,7 @@ export default function EditBusinessProfilePage() {
                       <p className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-primary-600 transition-colors">
                         ACC Employer Levy / Workplace Insurance
                       </p>
-                      <p className="text-xs text-gray-500">I have ACC employer levy coverage</p>
+                      <p className="text-xs text-gray-500">I have ACC employer levy coverage or workplace insurance</p>
                     </div>
                   </label>
                   <label className="flex items-center gap-3 cursor-pointer group">
@@ -536,7 +533,7 @@ export default function EditBusinessProfilePage() {
                       <p className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-primary-600 transition-colors">
                         Rated Traders Member
                       </p>
-                      <p className="text-xs text-gray-500">I am a verified member of Rated Traders</p>
+                      <p className="text-xs text-gray-500">I am a Rated Traders verified member</p>
                     </div>
                   </label>
                 </div>

@@ -34,7 +34,7 @@ const MOCK_BUSINESSES: Record<string, BusinessProfile> = {
     industry: 'Building & Construction',
     companySize: '11-50',
     yearsInBusiness: 12,
-    serviceAreas: ['Blenheim', 'Marlborough', 'Nelson', 'Picton'],
+    serviceAreas: ['Blenheim, Marlborough', 'Nelson', 'Richmond, Marlborough', 'Picton'],
     website: 'https://apexbuildingtrades.example.com',
     linkedIn: 'https://linkedin.com/company/apexbuildingtrades',
     description:
@@ -47,7 +47,7 @@ const MOCK_BUSINESSES: Record<string, BusinessProfile> = {
     hasWorkersComp: true,
     backgroundCheckStatus: 'clear',
     googleRating: 4.8,
-    certifications: ['Licensed Building Practitioner (LBP)', 'Site Safe Passport', 'First Aid Certificate'],
+    certifications: ['Site Safe Gold Card', 'Licensed Building Practitioner (LBP)', 'First Aid Certificate'],
     subscriptionTier: 'enterprise',
     isVerifiedContractor: true,
     isEnterprisePartner: true,
