@@ -358,6 +358,9 @@ export interface BusinessProfile {
   licenseVerified: boolean
   hasGeneralLiability: boolean
   hasWorkersComp: boolean
+  hasPublicLiability?: boolean
+  hasACCEmployerLevy?: boolean
+  isRatedTrader?: boolean
   backgroundCheckStatus: 'clear' | 'pending' | 'not_completed'
   bbbRating?: string
   googleRating?: number
