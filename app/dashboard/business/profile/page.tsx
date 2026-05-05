@@ -23,16 +23,17 @@ import toast from 'react-hot-toast'
 import { slugify } from '@/lib/utils'
 
 const INDUSTRIES = [
-  'Plumbing',
+  'General Contractor / Builder',
+  'Plumbing & Gasfitting',
   'Electrical',
   'Carpentry & Joinery',
   'HVAC / Heat Pumps',
   'Roofing',
-  'Landscaping & Garden',
+  'Landscaping / Garden',
   'Painting & Decorating',
   'Flooring',
-  'Cleaning',
-  'Removals & Moving',
+  'Cleaning / Janitorial',
+  'Moving & Relocation',
   'Building & Construction',
   'General Trades',
   'Property Maintenance',
@@ -43,24 +44,28 @@ const INDUSTRIES = [
   'Glazing',
   'Locksmith',
   'Pest Control',
+  'Facility Management',
+  'Property Management',
+  'Government / Public Works',
+  'Other',
 ]
 
 const NZ_REGIONS = [
-  'Auckland',
-  'Wellington',
-  'Christchurch (Canterbury)',
-  'Blenheim (Marlborough)',
+  'Blenheim, Marlborough',
   'Nelson',
-  'Hamilton (Waikato)',
-  'Tauranga (Bay of Plenty)',
-  'Dunedin (Otago)',
-  'Queenstown (Otago)',
-  'Invercargill (Southland)',
-  "Napier/Hastings (Hawke's Bay)",
-  'Palmerston North (Manawatū)',
-  'New Plymouth (Taranaki)',
-  'Rotorua (Bay of Plenty)',
-  'Whangarei (Northland)',
+  'Christchurch, Canterbury',
+  'Wellington',
+  'Auckland',
+  'Hamilton, Waikato',
+  'Tauranga, Bay of Plenty',
+  'Dunedin, Otago',
+  'Invercargill, Southland',
+  'Queenstown, Otago',
+  "Napier/Hastings, Hawke's Bay",
+  'Palmerston North, Manawatū',
+  'New Plymouth, Taranaki',
+  'Rotorua, Bay of Plenty',
+  'Whangarei, Northland',
 ]
 
 const COMPANY_SIZES = [
@@ -98,9 +103,9 @@ interface FormState {
   description: string
   missionStatement: string
   licenseNumber: string
-  hasGeneralLiability: boolean
-  hasWorkersComp: boolean
-  isRatedTradersMember: boolean
+  hasPublicLiability: boolean
+  hasACCEmployerLevy: boolean
+  isRatedTrader: boolean
   certifications: string[]
   serviceAreas: string[]
 }
@@ -116,58 +121,11 @@ const DEFAULT_FORM: FormState = {
   description: '',
   missionStatement: '',
   licenseNumber: '',
-  hasGeneralLiability: false,
-  hasWorkersComp: false,
-  isRatedTradersMember: false,
+  hasPublicLiability: false,
+  hasACCEmployerLevy: false,
+  isRatedTrader: false,
   certifications: [],
   serviceAreas: [],
-}
-
-function computeCompletion(form: FormState): { pct: number; missing: string[] } {
-  const requiredFields: Array<{ key: keyof FormState; label: string }> = [
-    { key: 'industry', label: 'Industry' },
-    { key: 'companySize', label: 'Company Size' },
-    { key: 'yearsInBusiness', label: 'Years in Business' },
-    { key: 'description', label: 'Description' },
-  ]
-  const optionalFields: Array<{ key: keyof FormState; label: string }> = [
-    { key: 'companyName', label: 'Business Name' },
-    { key: 'licenseNumber', label: 'Licence Number' },
-    { key: 'website', label: 'Website' },
-    { key: 'linkedIn', label: 'LinkedIn' },
-    { key: 'missionStatement', label: 'Mission Statement' },
-  ]
-  let score = 0
-  const missing: string[] = []
-  const total = requiredFields.length + optionalFields.length + 3 // +2 serviceAreas & certifications +1 insurance
-
-  requiredFields.forEach(({ key, label }) => {
-    if (String(form[key]).trim()) {
-      score++
-    } else {
-      missing.push(label)
-    }
-  })
-  optionalFields.forEach(({ key }) => {
-    if (String(form[key]).trim()) score++
-  })
-  if (form.serviceAreas.length > 0) {
-    score++
-  } else {
-    missing.push('Service Area')
-  }
-  if (form.certifications.length > 0) {
-    score++
-  } else {
-    missing.push('Certifications')
-  }
-  if (form.hasGeneralLiability || form.hasWorkersComp) {
-    score++
-  } else {
-    missing.push('Insurance')
-  }
-
-  return { pct: Math.round((score / total) * 100), missing }
 }
 
 function ProfileCompletionBar({ pct, missing }: { pct: number; missing: string[] }) {
@@ -183,14 +141,13 @@ function ProfileCompletionBar({ pct, missing }: { pct: number; missing: string[]
           style={{ width: `${pct}%` }}
         />
       </div>
-      {pct < 100 && missing.length > 0 && (
+      {missing.length > 0 && (
         <div className="mt-2">
-          <p className="text-xs text-gray-500 font-medium mb-1">What&apos;s missing:</p>
-          <ul className="text-xs text-gray-500 space-y-0.5">
-            {missing.map((item) => (
-              <li key={item} className="flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-gray-400 flex-shrink-0" />
-                {item}
+          <p className="text-xs text-gray-500 mb-1">Still needed to complete your profile:</p>
+          <ul className="flex flex-wrap gap-1">
+            {missing.map((m) => (
+              <li key={m} className="text-xs bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 px-2 py-0.5 rounded-full">
+                {m}
               </li>
             ))}
           </ul>
@@ -200,12 +157,63 @@ function ProfileCompletionBar({ pct, missing }: { pct: number; missing: string[]
   )
 }
 
+function computeCompletion(form: FormState): { pct: number; missing: string[] } {
+  const requiredFields: Array<{ key: keyof FormState; label: string }> = [
+    { key: 'industry', label: 'Industry' },
+    { key: 'companySize', label: 'Company Size' },
+    { key: 'yearsInBusiness', label: 'Years in Business' },
+    { key: 'description', label: 'Company Description' },
+  ]
+  const optionalFields: Array<{ key: keyof FormState; label: string }> = [
+    { key: 'companyName', label: 'Business / Trading Name' },
+    { key: 'licenseNumber', label: 'Licence Number' },
+    { key: 'website', label: 'Website' },
+    { key: 'linkedIn', label: 'LinkedIn' },
+    { key: 'missionStatement', label: 'Mission Statement' },
+  ]
+  const missing: string[] = []
+  let score = 0
+  const total = requiredFields.length + optionalFields.length + 3 // +3 for serviceAreas, certifications, insurance
+
+  requiredFields.forEach(({ key, label }) => {
+    if (String(form[key]).trim()) {
+      score++
+    } else {
+      missing.push(label)
+    }
+  })
+  optionalFields.forEach(({ key, label }) => {
+    if (String(form[key]).trim()) {
+      score++
+    } else {
+      missing.push(label)
+    }
+  })
+  if (form.serviceAreas.length > 0) {
+    score++
+  } else {
+    missing.push('Service Areas')
+  }
+  if (form.certifications.length > 0) {
+    score++
+  } else {
+    missing.push('Certifications')
+  }
+  if (form.hasPublicLiability || form.hasACCEmployerLevy) {
+    score++
+  } else {
+    missing.push('Insurance')
+  }
+
+  return { pct: Math.round((score / total) * 100), missing }
+}
+
 export default function EditBusinessProfilePage() {
   const [form, setForm] = useState<FormState>(DEFAULT_FORM)
   const [saving, setSaving] = useState(false)
   const [newArea, setNewArea] = useState('')
 
-  const { pct: completionPct, missing: missingFields } = computeCompletion(form)
+  const { pct: completionPct, missing: completionMissing } = computeCompletion(form)
 
   function handleChange(field: keyof FormState, value: string | boolean) {
     setForm((prev) => ({ ...prev, [field]: value }))
@@ -263,7 +271,7 @@ export default function EditBusinessProfilePage() {
               </p>
             </div>
             <div className="hidden sm:flex items-center gap-2">
-              {form.companyName.trim() && (
+              {form.companyName?.trim() && (
                 <Link
                   href={`/business/${slugify(form.companyName)}`}
                   className="text-sm text-primary-600 hover:text-primary-700 flex items-center gap-1"
@@ -283,7 +291,7 @@ export default function EditBusinessProfilePage() {
           {/* Completion bar */}
           <Card className="mb-6">
             <CardContent className="pt-4 pb-4">
-              <ProfileCompletionBar pct={completionPct} missing={missingFields} />
+              <ProfileCompletionBar pct={completionPct} missing={completionMissing} />
             </CardContent>
           </Card>
 
@@ -297,14 +305,14 @@ export default function EditBusinessProfilePage() {
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="sm:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Business / Trading Name
+                      Business / Trading Name <span className="text-gray-400 font-normal">(optional)</span>
                     </label>
                     <Input
-                      placeholder="e.g. Apex Building & Trades"
+                      placeholder="e.g. Marlborough Plumbing & Gas"
                       value={form.companyName}
                       onChange={(e) => handleChange('companyName', e.target.value)}
                     />
-                    <p className="text-xs text-gray-500 mt-1">Leave blank if you trade under your own name</p>
+                    <p className="text-xs text-gray-400 mt-1">Leave blank if you operate under your own name</p>
                   </div>
 
                   <div>
@@ -353,7 +361,7 @@ export default function EditBusinessProfilePage() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      License Number
+                      Licence Number
                     </label>
                     <Input
                       placeholder="e.g. LBP-123456"
@@ -430,6 +438,25 @@ export default function EditBusinessProfilePage() {
                 <CardTitle>Service Areas</CardTitle>
               </CardHeader>
               <CardContent>
+                {/* Quick-add NZ regions */}
+                <div className="mb-3">
+                  <label className="block text-xs text-gray-500 mb-1">Quick-add a common NZ region:</label>
+                  <select
+                    value=""
+                    onChange={(e) => {
+                      const val = e.target.value
+                      if (val && !form.serviceAreas.includes(val)) {
+                        setForm((prev) => ({ ...prev, serviceAreas: [...prev.serviceAreas, val] }))
+                      }
+                    }}
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  >
+                    <option value="">Select a region…</option>
+                    {NZ_REGIONS.map((r) => (
+                      <option key={r} value={r} disabled={form.serviceAreas.includes(r)}>{r}</option>
+                    ))}
+                  </select>
+                </div>
                 <div className="flex gap-2 mb-3">
                   <div className="flex-1 relative">
                     <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -497,8 +524,8 @@ export default function EditBusinessProfilePage() {
                   <label className="flex items-center gap-3 cursor-pointer group">
                     <input
                       type="checkbox"
-                      checked={form.hasGeneralLiability}
-                      onChange={(e) => handleChange('hasGeneralLiability', e.target.checked)}
+                      checked={form.hasPublicLiability}
+                      onChange={(e) => handleChange('hasPublicLiability', e.target.checked)}
                       className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                     />
                     <div>
@@ -511,8 +538,8 @@ export default function EditBusinessProfilePage() {
                   <label className="flex items-center gap-3 cursor-pointer group">
                     <input
                       type="checkbox"
-                      checked={form.hasWorkersComp}
-                      onChange={(e) => handleChange('hasWorkersComp', e.target.checked)}
+                      checked={form.hasACCEmployerLevy}
+                      onChange={(e) => handleChange('hasACCEmployerLevy', e.target.checked)}
                       className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                     />
                     <div>
@@ -525,15 +552,15 @@ export default function EditBusinessProfilePage() {
                   <label className="flex items-center gap-3 cursor-pointer group">
                     <input
                       type="checkbox"
-                      checked={form.isRatedTradersMember}
-                      onChange={(e) => handleChange('isRatedTradersMember', e.target.checked)}
+                      checked={form.isRatedTrader}
+                      onChange={(e) => handleChange('isRatedTrader', e.target.checked)}
                       className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                     />
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-primary-600 transition-colors">
-                        Rated Traders Member
+                        Rated Trader
                       </p>
-                      <p className="text-xs text-gray-500">I am a Rated Traders verified member</p>
+                      <p className="text-xs text-gray-500">I am a Rated Trader verified member</p>
                     </div>
                   </label>
                 </div>
