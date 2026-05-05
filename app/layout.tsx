@@ -13,7 +13,7 @@ const SupportChatbot = dynamic(() => import('@/components/chat/SupportChatbot'),
 const PWAInstallPrompt = dynamic(() => import('@/components/PWAInstallPrompt'), { ssr: false })
 const MobileTabBar = dynamic(() => import('@/components/MobileTabBar'), { ssr: false })
 const NotificationPrompt = dynamic(
-  () => import('@/components/NotificationPrompt'),
+  () => import('@/components/notifications/NotificationPrompt'),
   { ssr: false }
 )
 
