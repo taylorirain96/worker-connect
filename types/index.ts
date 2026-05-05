@@ -1134,6 +1134,7 @@ export interface JobApplication {
   workerName?: string
   workerPhotoURL?: string
   workerRating?: number
+  workerVerified?: boolean
   coverLetter?: string
   status: 'pending' | 'accepted' | 'rejected' | 'withdrawn'
   appliedAt: string
@@ -1385,6 +1386,7 @@ export interface Quote {
   workerId: string
   workerName: string
   workerAvatar?: string
+  workerVerified?: boolean
   basePrice: number
   laborHours?: number
   laborRate?: number
