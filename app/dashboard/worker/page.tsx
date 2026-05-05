@@ -10,7 +10,7 @@ import Button from '@/components/ui/Button'
 import RatingStars from '@/components/reviews/RatingStars'
 import Link from 'next/link'
 import {
-  Briefcase, DollarSign, Star, Clock, TrendingUp,
+  Briefcase, DollarSign, Star, Clock, TrendingUp, BarChart2,
   CheckCircle, AlertCircle, Search, Settings, FileText, MessageSquare, Send, Sparkles, ShieldCheck
 } from 'lucide-react'
 import { formatCurrency, STATUS_LABELS, formatRelativeDate } from '@/lib/utils'
@@ -339,7 +339,7 @@ export default function WorkerDashboardPage() {
                   Edit Profile
                 </Button>
               </Link>
-              <Link href="/analytics">
+              <Link href="/dashboard/worker/analytics">
                 <Button variant="outline" className="flex items-center gap-2">
                   <TrendingUp className="h-4 w-4" />
                   Analytics
@@ -689,6 +689,17 @@ export default function WorkerDashboardPage() {
                   <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                     <TrendingUp className="h-4 w-4 text-primary-600" />
                     View Earnings & Withdraw
+                  </div>
+                  <span className="text-xs text-primary-600">→</span>
+                </div>
+              </Link>
+
+              {/* Analytics link */}
+              <Link href="/dashboard/worker/analytics">
+                <div className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
+                  <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <BarChart2 className="h-4 w-4 text-indigo-500" />
+                    Analytics & Stats
                   </div>
                   <span className="text-xs text-primary-600">→</span>
                 </div>
