@@ -57,6 +57,29 @@ export function getInitials(name: string): string {
     .slice(0, 2)
 }
 
+export const NZ_REGIONS = [
+  'Auckland',
+  'Wellington',
+  'Christchurch',
+  'Hamilton',
+  'Tauranga',
+  'Dunedin',
+  'Palmerston North',
+  'Nelson',
+  'Rotorua',
+  'New Plymouth',
+  'Whanganui',
+  'Blenheim/Marlborough',
+  'Invercargill',
+  'Napier/Hawke\'s Bay',
+  'Queenstown',
+  'Gisborne',
+  'Whangarei',
+  'Timaru',
+] as const
+
+export type NZRegion = (typeof NZ_REGIONS)[number]
+
 export const JOB_CATEGORIES = [
   { id: 'plumbing', label: 'Plumbing', icon: '🔧', description: 'Pipes, fixtures, water systems', color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' },
   { id: 'electrical', label: 'Electrical', icon: '⚡', description: 'Wiring, panels, lighting', color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' },

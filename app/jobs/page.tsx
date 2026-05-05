@@ -1,6 +1,6 @@
 'use client'
-import { Suspense, useEffect, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { Suspense, useEffect, useState, useCallback } from 'react'
+import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import JobCard from '@/components/jobs/JobCard'
@@ -21,11 +21,12 @@ const MOCK_JOBS: Job[] = [
     category: 'plumbing',
     employerId: 'emp1',
     employerName: 'John Smith',
-    location: 'Blenheim, Marlborough',
+    location: 'Blenheim/Marlborough',
     budget: 150,
     budgetType: 'fixed',
     urgency: 'high',
     status: 'open',
+    jobType: 'gig',
     skills: ['Plumbing', 'Pipe Repair', 'Fixture Installation'],
     applicantsCount: 4,
     createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
@@ -38,11 +39,12 @@ const MOCK_JOBS: Job[] = [
     category: 'electrical',
     employerId: 'emp2',
     employerName: 'Sarah Johnson',
-    location: 'Nelson, Nelson',
+    location: 'Nelson',
     budget: 2500,
     budgetType: 'fixed',
     urgency: 'medium',
     status: 'open',
+    jobType: 'gig',
     skills: ['Electrical', 'Panel Upgrade', 'Licensed Electrician'],
     applicantsCount: 7,
     createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
@@ -55,11 +57,12 @@ const MOCK_JOBS: Job[] = [
     category: 'hvac',
     employerId: 'emp3',
     employerName: 'Mike Williams',
-    location: 'Wellington, Wellington',
+    location: 'Wellington',
     budget: 200,
     budgetType: 'fixed',
     urgency: 'low',
     status: 'open',
+    jobType: 'gig',
     skills: ['HVAC', 'Air Conditioning', 'Heating Systems'],
     applicantsCount: 2,
     createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
@@ -72,11 +75,12 @@ const MOCK_JOBS: Job[] = [
     category: 'carpentry',
     employerId: 'emp4',
     employerName: 'Lisa Brown',
-    location: 'Christchurch, Canterbury',
+    location: 'Christchurch',
     budget: 8500,
     budgetType: 'fixed',
     urgency: 'low',
     status: 'open',
+    jobType: 'gig',
     skills: ['Carpentry', 'Deck Building', 'Framing'],
     applicantsCount: 12,
     createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
@@ -89,11 +93,12 @@ const MOCK_JOBS: Job[] = [
     category: 'roofing',
     employerId: 'emp5',
     employerName: 'David Garcia',
-    location: 'Auckland, Auckland',
+    location: 'Auckland',
     budget: 500,
     budgetType: 'fixed',
     urgency: 'emergency',
     status: 'open',
+    jobType: 'gig',
     skills: ['Roofing', 'Shingle Repair', 'Waterproofing'],
     applicantsCount: 3,
     createdAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
@@ -106,11 +111,12 @@ const MOCK_JOBS: Job[] = [
     category: 'painting',
     employerId: 'emp6',
     employerName: 'Amanda Lee',
-    location: 'Hamilton, Waikato',
+    location: 'Hamilton',
     budget: 65,
     budgetType: 'hourly',
     urgency: 'low',
     status: 'open',
+    jobType: 'gig',
     skills: ['Painting', 'Interior Painting', 'Primer Application'],
     applicantsCount: 9,
     createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
@@ -118,30 +124,54 @@ const MOCK_JOBS: Job[] = [
   },
 ]
 
+const EMPTY_FILTERS = {
+  search: '',
+  category: '',
+  location: '',
+  budgetMin: '',
+  budgetMax: '',
+  urgency: '',
+  jobType: '',
+  sortBy: '',
+}
+
 function JobsPageContent() {
   const { profile } = useAuth()
   const searchParams = useSearchParams()
+  const router = useRouter()
+  const pathname = usePathname()
   const [jobs, setJobs] = useState<Job[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'all' | 'for-you'>(
     searchParams.get('tab') === 'for-you' ? 'for-you' : 'all'
   )
-  const [filters, setFilters] = useState({
-    search: '',
-    category: '',
-    location: '',
-    budgetMin: '',
-    budgetMax: '',
-    urgency: '',
-    status: '',
-  })
+
+  // Initialise filter state from URL params
+  const [filters, setFilters] = useState(() => ({
+    search: searchParams.get('search') ?? '',
+    category: searchParams.get('category') ?? '',
+    location: searchParams.get('location') ?? '',
+    budgetMin: searchParams.get('budgetMin') ?? '',
+    budgetMax: searchParams.get('budgetMax') ?? '',
+    urgency: searchParams.get('urgency') ?? '',
+    jobType: searchParams.get('jobType') ?? '',
+    sortBy: searchParams.get('sortBy') ?? '',
+  }))
+
+  // Sync filters → URL params
+  const syncUrl = useCallback((newFilters: typeof filters, tab: 'all' | 'for-you') => {
+    const params = new URLSearchParams()
+    if (tab === 'for-you') params.set('tab', 'for-you')
+    Object.entries(newFilters).forEach(([key, value]) => { if (value) params.set(key, value) })
+    const qs = params.toString()
+    router.replace(`${pathname}${qs ? `?${qs}` : ''}`, { scroll: false })
+  }, [router, pathname])
 
   useEffect(() => {
     async function fetchJobs() {
       setLoading(true)
       try {
         const fetched = await getJobs()
-        // Fall back to mock data when Firestore is not configured or returns empty
         setJobs(fetched.length > 0 ? fetched : MOCK_JOBS)
       } catch {
         setJobs(MOCK_JOBS)
@@ -152,16 +182,12 @@ function JobsPageContent() {
     fetchJobs()
   }, [])
 
-  // Sort urgent jobs first
-  const sortedJobs = [...jobs].sort((a, b) => {
-    const urgencyOrder = { emergency: 0, high: 1, medium: 2, low: 3 }
-    return urgencyOrder[a.urgency] - urgencyOrder[b.urgency]
-  })
+  const urgencyOrder = { emergency: 0, high: 1, medium: 2, low: 3 } as const
 
-  // Jobseekers only see employment-type jobs (staff roles posted by employers)
+  // Jobseekers only see employment-type jobs
   const roleFilteredJobs = profile?.role === 'jobseeker'
-    ? sortedJobs.filter((job) => !job.jobType || job.jobType === 'employment')
-    : sortedJobs
+    ? jobs.filter((job) => !job.jobType || job.jobType === 'employment')
+    : jobs
 
   const filteredJobs = roleFilteredJobs.filter((job) => {
     if (filters.search && !job.title.toLowerCase().includes(filters.search.toLowerCase()) &&
@@ -171,16 +197,40 @@ function JobsPageContent() {
     if (filters.budgetMin && job.budget < Number(filters.budgetMin)) return false
     if (filters.budgetMax && job.budget > Number(filters.budgetMax)) return false
     if (filters.urgency && job.urgency !== filters.urgency) return false
-    if (filters.status && job.status !== filters.status) return false
+    if (filters.jobType && job.jobType !== filters.jobType) return false
     return true
   })
 
+  const sortedJobs = [...filteredJobs].sort((a, b) => {
+    switch (filters.sortBy) {
+      case 'newest':
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      case 'budget_high':
+        return b.budget - a.budget
+      case 'budget_low':
+        return a.budget - b.budget
+      case 'urgency':
+      default:
+        return urgencyOrder[a.urgency] - urgencyOrder[b.urgency]
+    }
+  })
+
   const handleFilterChange = (key: string, value: string) => {
-    setFilters((prev) => ({ ...prev, [key]: value }))
+    setFilters((prev) => {
+      const next = { ...prev, [key]: value }
+      syncUrl(next, activeTab)
+      return next
+    })
   }
 
   const handleFilterReset = () => {
-    setFilters({ search: '', category: '', location: '', budgetMin: '', budgetMax: '', urgency: '', status: '' })
+    setFilters(EMPTY_FILTERS)
+    syncUrl(EMPTY_FILTERS, activeTab)
+  }
+
+  const handleTabChange = (tab: 'all' | 'for-you') => {
+    setActiveTab(tab)
+    syncUrl(filters, tab)
   }
 
   if (loading) {
@@ -209,7 +259,7 @@ function JobsPageContent() {
                 </h1>
                 <p className="text-gray-500 dark:text-gray-400 mt-1">
                   {activeTab === 'all'
-                    ? `${filteredJobs.length} job${filteredJobs.length !== 1 ? 's' : ''} available${profile?.role === 'jobseeker' ? ' — employment roles' : ''}`
+                    ? `${sortedJobs.length} job${sortedJobs.length !== 1 ? 's' : ''} found${profile?.role === 'jobseeker' ? ' — employment roles' : ''}`
                     : 'Jobs matched to your skills'}
                 </p>
               </div>
@@ -227,7 +277,7 @@ function JobsPageContent() {
             {profile?.role === 'worker' && (
               <div className="flex gap-1 mt-5 border-b border-gray-200 dark:border-gray-700">
                 <button
-                  onClick={() => setActiveTab('all')}
+                  onClick={() => handleTabChange('all')}
                   className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
                     activeTab === 'all'
                       ? 'border-primary-600 text-primary-600'
@@ -237,7 +287,7 @@ function JobsPageContent() {
                   All Jobs
                 </button>
                 <button
-                  onClick={() => setActiveTab('for-you')}
+                  onClick={() => handleTabChange('for-you')}
                   className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
                     activeTab === 'for-you'
                       ? 'border-primary-600 text-primary-600'
@@ -270,7 +320,7 @@ function JobsPageContent() {
 
               {/* Job Listings */}
               <div className="flex-1">
-                {filteredJobs.length === 0 ? (
+                {sortedJobs.length === 0 ? (
                   <div className="text-center py-16">
                     <Briefcase className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No jobs found</h3>
@@ -283,7 +333,7 @@ function JobsPageContent() {
                   </div>
                 ) : (
                   <div className="grid gap-4">
-                    {filteredJobs.map((job) => (
+                    {sortedJobs.map((job) => (
                       <JobCard key={job.id} job={job} showApplyButton={profile?.role === 'jobseeker'} />
                     ))}
                   </div>
@@ -312,4 +362,3 @@ export default function JobsPage() {
     </Suspense>
   )
 }
-
