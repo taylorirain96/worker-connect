@@ -6,7 +6,7 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
-import { MapPin, Star, CheckCircle, Briefcase, DollarSign, ArrowLeft, MessageSquare, Calendar, X, Camera } from 'lucide-react'
+import { MapPin, Star, CheckCircle, Briefcase, DollarSign, ArrowLeft, MessageSquare, Calendar, Camera } from 'lucide-react'
 import { getInitials } from '@/lib/utils'
 import type { UserProfile, ReviewAggregates, PortfolioPhoto } from '@/types'
 import Link from 'next/link'
@@ -17,6 +17,7 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import { getOrCreateConversation } from '@/lib/messaging'
 import toast from 'react-hot-toast'
 import FavouriteButton from '@/components/workers/FavouriteButton'
+import PortfolioGallery from '@/components/portfolio/PortfolioGallery'
 
 export default function WorkerProfilePage({ params }: { params: { id: string } }) {
   const router = useRouter()
@@ -28,7 +29,6 @@ export default function WorkerProfilePage({ params }: { params: { id: string } }
   const [messaging, setMessaging] = useState(false)
   const [hasAvailability, setHasAvailability] = useState(false)
   const [portfolio, setPortfolio] = useState<PortfolioPhoto[]>([])
-  const [lightboxPhoto, setLightboxPhoto] = useState<PortfolioPhoto | null>(null)
 
   useEffect(() => {
     async function fetchWorker() {
@@ -119,40 +119,6 @@ export default function WorkerProfilePage({ params }: { params: { id: string } }
 
   return (
     <div className="flex flex-col min-h-screen">
-      {lightboxPhoto && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
-          onClick={() => setLightboxPhoto(null)}
-        >
-          <div
-            className="relative max-w-4xl w-full bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => setLightboxPhoto(null)}
-              className="absolute top-3 right-3 z-10 p-1.5 bg-black/50 hover:bg-black/70 rounded-full text-white transition-colors"
-            >
-              <X className="h-5 w-5" />
-            </button>
-            <div className="relative w-full aspect-video bg-gray-100 dark:bg-gray-800">
-              <Image
-                src={lightboxPhoto.url}
-                alt={lightboxPhoto.title}
-                fill
-                className="object-contain"
-              />
-            </div>
-            <div className="p-5">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{lightboxPhoto.title}</h3>
-              <p className="text-sm text-primary-600 dark:text-primary-400 mt-1">{lightboxPhoto.category}</p>
-              {lightboxPhoto.description && (
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">{lightboxPhoto.description}</p>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
       {reviewAgg && reviewAgg.totalReviews > 0 && (
         <script
           type="application/ld+json"
@@ -285,33 +251,11 @@ export default function WorkerProfilePage({ params }: { params: { id: string } }
                     Portfolio
                     <span className="ml-2 text-sm font-normal text-gray-400">{portfolio.length} photo{portfolio.length !== 1 ? 's' : ''}</span>
                   </h2>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {portfolio.slice(0, 6).map((photo) => (
-                      <button
-                        key={photo.id}
-                        type="button"
-                        onClick={() => setLightboxPhoto(photo)}
-                        className="relative aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700 hover:opacity-90 transition-opacity group"
-                      >
-                        <Image
-                          src={photo.url}
-                          alt={photo.title}
-                          fill
-                          className="object-cover"
-                        />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-end">
-                          <div className="w-full bg-gradient-to-t from-black/60 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <p className="text-white text-xs font-medium truncate">{photo.title}</p>
-                          </div>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                  {portfolio.length > 6 && (
-                    <p className="text-sm text-gray-400 dark:text-gray-500 mt-3 text-center">
-                      +{portfolio.length - 6} more photos
-                    </p>
-                  )}
+                  <PortfolioGallery
+                    photos={portfolio}
+                    limit={6}
+                    viewAllHref={portfolio.length > 6 ? `/workers/${params.id}/portfolio` : undefined}
+                  />
                 </div>
               )}
 
