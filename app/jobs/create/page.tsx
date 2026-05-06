@@ -70,11 +70,21 @@ export default function CreateJobPage() {
   useEffect(() => {
     const title = searchParams.get('title')
     if (!title) return
-    const fields: (keyof JobFormData)[] = ['title', 'description', 'category', 'location', 'skills', 'budgetType', 'urgency']
-    fields.forEach((f) => {
+
+    const stringFields = ['title', 'description', 'category', 'location', 'skills'] as const
+    stringFields.forEach((f) => {
       const val = searchParams.get(f)
-      if (val) setValue(f as keyof JobFormData, val as never)
+      if (val) setValue(f, val)
     })
+
+    const budgetType = searchParams.get('budgetType')
+    if (budgetType === 'fixed' || budgetType === 'hourly') setValue('budgetType', budgetType)
+
+    const urgency = searchParams.get('urgency')
+    if (urgency === 'low' || urgency === 'medium' || urgency === 'high' || urgency === 'emergency') {
+      setValue('urgency', urgency)
+    }
+
     const budgetMin = searchParams.get('budgetMin')
     const budgetMax = searchParams.get('budgetMax')
     if (budgetMin) setValue('budgetMin', Number(budgetMin))

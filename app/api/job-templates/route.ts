@@ -72,8 +72,10 @@ export async function POST(req: NextRequest) {
       budgetMin: typeof body.budgetMin === 'number' ? body.budgetMin : 0,
       budgetMax: typeof body.budgetMax === 'number' ? body.budgetMax : 0,
       budgetType: body.budgetType === 'hourly' ? 'hourly' : 'fixed',
-      urgency: (['low', 'medium', 'high', 'emergency'] as const).includes(body.urgency as 'low')
-        ? body.urgency
+      urgency: (['low', 'medium', 'high', 'emergency'] as const).includes(
+        body.urgency as 'low' | 'medium' | 'high' | 'emergency',
+      )
+        ? (body.urgency as 'low' | 'medium' | 'high' | 'emergency')
         : 'medium',
       skills: typeof body.skills === 'string' ? body.skills : '',
       createdAt: new Date().toISOString(),
