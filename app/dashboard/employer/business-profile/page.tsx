@@ -24,6 +24,12 @@ const MIME_TO_EXT: Record<string, string> = {
   'image/webp': 'webp',
   'image/gif': 'gif',
 }
+
+/** Normalise a user-typed website URL by prepending https:// if no protocol present. */
+function normaliseWebsite(url: string): string {
+  if (!url) return ''
+  return url.startsWith('http://') || url.startsWith('https://') ? url : `https://${url}`
+}
 const COMPANY_SIZES = [
   { value: '1', label: '1 (Solo)' },
   { value: '2-5', label: '2–5 employees' },
@@ -147,7 +153,7 @@ export default function BusinessProfilePage() {
     // Validate website URL
     if (form.website) {
       try {
-        new URL(form.website.startsWith('http') ? form.website : `https://${form.website}`)
+        new URL(normaliseWebsite(form.website))
       } catch {
         toast.error('Please enter a valid website URL')
         return
@@ -156,17 +162,12 @@ export default function BusinessProfilePage() {
 
     setSaving(true)
     try {
-      const websiteNormalised =
-        form.website && !form.website.startsWith('http')
-          ? `https://${form.website}`
-          : form.website
-
       await updateDoc(doc(db, 'users', user.uid), {
         companyName: form.companyName,
         nzbn: form.nzbn,
         companyDescription: form.companyDescription,
         companySize: form.companySize,
-        website: websiteNormalised,
+        website: normaliseWebsite(form.website),
         companyLogoUrl: form.companyLogoUrl,
         companyTrades: form.companyTrades,
         updatedAt: new Date().toISOString(),

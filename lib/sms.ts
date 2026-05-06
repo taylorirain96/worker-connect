@@ -31,8 +31,8 @@ export async function sendSMS({ to, body }: SMSOptions): Promise<boolean> {
     console.warn('[SMS] Twilio env vars not set — SMS skipped')
     return false
   }
-  if (!to || !to.startsWith('+')) {
-    console.warn('[SMS] Invalid phone number format — must be E.164 (e.g. +64...)')
+  if (!to || !/^\+[1-9]\d{1,14}$/.test(to)) {
+    console.warn('[SMS] Invalid phone number — must be E.164 format (e.g. +6421000000)')
     return false
   }
 

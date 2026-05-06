@@ -138,7 +138,7 @@ export async function PUT(
         }).catch((err) => console.warn('[quotes/accept] Failed to send worker push notification:', err))
 
         // SMS fallback — non-blocking, best-effort
-        ;(async () => {
+        Promise.resolve().then(async () => {
           try {
             if (adminDb) {
               const workerSnap = await adminDb.collection('users').doc(quote.workerId).get()
@@ -153,7 +153,7 @@ export async function PUT(
           } catch (smsErr) {
             console.warn('[quotes/accept] SMS fallback failed:', smsErr)
           }
-        })().catch(() => {})
+        }).catch(() => {})
       } catch (emailErr) {
         console.error('Failed to send job-accepted email:', emailErr)
       }
