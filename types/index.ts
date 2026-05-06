@@ -2070,6 +2070,64 @@ export interface PromoCode {
   updatedAt?: string
 }
 
+// ─── Job Milestone & Progress Tracking Types ──────────────────────────────────
+
+/** Status lifecycle: pending → in_progress → submitted → approved | rejected */
+export type MilestoneStatus = 'pending' | 'in_progress' | 'submitted' | 'approved' | 'rejected'
+
+/**
+ * A billing milestone on a job.
+ * Stored at: jobs/{jobId}/milestones/{milestoneId}
+ */
+export interface JobMilestone {
+  id: string
+  jobId: string
+  /** Human-readable title, e.g. "Frame & rough-in" */
+  title: string
+  description?: string
+  /** Amount to release to the worker on approval (NZD) */
+  amount: number
+  /** 0-100 — what percentage of total job value this milestone represents */
+  percentage: number
+  status: MilestoneStatus
+  /** Expected completion date */
+  dueDate?: string
+  /** ISO timestamp when the worker submitted the milestone for approval */
+  submittedAt?: string
+  /** ISO timestamp when the employer approved the milestone */
+  approvedAt?: string
+  /** Stripe Transfer ID created when this milestone was paid out */
+  stripeTransferId?: string
+  /** Message left by the worker when submitting */
+  submissionNote?: string
+  /** Message left by the employer when approving or rejecting */
+  reviewNote?: string
+  /** URLs of photos attached to the submission */
+  submissionPhotos?: string[]
+  /** Order index for display */
+  order: number
+  createdAt: string
+  updatedAt: string
+}
+
+/**
+ * A progress update posted by the worker during an active job.
+ * Stored at: jobs/{jobId}/progressUpdates/{updateId}
+ */
+export interface JobProgressUpdate {
+  id: string
+  jobId: string
+  workerId: string
+  workerName: string
+  workerAvatar?: string
+  message: string
+  /** Optional photos attached to this update */
+  photos?: string[]
+  /** Linked milestone ID (if this update relates to a specific milestone) */
+  milestoneId?: string
+  createdAt: string
+}
+
 // ─── Credit Transaction Types ─────────────────────────────────────────────────
 
 export type CreditTransactionType = 'referral_reward' | 'credit_applied' | 'manual_adjustment' | 'referral_signup'
