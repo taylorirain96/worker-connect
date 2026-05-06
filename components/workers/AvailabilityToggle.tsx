@@ -68,6 +68,7 @@ export default function AvailabilityToggle() {
         className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-all ${config.badge} ${saving ? 'opacity-60 cursor-not-allowed' : 'hover:opacity-80 cursor-pointer'}`}
         aria-label="Change availability status"
         aria-expanded={open}
+        aria-haspopup="true"
       >
         <span className={`inline-block h-2 w-2 rounded-full flex-shrink-0 ${config.dot}`} />
         {saving ? 'Saving…' : config.label}
