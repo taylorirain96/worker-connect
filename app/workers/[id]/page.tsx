@@ -22,6 +22,7 @@ import FavouriteButton from '@/components/workers/FavouriteButton'
 import VideoProfilePlayer from '@/components/workers/VideoProfilePlayer'
 import PortfolioGallery from '@/components/portfolio/PortfolioGallery'
 import ServicePackageCard from '@/components/servicePackages/ServicePackageCard'
+import BadgeShowcase from '@/components/gamification/BadgeShowcase'
 
 export default function WorkerProfilePage({ params }: { params: { id: string } }) {
   const router = useRouter()
@@ -35,6 +36,7 @@ export default function WorkerProfilePage({ params }: { params: { id: string } }
   const [portfolio, setPortfolio] = useState<PortfolioPhoto[]>([])
   const [servicePackages, setServicePackages] = useState<ServicePackage[]>([])
   const [tradeLicences, setTradeLicences] = useState<WorkerTradeLicence[]>([])
+  const [badges, setBadges] = useState<string[]>([])
 
   useEffect(() => {
     async function fetchWorker() {
@@ -77,6 +79,13 @@ export default function WorkerProfilePage({ params }: { params: { id: string } }
           .then((r) => r.json())
           .then((data: { licences?: WorkerTradeLicence[] }) => {
             if (data.licences) setTradeLicences(data.licences)
+          })
+          .catch(() => {})
+        // Fetch badges
+        fetch(`/api/workers/${params.id}/badges`)
+          .then((r) => r.json())
+          .then((data: { badges?: string[] }) => {
+            if (Array.isArray(data.badges)) setBadges(data.badges)
           })
           .catch(() => {})
       }
@@ -267,6 +276,17 @@ export default function WorkerProfilePage({ params }: { params: { id: string } }
                       </span>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {/* Badges */}
+              {badges.length > 0 && (
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                  <h2 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <Award className="h-4 w-4 text-yellow-500" />
+                    Badges & Achievements
+                  </h2>
+                  <BadgeShowcase badges={badges} compact />
                 </div>
               )}
 

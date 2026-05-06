@@ -113,6 +113,10 @@
 | Affiliate payout dashboard | ✅ Live | /dashboard/admin/affiliates, Stripe Transfer |
 | Worker trade licences & certifications | ✅ Live | /dashboard/worker/trade-licences, displayed on public worker profile |
 | Homeowner spending dashboard | ✅ Live | /dashboard/homeowner/spending — stats, monthly chart, category breakdown, transaction history |
+| Job cancellation flow | ✅ Live | POST /api/jobs/[jobId]/cancel, CancelJobModal component with escrow refund notice |
+| Homeowner profile editor | ✅ Live | /dashboard/homeowner/profile — name, phone, location, bio, avatar upload |
+| Worker badge showcase | ✅ Live | BadgeShowcase component, GET /api/workers/[userId]/badges, wired into /workers/[id] public profile |
+| Homeowner search alerts | ✅ Live | /api/search-alerts (GET/POST/DELETE), /dashboard/homeowner/alerts, Firestore searchAlerts/{uid}/items |
 
 ---
 

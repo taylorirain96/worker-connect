@@ -2319,3 +2319,26 @@ export interface SpendingSummary {
   monthlyBreakdown: MonthlySpend[]
   categoryBreakdown: CategorySpend[]
 }
+
+// ─── Search Alerts ────────────────────────────────────────────────────────────
+
+export interface SearchAlert {
+  id: string
+  uid: string
+  category: string
+  location: string
+  budgetMin?: number
+  budgetMax?: number
+  keywords?: string
+  channels: {
+    email: boolean
+    push: boolean
+  }
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+// ─── Job Cancellation ─────────────────────────────────────────────────────────
+
+export type JobCancellationReason = string
