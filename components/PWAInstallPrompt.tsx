@@ -90,7 +90,7 @@ export default function PWAInstallPrompt() {
       <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-sm sm:max-w-md">
         <div className="rounded-xl bg-slate-800 border border-indigo-500/30 px-4 py-4 shadow-lg text-sm text-gray-100">
           <div className="flex items-start justify-between gap-3 mb-2">
-            <p className="font-semibold text-indigo-400">Install WorkerConnect</p>
+            <p className="font-semibold text-indigo-400">Install QuickTrade</p>
             <button
               onClick={handleDismiss}
               aria-label="Dismiss install prompt"
@@ -106,7 +106,7 @@ export default function PWAInstallPrompt() {
             </span>{' '}
             then{' '}
             <span className="font-semibold text-white">Add to Home Screen</span>{' '}
-            to install WorkerConnect for quick access.
+            to install QuickTrade for quick access.
           </p>
         </div>
       </div>
@@ -119,7 +119,7 @@ export default function PWAInstallPrompt() {
     <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-sm sm:max-w-md">
       <div className="flex items-center justify-between gap-3 rounded-xl bg-slate-800 border border-indigo-500/30 px-4 py-3 shadow-lg text-sm text-gray-100">
         <p className="flex-1 leading-snug">
-          Install <span className="font-semibold text-indigo-400">WorkerConnect</span> for quick
+          Install <span className="font-semibold text-indigo-400">QuickTrade</span> for quick
           access
         </p>
         <div className="flex items-center gap-2 shrink-0">
