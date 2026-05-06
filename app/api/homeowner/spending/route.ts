@@ -231,19 +231,18 @@ export async function GET(req: NextRequest) {
       // Sort newest first
       transactions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 
-      // Derive stats
-      const completed = transactions.filter((t) => t.status === 'completed' || t.status === 'refunded')
+      // Derive stats — only truly completed (paid & released) transactions count toward spending
+      const paidTxns = transactions.filter((t) => t.status === 'completed')
       const inEscrowTxns = transactions.filter((t) => t.status === 'in_escrow')
-      const thisMonth = new Date().getMonth()
-      const thisYear = new Date().getFullYear()
-      const thisMonthTxns = completed.filter((t) => {
+      const now = new Date()
+      const thisMonth = now.getMonth()
+      const thisYear = now.getFullYear()
+      const thisMonthTxns = paidTxns.filter((t) => {
         const d = new Date(t.paidAt)
         return d.getMonth() === thisMonth && d.getFullYear() === thisYear
       })
 
-      const totalSpent = completed
-        .filter((t) => t.status === 'completed')
-        .reduce((s, t) => s + t.amount, 0)
+      const totalSpent = paidTxns.reduce((s, t) => s + t.amount, 0)
       const inEscrow = inEscrowTxns.reduce((s, t) => s + t.amount, 0)
       const thisMonthSpent = thisMonthTxns.reduce((s, t) => s + t.amount, 0)
 
@@ -255,7 +254,7 @@ export async function GET(req: NextRequest) {
         d.setMonth(d.getMonth() - i)
         monthlyMap.set(monthLabel(d.toISOString()), 0)
       }
-      for (const t of completed.filter((t) => t.status === 'completed')) {
+      for (const t of paidTxns) {
         const label = monthLabel(t.paidAt)
         if (monthlyMap.has(label)) {
           monthlyMap.set(label, (monthlyMap.get(label) ?? 0) + t.amount)
@@ -267,7 +266,7 @@ export async function GET(req: NextRequest) {
 
       // Category breakdown
       const catMap = new Map<string, { amount: number; count: number }>()
-      for (const t of completed.filter((t) => t.status === 'completed')) {
+      for (const t of paidTxns) {
         const entry = catMap.get(t.category) ?? { amount: 0, count: 0 }
         catMap.set(t.category, { amount: entry.amount + t.amount, count: entry.count + 1 })
       }
@@ -279,7 +278,7 @@ export async function GET(req: NextRequest) {
         totalSpent,
         inEscrow,
         thisMonthSpent,
-        completedJobCount: completed.filter((t) => t.status === 'completed').length,
+        completedJobCount: paidTxns.length,
         transactions: transactions.slice(0, 50),
         monthlyBreakdown,
         categoryBreakdown,

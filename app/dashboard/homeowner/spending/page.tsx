@@ -134,6 +134,8 @@ export default function HomeownerSpendingPage() {
 
   const maxMonthly = data ? Math.max(...data.monthlyBreakdown.map((m: MonthlySpend) => m.amount), 1) : 1
   const maxCategory = data ? Math.max(...data.categoryBreakdown.map((c: CategorySpend) => c.amount), 1) : 1
+  const currentMonthLabel = new Date().toLocaleDateString('en-NZ', { month: 'short', year: 'numeric' })
+  const currentMonthLong = new Date().toLocaleDateString('en-NZ', { month: 'long', year: 'numeric' })
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-950">
@@ -200,7 +202,7 @@ export default function HomeownerSpendingPage() {
                   {data ? fmtNZD(data.thisMonthSpent) : '—'}
                 </p>
                 <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                  {new Date().toLocaleDateString('en-NZ', { month: 'long', year: 'numeric' })}
+                  {currentMonthLong}
                 </p>
               </CardContent>
             </Card>
@@ -234,7 +236,7 @@ export default function HomeownerSpendingPage() {
                 <div className="flex items-end gap-2 h-40">
                   {data.monthlyBreakdown.map((m: MonthlySpend) => {
                     const heightPct = maxMonthly > 0 ? (m.amount / maxMonthly) * 100 : 0
-                    const isCurrentMonth = m.month === new Date().toLocaleDateString('en-NZ', { month: 'short', year: 'numeric' })
+                    const isCurrentMonth = m.month === currentMonthLabel
                     return (
                       <div key={m.month} className="flex-1 flex flex-col items-center gap-1 group">
                         <span className="text-[10px] text-gray-400 dark:text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
