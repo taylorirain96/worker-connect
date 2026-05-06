@@ -101,6 +101,7 @@
 | WorkSafe NZ compliance module | ✅ Live | Checklist, badge on worker card |
 | Apprenticeship / training listings | ✅ Live | Dedicated category + pages + navbar link |
 | Job Milestone Billing & Progress Tracking | ✅ Live | Milestone escrow releases, worker progress log, approval flow |
+| SMS notifications (Twilio) | ✅ Live | Application accepted/rejected, payment released, booking confirmed/declined |
 
 ---
 
@@ -393,7 +394,7 @@ OPENAI_API_KEY=
 ### 🟡 Medium Priority
 - [ ] Worker availability calendar
 - [ ] Job scheduling / booking system (date + time picker on job post)
-- [ ] SMS notifications (Twilio) for urgent job alerts
+- [x] SMS notifications (Twilio) for urgent job alerts
 - [ ] Public worker portfolio page (shareable /workers/[id] URL)
 - [ ] Affiliate payout system (pay referrers via Stripe)
 - [ ] Rich job post editor (categories, tags, budget range, urgency level)

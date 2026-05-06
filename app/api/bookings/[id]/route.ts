@@ -3,6 +3,8 @@ import type { NextRequest } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
 import { sendBookingConfirmedEmail, sendBookingDeclinedEmail } from '@/lib/email/transactional'
 import { sendAdminNotification } from '@/lib/notifications/admin'
+import { sendSMS as sendTwilioSMS } from '@/lib/sms'
+import { buildSMSMessage } from '@/lib/notifications/sms'
 import type { BookingStatus } from '@/types'
 
 export const dynamic = 'force-dynamic'
@@ -117,6 +119,23 @@ export async function PUT(
         type: 'job_status_change',
         link: `/dashboard/homeowner/bookings`,
       }).catch(() => {})
+
+      // SMS to homeowner (non-blocking — fetch phone from Firestore)
+      ;(async () => {
+        try {
+          const homeownerSnap = await adminDb.collection('users').doc(booking.homeownerId).get()
+          const homeownerPhone = homeownerSnap.data()?.phone as string | undefined
+          if (homeownerPhone) {
+            const smsBody = buildSMSMessage('booking_confirmed', {
+              workerName: booking.workerName,
+              date: booking.requestedDate,
+            })
+            await sendTwilioSMS({ to: homeownerPhone, body: smsBody })
+          }
+        } catch {
+          // SMS is best-effort
+        }
+      })().catch(() => {})
     } else {
       sendBookingDeclinedEmail({
         homeownerEmail: booking.homeownerEmail,
@@ -135,6 +154,23 @@ export async function PUT(
         type: 'job_status_change',
         link: `/dashboard/homeowner/bookings`,
       }).catch(() => {})
+
+      // SMS to homeowner (non-blocking — fetch phone from Firestore)
+      ;(async () => {
+        try {
+          const homeownerSnap = await adminDb.collection('users').doc(booking.homeownerId).get()
+          const homeownerPhone = homeownerSnap.data()?.phone as string | undefined
+          if (homeownerPhone) {
+            const smsBody = buildSMSMessage('booking_declined', {
+              workerName: booking.workerName,
+              date: booking.requestedDate,
+            })
+            await sendTwilioSMS({ to: homeownerPhone, body: smsBody })
+          }
+        } catch {
+          // SMS is best-effort
+        }
+      })().catch(() => {})
     }
 
     return NextResponse.json({ success: true })

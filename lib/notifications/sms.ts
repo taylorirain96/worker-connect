@@ -9,6 +9,10 @@ export type SMSNotificationType =
   | 'security_alert'
   | 'account_update'
   | 'job_completed'
+  | 'application_accepted'
+  | 'application_rejected'
+  | 'booking_confirmed'
+  | 'booking_declined'
 
 export interface SMSNotification {
   to: string       // E.164 phone number, e.g. "+12125551234"
@@ -46,6 +50,14 @@ export function buildSMSMessage(type: SMSNotificationType, vars: Record<string, 
       return `QuickTrade: Your account has been updated. If you didn't make this change, contact support.`
     case 'job_completed':
       return `QuickTrade: Job "${vars.jobTitle ?? 'your job'}" is complete! Leave a review to earn points.`
+    case 'application_accepted':
+      return `QuickTrade: Great news! Your application for "${vars.jobTitle ?? 'a job'}" was accepted. Log in to get started.`
+    case 'application_rejected':
+      return `QuickTrade: Your application for "${vars.jobTitle ?? 'a job'}" was not selected. Keep applying — new jobs are posted daily!`
+    case 'booking_confirmed':
+      return `QuickTrade: Your booking with ${vars.workerName ?? 'your worker'} on ${vars.date ?? 'the scheduled date'} is confirmed. See you then!`
+    case 'booking_declined':
+      return `QuickTrade: Your booking with ${vars.workerName ?? 'your worker'} on ${vars.date ?? 'the scheduled date'} was declined. Find another worker at quicktrade.co.nz`
     default:
       return `QuickTrade: ${vars.message ?? 'You have a new notification.'}`
   }
