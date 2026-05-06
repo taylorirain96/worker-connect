@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next'
 import { SERVICES, LOCATIONS } from '@/lib/seo/servicesData'
 import { SITE_URL } from '@/lib/seo/config'
 import { getAllPosts } from '@/lib/blog/posts'
+import { AU_CITIES } from '@/lib/utils'
 
 const BASE = SITE_URL
 
@@ -32,6 +33,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
     entries.push({ url: `${BASE}/blog/${post.slug}`, lastModified: post.date, changeFrequency: 'monthly', priority: 0.7 })
   }
 
+  entries.push({ url: `${BASE}/apprenticeships`, lastModified: now, changeFrequency: 'daily', priority: 0.8 })
+  entries.push({ url: `${BASE}/au`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 })
+  entries.push({ url: `${BASE}/api-docs`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 })
+
   for (const s of SERVICES) {
     entries.push({
       url: `${BASE}/services/${s.slug}`,
@@ -42,6 +47,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
     for (const l of LOCATIONS) {
       entries.push({
         url: `${BASE}/services/${s.slug}/nz/${l.regionSlug}/${l.citySlug}`,
+        lastModified: now,
+        changeFrequency: 'weekly',
+        priority: 0.7,
+      })
+    }
+    for (const city of AU_CITIES) {
+      const citySlug = city.toLowerCase().replace(/\s+/g, '-')
+      entries.push({
+        url: `${BASE}/services/${s.slug}/au/${citySlug}`,
         lastModified: now,
         changeFrequency: 'weekly',
         priority: 0.7,

@@ -94,6 +94,12 @@
 | Disputes page | ✅ Live | |
 | Settings page | ✅ Live | |
 | Reports page | ✅ Live | |
+| Australian expansion (AU landing + service×city pages) | ✅ Live | AUD, ABN validation, 10% GST |
+| Video worker profiles (upload + playback) | ✅ Live | Firebase Storage, HTML5 player |
+| Background check integration | ✅ Live | Worker-initiated, admin-reviewed |
+| Open API for partner integrations | ✅ Live | x-api-key auth, jobs + workers endpoints |
+| WorkSafe NZ compliance module | ✅ Live | Checklist, badge on worker card |
+| Apprenticeship / training listings | ✅ Live | Dedicated category + pages + navbar link |
 
 ---
 
@@ -141,6 +147,13 @@ app/
 │   └── [service]/              # Service detail page
 │       └── nz/
 │           └── [region]/       # Region-level SEO landing pages
+│               └── [city]/     # NZ city-level SEO pages
+│       └── au/
+│           └── [city]/         # AU city-level SEO pages
+├── apprenticeships/            # Apprenticeship listings
+│   └── [id]/                   # Apprenticeship detail
+├── au/                         # Australia landing page
+├── api-docs/                   # Public Partner API documentation
 ├── settings/                   # Account settings
 ├── stripe/                     # Stripe Connect onboarding
 ├── timesheets/                 # Per-job timesheet & cost tracker
@@ -386,13 +399,13 @@ OPENAI_API_KEY=
 - [ ] A/B test homepage hero CTA
 
 ### 📋 Future / V2
+- [x] Australian expansion (AUD, ABN, AU GST 10%) ✅
+- [x] Video worker profiles ✅
+- [x] Background check integration (NZ Police vetting API) ✅
+- [x] Open API for partner integrations ✅
+- [x] WorkSafe NZ compliance module ✅
+- [x] Apprenticeship / training listings category ✅
 - [ ] Mobile app (React Native / Expo)
-- [ ] Australian expansion (AUD, ABN, AU GST 10%)
-- [ ] Video worker profiles
-- [ ] Background check integration (NZ Police vetting API)
-- [ ] Open API for partner integrations
-- [ ] WorkSafe NZ compliance module
-- [ ] Apprenticeship / training listings category
 
 ---
 

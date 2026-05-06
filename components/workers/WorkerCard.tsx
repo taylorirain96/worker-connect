@@ -3,7 +3,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { MapPin, Star, CheckCircle, Briefcase, DollarSign, MessageSquare } from 'lucide-react'
+import { MapPin, Star, CheckCircle, Briefcase, DollarSign, MessageSquare, ShieldCheck, HardHat } from 'lucide-react'
 import type { UserProfile } from '@/types'
 import { getInitials } from '@/lib/utils'
 import Badge from '@/components/ui/Badge'
@@ -78,13 +78,22 @@ export default function WorkerCard({ worker, isFavourited = false, onFavouriteTo
             )}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-primary-600 transition-colors truncate">
                 {worker.displayName || 'Anonymous Worker'}
               </h3>
               {worker.verified && (
                 <CheckCircle className="h-4 w-4 text-blue-500 flex-shrink-0" aria-label="Verified" />
               )}
+              {worker.backgroundCheckStatus === 'approved' && (
+                <ShieldCheck className="h-4 w-4 text-green-500 flex-shrink-0" aria-label="Background check passed" title="Background check passed" />
+              )}
+              {worker.worksafeCompliance?.inductionComplete &&
+                worker.worksafeCompliance?.ppeConfirmed &&
+                worker.worksafeCompliance?.hazardRegisterViewed &&
+                worker.worksafeCompliance?.safetyPlanUploaded && (
+                  <HardHat className="h-4 w-4 text-orange-500 flex-shrink-0" aria-label="WorkSafe NZ compliant" title="WorkSafe NZ compliant" />
+                )}
             </div>
             {worker.location && (
               <div className="flex items-center gap-1 text-xs text-gray-500 mt-0.5">

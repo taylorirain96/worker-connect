@@ -8,6 +8,7 @@ import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import { MapPin, Star, CheckCircle, Briefcase, DollarSign, ArrowLeft, MessageSquare, Calendar, Camera } from 'lucide-react'
 import { getInitials } from '@/lib/utils'
+import { Video } from 'lucide-react'
 import type { UserProfile, ReviewAggregates, PortfolioPhoto } from '@/types'
 import Link from 'next/link'
 import { getUserProfile } from '@/lib/users/getProfile'
@@ -17,6 +18,7 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import { getOrCreateConversation } from '@/lib/messaging'
 import toast from 'react-hot-toast'
 import FavouriteButton from '@/components/workers/FavouriteButton'
+import VideoProfilePlayer from '@/components/workers/VideoProfilePlayer'
 import PortfolioGallery from '@/components/portfolio/PortfolioGallery'
 
 export default function WorkerProfilePage({ params }: { params: { id: string } }) {
@@ -241,6 +243,20 @@ export default function WorkerProfilePage({ params }: { params: { id: string } }
                       </span>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {/* Video Profile */}
+              {worker.videoProfileUrl && (
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                  <h2 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <Video className="h-4 w-4 text-violet-500" />
+                    Video Profile
+                  </h2>
+                  <VideoProfilePlayer
+                    videoProfileUrl={worker.videoProfileUrl}
+                    workerName={worker.displayName ?? undefined}
+                  />
                 </div>
               )}
 

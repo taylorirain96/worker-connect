@@ -1,3 +1,5 @@
+export type Country = 'NZ' | 'AU'
+
 export interface UserProfile {
   uid: string
   email: string | null
@@ -53,6 +55,24 @@ export interface UserProfile {
   affiliateBalance?: number
   /** Total NZD paid out to this affiliate via Stripe Transfer */
   affiliatePaidOut?: number
+  /** Country the user operates in */
+  country?: Country
+  /** Australian Business Number (AU users only) */
+  abnNumber?: string
+  /** URL of the worker's video profile stored in Firebase Storage */
+  videoProfileUrl?: string
+  /** NZ Police vetting / background check status */
+  backgroundCheckStatus?: 'notStarted' | 'pending' | 'approved' | 'rejected'
+  /** ISO date string when the background check certificate expires */
+  backgroundCheckExpiry?: string
+  /** WorkSafe NZ compliance checklist */
+  worksafeCompliance?: {
+    inductionComplete: boolean
+    ppeConfirmed: boolean
+    hazardRegisterViewed: boolean
+    safetyPlanUploaded: boolean
+    completedAt?: string
+  }
 }
 
 export interface DirectRequest {
@@ -115,6 +135,8 @@ export interface Job {
   completedAt?: string
   /** ISO deadline (completedAt + 24h) within which the worker may dispute completion */
   workerDisputeDeadline?: string
+  /** Country the job is located in */
+  country?: Country
 }
 
 export type JobCategory =
@@ -129,6 +151,7 @@ export type JobCategory =
   | 'cleaning'
   | 'moving'
   | 'general'
+  | 'apprenticeship'
 
 export interface Application {
   id: string
