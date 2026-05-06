@@ -100,6 +100,7 @@
 | Open API for partner integrations | ✅ Live | x-api-key auth, jobs + workers endpoints |
 | WorkSafe NZ compliance module | ✅ Live | Checklist, badge on worker card |
 | Apprenticeship / training listings | ✅ Live | Dedicated category + pages + navbar link |
+| Job Milestone Billing & Progress Tracking | ✅ Live | Milestone escrow releases, worker progress log, approval flow |
 
 ---
 
