@@ -135,11 +135,12 @@ export async function POST(
 
     // Notify the worker
     if (assignedWorkerId) {
+      const paymentNote = stripeTransferId ? ' Your payment has been transferred.' : ''
       await sendNotification({
         userId: assignedWorkerId,
         type: 'payment_received',
         title: `Milestone Approved — NZ$${milestone.amount.toFixed(2)} Released 🎉`,
-        message: `"${milestone.title}" on job "${job.title as string}" was approved.${stripeTransferId ? ' Your payment has been transferred.' : ''}`,
+        message: `"${milestone.title}" on job "${job.title as string}" was approved.${paymentNote}`,
         metadata: { jobId, milestoneId, amount: milestone.amount },
         actionUrl: `/dashboard/worker/jobs/${jobId}/milestones`,
       })
