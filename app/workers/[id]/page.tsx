@@ -338,7 +338,7 @@ export default function WorkerProfilePage({ params }: { params: { id: string } }
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                               <p className="font-medium text-gray-900 dark:text-white text-sm">
-                                {TRADE_LICENCE_LABELS[licence.licenceType] ?? licence.licenceType}
+                                {TRADE_LICENCE_LABELS[licence.licenceType] ?? TRADE_LICENCE_LABELS.other}
                               </p>
                               {expired ? (
                                 <span className="text-xs px-1.5 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">

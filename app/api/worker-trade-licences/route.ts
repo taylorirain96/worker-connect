@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
       .orderBy('createdAt', 'desc')
       .get()
 
-    const licences = snap.docs.map((d: admin.firestore.QueryDocumentSnapshot) => {
+    const licences = snap.docs.map((d) => {
       const data = d.data()
       return {
         id: d.id,

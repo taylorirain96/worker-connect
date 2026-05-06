@@ -50,6 +50,7 @@ export default function TradeLicencesPage() {
   const [docFile, setDocFile] = useState<File | null>(null)
   const [docPreview, setDocPreview] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
   const [submitting, setSubmitting] = useState(false)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -104,6 +105,7 @@ export default function TradeLicencesPage() {
     setNotes('')
     setDocFile(null)
     setDocPreview(null)
+    setUploadProgress(0)
     if (fileInputRef.current) fileInputRef.current.value = ''
     setShowForm(false)
   }
@@ -133,7 +135,14 @@ export default function TradeLicencesPage() {
 
         await new Promise<void>((resolve, reject) => {
           const task = uploadBytesResumable(storageRef, docFile)
-          task.on('state_changed', undefined, reject, () => resolve())
+          task.on(
+            'state_changed',
+            (snapshot) => {
+              setUploadProgress(Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100))
+            },
+            reject,
+            () => resolve(),
+          )
         })
 
         documentUrl = await getDownloadURL(storageRef)
@@ -396,6 +405,22 @@ export default function TradeLicencesPage() {
                     />
                   </div>
 
+                  {/* Upload progress bar */}
+                  {uploading && (
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs text-gray-500">
+                        <span>Uploading document…</span>
+                        <span>{uploadProgress}%</span>
+                      </div>
+                      <div className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-indigo-500 rounded-full transition-all duration-200"
+                          style={{ width: `${uploadProgress}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex gap-3 pt-2">
                     <Button
                       type="button"
@@ -412,7 +437,7 @@ export default function TradeLicencesPage() {
                       loading={submitting}
                       className="flex-1"
                     >
-                      {uploading ? 'Uploading…' : 'Save Licence'}
+                      {uploading ? `Uploading… ${uploadProgress}%` : 'Save Licence'}
                     </Button>
                   </div>
                 </form>
@@ -449,7 +474,8 @@ export default function TradeLicencesPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="font-semibold text-gray-900 dark:text-white text-sm">
-                            {TRADE_LICENCE_LABELS[licence.licenceType] ?? licence.licenceType}
+                            {/* licenceType is server-validated; fallback is a safety net for future data changes */}
+                            {TRADE_LICENCE_LABELS[licence.licenceType] ?? TRADE_LICENCE_LABELS.other}
                           </p>
                           {expired ? (
                             <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 font-medium">
@@ -484,7 +510,7 @@ export default function TradeLicencesPage() {
                           {licence.expiryDate && (
                             <span className={`flex items-center gap-1 ${expired ? 'text-red-500 dark:text-red-400' : ''}`}>
                               <CalendarDays className="h-3 w-3" />
-                              Expires {fmtDate(licence.expiryDate)}
+                              {expired ? 'Expired' : 'Expires'} {fmtDate(licence.expiryDate)}
                             </span>
                           )}
                         </div>
