@@ -53,7 +53,7 @@ export default function BackgroundCheckPage() {
 
   if (!user) return null
 
-  const currentStep = status === 'notStarted' ? 0 : status === 'pending' ? 1 : 2
+  const currentStep = status === 'notStarted' ? 0 : status === 'pending' ? 1 : status === 'approved' ? 2 : -1
 
   return (
     <div className="flex flex-col min-h-screen luxury-bg">

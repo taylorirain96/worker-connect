@@ -14,17 +14,26 @@ export async function GET(req: NextRequest) {
   }
 
   const url = new URL(req.url)
-  const page = Math.max(1, parseInt(url.searchParams.get('page') ?? '1', 10))
   const pageSize = Math.min(100, Math.max(1, parseInt(url.searchParams.get('pageSize') ?? '20', 10)))
+  const cursor = url.searchParams.get('cursor') ?? null
 
   try {
-    const snapshot = await adminDb
+    let query = adminDb
       .collection('jobs')
       .where('status', '==', 'open')
       .orderBy('createdAt', 'desc')
-      .get()
+      .limit(pageSize + 1)
 
-    const allJobs = snapshot.docs.map((d) => {
+    if (cursor) {
+      const cursorSnap = await adminDb.collection('jobs').doc(cursor).get()
+      if (cursorSnap.exists) query = query.startAfter(cursorSnap)
+    }
+
+    const snapshot = await query.get()
+    const hasMore = snapshot.docs.length > pageSize
+    const docs = hasMore ? snapshot.docs.slice(0, pageSize) : snapshot.docs
+
+    const jobs = docs.map((d) => {
       const data = d.data()
       return {
         id: d.id,
@@ -40,11 +49,8 @@ export async function GET(req: NextRequest) {
       }
     })
 
-    const total = allJobs.length
-    const start = (page - 1) * pageSize
-    const jobs = allJobs.slice(start, start + pageSize)
-
-    return NextResponse.json({ jobs, total, page, pageSize })
+    const nextCursor = hasMore ? docs[docs.length - 1].id : null
+    return NextResponse.json({ jobs, pageSize, nextCursor, hasMore })
   } catch (err) {
     console.error('partner/jobs GET error:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

@@ -14,17 +14,27 @@ export async function GET(req: NextRequest) {
   }
 
   const url = new URL(req.url)
-  const page = Math.max(1, parseInt(url.searchParams.get('page') ?? '1', 10))
   const pageSize = Math.min(100, Math.max(1, parseInt(url.searchParams.get('pageSize') ?? '20', 10)))
+  const cursor = url.searchParams.get('cursor') ?? null
 
   try {
-    const snapshot = await adminDb
+    let query = adminDb
       .collection('users')
       .where('role', '==', 'worker')
       .where('verified', '==', true)
-      .get()
+      .orderBy('createdAt', 'desc')
+      .limit(pageSize + 1)
 
-    const allWorkers = snapshot.docs.map((d) => {
+    if (cursor) {
+      const cursorSnap = await adminDb.collection('users').doc(cursor).get()
+      if (cursorSnap.exists) query = query.startAfter(cursorSnap)
+    }
+
+    const snapshot = await query.get()
+    const hasMore = snapshot.docs.length > pageSize
+    const docs = hasMore ? snapshot.docs.slice(0, pageSize) : snapshot.docs
+
+    const workers = docs.map((d) => {
       const data = d.data()
       return {
         uid: d.id,
@@ -40,11 +50,8 @@ export async function GET(req: NextRequest) {
       }
     })
 
-    const total = allWorkers.length
-    const start = (page - 1) * pageSize
-    const workers = allWorkers.slice(start, start + pageSize)
-
-    return NextResponse.json({ workers, total, page, pageSize })
+    const nextCursor = hasMore ? docs[docs.length - 1].id : null
+    return NextResponse.json({ workers, pageSize, nextCursor, hasMore })
   } catch (err) {
     console.error('partner/workers GET error:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
