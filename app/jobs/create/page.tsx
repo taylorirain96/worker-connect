@@ -1,6 +1,6 @@
 'use client'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -11,10 +11,11 @@ import Input from '@/components/ui/Input'
 import { useAuth } from '@/components/providers/AuthProvider'
 import toast from 'react-hot-toast'
 import { JOB_CATEGORIES } from '@/lib/utils'
-import { Briefcase, Sparkles } from 'lucide-react'
+import { Briefcase, Sparkles, FileText, BookmarkPlus } from 'lucide-react'
 import { hasEmployerAI } from '@/lib/subscriptions'
 import AIUpgradePrompt from '@/components/ui/AIUpgradePrompt'
 import { trackEvent } from '@/lib/analytics'
+import Link from 'next/link'
 
 const jobSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters').max(100),
@@ -45,10 +46,14 @@ const URGENCY_OPTIONS = [
 export default function CreateJobPage() {
   const { user, profile } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   const [showAIPanel, setShowAIPanel] = useState(false)
   const [aiLoading, setAILoading] = useState(false)
   const [aiInputs, setAIInputs] = useState({ task: '', size: 'half_day', requirements: '' })
+  const [saveAsTemplate, setSaveAsTemplate] = useState(false)
+  const [templateName, setTemplateName] = useState('')
+  const [savingTemplate, setSavingTemplate] = useState(false)
 
   const {
     register,
@@ -60,6 +65,21 @@ export default function CreateJobPage() {
     resolver: zodResolver(jobSchema),
     defaultValues: { budgetType: 'fixed', urgency: 'medium', budgetMin: 0 },
   })
+
+  // Pre-fill form from URL params when loading from a saved template
+  useEffect(() => {
+    const title = searchParams.get('title')
+    if (!title) return
+    const fields: (keyof JobFormData)[] = ['title', 'description', 'category', 'location', 'skills', 'budgetType', 'urgency']
+    fields.forEach((f) => {
+      const val = searchParams.get(f)
+      if (val) setValue(f as keyof JobFormData, val as never)
+    })
+    const budgetMin = searchParams.get('budgetMin')
+    const budgetMax = searchParams.get('budgetMax')
+    if (budgetMin) setValue('budgetMin', Number(budgetMin))
+    if (budgetMax) setValue('budgetMax', Number(budgetMax))
+  }, [searchParams, setValue])
 
   const budgetType = watch('budgetType')
   const selectedCategory = watch('category')
@@ -130,7 +150,38 @@ export default function CreateJobPage() {
         status: 'open',
         ...(data.deadline ? { deadline: data.deadline } : {}),
       })
-      toast.success('Job posted successfully!')
+
+      // Optionally save this post as a reusable template
+      if (saveAsTemplate && templateName.trim()) {
+        setSavingTemplate(true)
+        try {
+          await fetch('/api/job-templates', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-user-id': user.uid },
+            body: JSON.stringify({
+              name: templateName.trim(),
+              title: data.title,
+              description: data.description,
+              category: data.category,
+              location: data.location,
+              budgetMin: data.budgetMin,
+              budgetMax: data.budgetMax,
+              budgetType: data.budgetType,
+              urgency: data.urgency,
+              skills: data.skills ?? '',
+            }),
+          })
+          toast.success('Job posted & template saved!')
+        } catch {
+          // Don't block navigation if template save fails
+          toast.success('Job posted!')
+        } finally {
+          setSavingTemplate(false)
+        }
+      } else {
+        toast.success('Job posted successfully!')
+      }
+
       trackEvent('job_posted', { job_id: jobId, category: data.category, budget: data.budgetMax })
       router.push(`/jobs/${jobId}`)
     } catch {
@@ -170,6 +221,16 @@ export default function CreateJobPage() {
         </div>
 
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Template banner — shown if pre-filled from a saved template */}
+          {searchParams.get('templateId') && (
+            <div className="mb-5 flex items-center gap-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700 px-4 py-3 text-sm text-indigo-700 dark:text-indigo-300">
+              <FileText className="h-4 w-4 flex-shrink-0" />
+              <span>Pre-filled from your saved template. Edit any details before posting.</span>
+              <Link href="/dashboard/homeowner/templates" className="ml-auto text-xs underline underline-offset-2 whitespace-nowrap">
+                View templates
+              </Link>
+            </div>
+          )}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 space-y-5">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-700 pb-3">
@@ -403,6 +464,37 @@ export default function CreateJobPage() {
               </div>
             </div>
 
+            {/* Save as template */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={saveAsTemplate}
+                  onChange={(e) => setSaveAsTemplate(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                />
+                <div>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-1.5">
+                    <BookmarkPlus className="h-4 w-4 text-primary-500" />
+                    Save as a reusable template
+                  </span>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    Repost this job with one click — great for recurring work like lawn mowing or cleaning.
+                  </p>
+                </div>
+              </label>
+              {saveAsTemplate && (
+                <div className="mt-3 pl-7">
+                  <Input
+                    label="Template name"
+                    placeholder="e.g., Monthly lawn mow"
+                    value={templateName}
+                    onChange={(e) => setTemplateName(e.target.value)}
+                  />
+                </div>
+              )}
+            </div>
+
             <div className="flex gap-3">
               <Button
                 type="button"
@@ -414,7 +506,7 @@ export default function CreateJobPage() {
               </Button>
               <Button
                 type="submit"
-                loading={isSubmitting}
+                loading={isSubmitting || savingTemplate}
                 className="flex-1"
                 size="lg"
               >

@@ -23,6 +23,7 @@ import { getWorkerActivePlacement, type Placement } from '@/lib/placements/fireb
 import toast from 'react-hot-toast'
 import QuoteStats from '@/components/quotes/QuoteStats'
 import JobsForYouFeed from '@/components/jobs/JobsForYouFeed'
+import AvailabilityToggle from '@/components/workers/AvailabilityToggle'
 
 const MAX_DISPLAYED_REVIEWS = 10
 const MS_PER_DAY = 86_400_000
@@ -320,9 +321,7 @@ export default function WorkerDashboardPage() {
                 Welcome back, {profile?.displayName?.split(' ')[0] || user?.displayName?.split(' ')[0] || 'Worker'}! 👋
               </h1>
               <div className="flex items-center gap-3 mt-1 flex-wrap">
-                <p className="text-gray-500 dark:text-gray-400">
-                  {profile?.availability === 'available' ? '🟢 You are visible to employers' : '🔴 Update your availability to get more jobs'}
-                </p>
+                <AvailabilityToggle />
                 {(profile?.rating ?? 0) > 0 && (
                   <div className="flex items-center gap-1 text-sm">
                     <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
