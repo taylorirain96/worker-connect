@@ -3,9 +3,31 @@ import type { NextRequest } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
 import { sendBookingConfirmedEmail, sendBookingDeclinedEmail } from '@/lib/email/transactional'
 import { sendAdminNotification } from '@/lib/notifications/admin'
+import { sendSMS as sendTwilioSMS } from '@/lib/sms'
+import { buildSMSMessage } from '@/lib/notifications/sms'
 import type { BookingStatus } from '@/types'
 
 export const dynamic = 'force-dynamic'
+
+/** Send an SMS to the homeowner when their booking is confirmed or declined. Best-effort, never throws. */
+async function sendBookingStatusSMS(
+  homeownerId: string,
+  workerName: string,
+  requestedDate: string,
+  status: 'confirmed' | 'declined',
+): Promise<void> {
+  try {
+    const homeownerSnap = await adminDb.collection('users').doc(homeownerId).get()
+    const homeownerPhone = homeownerSnap.data()?.phone as string | undefined
+    if (homeownerPhone) {
+      const smsType = status === 'confirmed' ? 'booking_confirmed' : 'booking_declined'
+      const smsBody = buildSMSMessage(smsType, { workerName, date: requestedDate })
+      await sendTwilioSMS({ to: homeownerPhone, body: smsBody })
+    }
+  } catch {
+    // SMS is best-effort
+  }
+}
 
 /**
  * GET /api/bookings/[id]
@@ -136,6 +158,14 @@ export async function PUT(
         link: `/dashboard/homeowner/bookings`,
       }).catch(() => {})
     }
+
+    // SMS to homeowner (non-blocking)
+    sendBookingStatusSMS(
+      booking.homeownerId,
+      booking.workerName,
+      booking.requestedDate,
+      status,
+    ).catch(() => {})
 
     return NextResponse.json({ success: true })
   } catch (err) {

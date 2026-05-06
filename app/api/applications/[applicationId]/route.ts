@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
 import { FieldValue } from 'firebase-admin/firestore'
 import { sendApplicationUpdateEmail } from '@/lib/email/transactional'
+import { sendSMS as sendTwilioSMS } from '@/lib/sms'
+import { buildSMSMessage } from '@/lib/notifications/sms'
 
 export async function PUT(
   request: Request,
@@ -45,6 +47,16 @@ export async function PUT(
                 newStatus: status,
                 applicationId,
               })
+            }
+
+            // Send SMS for accepted / rejected — non-blocking
+            if (status === 'accepted' || status === 'rejected') {
+              const phone = workerData?.phone as string | undefined
+              if (phone) {
+                const smsType = status === 'accepted' ? 'application_accepted' : 'application_rejected'
+                const smsBody = buildSMSMessage(smsType, { jobTitle: jobTitle ?? '' })
+                sendTwilioSMS({ to: phone, body: smsBody }).catch(() => {})
+              }
             }
           }
         }
