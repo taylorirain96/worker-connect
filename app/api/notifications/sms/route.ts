@@ -20,7 +20,6 @@ interface SMSBody {
   to: string
   type: string
   message: string
-  userId: string
 }
 
 export async function POST(request: NextRequest) {
@@ -47,16 +46,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (message.length > 320) {
+    if (message.length > 160) {
       return NextResponse.json(
-        { error: 'Message exceeds maximum length' },
+        { error: 'Message exceeds 160 characters (one SMS segment)' },
         { status: 400 },
       )
     }
 
     const sent = await sendSMS({ to, body: message })
 
-    return NextResponse.json({ success: true, sent })
+    return NextResponse.json({ success: true, delivered: sent })
   } catch (err) {
     console.error('[POST /api/notifications/sms] error:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

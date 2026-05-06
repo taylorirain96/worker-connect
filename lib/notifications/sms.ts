@@ -57,7 +57,7 @@ export function buildSMSMessage(type: SMSNotificationType, vars: Record<string, 
     case 'booking_confirmed':
       return `QuickTrade: Your booking with ${vars.workerName ?? 'your worker'} on ${vars.date ?? 'the scheduled date'} is confirmed. See you then!`
     case 'booking_declined':
-      return `QuickTrade: Your booking with ${vars.workerName ?? 'your worker'} on ${vars.date ?? 'the scheduled date'} was declined. Find another worker at quicktrade.co.nz`
+      return `QuickTrade: Your booking with ${vars.workerName ?? 'your worker'} on ${vars.date ?? 'the scheduled date'} was declined. Find another worker at https://quicktrade.co.nz`
     default:
       return `QuickTrade: ${vars.message ?? 'You have a new notification.'}`
   }

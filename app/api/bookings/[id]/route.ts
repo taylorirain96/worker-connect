@@ -9,6 +9,26 @@ import type { BookingStatus } from '@/types'
 
 export const dynamic = 'force-dynamic'
 
+/** Send an SMS to the homeowner when their booking is confirmed or declined. Best-effort, never throws. */
+async function sendBookingStatusSMS(
+  homeownerId: string,
+  workerName: string,
+  requestedDate: string,
+  status: 'confirmed' | 'declined',
+): Promise<void> {
+  try {
+    const homeownerSnap = await adminDb.collection('users').doc(homeownerId).get()
+    const homeownerPhone = homeownerSnap.data()?.phone as string | undefined
+    if (homeownerPhone) {
+      const smsType = status === 'confirmed' ? 'booking_confirmed' : 'booking_declined'
+      const smsBody = buildSMSMessage(smsType, { workerName, date: requestedDate })
+      await sendTwilioSMS({ to: homeownerPhone, body: smsBody })
+    }
+  } catch {
+    // SMS is best-effort
+  }
+}
+
 /**
  * GET /api/bookings/[id]
  * Returns a single booking by ID.
@@ -119,23 +139,6 @@ export async function PUT(
         type: 'job_status_change',
         link: `/dashboard/homeowner/bookings`,
       }).catch(() => {})
-
-      // SMS to homeowner (non-blocking — fetch phone from Firestore)
-      ;(async () => {
-        try {
-          const homeownerSnap = await adminDb.collection('users').doc(booking.homeownerId).get()
-          const homeownerPhone = homeownerSnap.data()?.phone as string | undefined
-          if (homeownerPhone) {
-            const smsBody = buildSMSMessage('booking_confirmed', {
-              workerName: booking.workerName,
-              date: booking.requestedDate,
-            })
-            await sendTwilioSMS({ to: homeownerPhone, body: smsBody })
-          }
-        } catch {
-          // SMS is best-effort
-        }
-      })().catch(() => {})
     } else {
       sendBookingDeclinedEmail({
         homeownerEmail: booking.homeownerEmail,
@@ -154,24 +157,15 @@ export async function PUT(
         type: 'job_status_change',
         link: `/dashboard/homeowner/bookings`,
       }).catch(() => {})
-
-      // SMS to homeowner (non-blocking — fetch phone from Firestore)
-      ;(async () => {
-        try {
-          const homeownerSnap = await adminDb.collection('users').doc(booking.homeownerId).get()
-          const homeownerPhone = homeownerSnap.data()?.phone as string | undefined
-          if (homeownerPhone) {
-            const smsBody = buildSMSMessage('booking_declined', {
-              workerName: booking.workerName,
-              date: booking.requestedDate,
-            })
-            await sendTwilioSMS({ to: homeownerPhone, body: smsBody })
-          }
-        } catch {
-          // SMS is best-effort
-        }
-      })().catch(() => {})
     }
+
+    // SMS to homeowner (non-blocking)
+    sendBookingStatusSMS(
+      booking.homeownerId,
+      booking.workerName,
+      booking.requestedDate,
+      status,
+    ).catch(() => {})
 
     return NextResponse.json({ success: true })
   } catch (err) {
