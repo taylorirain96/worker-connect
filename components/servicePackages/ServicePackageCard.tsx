@@ -46,7 +46,7 @@ export default function ServicePackageCard({ pkg, hideBook = false }: ServicePac
         const data = await res.json() as { error?: string }
         throw new Error(data.error ?? 'Booking failed')
       }
-      toast.success('Booking confirmed! You\'ll receive a confirmation email shortly.')
+      toast.success("Booking confirmed! You'll receive a confirmation email shortly.")
       setShowBookModal(false)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Booking failed')
