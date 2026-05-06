@@ -4,42 +4,17 @@ import { useRouter } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import Button from '@/components/ui/Button'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { storage } from '@/lib/firebase'
-import { ref as storageRef, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage'
-import { ArrowLeft, Upload, Trash2, GripVertical, X, ImageIcon, Plus, Camera } from 'lucide-react'
+import { ref as storageRef, deleteObject } from 'firebase/storage'
+import { ArrowLeft, Trash2, GripVertical, X, ImageIcon, Plus, Camera } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import toast from 'react-hot-toast'
 import type { PortfolioPhoto } from '@/types'
+import PortfolioUploadModal from '@/components/portfolio/PortfolioUploadModal'
 
 const MAX_PHOTOS = 20
-const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5 MB
-const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
-
-const CATEGORIES = [
-  'Plumbing',
-  'Electrical',
-  'Carpentry',
-  'HVAC',
-  'Roofing',
-  'Landscaping',
-  'Painting',
-  'Flooring',
-  'Cleaning',
-  'Moving',
-  'General',
-  'Other',
-]
-
-interface UploadingPhoto {
-  id: string
-  file: File
-  preview: string
-  progress: number
-  error?: string
-}
 
 interface LightboxState {
   photo: PortfolioPhoto
@@ -51,20 +26,12 @@ export default function WorkerPortfolioPage() {
 
   const [photos, setPhotos] = useState<PortfolioPhoto[]>([])
   const [loadingPhotos, setLoadingPhotos] = useState(true)
-  const [uploading, setUploading] = useState<UploadingPhoto[]>([])
   const [lightbox, setLightbox] = useState<LightboxState | null>(null)
-
-  // Add photo form state
-  const [addTitle, setAddTitle] = useState('')
-  const [addCategory, setAddCategory] = useState(CATEGORIES[0])
-  const [addDescription, setAddDescription] = useState('')
-  const [showAddForm, setShowAddForm] = useState(false)
+  const [showUploadModal, setShowUploadModal] = useState(false)
 
   // Drag-to-reorder state
   const dragItem = useRef<number | null>(null)
   const dragOverItem = useRef<number | null>(null)
-
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Redirect non-workers
   useEffect(() => {
@@ -91,127 +58,9 @@ export default function WorkerPortfolioPage() {
     if (user?.uid) fetchPhotos()
   }, [user?.uid, fetchPhotos])
 
-  const validateFile = (file: File): string | null => {
-    if (!ACCEPTED_TYPES.includes(file.type)) {
-      return `${file.name}: only JPG, PNG and WEBP images are allowed`
-    }
-    if (file.size > MAX_FILE_SIZE) {
-      return `${file.name}: file must be under 5 MB`
-    }
-    return null
-  }
-
-  const handleFileSelect = (files: FileList | null) => {
-    if (!files || !user?.uid) return
-
-    const remaining = MAX_PHOTOS - photos.length - uploading.length
-    if (remaining <= 0) {
-      toast.error(`You've reached the maximum of ${MAX_PHOTOS} photos`)
-      return
-    }
-
-    const toUpload = Array.from(files).slice(0, remaining)
-    for (const file of toUpload) {
-      const err = validateFile(file)
-      if (err) {
-        toast.error(err)
-        return
-      }
-    }
-
-    if (!showAddForm) setShowAddForm(true)
-
-    const newUploads: UploadingPhoto[] = toUpload.map((file) => ({
-      id: `upload_${Date.now()}_${Math.random()}`,
-      file,
-      preview: URL.createObjectURL(file),
-      progress: 0,
-    }))
-    setUploading((prev) => [...prev, ...newUploads])
-  }
-
-  const removeUpload = (id: string) => {
-    setUploading((prev) => {
-      const found = prev.find((u) => u.id === id)
-      if (found) URL.revokeObjectURL(found.preview)
-      return prev.filter((u) => u.id !== id)
-    })
-  }
-
-  const handleAddPhotos = async () => {
-    if (!user?.uid || uploading.length === 0) return
-    if (!addTitle.trim()) {
-      toast.error('Please enter a title for your photos')
-      return
-    }
-
-    for (const upload of uploading) {
-      if (!storage) {
-        toast.error('Storage not available')
-        return
-      }
-
-      const photoId = `${Date.now()}_${Math.random().toString(36).slice(2)}`
-      const path = `portfolio/${user.uid}/${photoId}`
-      const sRef = storageRef(storage, path)
-      const task = uploadBytesResumable(sRef, upload.file)
-
-      await new Promise<void>((resolve) => {
-        task.on(
-          'state_changed',
-          (snap) => {
-            const pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 100)
-            setUploading((prev) =>
-              prev.map((u) => (u.id === upload.id ? { ...u, progress: pct } : u)),
-            )
-          },
-          (err) => {
-            setUploading((prev) =>
-              prev.map((u) =>
-                u.id === upload.id ? { ...u, error: err.message } : u,
-              ),
-            )
-            resolve()
-          },
-          async () => {
-            try {
-              const url = await getDownloadURL(task.snapshot.ref)
-              const res = await fetch('/api/portfolio', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'x-user-id': user.uid,
-                },
-                body: JSON.stringify({
-                  url,
-                  title: addTitle.trim(),
-                  category: addCategory,
-                  description: addDescription.trim() || undefined,
-                  order: photos.length,
-                }),
-              })
-              if (!res.ok) {
-                const data = await res.json() as { error?: string }
-                toast.error(data.error ?? 'Failed to save photo')
-              }
-            } catch {
-              toast.error('Failed to upload photo')
-            } finally {
-              resolve()
-            }
-          },
-        )
-      })
-    }
-
-    // Clean up previews
-    uploading.forEach((u) => URL.revokeObjectURL(u.preview))
-    setUploading([])
-    setAddTitle('')
-    setAddDescription('')
-    setShowAddForm(false)
-    await fetchPhotos()
-    toast.success('Photos added to your portfolio!')
+  const handleUploadSuccess = (newPhotos: PortfolioPhoto[]) => {
+    setPhotos((prev) => [...prev, ...newPhotos])
+    setShowUploadModal(false)
   }
 
   const handleDelete = async (photo: PortfolioPhoto) => {
@@ -295,6 +144,7 @@ export default function WorkerPortfolioPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
+      {/* Lightbox */}
       {lightbox && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
@@ -307,6 +157,7 @@ export default function WorkerPortfolioPage() {
             <button
               onClick={() => setLightbox(null)}
               className="absolute top-3 right-3 z-10 p-1.5 bg-black/50 hover:bg-black/70 rounded-full text-white transition-colors"
+              aria-label="Close lightbox"
             >
               <X className="h-5 w-5" />
             </button>
@@ -327,6 +178,17 @@ export default function WorkerPortfolioPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Upload Modal */}
+      {showUploadModal && user && (
+        <PortfolioUploadModal
+          uid={user.uid}
+          currentCount={photos.length}
+          maxPhotos={MAX_PHOTOS}
+          onSuccess={handleUploadSuccess}
+          onClose={() => setShowUploadModal(false)}
+        />
       )}
 
       <Navbar />
@@ -352,7 +214,7 @@ export default function WorkerPortfolioPage() {
             </div>
             {photos.length < MAX_PHOTOS && (
               <Button
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => setShowUploadModal(true)}
                 className="hidden sm:flex"
               >
                 <Plus className="h-4 w-4" />
@@ -360,98 +222,6 @@ export default function WorkerPortfolioPage() {
               </Button>
             )}
           </div>
-
-          {/* Upload Form */}
-          {showAddForm && uploading.length > 0 && (
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle className="text-base">Add Photos to Portfolio</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Previews */}
-                <div className="flex flex-wrap gap-3">
-                  {uploading.map((u) => (
-                    <div key={u.id} className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={u.preview} alt="preview" className="w-full h-full object-cover" />
-                      {u.progress > 0 && u.progress < 100 && (
-                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                          <span className="text-white text-xs font-bold">{u.progress}%</span>
-                        </div>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => removeUpload(u.id)}
-                        className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-0.5"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Title <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={addTitle}
-                    onChange={(e) => setAddTitle(e.target.value)}
-                    placeholder="e.g. Bathroom renovation in Wellington"
-                    maxLength={100}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Category <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    value={addCategory}
-                    onChange={(e) => setAddCategory(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
-                  >
-                    {CATEGORIES.map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Description <span className="text-gray-400 text-xs">(optional)</span>
-                  </label>
-                  <textarea
-                    value={addDescription}
-                    onChange={(e) => setAddDescription(e.target.value)}
-                    placeholder="Describe the project, materials used, any challenges overcome…"
-                    rows={2}
-                    maxLength={500}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none text-sm"
-                  />
-                </div>
-
-                <div className="flex gap-3">
-                  <Button onClick={handleAddPhotos} disabled={!addTitle.trim()}>
-                    <Upload className="h-4 w-4" />
-                    Save to Portfolio
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      uploading.forEach((u) => URL.revokeObjectURL(u.preview))
-                      setUploading([])
-                      setShowAddForm(false)
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
 
           {/* Photo Grid */}
           {loadingPhotos ? (
@@ -469,8 +239,8 @@ export default function WorkerPortfolioPage() {
               <p className="text-sm text-gray-500 mb-6 max-w-sm mx-auto">
                 Upload photos of your past work to build trust with homeowners and win more jobs.
               </p>
-              <Button onClick={() => fileInputRef.current?.click()}>
-                <Upload className="h-4 w-4" />
+              <Button onClick={() => setShowUploadModal(true)}>
+                <Plus className="h-4 w-4" />
                 Upload Your First Photo
               </Button>
             </div>
@@ -498,6 +268,7 @@ export default function WorkerPortfolioPage() {
                       type="button"
                       onClick={() => setLightbox({ photo })}
                       className="p-2 bg-white/90 rounded-full hover:bg-white transition-colors"
+                      aria-label="View full size"
                     >
                       <ImageIcon className="h-4 w-4 text-gray-700" />
                     </button>
@@ -505,6 +276,7 @@ export default function WorkerPortfolioPage() {
                       type="button"
                       onClick={() => handleDelete(photo)}
                       className="p-2 bg-red-500/90 rounded-full hover:bg-red-500 transition-colors"
+                      aria-label="Delete photo"
                     >
                       <Trash2 className="h-4 w-4 text-white" />
                     </button>
@@ -527,7 +299,7 @@ export default function WorkerPortfolioPage() {
               {photos.length < MAX_PHOTOS && (
                 <button
                   type="button"
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={() => setShowUploadModal(true)}
                   className="aspect-square rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 flex flex-col items-center justify-center gap-2 text-gray-400 hover:text-primary-600 hover:border-primary-400 dark:hover:text-primary-400 transition-colors"
                 >
                   <Plus className="h-8 w-8" />
@@ -547,7 +319,7 @@ export default function WorkerPortfolioPage() {
           {/* Mobile add button */}
           {photos.length < MAX_PHOTOS && (
             <div className="mt-6 sm:hidden">
-              <Button onClick={() => fileInputRef.current?.click()} className="w-full">
+              <Button onClick={() => setShowUploadModal(true)} className="w-full">
                 <Plus className="h-4 w-4" />
                 Add Photos
               </Button>
@@ -555,19 +327,6 @@ export default function WorkerPortfolioPage() {
           )}
         </div>
       </main>
-
-      {/* Hidden file input */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept={ACCEPTED_TYPES.join(',')}
-        multiple
-        className="hidden"
-        onChange={(e) => {
-          handleFileSelect(e.target.files)
-          e.target.value = ''
-        }}
-      />
 
       <Footer />
     </div>

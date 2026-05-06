@@ -358,6 +358,9 @@ export interface BusinessProfile {
   licenseVerified: boolean
   hasGeneralLiability: boolean
   hasWorkersComp: boolean
+  hasPublicLiability?: boolean
+  hasACCEmployerLevy?: boolean
+  isRatedTrader?: boolean
   backgroundCheckStatus: 'clear' | 'pending' | 'not_completed'
   bbbRating?: string
   googleRating?: number
@@ -1134,6 +1137,7 @@ export interface JobApplication {
   workerName?: string
   workerPhotoURL?: string
   workerRating?: number
+  workerVerified?: boolean
   coverLetter?: string
   status: 'pending' | 'accepted' | 'rejected' | 'withdrawn'
   appliedAt: string
@@ -1385,6 +1389,7 @@ export interface Quote {
   workerId: string
   workerName: string
   workerAvatar?: string
+  workerVerified?: boolean
   basePrice: number
   laborHours?: number
   laborRate?: number

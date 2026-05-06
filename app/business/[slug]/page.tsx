@@ -26,34 +26,37 @@ import { TrustBadgeList, TrustScoreBar } from '@/components/business/TrustBadge'
 
 // Mock data — replace with Firestore fetch once DB is connected
 const MOCK_BUSINESSES: Record<string, BusinessProfile> = {
-  'apex-general-contracting': {
+  'marlborough-plumbing-gas': {
     id: 'b1',
     userId: 'u1',
-    companyName: 'Apex Building & Trades',
-    slug: 'apex-general-contracting',
-    industry: 'Building & Construction',
-    companySize: '11-50',
+    companyName: 'Marlborough Plumbing & Gas',
+    slug: 'marlborough-plumbing-gas',
+    industry: 'Plumbing & Gasfitting',
+    companySize: '2-10',
     yearsInBusiness: 12,
-    serviceAreas: ['Blenheim, Marlborough', 'Nelson', 'Richmond, Marlborough', 'Picton'],
-    website: 'https://apexbuildingtrades.example.com',
-    linkedIn: 'https://linkedin.com/company/apexbuildingtrades',
+    serviceAreas: ['Blenheim, Marlborough', 'Nelson', 'Picton, Marlborough'],
+    website: 'https://marlboroughplumbing.example.co.nz',
+    linkedIn: 'https://linkedin.com/company/marlborough-plumbing',
     description:
-      'Apex Building & Trades has been delivering high-quality construction and renovation projects across the Marlborough and Nelson regions for over 12 years. We specialise in residential builds, commercial renovations, and property maintenance for both residential and commercial clients.',
+      'Marlborough Plumbing & Gas has been delivering quality plumbing, gasfitting and drainage services across the Marlborough and Nelson regions for over 12 years. We specialise in residential and light commercial work, heat pump hot water systems, and gas installations.',
     missionStatement:
-      'Building lasting relationships through quality craftsmanship, on-time delivery, and transparent communication.',
-    licenseNumber: 'LBP-112345',
+      'Building lasting relationships through quality workmanship, on-time delivery, and honest communication.',
+    licenseNumber: 'PGD-12345',
     licenseVerified: true,
     hasGeneralLiability: true,
     hasWorkersComp: true,
+    hasPublicLiability: true,
+    hasACCEmployerLevy: true,
+    isRatedTrader: true,
     backgroundCheckStatus: 'clear',
     googleRating: 4.8,
-    certifications: ['Site Safe Gold Card', 'Licensed Building Practitioner (LBP)', 'First Aid Certificate'],
-    subscriptionTier: 'enterprise',
+    certifications: ['Licensed Building Practitioner (LBP)', 'Site Safe Passport', 'First Aid Certificate'],
+    subscriptionTier: 'premium',
     isVerifiedContractor: true,
-    isEnterprisePartner: true,
+    isEnterprisePartner: false,
     totalJobsPosted: 134,
     workersHiredYTD: 47,
-    avgJobValue: 8500,
+    avgJobValue: 1200,
     successRate: 97,
     avgTimeToFill: 2.3,
     repeatHireRate: 68,
@@ -77,30 +80,30 @@ const MOCK_REVIEWS: BusinessReview[] = [
     id: 'r1',
     businessId: 'b1',
     workerId: 'w1',
-    workerName: 'Mike Johnson',
-    jobTitle: 'Commercial Bathroom Renovation',
+    workerName: 'Mike Tane',
+    jobTitle: 'Bathroom Renovation – Blenheim',
     rating: 5,
     communication: 5,
     quality: 5,
     timeliness: 5,
     fairPay: 5,
     comment:
-      'Apex is one of the best contractors I have worked for. Clear scope, fair pay, and they always have materials ready on-site. Will definitely work with them again.',
+      'Marlborough Plumbing is one of the best contractors I have worked for. Clear scope, fair pay, and they always have materials ready on-site. Will definitely work with them again.',
     createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
   },
   {
     id: 'r2',
     businessId: 'b1',
     workerId: 'w2',
-    workerName: 'Sarah Chen',
-    jobTitle: 'Office Building Electrical Upgrade',
+    workerName: 'Sarah Ngata',
+    jobTitle: 'Gas Hot Water System Install – Nelson',
     rating: 5,
     communication: 5,
     quality: 5,
     timeliness: 4,
     fairPay: 5,
     comment:
-      'Professional team, paid on time, and communicated every step of the way. Highly recommend to any electrician looking for steady commercial work.',
+      'Professional team, paid on time, and communicated every step of the way. Highly recommend to any plumber looking for steady work in the region.',
     createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
   },
   {
@@ -108,14 +111,14 @@ const MOCK_REVIEWS: BusinessReview[] = [
     businessId: 'b1',
     workerId: 'w3',
     workerName: 'Carlos Rivera',
-    jobTitle: 'HVAC Installation – 40-Unit Apartment Complex',
+    jobTitle: 'Heat Pump Installation – Marlborough',
     rating: 4,
     communication: 4,
     quality: 5,
     timeliness: 4,
     fairPay: 4,
     comment:
-      'Great project to work on. Organized crew and project manager was responsive. A few timeline shifts, but overall a solid employer.',
+      'Great project to work on. Organised crew and the project manager was responsive. A few timeline shifts, but overall a solid employer.',
     createdAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
   },
 ]
@@ -124,9 +127,9 @@ const MOCK_REVIEWS: BusinessReview[] = [
 function computeProfileVerification(biz: BusinessProfile): { verifiedCount: number; trustScore: number } {
   let verifiedCount = 0
   if (biz.licenseVerified) verifiedCount++
-  if (biz.hasGeneralLiability || biz.hasWorkersComp) verifiedCount++
+  if (biz.hasPublicLiability || biz.hasGeneralLiability || biz.hasACCEmployerLevy || biz.hasWorkersComp) verifiedCount++
   if (biz.backgroundCheckStatus === 'clear') verifiedCount++
-  if (biz.bbbRating || biz.googleRating) verifiedCount++
+  if (biz.isRatedTrader || biz.bbbRating || biz.googleRating) verifiedCount++
   if (biz.certifications && biz.certifications.length > 0) verifiedCount++
   return { verifiedCount, trustScore: verifiedCount * 20 }
 }
@@ -237,7 +240,7 @@ export default function BusinessProfilePage({ params }: { params: { slug: string
               <div className="flex-1 pb-2">
                 <div className="flex flex-wrap items-center gap-2 mb-1">
                   <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
-                    {biz.companyName}
+                    {biz.companyName || 'Independent Tradesperson'}
                   </h1>
                   {biz.licenseVerified && (
                     <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-2 py-0.5 rounded-full text-xs font-semibold">
@@ -338,7 +341,7 @@ export default function BusinessProfilePage({ params }: { params: { slug: string
               {/* About */}
               <Card>
                 <CardHeader>
-                  <CardTitle>About {biz.companyName}</CardTitle>
+                  <CardTitle>About {biz.companyName || 'This Business'}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">{biz.description}</p>
@@ -480,18 +483,26 @@ export default function BusinessProfilePage({ params }: { params: { slug: string
                         </Badge>
                       </div>
                     )}
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-400">Public Liability</span>
-                      <Badge variant={biz.hasGeneralLiability ? 'success' : 'danger'}>
-                        {biz.hasGeneralLiability ? 'Active' : 'None'}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-400">ACC Levy</span>
-                      <Badge variant={biz.hasWorkersComp ? 'success' : 'danger'}>
-                        {biz.hasWorkersComp ? 'Active' : 'None'}
-                      </Badge>
-                    </div>
+                    {(() => {
+                      const hasLiability = biz.hasPublicLiability ?? biz.hasGeneralLiability
+                      const hasACC = biz.hasACCEmployerLevy ?? biz.hasWorkersComp
+                      return (
+                        <>
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-600 dark:text-gray-400">Public Liability</span>
+                            <Badge variant={hasLiability ? 'success' : 'danger'}>
+                              {hasLiability ? 'Active' : 'None'}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-600 dark:text-gray-400">ACC / Workplace Insurance</span>
+                            <Badge variant={hasACC ? 'success' : 'danger'}>
+                              {hasACC ? 'Active' : 'None'}
+                            </Badge>
+                          </div>
+                        </>
+                      )
+                    })()}
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-600 dark:text-gray-400">Background Check</span>
                       <Badge variant={biz.backgroundCheckStatus === 'clear' ? 'success' : 'warning'}>
@@ -502,6 +513,12 @@ export default function BusinessProfilePage({ params }: { params: { slug: string
                           : 'Not Done'}
                       </Badge>
                     </div>
+                    {biz.isRatedTrader && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600 dark:text-gray-400">Rated Trader</span>
+                        <Badge variant="success">Verified Member</Badge>
+                      </div>
+                    )}
                     {biz.googleRating && (
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-gray-600 dark:text-gray-400">Google Rating</span>

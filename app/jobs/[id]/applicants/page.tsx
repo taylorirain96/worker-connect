@@ -9,7 +9,7 @@ import { Card, CardContent } from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import toast from 'react-hot-toast'
-import { ArrowLeft, Star, ChevronDown, ChevronUp, Users, MessageSquare, Loader2 } from 'lucide-react'
+import { ArrowLeft, Star, ChevronDown, ChevronUp, Users, MessageSquare, Loader2, CheckCircle } from 'lucide-react'
 import { formatRelativeDate } from '@/lib/utils'
 import { getJobApplications, acceptApplication, rejectApplication } from '@/lib/applications'
 import { db } from '@/lib/firebase'
@@ -317,6 +317,11 @@ export default function ApplicantsPage() {
                               <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
                               {app.workerRating.toFixed(1)}
                             </span>
+                          )}
+
+                          {/* Verified badge */}
+                          {app.workerVerified && (
+                            <CheckCircle className="h-4 w-4 text-blue-500 flex-shrink-0" aria-label="Verified" />
                           )}
 
                           {/* Status badge */}
