@@ -3,21 +3,23 @@
  * Sends via Resend using the RESEND_API_KEY environment variable.
  *
  * Emails:
- *   sendJobAcceptedEmail          — sent to worker when their quote is accepted
- *   sendPaymentReleasedEmail      — sent to worker when escrow payment is released
- *   sendQuoteReceivedEmail        — sent to homeowner when a worker submits a quote
- *   sendMessageReceivedEmail      — sent to recipient when they receive a message (30+ min inactive)
- *   sendApplicationUpdateEmail    — sent to jobseeker when employer views/updates their application
- *   sendReviewReceivedEmail       — sent to user when they receive a new review
- *   sendVerificationApprovedEmail — sent to worker when their identity is verified
- *   sendVerificationRejectedEmail — sent to worker when their verification is rejected
- *   sendBookingRequestEmail           — sent to worker when a homeowner requests a booking
- *   sendBookingConfirmedEmail         — sent to homeowner when worker confirms a booking
- *   sendBookingDeclinedEmail          — sent to homeowner when worker declines a booking
- *   sendJobCompletedWorkerEmail       — sent to worker when homeowner marks job complete + payment released
- *   sendJobCompletedHomeownerEmail    — sent to homeowner after marking complete, prompts review
- *   sendPaymentReleaseRequestEmail    — sent to homeowner when worker requests payment confirmation
- *   sendJobMatchesEmail               — sent to workers when a new job matches their trade/location
+ *   sendJobAcceptedEmail                   — sent to worker when their quote is accepted
+ *   sendPaymentReleasedEmail               — sent to worker when escrow payment is released
+ *   sendQuoteReceivedEmail                 — sent to homeowner when a worker submits a quote
+ *   sendMessageReceivedEmail               — sent to recipient when they receive a message (30+ min inactive)
+ *   sendApplicationUpdateEmail             — sent to jobseeker when employer views/updates their application
+ *   sendReviewReceivedEmail                — sent to user when they receive a new review
+ *   sendVerificationApprovedEmail          — sent to worker when their identity is verified
+ *   sendVerificationRejectedEmail          — sent to worker when their verification is rejected
+ *   sendBookingRequestEmail                — sent to worker when a homeowner requests a booking
+ *   sendBookingConfirmedEmail              — sent to homeowner when worker confirms a booking
+ *   sendBookingDeclinedEmail               — sent to homeowner when worker declines a booking
+ *   sendJobCompletedWorkerEmail            — sent to worker when homeowner marks job complete + payment released
+ *   sendJobCompletedHomeownerEmail         — sent to homeowner after marking complete, prompts review
+ *   sendPaymentReleaseRequestEmail         — sent to homeowner when worker requests payment confirmation
+ *   sendJobMatchesEmail                    — sent to workers when a new job matches their trade/location
+ *   sendServicePackageBookedWorkerEmail    — sent to worker when a homeowner books their service package
+ *   sendServicePackageBookedHomeownerEmail — sent to homeowner confirming their instant package booking
  */
 import { Resend } from 'resend'
 
@@ -734,6 +736,103 @@ export async function sendDirectJobRequestEmail(opts: {
     from: FROM,
     to: workerEmail,
     subject: `${homeownerName} wants to book you again!`,
+    html,
+  })
+}
+
+// ─── Email 18: Service Package Booked (Worker) ───────────────────────────────
+
+/**
+ * Sent to the worker when a homeowner instantly books one of their service packages.
+ */
+export async function sendServicePackageBookedWorkerEmail(opts: {
+  workerEmail: string
+  workerName: string
+  homeownerName: string
+  packageTitle: string
+  price: number
+  preferredDate: string
+  preferredTime: string
+  address: string
+  notes?: string
+  bookingId: string
+}): Promise<void> {
+  const { workerEmail, workerName, homeownerName, packageTitle, price, preferredDate, preferredTime, address, notes, bookingId } = opts
+  const dashboardUrl = `${APP_URL}/dashboard/worker`
+
+  const html = emailWrapper(`
+    <h1 style="font-size:24px;font-weight:700;color:#fff;margin:0 0 8px;">New package booking! 🎉</h1>
+    <p style="color:#94a3b8;line-height:1.6;margin:0 0 20px;">Ka pai, ${workerName}! <strong style="color:#e2e8f0;">${homeownerName}</strong> has instantly booked your <strong style="color:#e2e8f0;">${packageTitle}</strong> package.</p>
+    ${infoTable(`
+      ${infoRow('Package', packageTitle)}
+      ${infoRow('Price', formatNzd(price))}
+      ${infoRow('Date', preferredDate)}
+      ${infoRow('Time', preferredTime)}
+      ${infoRow('Address', address)}
+    `)}
+    ${notes ? `
+    <div style="background:#1e293b;border-left:4px solid #4f46e5;border-radius:8px;padding:16px 20px;margin:20px 0;">
+      <p style="color:#94a3b8;font-size:12px;margin:0 0 6px;text-transform:uppercase;letter-spacing:0.05em;">Customer notes</p>
+      <p style="color:#e2e8f0;font-size:15px;line-height:1.6;margin:0;">${notes}</p>
+    </div>
+    ` : ''}
+    ${ctaButton(dashboardUrl, 'View on Dashboard →')}
+    <p style="color:#64748b;font-size:13px;text-align:center;margin:0;">Booking ID: ${bookingId}. Please arrive on time and message the homeowner if you need to reschedule.</p>
+  `)
+
+  const resend = getResend()
+  if (!resend) return
+  await resend.emails.send({
+    from: FROM,
+    to: workerEmail,
+    subject: `New booking: ${packageTitle} on ${preferredDate}`,
+    html,
+  })
+}
+
+// ─── Email 19: Service Package Booked (Homeowner) ────────────────────────────
+
+/**
+ * Sent to the homeowner confirming their instant package booking.
+ */
+export async function sendServicePackageBookedHomeownerEmail(opts: {
+  homeownerEmail: string
+  homeownerName: string
+  workerName: string
+  packageTitle: string
+  price: number
+  preferredDate: string
+  preferredTime: string
+  address: string
+  bookingId: string
+}): Promise<void> {
+  const { homeownerEmail, homeownerName, workerName, packageTitle, price, preferredDate, preferredTime, address, bookingId } = opts
+  const packagesUrl = `${APP_URL}/packages`
+
+  const html = emailWrapper(`
+    <h1 style="font-size:24px;font-weight:700;color:#fff;margin:0 0 8px;">Booking confirmed! ✅</h1>
+    <p style="color:#94a3b8;line-height:1.6;margin:0 0 20px;">Hi ${homeownerName}! Your booking of <strong style="color:#e2e8f0;">${packageTitle}</strong> with <strong style="color:#e2e8f0;">${workerName}</strong> is confirmed.</p>
+    ${infoTable(`
+      ${infoRow('Package', packageTitle)}
+      ${infoRow('Worker', workerName)}
+      ${infoRow('Price', formatNzd(price))}
+      ${infoRow('Date', preferredDate)}
+      ${infoRow('Time', preferredTime)}
+      ${infoRow('Address', address)}
+    `)}
+    <div style="background:#1e293b;border-left:4px solid #22c55e;border-radius:8px;padding:16px 20px;margin:20px 0;">
+      <p style="color:#e2e8f0;font-size:14px;line-height:1.6;margin:0;">💡 Payment is held securely in escrow and only released to the worker after you approve the completed job.</p>
+    </div>
+    ${ctaButton(packagesUrl, 'Browse More Packages →')}
+    <p style="color:#64748b;font-size:13px;text-align:center;margin:0;">Booking ID: ${bookingId}. You can message the worker directly through the platform.</p>
+  `)
+
+  const resend = getResend()
+  if (!resend) return
+  await resend.emails.send({
+    from: FROM,
+    to: homeownerEmail,
+    subject: `Booking confirmed — ${packageTitle} on ${preferredDate}`,
     html,
   })
 }

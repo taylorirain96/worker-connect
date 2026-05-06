@@ -12,7 +12,7 @@ import Link from 'next/link'
 import {
   Briefcase, DollarSign, Star, Clock, TrendingUp, BarChart2,
   CheckCircle, AlertCircle, Search, Settings, FileText, MessageSquare, Send, Sparkles, ShieldCheck,
-  Video, HardHat, Shield,
+  Video, HardHat, Shield, Package,
 } from 'lucide-react'
 import { formatCurrency, STATUS_LABELS, formatRelativeDate } from '@/lib/utils'
 import { collection, query, where, orderBy, getDocs, type DocumentData } from 'firebase/firestore'
@@ -821,6 +821,17 @@ export default function WorkerDashboardPage() {
                   <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                     <Send className="h-4 w-4 text-primary-600" />
                     My Portfolio
+                  </div>
+                  <span className="text-xs text-primary-600">→</span>
+                </div>
+              </Link>
+
+              {/* Service Packages link */}
+              <Link href="/dashboard/worker/service-packages">
+                <div className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
+                  <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <Package className="h-4 w-4 text-green-600" />
+                    Service Packages
                   </div>
                   <span className="text-xs text-primary-600">→</span>
                 </div>
