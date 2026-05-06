@@ -117,7 +117,7 @@ export default async function ServiceLocationPage({ params }: Props) {
 
             <div className="flex flex-wrap gap-3">
               <Link
-                href="/jobs/new"
+                href="/jobs/create"
                 className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition-colors"
               >
                 Post a Job in {region.city}
@@ -170,7 +170,7 @@ export default async function ServiceLocationPage({ params }: Props) {
               </p>
               <div className="flex flex-wrap justify-center gap-3">
                 <Link
-                  href="/jobs/new"
+                  href="/jobs/create"
                   className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition-colors"
                 >
                   Post a Job
