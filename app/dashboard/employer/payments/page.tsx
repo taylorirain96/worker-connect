@@ -297,7 +297,7 @@ export default function EmployerPaymentsPage() {
                     <div className="text-center py-8">
                       <Briefcase className="h-8 w-8 text-gray-300 mx-auto mb-2" />
                       <p className="text-gray-500 text-sm">No jobs posted yet</p>
-                      <Link href="/jobs/post">
+                      <Link href="/jobs/create">
                         <Button size="sm" className="mt-3">Post a Job</Button>
                       </Link>
                     </div>
@@ -392,7 +392,7 @@ export default function EmployerPaymentsPage() {
               </Card>
 
               {/* Post a job CTA */}
-              <Link href="/jobs/post">
+              <Link href="/jobs/create">
                 <Button className="w-full flex items-center justify-center gap-2">
                   <Briefcase className="h-4 w-4" />
                   Post a New Job
