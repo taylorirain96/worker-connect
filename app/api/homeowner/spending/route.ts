@@ -151,7 +151,7 @@ export async function GET(req: NextRequest) {
   try {
     const uid = req.headers.get('x-user-id')
     if (!uid) {
-      return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     try {
@@ -209,11 +209,11 @@ export async function GET(req: NextRequest) {
         .limit(100)
         .get()
 
+      // Avoid double-counting if job already in transactions (O(1) with Set)
+      const includedJobIds = new Set(transactions.map((t) => t.jobId))
       for (const doc of invoicesSnap.docs) {
         const d = doc.data()
-        // Avoid double-counting if job already in transactions
-        const alreadyIncluded = transactions.some((t) => t.jobId === d.jobId)
-        if (alreadyIncluded) continue
+        if (includedJobIds.has(d.jobId)) continue
 
         transactions.push({
           id: doc.id,

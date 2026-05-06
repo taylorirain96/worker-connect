@@ -87,7 +87,9 @@ export default function WorkerProfilePage({ params }: { params: { id: string } }
           .then((data: { badges?: string[] }) => {
             if (Array.isArray(data.badges)) setBadges(data.badges)
           })
-          .catch(() => {})
+          .catch((err: unknown) => {
+            console.error('[worker profile] Failed to fetch badges:', err)
+          })
       }
       setReviewAgg(agg)
       setLoading(false)

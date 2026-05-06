@@ -78,8 +78,8 @@ export async function GET(
 
       return NextResponse.json({ badges: Array.from(computed) })
     } catch (firestoreError) {
-      console.warn('Firestore unavailable — returning mock badges:', firestoreError)
-      return NextResponse.json({ badges: ['top_rated', 'verified', 'jobs_10'] })
+      console.warn('Firestore unavailable — returning empty badges array:', firestoreError)
+      return NextResponse.json({ badges: [] })
     }
   } catch (error) {
     console.error(`GET /api/workers/${userId}/badges error:`, error)

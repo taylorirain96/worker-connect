@@ -144,7 +144,7 @@ export default function HomeownerAlertsPage() {
         return
       }
       if (json.alert) {
-        setAlerts((prev) => [json.alert!, ...prev])
+        setAlerts((prev) => [json.alert as SearchAlert, ...prev])
       }
       setShowForm(false)
       setForm(DEFAULT_FORM)

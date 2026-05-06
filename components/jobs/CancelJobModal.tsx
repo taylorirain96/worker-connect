@@ -117,8 +117,8 @@ export default function CancelJobModal({
               required
               minLength={10}
             />
-            {reason.length > 0 && reason.length < 10 && (
-              <p className="text-xs text-red-400">{10 - reason.length} more characters required</p>
+            {reason.length > 0 && reason.trim().length < 10 && (
+              <p className="text-xs text-red-400">{10 - reason.trim().length} more characters required</p>
             )}
           </div>
 
