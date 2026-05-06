@@ -1,7 +1,7 @@
 {
-  "name": "WorkerConnect",
-  "short_name": "WorkerConnect",
-  "description": "Find trusted tradies in New Zealand",
+  "name": "QuickTrade",
+  "short_name": "QuickTrade",
+  "description": "New Zealand's trade & labour marketplace",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",

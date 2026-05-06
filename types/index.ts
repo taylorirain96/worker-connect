@@ -49,6 +49,10 @@ export interface UserProfile {
   credit?: number
   /** Legacy referral credits field (kept for backwards compatibility) */
   referralCredits?: number
+  /** Total NZD affiliate earnings accumulated (from referrals that converted to paid jobs) */
+  affiliateBalance?: number
+  /** Total NZD paid out to this affiliate via Stripe Transfer */
+  affiliatePaidOut?: number
 }
 
 export interface DirectRequest {

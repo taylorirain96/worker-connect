@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Script from 'next/script'
 import Navbar from '@/components/layout/Navbar'
@@ -14,6 +14,7 @@ import FoundersDealBanner from '@/components/home/FoundersDealBanner'
 import { getAllPosts } from '@/lib/blog/posts'
 import { JOB_CATEGORIES, CATEGORY_ICONS, CATEGORY_GRADIENTS, type CategoryId } from '@/lib/utils'
 import { SITE_URL } from '@/lib/seo/config'
+import { trackEvent } from '@/lib/analytics'
 import {
   MapPin,
   Shield,
@@ -81,8 +82,28 @@ const PREMIUM_CATEGORIES: CategoryId[] = ['plumbing', 'electrical', 'hvac']
 
 export default function HomePage() {
   const [expanded, setExpanded] = useState<'work' | 'hire' | null>(null)
+  const [heroVariant, setHeroVariant] = useState<'A' | 'B'>('A')
+
+  // Assign A/B variant once on mount, persisted in localStorage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('hero_variant') as 'A' | 'B' | null
+      if (stored === 'A' || stored === 'B') {
+        setHeroVariant(stored)
+        trackEvent('hero_variant_assigned', { variant: stored })
+      } else {
+        const assigned: 'A' | 'B' = Math.random() < 0.5 ? 'A' : 'B'
+        localStorage.setItem('hero_variant', assigned)
+        setHeroVariant(assigned)
+        trackEvent('hero_variant_assigned', { variant: assigned })
+      }
+    } catch {
+      // localStorage unavailable — stay on default variant A
+    }
+  }, [])
 
   function toggle(key: 'work' | 'hire') {
+    trackEvent('hero_cta_click', { variant: heroVariant, cta: key })
     setExpanded((prev) => (prev === key ? null : key))
   }
 
@@ -120,8 +141,17 @@ export default function HomePage() {
               <span className="text-indigo-300">Trusted by 12,000+ tradies and workers</span>
             </div>
             <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight text-white">
-              New Zealand&apos;s Home for{' '}
-              <span className="platinum-shimmer">Trade Work & Employment</span>
+              {heroVariant === 'B' ? (
+                <>
+                  Find Trusted Tradies in{' '}
+                  <span className="platinum-shimmer">New Zealand — Fast</span>
+                </>
+              ) : (
+                <>
+                  New Zealand&apos;s Home for{' '}
+                  <span className="platinum-shimmer">Trade Work & Employment</span>
+                </>
+              )}
             </h1>
             <p className="text-xl text-slate-400 mb-10 max-w-2xl mx-auto">
               Whether you need a tradie or you are one — QuickTrade connects the right people across New Zealand.

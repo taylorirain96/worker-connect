@@ -402,7 +402,10 @@ function JobDetailInner() {
           toast.success('Job is already marked as complete.')
         } else {
           trackEvent('payment_completed', { job_id: params.id as string })
-          toast.success('Job marked as complete! Payment has been released to the worker.')
+          toast.success('Job marked as complete! Redirecting to leave a review…')
+          setTimeout(() => {
+            router.push(`/jobs/${params.id as string}/review`)
+          }, 1500)
         }
       } else {
         toast.error(data.error ?? 'Failed to mark job as complete')

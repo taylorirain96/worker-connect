@@ -21,14 +21,26 @@ const jobSchema = z.object({
   description: z.string().min(20, 'Description must be at least 20 characters').max(2000),
   category: z.string().min(1, 'Please select a category'),
   location: z.string().min(3, 'Please enter a location'),
-  budget: z.coerce.number().min(1, 'Budget must be greater than 0'),
+  budgetMin: z.coerce.number().min(0, 'Min budget must be 0 or more'),
+  budgetMax: z.coerce.number().min(1, 'Max budget must be greater than 0'),
   budgetType: z.enum(['fixed', 'hourly']),
   urgency: z.enum(['low', 'medium', 'high', 'emergency']),
   skills: z.string().optional(),
+  tags: z.string().optional(),
   deadline: z.string().optional(),
+}).refine((d) => d.budgetMax >= d.budgetMin, {
+  message: 'Max budget must be ≥ min budget',
+  path: ['budgetMax'],
 })
 
 type JobFormData = z.infer<typeof jobSchema>
+
+const URGENCY_OPTIONS = [
+  { value: 'low',       label: '⬇️ Low',       sub: 'No rush',           ring: 'ring-gray-400',   bg: 'bg-gray-100 dark:bg-gray-700',   text: 'text-gray-700 dark:text-gray-200' },
+  { value: 'medium',    label: '📅 Medium',    sub: 'Within a week',     ring: 'ring-blue-500',   bg: 'bg-blue-50 dark:bg-blue-900/30',  text: 'text-blue-700 dark:text-blue-300' },
+  { value: 'high',      label: '⚡ High',      sub: 'Within 48 hours',   ring: 'ring-amber-500',  bg: 'bg-amber-50 dark:bg-amber-900/30',text: 'text-amber-700 dark:text-amber-300' },
+  { value: 'emergency', label: '🚨 Emergency', sub: 'ASAP',              ring: 'ring-red-500',    bg: 'bg-red-50 dark:bg-red-900/30',   text: 'text-red-700 dark:text-red-300' },
+] as const
 
 export default function CreateJobPage() {
   const { user, profile } = useAuth()
@@ -46,11 +58,12 @@ export default function CreateJobPage() {
     formState: { errors, isSubmitting },
   } = useForm<JobFormData>({
     resolver: zodResolver(jobSchema),
-    defaultValues: { budgetType: 'fixed', urgency: 'medium' },
+    defaultValues: { budgetType: 'fixed', urgency: 'medium', budgetMin: 0 },
   })
 
   const budgetType = watch('budgetType')
   const selectedCategory = watch('category')
+  const selectedUrgency = watch('urgency')
 
   const handleAIJobPost = async () => {
     if (!user || !aiInputs.task.trim()) return
@@ -99,22 +112,26 @@ export default function CreateJobPage() {
 
     try {
       const { saveJob } = await import('@/lib/services/jobService')
+      const tags = data.tags ? data.tags.split(',').map((t) => t.trim()).filter(Boolean).slice(0, 10) : []
       const jobId = await saveJob({
         title: data.title,
         description: data.description,
         category: data.category as import('@/types').JobCategory,
         location: data.location,
-        budget: data.budget,
+        budget: data.budgetMax,
+        budgetMin: data.budgetMin,
+        budgetMax: data.budgetMax,
         budgetType: data.budgetType,
         urgency: data.urgency,
         skills: data.skills ? data.skills.split(',').map((s) => s.trim()).filter(Boolean) : [],
+        tags,
         employerId: user.uid,
         employerName: user.displayName || user.email || 'Employer',
         status: 'open',
         ...(data.deadline ? { deadline: data.deadline } : {}),
       })
       toast.success('Job posted successfully!')
-      trackEvent('job_posted', { job_id: jobId, category: data.category, budget: data.budget })
+      trackEvent('job_posted', { job_id: jobId, category: data.category, budget: data.budgetMax })
       router.push(`/jobs/${jobId}`)
     } catch {
       toast.error('Failed to post job. Please try again.')
@@ -287,6 +304,13 @@ export default function CreateJobPage() {
                 helperText="List specific skills you need the worker to have"
                 {...register('skills')}
               />
+
+              <Input
+                label="Tags (comma-separated, optional)"
+                placeholder="e.g., residential, urgent, outdoor"
+                helperText="Up to 10 tags to help workers find your job"
+                {...register('tags')}
+              />
             </div>
 
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 space-y-5">
@@ -317,31 +341,58 @@ export default function CreateJobPage() {
                   </div>
                 </div>
 
-                <Input
-                  label={budgetType === 'hourly' ? 'Hourly Rate ($)' : 'Budget ($)'}
-                  type="number"
-                  min="1"
-                  placeholder="0"
-                  error={errors.budget?.message}
-                  required
-                  {...register('budget')}
-                />
+                {/* Budget range */}
+                <div className="sm:col-span-1 grid grid-cols-2 gap-2">
+                  <Input
+                    label={budgetType === 'hourly' ? 'Min ($/hr)' : 'Min ($)'}
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    error={errors.budgetMin?.message}
+                    {...register('budgetMin')}
+                  />
+                  <Input
+                    label={budgetType === 'hourly' ? 'Max ($/hr)' : 'Max ($)'}
+                    type="number"
+                    min="1"
+                    placeholder="0"
+                    error={errors.budgetMax?.message}
+                    required
+                    {...register('budgetMax')}
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Urgency — color-coded radio buttons */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Urgency <span className="text-red-500">*</span>
                   </label>
-                  <select
-                    className="w-full px-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    {...register('urgency')}
-                  >
-                    <option value="low">Low Priority</option>
-                    <option value="medium">Medium Priority</option>
-                    <option value="high">High Priority</option>
-                    <option value="emergency">🚨 Emergency</option>
-                  </select>
+                  <div className="grid grid-cols-2 gap-2">
+                    {URGENCY_OPTIONS.map((opt) => {
+                      const isSelected = selectedUrgency === opt.value
+                      return (
+                        <label
+                          key={opt.value}
+                          className={`cursor-pointer rounded-lg border-2 p-2.5 transition-all ${
+                            isSelected
+                              ? `${opt.bg} ${opt.text} ring-2 ${opt.ring} border-transparent`
+                              : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            value={opt.value}
+                            className="sr-only"
+                            {...register('urgency')}
+                          />
+                          <p className="text-xs font-semibold leading-none">{opt.label}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{opt.sub}</p>
+                        </label>
+                      )
+                    })}
+                  </div>
                 </div>
 
                 <Input

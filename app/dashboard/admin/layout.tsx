@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { label: 'Users',          href: '/dashboard/admin/users',              icon: Users },
   { label: 'Jobs',           href: '/dashboard/admin/jobs',               icon: Briefcase },
   { label: 'Payments',       href: '/dashboard/admin/payments',           icon: DollarSign },
+  { label: 'Affiliates',     href: '/dashboard/admin/affiliates',         icon: DollarSign },
   { label: 'Disputes',       href: '/dashboard/admin/disputes',           icon: AlertTriangle },
   { label: 'Verification',   href: '/dashboard/admin/verification',       icon: ShieldCheck },
   { label: 'ID Verifications', href: '/dashboard/admin/verifications',    icon: ShieldCheck },

@@ -202,6 +202,12 @@ export default function EmployerDashboardPage() {
                 Edit Profile
               </Button>
             </Link>
+            <Link href="/dashboard/employer/business-profile">
+              <Button variant="outline" className="flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
+                Business Profile
+              </Button>
+            </Link>
           </div>
 
           {/* Stats */}

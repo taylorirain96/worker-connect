@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
@@ -9,7 +9,7 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import {
   ArrowLeft, TrendingUp, CheckCircle, Clock, XCircle, ArrowRight, ShieldCheck,
-  Wallet, AlertCircle, X, Banknote, RefreshCw,
+  Wallet, AlertCircle, X, Banknote, RefreshCw, Calendar,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -226,7 +226,16 @@ export default function PayoutsPage() {
 
   const [showWithdrawModal, setShowWithdrawModal] = useState(false)
 
-  // ── Fetch balance ────────────────────────────────────────────────────────────
+  // ── Next payout date — earliest estimatedArrival from in_transit/pending payouts ──
+  const nextPayoutDate = useMemo(() => {
+    const upcoming = payouts
+      .filter((p) => (p.status === 'in_transit' || p.status === 'pending') && p.estimatedArrival)
+      .map((p) => new Date(p.estimatedArrival!).getTime())
+    if (upcoming.length === 0) return null
+    return new Date(Math.min(...upcoming))
+  }, [payouts])
+
+
   const fetchBalance = useCallback(async () => {
     if (!user) return
     setBalanceLoading(true)
@@ -376,7 +385,7 @@ export default function PayoutsPage() {
           </div>
 
           {/* Balance summary cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Available Balance */}
             <Card className="border-indigo-200 dark:border-indigo-800">
               <CardContent>
@@ -434,6 +443,28 @@ export default function PayoutsPage() {
                   </p>
                 )}
                 <p className="text-xs text-gray-400 mt-1">All time</p>
+              </CardContent>
+            </Card>
+
+            {/* Next Payout */}
+            <Card className="border-violet-200 dark:border-violet-800">
+              <CardContent>
+                <div className="flex items-center gap-2 mb-2">
+                  <Calendar className="h-4 w-4 text-violet-500" />
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                    Next Payout
+                  </p>
+                </div>
+                {payoutsLoading ? (
+                  <div className="h-7 w-24 bg-gray-100 dark:bg-gray-700 animate-pulse rounded" />
+                ) : (
+                  <p className="text-2xl font-bold text-violet-600 dark:text-violet-400">
+                    {nextPayoutDate
+                      ? nextPayoutDate.toLocaleDateString('en-NZ', { day: 'numeric', month: 'short' })
+                      : '—'}
+                  </p>
+                )}
+                <p className="text-xs text-gray-400 mt-1">Estimated arrival</p>
               </CardContent>
             </Card>
           </div>

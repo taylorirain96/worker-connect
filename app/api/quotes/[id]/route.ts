@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
 import { sendJobAcceptedEmail } from '@/lib/email/transactional'
 import { sendAdminNotification } from '@/lib/notifications/admin'
+import { sendSMS } from '@/lib/sms'
 
 export const dynamic = 'force-dynamic'
 
@@ -135,6 +136,24 @@ export async function PUT(
           type: 'job_status_change',
           link: `/jobs/${quote.jobId}`,
         }).catch((err) => console.warn('[quotes/accept] Failed to send worker push notification:', err))
+
+        // SMS fallback — non-blocking, best-effort
+        Promise.resolve().then(async () => {
+          try {
+            if (adminDb) {
+              const workerSnap = await adminDb.collection('users').doc(quote.workerId).get()
+              const phone = workerSnap.data()?.phone as string | undefined
+              if (phone) {
+                await sendSMS({
+                  to: phone,
+                  body: `QuickTrade: Your quote for "${quote.jobTitle}" was accepted! Log in to confirm. quicktrade.co.nz`,
+                })
+              }
+            }
+          } catch (smsErr) {
+            console.warn('[quotes/accept] SMS fallback failed:', smsErr)
+          }
+        }).catch(() => {})
       } catch (emailErr) {
         console.error('Failed to send job-accepted email:', emailErr)
       }
