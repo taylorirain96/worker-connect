@@ -16,6 +16,7 @@ export interface UserProfile {
   skills?: string[]
   hourlyRate?: number
   availability?: 'available' | 'busy' | 'unavailable'
+  availabilityUpdatedAt?: string
   rating?: number
   reviewCount?: number
   completedJobs?: number
@@ -2219,3 +2220,20 @@ export interface ServicePackageBooking {
   updatedAt: string
 }
 
+
+export interface JobTemplate {
+  id: string
+  /** Human-friendly name for this template, e.g. "Monthly lawn mow" */
+  name: string
+  title: string
+  description: string
+  category: string
+  location: string
+  budgetMin: number
+  budgetMax: number
+  budgetType: 'fixed' | 'hourly'
+  urgency: 'low' | 'medium' | 'high' | 'emergency'
+  skills: string
+  createdAt: string
+  updatedAt: string
+}
