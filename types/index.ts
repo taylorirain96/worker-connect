@@ -76,6 +76,53 @@ export interface UserProfile {
   }
 }
 
+// ─── Worker Trade Licences ────────────────────────────────────────────────────
+
+export type TradeLicenceType =
+  | 'lbp'
+  | 'electrical'
+  | 'plumbing'
+  | 'gasfitting'
+  | 'drainlaying'
+  | 'hvac'
+  | 'scaffolding'
+  | 'site_safe'
+  | 'first_aid'
+  | 'asbestos'
+  | 'forklift'
+  | 'other'
+
+export const TRADE_LICENCE_LABELS: Record<TradeLicenceType, string> = {
+  lbp: 'LBP — Licensed Building Practitioner',
+  electrical: 'Registered Electrician',
+  plumbing: 'Registered Plumber',
+  gasfitting: 'Gasfitter Licence',
+  drainlaying: 'Drainlayer Licence',
+  hvac: 'HVAC / Refrigeration Certificate',
+  scaffolding: 'Scaffolding Certificate',
+  site_safe: 'Site Safe Certificate',
+  first_aid: 'First Aid Certificate',
+  asbestos: 'Asbestos Removal Licence',
+  forklift: 'Forklift Licence',
+  other: 'Other Certification',
+}
+
+export interface WorkerTradeLicence {
+  id: string
+  uid: string
+  licenceType: TradeLicenceType
+  licenceNumber?: string
+  issuingBody?: string
+  issueDate?: string
+  expiryDate?: string
+  /** Firebase Storage download URL of the uploaded certificate document */
+  documentUrl?: string
+  /** Worker-provided notes */
+  notes?: string
+  createdAt: string
+  updatedAt: string
+}
+
 export interface DirectRequest {
   id: string
   homeownerId: string

@@ -12,7 +12,7 @@ import Link from 'next/link'
 import {
   Briefcase, DollarSign, Star, Clock, TrendingUp, BarChart2,
   CheckCircle, AlertCircle, Search, Settings, FileText, MessageSquare, Send, Sparkles, ShieldCheck,
-  Video, HardHat, Shield, Package,
+  Video, HardHat, Shield, Package, Award,
 } from 'lucide-react'
 import { formatCurrency, STATUS_LABELS, formatRelativeDate } from '@/lib/utils'
 import { collection, query, where, orderBy, getDocs, type DocumentData } from 'firebase/firestore'
@@ -809,6 +809,17 @@ export default function WorkerDashboardPage() {
                         </span>
                       </span>
                     )}
+                  </div>
+                  <span className="text-xs text-primary-600">→</span>
+                </div>
+              </Link>
+
+              {/* Trade Licences link */}
+              <Link href="/dashboard/worker/trade-licences">
+                <div className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
+                  <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <Award className="h-4 w-4 text-indigo-500" />
+                    Trade Licences
                   </div>
                   <span className="text-xs text-primary-600">→</span>
                 </div>
