@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -43,7 +43,7 @@ const URGENCY_OPTIONS = [
   { value: 'emergency', label: '🚨 Emergency', sub: 'ASAP',              ring: 'ring-red-500',    bg: 'bg-red-50 dark:bg-red-900/30',   text: 'text-red-700 dark:text-red-300' },
 ] as const
 
-export default function CreateJobPage() {
+function CreateJobPage() {
   const { user, profile } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -528,5 +528,13 @@ export default function CreateJobPage() {
       </main>
       <Footer />
     </div>
+  )
+}
+
+export default function CreateJobPageWrapper() {
+  return (
+    <Suspense>
+      <CreateJobPage />
+    </Suspense>
   )
 }
