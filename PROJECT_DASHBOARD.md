@@ -112,6 +112,7 @@
 | Admin analytics dashboard | ✅ Live | /dashboard/admin/analytics, recharts, 5-min cache |
 | Affiliate payout dashboard | ✅ Live | /dashboard/admin/affiliates, Stripe Transfer |
 | Worker trade licences & certifications | ✅ Live | /dashboard/worker/trade-licences, displayed on public worker profile |
+| Homeowner spending dashboard | ✅ Live | /dashboard/homeowner/spending — stats, monthly chart, category breakdown, transaction history |
 
 ---
 

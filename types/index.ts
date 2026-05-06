@@ -2284,3 +2284,38 @@ export interface JobTemplate {
   createdAt: string
   updatedAt: string
 }
+
+// ─── Homeowner Spending Dashboard ─────────────────────────────────────────────
+
+export interface SpendingTransaction {
+  id: string
+  jobId: string
+  jobTitle: string
+  category: string
+  workerName: string
+  amount: number
+  status: 'completed' | 'in_escrow' | 'refunded' | 'disputed'
+  paidAt: string
+  createdAt: string
+}
+
+export interface MonthlySpend {
+  month: string
+  amount: number
+}
+
+export interface CategorySpend {
+  category: string
+  amount: number
+  count: number
+}
+
+export interface SpendingSummary {
+  totalSpent: number
+  inEscrow: number
+  thisMonthSpent: number
+  completedJobCount: number
+  transactions: SpendingTransaction[]
+  monthlyBreakdown: MonthlySpend[]
+  categoryBreakdown: CategorySpend[]
+}

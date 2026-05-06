@@ -252,6 +252,13 @@ export default function HomeownerDashboardPage() {
                 ❤️ <span className="hidden sm:inline">Favourites</span>
               </Link>
               <Link
+                href="/dashboard/homeowner/spending"
+                className="py-2.5 px-3 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-xl hover:bg-white dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
+                aria-label="Spending overview"
+              >
+                💳 <span className="hidden sm:inline">Spending</span>
+              </Link>
+              <Link
                 href="/dashboard/homeowner/templates"
                 className="py-2.5 px-3 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-xl hover:bg-white dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
                 aria-label="My job templates"
