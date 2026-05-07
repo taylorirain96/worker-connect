@@ -227,7 +227,7 @@ export default function EditBusinessProfilePage() {
           setForm((prev) => ({ ...prev, ...json.profile }))
         }
       })
-      .catch(() => {/* keep default form on error */})
+      .catch(() => toast.error('Failed to load profile'))
   }, [user?.uid])
 
   function handleChange(field: keyof FormState, value: string | boolean) {

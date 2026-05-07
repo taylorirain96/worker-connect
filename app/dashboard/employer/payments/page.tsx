@@ -29,6 +29,7 @@ import {
   AlertCircle,
 } from 'lucide-react'
 import { POSTING_FEES, getPostingFee, type EscrowRecord, type PostingFeeSize } from '@/types'
+import toast from 'react-hot-toast'
 
 function formatNZD(amount: number): string {
   return new Intl.NumberFormat('en-NZ', {
@@ -83,7 +84,7 @@ export default function EmployerPaymentsPage() {
           escrows: (json.escrows ?? []) as Array<EscrowRecord & { jobTitle: string }>,
         })
       })
-      .catch(() => {/* keep empty state on error */})
+      .catch(() => toast.error('Failed to load payment data'))
       .finally(() => setLoading(false))
   }, [user?.uid])
 

@@ -727,7 +727,7 @@ export default function VerificationPage() {
         next.verifiedCount = computeVerifiedCount(next)
         setVerification(next)
       })
-      .catch(() => {/* keep empty state on error */})
+      .catch(() => toast.error('Failed to load verification status'))
   }, [userId])
 
   function update(patch: Partial<BusinessVerification>) {

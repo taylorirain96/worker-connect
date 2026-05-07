@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { calculateNetWithdrawal, MIN_WITHDRAWAL } from '@/lib/earnings/calculateEarnings'
 import { adminDb } from '@/lib/firebase-admin'
 import { FieldValue } from 'firebase-admin/firestore'
+import type { DocumentReference } from 'firebase-admin/firestore'
 import { rateLimit } from '@/lib/rateLimit'
 
 interface WithdrawRequestBody {
@@ -38,24 +39,49 @@ export async function POST(req: NextRequest) {
 
     const { fee, instantFee, netAmount } = calculateNetWithdrawal(amount, transferType)
 
-    // Verify user exists and check available balance
-    const userSnap = await adminDb.collection('users').doc(uid).get()
-    if (!userSnap.exists) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
-    }
+    // Use a Firestore transaction to atomically verify balance and deduct
+    let workerStripeAccountId: string | undefined
+    let withdrawalRef: DocumentReference
 
-    const userData = userSnap.data()!
-    const availableBalance: number =
-      typeof userData.availableBalance === 'number' ? userData.availableBalance : 0
-    const workerStripeAccountId: string | undefined =
-      userData.stripeAccountId as string | undefined
+    await adminDb.runTransaction(async (txn) => {
+      const userRef = adminDb.collection('users').doc(uid)
+      const userSnap = await txn.get(userRef)
 
-    if (availableBalance < amount) {
-      return NextResponse.json(
-        { error: `Insufficient balance. Available: $${availableBalance.toFixed(2)}` },
-        { status: 400 }
-      )
-    }
+      if (!userSnap.exists) {
+        throw new Error('USER_NOT_FOUND')
+      }
+
+      const userData = userSnap.data()!
+      const availableBalance: number =
+        typeof userData.availableBalance === 'number' ? userData.availableBalance : 0
+      workerStripeAccountId = userData.stripeAccountId as string | undefined
+
+      if (availableBalance < amount) {
+        throw new Error(`INSUFFICIENT_BALANCE:${availableBalance.toFixed(2)}`)
+      }
+
+      // Deduct balance inside the transaction
+      txn.update(userRef, {
+        availableBalance: FieldValue.increment(-amount),
+        updatedAt: new Date().toISOString(),
+      })
+
+      // Create the withdrawal record inside the transaction
+      withdrawalRef = adminDb.collection('withdrawals').doc()
+      txn.set(withdrawalRef, {
+        uid,
+        amount,
+        fee,
+        instantFee,
+        netAmount,
+        transferType,
+        bankAccountId,
+        status: 'pending',
+        stripePayoutId: null,
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      })
+    })
 
     let stripePayoutId: string | undefined
 
@@ -73,44 +99,41 @@ export async function POST(req: NextRequest) {
         { stripeAccount: workerStripeAccountId }
       )
       stripePayoutId = payout.id
+
+      // Update withdrawal record with Stripe payout ID
+      await withdrawalRef!.update({
+        stripePayoutId,
+        status: 'processing',
+        updatedAt: FieldValue.serverTimestamp(),
+      })
     }
 
-    // Record withdrawal in Firestore
-    const now = FieldValue.serverTimestamp()
-    const ref = await adminDb.collection('withdrawals').add({
-      uid,
-      amount,
-      fee,
-      instantFee,
-      netAmount,
-      transferType,
-      bankAccountId,
-      status: 'pending',
-      stripePayoutId: stripePayoutId ?? null,
-      createdAt: now,
-      updatedAt: now,
-    })
-
-    // Deduct from worker's available balance
-    await adminDb.collection('users').doc(uid).update({
-      availableBalance: FieldValue.increment(-amount),
-      updatedAt: new Date().toISOString(),
-    })
-
     const withdrawal = {
-      id: ref.id,
+      id: withdrawalRef!.id,
       amount,
       fee,
       instantFee,
       netAmount,
       transferType,
       bankAccountId,
-      status: 'pending',
+      status: stripePayoutId ? 'processing' : 'pending',
+      stripePayoutId: stripePayoutId ?? null,
       createdAt: new Date().toISOString(),
     }
 
     return NextResponse.json({ success: true, withdrawal }, { status: 201 })
   } catch (error) {
+    const msg = error instanceof Error ? error.message : ''
+    if (msg === 'USER_NOT_FOUND') {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+    if (msg.startsWith('INSUFFICIENT_BALANCE:')) {
+      const bal = msg.split(':')[1]
+      return NextResponse.json(
+        { error: `Insufficient balance. Available: $${bal}` },
+        { status: 400 }
+      )
+    }
     console.error('POST /api/earnings/withdraw error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }

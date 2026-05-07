@@ -294,7 +294,7 @@ export async function getWorkerAnalytics(workerId: string): Promise<WorkerAnalyt
 
     const completionRate =
       jobs.length > 0
-        ? Math.round((completedJobs.length / (jobs.length - pendingJobs.length || 1)) * 100)
+        ? Math.round((completedJobs.length / Math.max(jobs.length - pendingJobs.length, 1)) * 100)
         : 0
     const cancellationRate =
       jobs.length > 0 ? Math.round((cancelledJobs.length / jobs.length) * 100) : 0
