@@ -30,7 +30,9 @@ import {
   Award,
   CheckCircle,
 } from 'lucide-react'
-import { WORKER_TIERS, getWorkerTier, type EscrowRecord, type JobPaymentRecord } from '@/types'
+import { collection, query, where, orderBy, getDocs } from 'firebase/firestore'
+import { db } from '@/lib/firebase'
+import { WORKER_TIERS, getWorkerTier, type EscrowRecord } from '@/types'
 import FeeBreakdown from '@/components/payments/FeeBreakdown'
 
 function formatNZD(amount: number): string {
@@ -41,79 +43,6 @@ function formatNZD(amount: number): string {
     maximumFractionDigits: 2,
   }).format(amount)
 }
-
-// ─── Mock data (replace with real Firestore queries in production) ─────────────
-
-const MOCK_TRANSACTIONS: Array<
-  (EscrowRecord | JobPaymentRecord) & { jobTitle: string }
-> = [
-  {
-    id: 'escrow_1',
-    jobId: 'job_1',
-    jobTitle: 'Bathroom Renovation — Tile Work',
-    workerId: 'worker_1',
-    employerId: 'emp_1',
-    amount: 1850,
-    commission: 148,
-    commissionRate: 0.08,
-    workerReceives: 1702,
-    currency: 'nzd',
-    status: 'released',
-    workerTier: 'established',
-    createdAt: new Date(Date.now() - 10 * 86400000).toISOString(),
-    updatedAt: new Date(Date.now() - 3 * 86400000).toISOString(),
-    releasedAt: new Date(Date.now() - 3 * 86400000).toISOString(),
-  },
-  {
-    id: 'escrow_2',
-    jobId: 'job_2',
-    jobTitle: 'Kitchen Sink Replacement',
-    workerId: 'worker_1',
-    employerId: 'emp_2',
-    amount: 420,
-    commission: 33.60,
-    commissionRate: 0.08,
-    workerReceives: 386.40,
-    currency: 'nzd',
-    status: 'in_escrow',
-    workerTier: 'established',
-    createdAt: new Date(Date.now() - 2 * 86400000).toISOString(),
-    updatedAt: new Date(Date.now() - 2 * 86400000).toISOString(),
-  },
-  {
-    id: 'escrow_3',
-    jobId: 'job_3',
-    jobTitle: 'Electrical Panel Upgrade',
-    workerId: 'worker_1',
-    employerId: 'emp_3',
-    amount: 2800,
-    commission: 224,
-    commissionRate: 0.08,
-    workerReceives: 2576,
-    currency: 'nzd',
-    status: 'released',
-    workerTier: 'established',
-    createdAt: new Date(Date.now() - 30 * 86400000).toISOString(),
-    updatedAt: new Date(Date.now() - 22 * 86400000).toISOString(),
-    releasedAt: new Date(Date.now() - 22 * 86400000).toISOString(),
-  },
-  {
-    id: 'escrow_4',
-    jobId: 'job_4',
-    jobTitle: 'Fence Installation — 20m',
-    workerId: 'worker_1',
-    employerId: 'emp_4',
-    amount: 1100,
-    commission: 88,
-    commissionRate: 0.08,
-    workerReceives: 1012,
-    currency: 'nzd',
-    status: 'pending_deposit',
-    workerTier: 'established',
-    createdAt: new Date(Date.now() - 1 * 86400000).toISOString(),
-    updatedAt: new Date(Date.now() - 1 * 86400000).toISOString(),
-  },
-] as Array<EscrowRecord & { jobTitle: string }>
 
 const ESCROW_STATUS_CONFIG: Record<
   EscrowRecord['status'],
@@ -129,11 +58,11 @@ const ESCROW_STATUS_CONFIG: Record<
 }
 
 export default function WorkerEarningsPage() {
-  const { profile } = useAuth()
+  const { user, profile } = useAuth()
   const [transactions, setTransactions] = useState<Array<EscrowRecord & { jobTitle: string }>>([])
   const [loading, setLoading] = useState(true)
 
-  const completedJobs = profile?.completedJobs ?? 8 // fallback for demo
+  const completedJobs = profile?.completedJobs ?? 0
   const tierInfo = getWorkerTier(completedJobs)
   const nextTier = WORKER_TIERS.find((t) => t.minJobs > tierInfo.minJobs)
 
@@ -143,13 +72,25 @@ export default function WorkerEarningsPage() {
     : 100
 
   useEffect(() => {
-    // TODO: Replace with real Firestore query:
-    // collection('escrows').where('workerId', '==', user.uid).orderBy('createdAt', 'desc')
-    setTimeout(() => {
-      setTransactions(MOCK_TRANSACTIONS)
+    if (!user || !db) {
       setLoading(false)
-    }, 300)
-  }, [])
+      return
+    }
+    const q = query(
+      collection(db, 'escrows'),
+      where('workerId', '==', user.uid),
+      orderBy('createdAt', 'desc'),
+    )
+    getDocs(q)
+      .then((snap) => {
+        const rows = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<EscrowRecord, 'id'>) })) as Array<EscrowRecord & { jobTitle: string }>
+        setTransactions(rows)
+      })
+      .catch(() => {
+        // On error keep empty list — component already handles empty state
+      })
+      .finally(() => setLoading(false))
+  }, [user])
 
   const releasedTransactions = transactions.filter((t) => t.status === 'released')
   const pendingTransactions  = transactions.filter((t) => t.status === 'in_escrow' || t.status === 'pending_deposit')

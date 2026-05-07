@@ -369,21 +369,21 @@ OPENAI_API_KEY=
 ## 🗺️ Roadmap — Next Priorities
 
 ### 🔥 High Priority (Next Sprint)
-- [ ] Worker verification badge (trade licence / ID check) — display on profile + job listings
-- [ ] Push notifications (FCM) for job alerts
-- [ ] Job completion flow (employer marks done → releases escrow → triggers review prompt)
-- [ ] Stripe payout dashboard (worker sees pending/available balance breakdown)
-- [ ] Employer business profile (logo, NZBN, team members)
-- [ ] Mobile PWA manifest + service worker
+- [x] Worker verification badge (trade licence / ID check) — BadgeShowcase component + trade licences on /workers/[id]
+- [x] Push notifications (FCM) for job alerts — FCM wired across jobs, quotes, reviews, disputes, messages
+- [x] Job completion flow (employer marks done → releases escrow → triggers review prompt) — milestone approve + auto-release
+- [x] Stripe payout dashboard (worker sees pending/available balance breakdown) — /payouts page + real Stripe balance API; earnings page now uses real Firestore escrows
+- [x] Employer business profile (logo, NZBN, team members) — /dashboard/employer/business-profile
+- [x] Mobile PWA manifest + service worker — public/manifest.json, service-worker.js, sw.js
 
 ### 🟡 Medium Priority
-- [ ] Worker availability calendar
-- [ ] Job scheduling / booking system (date + time picker on job post)
-- [ ] SMS notifications (Twilio) for urgent job alerts
-- [ ] Public worker portfolio page (shareable /workers/[id] URL)
-- [ ] Affiliate payout system (pay referrers via Stripe)
-- [ ] Rich job post editor (categories, tags, budget range, urgency level)
-- [ ] A/B test homepage hero CTA
+- [x] Worker availability calendar — /dashboard/worker/availability
+- [x] Job scheduling / booking system (date + time picker on job post) — /bookings, service-package booking flow
+- [x] SMS notifications (Twilio) for urgent job alerts — lib/sms.ts, lib/notifications/sms.ts
+- [x] Public worker portfolio page (shareable /workers/[id] URL) — portfolio gallery on worker public profile
+- [x] Affiliate payout system (pay referrers via Stripe) — /api/affiliates/payout, /dashboard/admin/affiliates
+- [x] Rich job post editor (categories, tags, budget range, urgency level) — /jobs/create with urgency selector, tags, budgetMin/Max, AI assist
+- [x] A/B test homepage hero CTA — heroVariant A/B persisted in localStorage, GA event tracking
 
 ### 📋 Future / V2
 - [ ] Mobile app (React Native / Expo)
