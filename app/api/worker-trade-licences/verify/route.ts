@@ -68,7 +68,11 @@ export async function POST(request: NextRequest) {
     }
 
     if (verificationSource === 'manual') {
-      updatePayload.notes = (licence.notes ? licence.notes + ' ' : '') + '[Pending admin review — manual verification required]'
+      const manualNotice = '[Pending admin review — manual verification required]'
+      const currentNotes = licence.notes ?? ''
+      if (!currentNotes.includes(manualNotice)) {
+        updatePayload.notes = (currentNotes ? currentNotes + ' ' : '') + manualNotice
+      }
     }
 
     await licenceRef.update(updatePayload)

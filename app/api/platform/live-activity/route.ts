@@ -3,6 +3,14 @@ import { adminDb } from '@/lib/firebase-admin'
 
 export const dynamic = 'force-dynamic'
 
+type ActivityItem = {
+  type: 'job_posted' | 'booking_made' | 'review_left'
+  label: string
+  location?: string
+  timeAgo: string
+  _ts: number
+}
+
 function timeAgo(isoDate: string): string {
   const diffMs = Date.now() - new Date(isoDate).getTime()
   const diffMin = Math.floor(diffMs / 60_000)
@@ -29,7 +37,6 @@ export async function GET() {
       adminDb.collection('instantBookings').where('createdAt', '>=', since).orderBy('createdAt', 'desc').limit(2).get(),
     ])
 
-type ActivityItem = { type: 'job_posted' | 'booking_made' | 'review_left'; label: string; location?: string; timeAgo: string; _ts: number }
     const activities: ActivityItem[] = []
 
     for (const doc of jobsSnap.docs) {

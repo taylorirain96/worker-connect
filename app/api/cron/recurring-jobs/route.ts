@@ -33,15 +33,16 @@ export async function GET(request: Request) {
       const newRef = adminDb.collection('jobs').doc()
       const nowIso = new Date().toISOString()
 
+      // Destructure out the id so it's not written to the new document
+      const { id: _jobId, ...jobWithoutId } = job
       const cloned = {
-        ...job,
+        ...jobWithoutId,
         status: 'open',
         applicantsCount: 0,
         createdAt: nowIso,
         updatedAt: nowIso,
         parentJobId: job.id,
       }
-      delete cloned.id
 
       await newRef.set(cloned)
 

@@ -50,7 +50,7 @@ export default function PropertyManagerDashboard() {
   if (authLoading || !user) return null
 
   const totalActiveJobs = properties.reduce((sum, p) => sum + (p.activeJobCount ?? 0), 0)
-  const jobsThisMonth = properties.reduce((sum, p) => sum + (p.totalJobsPosted ?? 0), 0)
+  const totalJobsPosted = properties.reduce((sum, p) => sum + (p.totalJobsPosted ?? 0), 0)
 
   return (
     <div className="min-h-screen bg-gray-950 flex flex-col">
@@ -103,7 +103,7 @@ export default function PropertyManagerDashboard() {
             {[
               { label: 'Total Properties', value: properties.length, icon: Building2 },
               { label: 'Active Jobs', value: totalActiveJobs, icon: Briefcase },
-              { label: 'Total Jobs Posted', value: jobsThisMonth, icon: ExternalLink },
+              { label: 'Total Jobs Posted', value: totalJobsPosted, icon: ExternalLink },
             ].map(({ label, value, icon: Icon }) => (
               <div key={label} className="rounded-xl border border-slate-700/50 bg-slate-900/60 p-5 flex items-center gap-4">
                 <div className="h-10 w-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0">

@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { Star, MapPin, Briefcase } from 'lucide-react'
 
@@ -36,9 +37,11 @@ export default function WorkerOfMonth() {
       <div className="relative flex flex-col sm:flex-row items-start sm:items-center gap-5">
         <div className="relative shrink-0">
           {worker.photoURL ? (
-            <img
+            <Image
               src={worker.photoURL}
               alt={worker.displayName ?? 'Worker'}
+              width={64}
+              height={64}
               className="h-16 w-16 rounded-full object-cover border-2 border-indigo-500/50"
             />
           ) : (

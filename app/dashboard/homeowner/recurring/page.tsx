@@ -25,7 +25,7 @@ const INTERVAL_COLORS: Record<string, string> = {
 
 export default function RecurringJobsPage() {
   const router = useRouter()
-  const { user, profile, loading: authLoading } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const [jobs, setJobs] = useState<Job[]>([])
   const [fetching, setFetching] = useState(true)
   const [pausingId, setPausingId] = useState<string | null>(null)
@@ -37,7 +37,7 @@ export default function RecurringJobsPage() {
   }, [authLoading, user, router])
 
   const fetchJobs = useCallback(async () => {
-    if (!user) return
+    if (!user || !db) return
     setFetching(true)
     try {
       const q = query(

@@ -277,7 +277,8 @@ export default function HomeownerDashboardPage() {
                 className="py-2.5 px-3 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-xl hover:bg-white dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
                 aria-label="My recurring services"
               >
-                🔁 <span className="hidden sm:inline">Recurring Services</span>
+                🔁 <span role="img" aria-label="Recurring" className="sr-only">Recurring</span>
+                <span className="hidden sm:inline">Recurring Services</span>
               </Link>
               <Link
                 href="/post/homeowner"
