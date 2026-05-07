@@ -51,7 +51,7 @@ const stats = [
   { value: '17+', label: 'Services available at launch' },
   { value: '10', label: 'NZ regions covered' },
   { value: 'Blenheim', label: 'Founding hometown' },
-  { value: '1 day', label: 'Typical press response time' },
+  { value: 'Within 1', label: 'Business day response time' },
 ]
 
 const factSheet = [
