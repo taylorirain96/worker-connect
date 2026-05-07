@@ -130,6 +130,25 @@ export default function CreateJobPage() {
         status: 'open',
         ...(data.deadline ? { deadline: data.deadline } : {}),
       })
+
+      // Fire-and-forget SMS to matching workers for urgent jobs
+      if (data.urgency === 'high' || data.urgency === 'emergency') {
+        fetch('/api/jobs/urgent-notify', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-user-id': user.uid,
+          },
+          body: JSON.stringify({
+            jobId,
+            title: data.title,
+            location: data.location,
+            category: data.category,
+            urgency: data.urgency,
+            budget: data.budgetMax,
+          }),
+        }).catch(() => {}) // non-blocking — never delay navigation
+      }
       toast.success('Job posted successfully!')
       trackEvent('job_posted', { job_id: jobId, category: data.category, budget: data.budgetMax })
       router.push(`/jobs/${jobId}`)

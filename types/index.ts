@@ -2047,6 +2047,50 @@ export interface PromoCode {
   updatedAt?: string
 }
 
+// ─── Worker Trade Licence Types ──────────────────────────────────────────────
+
+export type TradeLicenceType =
+  | 'lbp'
+  | 'electrical'
+  | 'plumbing'
+  | 'gasfitting'
+  | 'drainlaying'
+  | 'hvac'
+  | 'scaffolding'
+  | 'site_safe'
+  | 'first_aid'
+  | 'asbestos'
+  | 'forklift'
+  | 'other'
+
+export const TRADE_LICENCE_LABELS: Record<TradeLicenceType, string> = {
+  lbp: 'Licensed Building Practitioner (LBP)',
+  electrical: 'Electrical Worker Licence',
+  plumbing: 'Plumbing Licence',
+  gasfitting: 'Gasfitting Licence',
+  drainlaying: 'Drainlaying Licence',
+  hvac: 'HVAC / Refrigeration Licence',
+  scaffolding: 'Scaffolding Certificate',
+  site_safe: 'Site Safe Certificate',
+  first_aid: 'First Aid Certificate',
+  asbestos: 'Asbestos Removal Licence',
+  forklift: 'Forklift Licence',
+  other: 'Other Certification',
+}
+
+export interface WorkerTradeLicence {
+  id: string
+  uid: string
+  licenceType: TradeLicenceType
+  licenceNumber?: string
+  issuer?: string
+  /** ISO date string e.g. '2027-06-30' */
+  expiryDate?: string
+  documentUrl?: string
+  createdAt: string
+  updatedAt?: string
+}
+
 // ─── Credit Transaction Types ─────────────────────────────────────────────────
 
 export type CreditTransactionType = 'referral_reward' | 'credit_applied' | 'manual_adjustment' | 'referral_signup'

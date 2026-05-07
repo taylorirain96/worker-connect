@@ -6,9 +6,10 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
-import { MapPin, Star, CheckCircle, Briefcase, DollarSign, ArrowLeft, MessageSquare, Calendar, Camera } from 'lucide-react'
+import { MapPin, Star, CheckCircle, Briefcase, DollarSign, ArrowLeft, MessageSquare, Calendar, Camera, Shield } from 'lucide-react'
 import { getInitials } from '@/lib/utils'
-import type { UserProfile, ReviewAggregates, PortfolioPhoto } from '@/types'
+import type { UserProfile, ReviewAggregates, PortfolioPhoto, WorkerTradeLicence } from '@/types'
+import { TRADE_LICENCE_LABELS } from '@/types'
 import Link from 'next/link'
 import { getUserProfile } from '@/lib/users/getProfile'
 import ReviewSummary from '@/components/reviews/ReviewSummary'
@@ -29,6 +30,7 @@ export default function WorkerProfilePage({ params }: { params: { id: string } }
   const [messaging, setMessaging] = useState(false)
   const [hasAvailability, setHasAvailability] = useState(false)
   const [portfolio, setPortfolio] = useState<PortfolioPhoto[]>([])
+  const [tradeLicences, setTradeLicences] = useState<WorkerTradeLicence[]>([])
 
   useEffect(() => {
     async function fetchWorker() {
@@ -57,6 +59,13 @@ export default function WorkerProfilePage({ params }: { params: { id: string } }
           .then((r) => r.json())
           .then((data: { photos?: PortfolioPhoto[] }) => {
             if (data.photos) setPortfolio(data.photos)
+          })
+          .catch(() => {})
+        // Fetch trade licences
+        fetch(`/api/worker-trade-licences?uid=${params.id}`)
+          .then((r) => r.json())
+          .then((data: { licences?: WorkerTradeLicence[] }) => {
+            if (data.licences) setTradeLicences(data.licences)
           })
           .catch(() => {})
       }
@@ -240,6 +249,39 @@ export default function WorkerProfilePage({ params }: { params: { id: string } }
                         {skill}
                       </span>
                     ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Trade Licences */}
+              {tradeLicences.length > 0 && (
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Shield className="h-5 w-5 text-green-600 dark:text-green-400" />
+                    <h2 className="font-semibold text-gray-900 dark:text-white">Trade Licences & Certifications</h2>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {tradeLicences.map((licence) => {
+                      const isExpired = licence.expiryDate
+                        ? new Date(licence.expiryDate) < new Date()
+                        : false
+                      return (
+                        <div
+                          key={licence.id}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border ${
+                            isExpired
+                              ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800'
+                              : 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800'
+                          }`}
+                        >
+                          <CheckCircle className="h-3.5 w-3.5 flex-shrink-0" />
+                          {TRADE_LICENCE_LABELS[licence.licenceType]}
+                          {licence.licenceNumber && (
+                            <span className="text-xs font-mono opacity-70">#{licence.licenceNumber}</span>
+                          )}
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
               )}
