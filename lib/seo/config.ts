@@ -1,4 +1,4 @@
-export const SITE_URL = 'https://quicktrade-pi.vercel.app'
+export const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://quicktrade-pi.vercel.app'
 export const SITE_NAME = 'QuickTrade'
 export const SITE_TWITTER = '@QuickTradeNZ'
 export const SITE_EMAIL = 'support@quicktrade.co.nz'
