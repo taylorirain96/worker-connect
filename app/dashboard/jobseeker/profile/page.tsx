@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { useAuth } from '@/components/providers/AuthProvider'
@@ -355,12 +356,12 @@ export default function JobseekerProfilePage() {
           <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Camera className="h-4 w-4 text-indigo-400" />Profile Photo</CardTitle></CardHeader>
           <CardContent className="pt-0">
             <div className="flex items-center gap-4">
-              <div className="w-20 h-20 rounded-full bg-gray-800 border-2 border-gray-700 flex items-center justify-center overflow-hidden flex-shrink-0">
-                {formData.photoURL
-                  ? <img src={formData.photoURL} alt="Profile" className="w-full h-full object-cover" />
-                  : <User className="h-8 w-8 text-gray-500" />
-                }
-              </div>
+                <div className="w-20 h-20 rounded-full bg-gray-800 border-2 border-gray-700 flex items-center justify-center overflow-hidden flex-shrink-0">
+                  {formData.photoURL
+                    ? <Image src={formData.photoURL} alt="Profile" width={80} height={80} className="w-full h-full object-cover" />
+                    : <User className="h-8 w-8 text-gray-500" />
+                  }
+                </div>
               <div className="flex-1">
                 <input
                   ref={photoInputRef}
@@ -682,7 +683,7 @@ export default function JobseekerProfilePage() {
             <div className="grid grid-cols-3 gap-2">
               {formData.portfolioPhotos.map((url, i) => (
                 <div key={i} className="relative aspect-square rounded-lg overflow-hidden bg-gray-800 group">
-                  <img src={url} alt={`Portfolio ${i + 1}`} className="w-full h-full object-cover" />
+                  <Image src={url} alt={`Portfolio ${i + 1}`} fill sizes="(max-width: 640px) 33vw, 160px" className="w-full h-full object-cover" />
                   <button
                     onClick={() => set('portfolioPhotos', formData.portfolioPhotos.filter((_, j) => j !== i))}
                     className="absolute top-1 right-1 p-1 bg-black/60 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"

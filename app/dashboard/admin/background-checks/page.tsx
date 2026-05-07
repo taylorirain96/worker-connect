@@ -25,10 +25,10 @@ function fmtDate(iso?: string | null) {
   return new Date(iso).toLocaleDateString('en-NZ', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
-const STATUS_BADGE: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
+const STATUS_BADGE: Record<BackgroundCheckRecord['status'], 'success' | 'warning' | 'danger'> = {
   approved: 'success',
   pending: 'warning',
-  rejected: 'error',
+  rejected: 'danger',
 }
 
 export default function AdminBackgroundChecksPage() {
