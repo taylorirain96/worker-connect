@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { slugify } from '@/lib/utils'
+import { useAuth } from '@/components/providers/AuthProvider'
 
 const INDUSTRIES = [
   'General Contractor / Builder',
@@ -209,11 +210,25 @@ function computeCompletion(form: FormState): { pct: number; missing: string[] } 
 }
 
 export default function EditBusinessProfilePage() {
+  const { user } = useAuth()
   const [form, setForm] = useState<FormState>(DEFAULT_FORM)
   const [saving, setSaving] = useState(false)
   const [newArea, setNewArea] = useState('')
 
   const { pct: completionPct, missing: completionMissing } = computeCompletion(form)
+
+  // Load saved profile on mount
+  useEffect(() => {
+    if (!user?.uid) return
+    fetch('/api/business/profile', { headers: { 'x-user-id': user.uid } })
+      .then((r) => r.json())
+      .then((json: { profile?: Partial<FormState> | null }) => {
+        if (json.profile) {
+          setForm((prev) => ({ ...prev, ...json.profile }))
+        }
+      })
+      .catch(() => toast.error('Failed to load profile'))
+  }, [user?.uid])
 
   function handleChange(field: keyof FormState, value: string | boolean) {
     setForm((prev) => ({ ...prev, [field]: value }))
@@ -240,11 +255,21 @@ export default function EditBusinessProfilePage() {
   }
 
   async function handleSave() {
+    if (!user?.uid) { toast.error('Not authenticated'); return }
     setSaving(true)
-    // TODO: save to Firestore businesses collection
-    await new Promise((r) => setTimeout(r, 800))
-    setSaving(false)
-    toast.success('Business profile saved!')
+    try {
+      const res = await fetch('/api/business/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-user-id': user.uid },
+        body: JSON.stringify(form),
+      })
+      if (!res.ok) throw new Error('Failed to save')
+      toast.success('Business profile saved!')
+    } catch {
+      toast.error('Failed to save profile')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (

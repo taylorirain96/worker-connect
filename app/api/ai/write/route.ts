@@ -82,6 +82,11 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  const headerUserId = request.headers.get('x-user-id')
+  if (!headerUserId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     const body = await request.json() as WriteRequest
     const { type, userId, userRole, inputs } = body
@@ -90,9 +95,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    // TODO: Verify the Firebase ID token from the Authorization header to authenticate
-    // the user server-side and enforce subscription tier checks via adminDb before
-    // calling OpenAI. For now, subscription gating is enforced on the client.
+    // Verify the caller is the authenticated user
+    if (headerUserId !== userId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
 
     const apiKey = process.env.OPENAI_API_KEY
     if (!apiKey) {

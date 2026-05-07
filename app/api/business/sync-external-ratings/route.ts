@@ -1,6 +1,14 @@
 import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+import { adminDb } from '@/lib/firebase-admin'
+import { FieldValue } from 'firebase-admin/firestore'
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const uid = request.headers.get('x-user-id')
+  if (!uid) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   const body = await request.json()
   const { bbbNumber, bbbLink, googleProfileLink } = body
 
@@ -12,7 +20,6 @@ export async function POST(request: Request) {
   }
 
   // TODO: call BBB API and Google Business Profile API for real rating data
-  // Mock synced ratings
   const result = {
     bbbNumber: bbbNumber ?? null,
     bbbLink: bbbLink ?? null,
@@ -23,6 +30,11 @@ export async function POST(request: Request) {
     googleReviewCount: googleProfileLink ? 134 : null,
     lastSyncedAt: new Date().toISOString(),
   }
+
+  await adminDb.collection('businessVerifications').doc(uid).set(
+    { externalRatings: result, updatedAt: FieldValue.serverTimestamp() },
+    { merge: true }
+  )
 
   return NextResponse.json(result)
 }
