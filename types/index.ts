@@ -16,6 +16,7 @@ export interface UserProfile {
   skills?: string[]
   hourlyRate?: number
   availability?: 'available' | 'busy' | 'unavailable'
+  availabilityUpdatedAt?: string
   rating?: number
   reviewCount?: number
   completedJobs?: number
@@ -73,6 +74,53 @@ export interface UserProfile {
     safetyPlanUploaded: boolean
     completedAt?: string
   }
+}
+
+// ─── Worker Trade Licences ────────────────────────────────────────────────────
+
+export type TradeLicenceType =
+  | 'lbp'
+  | 'electrical'
+  | 'plumbing'
+  | 'gasfitting'
+  | 'drainlaying'
+  | 'hvac'
+  | 'scaffolding'
+  | 'site_safe'
+  | 'first_aid'
+  | 'asbestos'
+  | 'forklift'
+  | 'other'
+
+export const TRADE_LICENCE_LABELS: Record<TradeLicenceType, string> = {
+  lbp: 'LBP — Licensed Building Practitioner',
+  electrical: 'Registered Electrician',
+  plumbing: 'Registered Plumber',
+  gasfitting: 'Gasfitter Licence',
+  drainlaying: 'Drainlayer Licence',
+  hvac: 'HVAC / Refrigeration Certificate',
+  scaffolding: 'Scaffolding Certificate',
+  site_safe: 'Site Safe Certificate',
+  first_aid: 'First Aid Certificate',
+  asbestos: 'Asbestos Removal Licence',
+  forklift: 'Forklift Licence',
+  other: 'Other Certification',
+}
+
+export interface WorkerTradeLicence {
+  id: string
+  uid: string
+  licenceType: TradeLicenceType
+  licenceNumber?: string
+  issuingBody?: string
+  issueDate?: string
+  expiryDate?: string
+  /** Firebase Storage download URL of the uploaded certificate document */
+  documentUrl?: string
+  /** Worker-provided notes */
+  notes?: string
+  createdAt: string
+  updatedAt: string
 }
 
 export interface DirectRequest {
@@ -2144,3 +2192,95 @@ export interface CreditTransaction {
   createdAt: string
 }
 
+// ─── Service Package Types ────────────────────────────────────────────────────
+
+/**
+ * A fixed-price service package created by a worker (e.g. "1BR clean – $80").
+ * Homeowners can browse and instantly book a package without quoting.
+ * Firestore: servicePackages/{packageId}
+ */
+export interface ServicePackage {
+  id: string
+  workerId: string
+  workerName: string
+  workerPhotoURL?: string | null
+  workerRating?: number
+  workerReviewCount?: number
+  workerCompletedJobs?: number
+  /** Short title shown on the card */
+  title: string
+  /** Longer description of what is included */
+  description: string
+  /** Fixed price in NZD */
+  price: number
+  /** Job category matching JOB_CATEGORIES ids */
+  category: string
+  /** NZ region where the service is available */
+  region: string
+  /** Bullet-point inclusions shown on the card (max 8) */
+  inclusions: string[]
+  /** Estimated hours to complete the job */
+  estimatedDurationHours: number
+  /** Whether the package is publicly visible */
+  active: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+/** Status of an instant-book service package order */
+export type ServicePackageBookingStatus =
+  | 'pending'
+  | 'confirmed'
+  | 'in_progress'
+  | 'completed'
+  | 'cancelled'
+
+/**
+ * A booking created when a homeowner clicks "Book Now" on a ServicePackage.
+ * Firestore: servicePackageBookings/{bookingId}
+ */
+export interface ServicePackageBooking {
+  id: string
+  packageId: string
+  packageTitle: string
+  workerId: string
+  workerName: string
+  workerEmail: string
+  homeownerId: string
+  homeownerName: string
+  homeownerEmail: string
+  price: number
+  category: string
+  region: string
+  /** Preferred date (ISO date string, e.g. '2026-07-01') */
+  preferredDate: string
+  /** Preferred time slot, e.g. '09:00' */
+  preferredTime: string
+  /** Homeowner's service address */
+  address: string
+  /** Optional extra notes from the homeowner */
+  notes?: string
+  status: ServicePackageBookingStatus
+  /** ID of the job document created from this booking */
+  jobId?: string
+  createdAt: string
+  updatedAt: string
+}
+
+
+export interface JobTemplate {
+  id: string
+  /** Human-friendly name for this template, e.g. "Monthly lawn mow" */
+  name: string
+  title: string
+  description: string
+  category: string
+  location: string
+  budgetMin: number
+  budgetMax: number
+  budgetType: 'fixed' | 'hourly'
+  urgency: 'low' | 'medium' | 'high' | 'emergency'
+  skills: string
+  createdAt: string
+  updatedAt: string
+}

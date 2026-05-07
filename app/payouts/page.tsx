@@ -331,7 +331,7 @@ export default function PayoutsPage() {
                   <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
                     Connect your bank account via Stripe to start receiving payouts for completed jobs.
                   </p>
-                  <Link href="/stripe">
+                  <Link href="/stripe/connect">
                     <Button className="gap-2 mt-2">
                       <Banknote className="h-4 w-4" />
                       Set Up Bank Account
@@ -539,7 +539,7 @@ export default function PayoutsPage() {
               <p className="font-semibold mb-0.5">Secure Payouts via Stripe Connect</p>
               <p>
                 All payouts are processed securely through Stripe.{' '}
-                <Link href="/stripe" className="underline">
+                <Link href="/stripe/connect" className="underline">
                   Manage bank account
                 </Link>{' '}
                 to update your payout destination.

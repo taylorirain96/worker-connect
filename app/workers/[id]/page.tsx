@@ -6,10 +6,11 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
-import { MapPin, Star, CheckCircle, Briefcase, DollarSign, ArrowLeft, MessageSquare, Calendar, Camera } from 'lucide-react'
+import { MapPin, Star, CheckCircle, Briefcase, DollarSign, ArrowLeft, MessageSquare, Calendar, Camera, Package, Award, Hash, Building2, CalendarDays } from 'lucide-react'
 import { getInitials } from '@/lib/utils'
 import { Video } from 'lucide-react'
-import type { UserProfile, ReviewAggregates, PortfolioPhoto } from '@/types'
+import type { UserProfile, ReviewAggregates, PortfolioPhoto, ServicePackage, WorkerTradeLicence } from '@/types'
+import { TRADE_LICENCE_LABELS } from '@/types'
 import Link from 'next/link'
 import { getUserProfile } from '@/lib/users/getProfile'
 import ReviewSummary from '@/components/reviews/ReviewSummary'
@@ -20,6 +21,7 @@ import toast from 'react-hot-toast'
 import FavouriteButton from '@/components/workers/FavouriteButton'
 import VideoProfilePlayer from '@/components/workers/VideoProfilePlayer'
 import PortfolioGallery from '@/components/portfolio/PortfolioGallery'
+import ServicePackageCard from '@/components/servicePackages/ServicePackageCard'
 
 export default function WorkerProfilePage({ params }: { params: { id: string } }) {
   const router = useRouter()
@@ -31,6 +33,8 @@ export default function WorkerProfilePage({ params }: { params: { id: string } }
   const [messaging, setMessaging] = useState(false)
   const [hasAvailability, setHasAvailability] = useState(false)
   const [portfolio, setPortfolio] = useState<PortfolioPhoto[]>([])
+  const [servicePackages, setServicePackages] = useState<ServicePackage[]>([])
+  const [tradeLicences, setTradeLicences] = useState<WorkerTradeLicence[]>([])
 
   useEffect(() => {
     async function fetchWorker() {
@@ -59,6 +63,20 @@ export default function WorkerProfilePage({ params }: { params: { id: string } }
           .then((r) => r.json())
           .then((data: { photos?: PortfolioPhoto[] }) => {
             if (data.photos) setPortfolio(data.photos)
+          })
+          .catch(() => {})
+        // Fetch service packages
+        fetch(`/api/service-packages?workerId=${params.id}`)
+          .then((r) => r.json())
+          .then((data: { packages?: ServicePackage[] }) => {
+            if (data.packages) setServicePackages(data.packages)
+          })
+          .catch(() => {})
+        // Fetch trade licences
+        fetch(`/api/worker-trade-licences?uid=${params.id}`)
+          .then((r) => r.json())
+          .then((data: { licences?: WorkerTradeLicence[] }) => {
+            if (data.licences) setTradeLicences(data.licences)
           })
           .catch(() => {})
       }
@@ -211,6 +229,12 @@ export default function WorkerProfilePage({ params }: { params: { id: string } }
                           {portfolio.length} project{portfolio.length !== 1 ? 's' : ''}
                         </Badge>
                       )}
+                      {servicePackages.length > 0 && (
+                        <Badge variant="default">
+                          <Package className="h-3 w-3" />
+                          {servicePackages.length} package{servicePackages.length !== 1 ? 's' : ''}
+                        </Badge>
+                      )}
                     </div>
                   </div>
                   {worker.hourlyRate != null && (
@@ -272,6 +296,86 @@ export default function WorkerProfilePage({ params }: { params: { id: string } }
                     limit={6}
                     viewAllHref={portfolio.length > 6 ? `/workers/${params.id}/portfolio` : undefined}
                   />
+                </div>
+              )}
+
+              {/* Service Packages */}
+              {servicePackages.length > 0 && (
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                  <h2 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <Package className="h-4 w-4 text-primary-500" />
+                    Service Packages
+                    <span className="ml-1 text-sm font-normal text-gray-400">
+                      {servicePackages.length} fixed-price package{servicePackages.length !== 1 ? 's' : ''}
+                    </span>
+                  </h2>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    {servicePackages.map((pkg) => (
+                      <ServicePackageCard key={pkg.id} pkg={pkg} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Trade Licences & Certifications */}
+              {tradeLicences.length > 0 && (
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                  <h2 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <Award className="h-4 w-4 text-indigo-500" />
+                    Trade Licences &amp; Certifications
+                    <span className="ml-1 text-sm font-normal text-gray-400">
+                      {tradeLicences.length} credential{tradeLicences.length !== 1 ? 's' : ''}
+                    </span>
+                  </h2>
+                  <div className="space-y-3">
+                    {tradeLicences.map((licence) => {
+                      const expired = licence.expiryDate ? new Date(licence.expiryDate) < new Date() : false
+                      return (
+                        <div key={licence.id} className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                          <div className="h-8 w-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center shrink-0">
+                            <Award className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="font-medium text-gray-900 dark:text-white text-sm">
+                                {TRADE_LICENCE_LABELS[licence.licenceType] ?? TRADE_LICENCE_LABELS.other}
+                              </p>
+                              {expired ? (
+                                <span className="text-xs px-1.5 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                                  Expired
+                                </span>
+                              ) : licence.expiryDate ? (
+                                <span className="text-xs px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                  Active
+                                </span>
+                              ) : null}
+                            </div>
+                            <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-gray-500 dark:text-gray-400">
+                              {licence.licenceNumber && (
+                                <span className="flex items-center gap-1">
+                                  <Hash className="h-3 w-3" />
+                                  {licence.licenceNumber}
+                                </span>
+                              )}
+                              {licence.issuingBody && (
+                                <span className="flex items-center gap-1">
+                                  <Building2 className="h-3 w-3" />
+                                  {licence.issuingBody}
+                                </span>
+                              )}
+                              {licence.expiryDate && (
+                                <span className={`flex items-center gap-1 ${expired ? 'text-red-500 dark:text-red-400' : ''}`}>
+                                  <CalendarDays className="h-3 w-3" />
+                                  {expired ? 'Expired' : 'Expires'}{' '}
+                                  {new Date(licence.expiryDate).toLocaleDateString('en-NZ', { month: 'short', year: 'numeric' })}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
               )}
 

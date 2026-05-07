@@ -102,6 +102,16 @@
 | Apprenticeship / training listings | ✅ Live | Dedicated category + pages + navbar link |
 | Job Milestone Billing & Progress Tracking | ✅ Live | Milestone escrow releases, worker progress log, approval flow |
 | SMS notifications (Twilio) | ✅ Live | Application accepted/rejected, payment released, booking confirmed/declined |
+| Worker portfolio with photo gallery | ✅ Live | /dashboard/worker/portfolio, gallery on public profile |
+| Booking & availability system | ✅ Live | /dashboard/worker/availability, /workers/[id]/book |
+| Service packages (fixed-price packages) | ✅ Live | /dashboard/worker/service-packages, /packages, on worker profile |
+| In-app messaging (Firestore) | ✅ Live | Real-time chat, typing indicators, image upload, unread badge |
+| FCM push notifications | ✅ Live | Background + foreground push, 7-day snooze prompt |
+| Promo codes & credit system | ✅ Live | /dashboard/admin/promos, /api/promos, /api/credits |
+| Favourite workers | ✅ Live | FavouriteButton, /dashboard/homeowner/favourites |
+| Admin analytics dashboard | ✅ Live | /dashboard/admin/analytics, recharts, 5-min cache |
+| Affiliate payout dashboard | ✅ Live | /dashboard/admin/affiliates, Stripe Transfer |
+| Worker trade licences & certifications | ✅ Live | /dashboard/worker/trade-licences, displayed on public worker profile |
 
 ---
 
@@ -383,22 +393,22 @@ OPENAI_API_KEY=
 
 ## 🗺️ Roadmap — Next Priorities
 
-### 🔥 High Priority (Next Sprint)
-- [ ] Worker verification badge (trade licence / ID check) — display on profile + job listings
-- [ ] Push notifications (FCM) for job alerts
-- [ ] Job completion flow (employer marks done → releases escrow → triggers review prompt)
-- [ ] Stripe payout dashboard (worker sees pending/available balance breakdown)
-- [ ] Employer business profile (logo, NZBN, team members)
-- [ ] Mobile PWA manifest + service worker
-
-### 🟡 Medium Priority
-- [ ] Worker availability calendar
-- [ ] Job scheduling / booking system (date + time picker on job post)
-- [x] SMS notifications (Twilio) for urgent job alerts
-- [ ] Public worker portfolio page (shareable /workers/[id] URL)
-- [ ] Affiliate payout system (pay referrers via Stripe)
-- [ ] Rich job post editor (categories, tags, budget range, urgency level)
-- [ ] A/B test homepage hero CTA
+### ✅ High Priority — All Shipped
+| Feature | Notes |
+|---------|-------|
+| Worker verification badge | ID verification at /dashboard/worker/verify, badge on profile + worker cards |
+| Push notifications (FCM) | FCM background + foreground push, permission prompt, service worker |
+| Job completion flow | Worker requests → homeowner confirms → escrow releases → review |
+| Stripe payout dashboard | /dashboard/worker/payout-setup |
+| Employer business profile | /dashboard/business/profile (NZBN, logo, team) |
+| Mobile PWA manifest + service worker | manifest.json + sw.js + firebase-messaging-sw.js |
+| Worker availability calendar | /dashboard/worker/availability |
+| Job booking system | /workers/[id]/book, /dashboard/worker/bookings |
+| Public worker portfolio | Portfolio section on worker profile, /dashboard/worker/portfolio |
+| Affiliate payout system | /api/affiliates + /dashboard/admin/affiliates |
+| Rich job post editor | Category, urgency, budget type, save-as-template |
+| Worker trade licences & certifications | /dashboard/worker/trade-licences, displayed on public profile |
+| SMS notifications (Twilio) | Application events, payment released, booking confirmed |
 
 ### 📋 Future / V2
 - [x] Australian expansion (AUD, ABN, AU GST 10%) ✅
@@ -407,6 +417,7 @@ OPENAI_API_KEY=
 - [x] Open API for partner integrations ✅
 - [x] WorkSafe NZ compliance module ✅
 - [x] Apprenticeship / training listings category ✅
+- [ ] A/B test homepage hero CTA
 - [ ] Mobile app (React Native / Expo)
 
 ---
