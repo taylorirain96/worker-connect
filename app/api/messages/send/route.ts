@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     const imageList = Array.isArray(imageUrls) ? imageUrls : []
 
     if (!authenticatedUserId) {
-      return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     if (authenticatedUserId !== senderId) {
