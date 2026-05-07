@@ -11,7 +11,6 @@ interface ErrorProps {
 
 export default function Error({ error, reset }: ErrorProps) {
   useEffect(() => {
-    // Log only the error message and digest to avoid leaking sensitive stack info in production
     if (process.env.NODE_ENV === 'development') {
       console.error('[App Error]', error)
     } else {
@@ -21,7 +20,6 @@ export default function Error({ error, reset }: ErrorProps) {
 
   return (
     <div className="relative flex flex-col min-h-screen luxury-bg items-center justify-center px-4 py-20 overflow-hidden">
-      {/* Glow backdrop */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
@@ -31,15 +29,12 @@ export default function Error({ error, reset }: ErrorProps) {
       />
 
       <div className="relative max-w-md w-full text-center">
-        {/* Icon */}
         <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-red-500/10 border border-red-500/20 mb-6 mx-auto">
           <AlertTriangle className="h-8 w-8 text-red-400" />
         </div>
 
-        {/* Heading */}
         <h1 className="text-2xl font-bold text-white mb-3">Something went wrong</h1>
 
-        {/* Sub-text */}
         <p className="text-gray-400 text-sm leading-relaxed mb-2">
           An unexpected error occurred. This has been logged and we&apos;ll look into it.
         </p>
@@ -50,7 +45,6 @@ export default function Error({ error, reset }: ErrorProps) {
           </p>
         )}
 
-        {/* Actions */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8">
           <button
             onClick={reset}

@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, type ComponentProps } from 'react'
+import { useEffect, useState } from 'react'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import { ShieldCheck, CheckCircle, XCircle, Clock, RefreshCw, User, Calendar } from 'lucide-react'
@@ -25,9 +25,7 @@ function fmtDate(iso?: string | null) {
   return new Date(iso).toLocaleDateString('en-NZ', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
-type BadgeVariant = NonNullable<ComponentProps<typeof Badge>['variant']>
-
-const STATUS_BADGE: Record<BackgroundCheckRecord['status'], BadgeVariant> = {
+const STATUS_BADGE: Record<string, 'success' | 'warning' | 'danger' | 'default'> = {
   approved: 'success',
   pending: 'warning',
   rejected: 'danger',
@@ -184,7 +182,7 @@ export default function AdminBackgroundChecksPage() {
                           <p className="text-xs text-slate-500">{record.uid}</p>
                         </td>
                         <td className="px-4 py-3">
-                          <Badge variant={STATUS_BADGE[record.status]}>
+                          <Badge variant={STATUS_BADGE[record.status] ?? 'default'}>
                             {record.status}
                           </Badge>
                         </td>

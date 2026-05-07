@@ -1,69 +1,18 @@
-import { NextResponse } from 'next/server'
-import Stripe from 'stripe'
-import { rateLimit } from '@/lib/rateLimit'
+/**
+ * @deprecated Use /api/payments/create-intent instead.
+ * This route forwards all requests to the canonical payment-intent endpoint.
+ */
+import { NextRequest, NextResponse } from 'next/server'
 
-/** Platform fee charged on every Connect payment (5 %). */
-const PLATFORM_FEE_RATE = 0.05
-
-export async function POST(request: Request) {
-  if (rateLimit(request, { max: 20, windowMs: 60_000 })) {
-    return NextResponse.json(
-      { error: 'Too many requests. Please wait a moment before trying again.' },
-      { status: 429 }
-    )
-  }
-
-  try {
-    const body = await request.json()
-    const { amount, currency, jobId, employerId, workerId, workerStripeAccountId } = body as {
-      amount: number
-      currency?: string
-      jobId: string
-      employerId: string
-      workerId: string
-      workerStripeAccountId?: string
-    }
-
-    if (!amount || !jobId || !employerId || !workerId) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
-    }
-
-    const stripeSecretKey = process.env.STRIPE_SECRET_KEY
-    if (!stripeSecretKey) {
-      return NextResponse.json({ error: 'Stripe not configured' }, { status: 500 })
-    }
-
-    const stripe = new Stripe(stripeSecretKey)
-
-    const amountCents = Math.round(amount * 100)
-    const resolvedCurrency = currency || 'usd'
-
-    // Platform fee: PLATFORM_FEE_RATE of the job amount
-    const platformFeeCents = Math.round(amountCents * PLATFORM_FEE_RATE)
-
-    const paymentIntentParams: Stripe.PaymentIntentCreateParams = {
-      amount: amountCents,
-      currency: resolvedCurrency,
-      automatic_payment_methods: { enabled: true },
-      metadata: { jobId, employerId, workerId },
-    }
-
-    // If the worker has a Stripe Connect account, route payment via Connect
-    if (workerStripeAccountId) {
-      paymentIntentParams.transfer_data = { destination: workerStripeAccountId }
-      paymentIntentParams.application_fee_amount = platformFeeCents
-    }
-
-    const paymentIntent = await stripe.paymentIntents.create(paymentIntentParams)
-
-    return NextResponse.json({
-      clientSecret: paymentIntent.client_secret,
-      paymentIntentId: paymentIntent.id,
-      amount: paymentIntent.amount,
-      currency: paymentIntent.currency,
-    })
-  } catch (error) {
-    console.error('Create payment intent error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
+export async function POST(request: NextRequest) {
+  console.warn('[deprecated] /api/payments/create-payment-intent — use /api/payments/create-intent')
+  const body = await request.json()
+  const url = new URL('/api/payments/create-intent', request.url)
+  const res = await fetch(url.toString(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  const data: unknown = await res.json()
+  return NextResponse.json(data, { status: res.status })
 }

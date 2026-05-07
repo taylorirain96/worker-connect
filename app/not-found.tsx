@@ -7,6 +7,7 @@ import { Home, Search, Briefcase } from 'lucide-react'
 export const metadata: Metadata = {
   title: 'Page Not Found | QuickTrade NZ',
   description: 'The page you were looking for could not be found. Browse jobs, find workers, or return to the QuickTrade homepage.',
+  robots: { index: false },
 }
 
 export default function NotFound() {
@@ -15,7 +16,6 @@ export default function NotFound() {
       <Navbar />
 
       <main className="relative flex-1 flex items-center justify-center px-4 py-20 overflow-hidden">
-        {/* Glow backdrop */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
@@ -24,24 +24,19 @@ export default function NotFound() {
           }}
         />
         <div className="relative max-w-lg w-full text-center">
-
-          {/* 404 number */}
           <p className="text-8xl font-extrabold tracking-tight bg-gradient-to-br from-indigo-400 via-violet-400 to-purple-500 bg-clip-text text-transparent select-none">
             404
           </p>
 
-          {/* Heading */}
           <h1 className="mt-4 text-2xl font-bold text-white">
             Page not found
           </h1>
 
-          {/* Sub-text */}
           <p className="mt-3 text-gray-400 text-sm leading-relaxed max-w-sm mx-auto">
             The page you&apos;re looking for doesn&apos;t exist or may have been moved. Here are
             some helpful links to get you back on track.
           </p>
 
-          {/* Quick links */}
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               href="/"
@@ -68,7 +63,6 @@ export default function NotFound() {
             </Link>
           </div>
 
-          {/* Contact link */}
           <p className="mt-8 text-xs text-gray-500">
             Need help?{' '}
             <Link href="/contact" className="text-indigo-400 hover:text-indigo-300 transition-colors">

@@ -2,9 +2,8 @@
 import { Search, X, Trophy } from 'lucide-react'
 import { JOB_CATEGORIES, CATEGORY_ICONS } from '@/lib/utils'
 import type { CategoryId } from '@/lib/utils'
-import type { JobCategory } from '@/types'
 
-export type LeaderboardCategory = JobCategory | 'all'
+export type LeaderboardCategory = CategoryId | 'all'
 
 interface LeaderboardFiltersProps {
   searchQuery: string

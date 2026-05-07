@@ -5,20 +5,23 @@ import Footer from '@/components/layout/Footer'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import JobRecommendationsList from '@/components/recommendations/JobRecommendationsList'
 import EmptyRecommendationsState from '@/components/recommendations/EmptyRecommendationsState'
+import { useAuth } from '@/components/providers/AuthProvider'
 import type { JobRecommendation, RecommendationFeedback } from '@/types'
 
 export default function RecommendationsPage() {
   const [recommendations, setRecommendations] = useState<JobRecommendation[]>([])
   const [loading, setLoading] = useState(true)
 
-  const workerId = 'demo'
+  const { user } = useAuth()
+  const workerId = user?.uid ?? ''
 
   useEffect(() => {
+    if (!workerId) return
     fetch(`/api/recommendations/personalized?workerId=${workerId}`)
       .then((r) => r.json())
       .then((data) => setRecommendations(data))
       .finally(() => setLoading(false))
-  }, [])
+  }, [workerId])
 
   const handleFeedback = async (feedback: RecommendationFeedback) => {
     await fetch('/api/recommendations/feedback', {

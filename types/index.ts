@@ -46,9 +46,6 @@ export interface UserProfile {
   videoUrl?: string
   /** ABN for Australian employers (11 digits) */
   abn?: string
-  /** NZ Police vetting / background check status */
-  backgroundCheckStatus?: 'notStarted' | 'pending' | 'approved' | 'rejected'
-  backgroundCheckApprovedAt?: string
   /** Referral code unique to this user, stored in Firestore */
   referralCode?: string
   /** UID of the user who referred this user */
@@ -69,6 +66,10 @@ export interface UserProfile {
   abnNumber?: string
   /** URL of the worker's video profile stored in Firebase Storage */
   videoProfileUrl?: string
+  /** NZ Police vetting / background check status */
+  backgroundCheckStatus?: 'notStarted' | 'pending' | 'approved' | 'rejected'
+  /** ISO date string when the background check was approved */
+  backgroundCheckApprovedAt?: string
   /** ISO date string when the background check certificate expires */
   backgroundCheckExpiry?: string
   /** WorkSafe NZ compliance checklist */

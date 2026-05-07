@@ -2,24 +2,21 @@
  * POST /api/notifications/sms
  *
  * Server-side SMS dispatch endpoint.
- * Called by lib/notifications/sms.ts (client helper) and directly from
- * server-only API routes that need to send Twilio SMS messages.
- *
- * Body: { to: string, type: string, message: string, userId: string }
- *
- * Silently skips (returns success) when Twilio env vars are absent so the
- * app works without SMS configured.
+ * Supports callers that provide a direct `to` number or only a `userId`
+ * (the user's phone number is resolved from Firestore).
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { sendSMS } from '@/lib/sms'
 import { rateLimit } from '@/lib/rateLimit'
+import { adminDb } from '@/lib/firebase-admin'
 
 export const dynamic = 'force-dynamic'
 
 interface SMSBody {
-  to: string
-  type: string
+  to?: string
+  type?: string
   message: string
+  userId?: string
 }
 
 export async function POST(request: NextRequest) {
@@ -31,17 +28,13 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const userId = request.headers.get('x-user-id')
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
     const body = (await request.json()) as SMSBody
-    const { to, type, message } = body
+    const { to, message } = body
+    const userId = request.headers.get('x-user-id') ?? body.userId
 
-    if (!to || !type || !message) {
+    if (!message || (!to && !userId)) {
       return NextResponse.json(
-        { error: 'Missing required fields: to, type, message' },
+        { error: 'Missing required fields: message and either to or userId' },
         { status: 400 },
       )
     }
@@ -53,8 +46,25 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const sent = await sendSMS({ to, body: message })
+    let recipient = to
 
+    if (!recipient && userId) {
+      const userSnap = await adminDb.collection('users').doc(userId).get()
+      recipient = (userSnap.data()?.phone as string | undefined) ?? undefined
+    }
+
+    if (!recipient) {
+      return NextResponse.json({ success: true, delivered: false, skipped: true }, { status: 200 })
+    }
+
+    if (!/^\+[1-9]\d{1,14}$/.test(recipient)) {
+      return NextResponse.json(
+        { error: 'Invalid phone number format. Use E.164 (e.g. +6421234567)' },
+        { status: 400 },
+      )
+    }
+
+    const sent = await sendSMS({ to: recipient, body: message })
     return NextResponse.json({ success: true, delivered: sent })
   } catch (err) {
     console.error('[POST /api/notifications/sms] error:', err)

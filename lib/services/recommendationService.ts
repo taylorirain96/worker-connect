@@ -1,4 +1,5 @@
 import type { JobRecommendation, RecommendationFeedback } from '@/types'
+import { adminDb } from '@/lib/firebase-admin'
 
 const MOCK_RECOMMENDATIONS: JobRecommendation[] = [
   {
@@ -49,9 +50,11 @@ export async function getJobRecommendations(_workerId: string): Promise<JobRecom
   return MOCK_RECOMMENDATIONS
 }
 
-export async function storeFeedback(_feedback: RecommendationFeedback): Promise<void> {
-  await new Promise((r) => setTimeout(r, 100))
-  // TODO: persist to Firestore
+export async function storeFeedback(feedback: RecommendationFeedback): Promise<void> {
+  await adminDb.collection('recommendationFeedback').add({
+    ...feedback,
+    createdAt: new Date().toISOString(),
+  })
 }
 
 export async function getPersonalizedRecommendations(workerId: string): Promise<JobRecommendation[]> {

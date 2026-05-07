@@ -7,6 +7,7 @@ import StrengthsHighlight from '@/components/insights/StrengthsHighlight'
 import ImprovementSuggestions from '@/components/insights/ImprovementSuggestions'
 import PeerComparisonTable from '@/components/insights/PeerComparisonTable'
 import SuccessPatternAnalysis from '@/components/insights/SuccessPatternAnalysis'
+import { useAuth } from '@/components/providers/AuthProvider'
 import type { PerformanceMetrics, PeerComparison } from '@/types'
 
 interface Strength { skill: string; score: number; description: string }
@@ -19,9 +20,11 @@ export default function InsightsPage() {
   const [peerData, setPeerData] = useState<PeerComparison[]>([])
   const [loading, setLoading] = useState(true)
 
-  const workerId = 'demo'
+  const { user } = useAuth()
+  const workerId = user?.uid ?? ''
 
   useEffect(() => {
+    if (!workerId) return
     const fetchAll = async () => {
       setLoading(true)
       try {
@@ -40,7 +43,7 @@ export default function InsightsPage() {
       }
     }
     fetchAll()
-  }, [])
+  }, [workerId])
 
   if (loading) {
     return (

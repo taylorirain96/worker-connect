@@ -22,14 +22,22 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ valid: false, error: 'Invalid referral code' }, { status: 404 })
     }
 
-    const referrerData = snap.docs[0].data()
+    const doc = snap.docs[0]
+    const data = doc.data() as { displayName?: string; referralCode?: string }
+
+    if (!data.referralCode) {
+      return NextResponse.json({ valid: false, error: 'Referral code missing on referrer record' }, { status: 500 })
+    }
+
     return NextResponse.json({
       valid: true,
-      code,
-      referrerName: referrerData.displayName ?? null,
+      code: data.referralCode,
+      ownerId: doc.id,
+      referrerName: data.displayName ?? null,
+      usesRemaining: null,
     })
   } catch (err) {
     console.error('Failed to validate referral code:', err)
-    return NextResponse.json({ valid: false, error: 'Validation failed' }, { status: 500 })
+    return NextResponse.json({ valid: false, error: 'Internal server error' }, { status: 500 })
   }
 }
