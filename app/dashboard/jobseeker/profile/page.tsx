@@ -358,7 +358,7 @@ export default function JobseekerProfilePage() {
             <div className="flex items-center gap-4">
                 <div className="w-20 h-20 rounded-full bg-gray-800 border-2 border-gray-700 flex items-center justify-center overflow-hidden flex-shrink-0">
                   {formData.photoURL
-                    ? <Image src={formData.photoURL} alt="Profile" width={80} height={80} className="w-full h-full object-cover" />
+                    ? <Image src={formData.photoURL} alt="Profile" width={80} height={80} className="object-cover" />
                     : <User className="h-8 w-8 text-gray-500" />
                   }
                 </div>
@@ -683,7 +683,7 @@ export default function JobseekerProfilePage() {
             <div className="grid grid-cols-3 gap-2">
               {formData.portfolioPhotos.map((url, i) => (
                 <div key={i} className="relative aspect-square rounded-lg overflow-hidden bg-gray-800 group">
-                  <Image src={url} alt={`Portfolio ${i + 1}`} fill sizes="(max-width: 640px) 33vw, 160px" className="w-full h-full object-cover" />
+                  <Image src={url} alt={`Portfolio ${i + 1}`} fill sizes="(max-width: 640px) 33vw, 160px" className="object-cover" />
                   <button
                     onClick={() => set('portfolioPhotos', formData.portfolioPhotos.filter((_, j) => j !== i))}
                     className="absolute top-1 right-1 p-1 bg-black/60 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
