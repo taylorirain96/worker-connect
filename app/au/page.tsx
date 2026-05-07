@@ -178,7 +178,7 @@ export default function AustraliaPage() {
         </p>
         <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
           <Link
-            href="/auth/sign-up?country=AU"
+            href="/auth/register?country=AU"
             className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-8 py-4 font-semibold text-white shadow-lg shadow-indigo-500/25 transition hover:opacity-90"
           >
             <Briefcase className="h-4 w-4" />

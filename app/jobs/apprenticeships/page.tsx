@@ -201,7 +201,7 @@ export default function ApprenticeshipsPage() {
             Find an Apprenticeship <ArrowRight className="h-4 w-4" />
           </Link>
           <Link
-            href="/auth/sign-up"
+            href="/auth/register"
             className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-8 py-4 font-semibold text-white transition hover:bg-white/10"
           >
             Create a Free Account
