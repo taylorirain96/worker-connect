@@ -79,7 +79,7 @@ function randomId(): string {
 }
 
 export default function JobseekerProfilePage() {
-  const { user, profile, loading } = useAuth()
+  const { user, loading } = useAuth()
   const router = useRouter()
   const [saving, setSaving] = useState(false)
   const [uploadingCv, setUploadingCv] = useState(false)

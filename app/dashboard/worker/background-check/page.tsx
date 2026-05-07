@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { Shield, ShieldCheck, Clock, XCircle, ExternalLink, ChevronRight } from 'lucide-react'
+import { Shield, ShieldCheck, Clock, XCircle, ExternalLink } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import Link from 'next/link'
 
@@ -17,7 +17,7 @@ const STEPS = [
 type CheckStatus = 'notStarted' | 'pending' | 'approved' | 'rejected'
 
 export default function BackgroundCheckPage() {
-  const { user, profile, loading } = useAuth()
+  const { user, loading } = useAuth()
   const router = useRouter()
   const [status, setStatus] = useState<CheckStatus>('notStarted')
   const [expiry, setExpiry] = useState<string | null>(null)

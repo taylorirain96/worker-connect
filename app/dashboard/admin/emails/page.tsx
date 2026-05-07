@@ -1,7 +1,6 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
 import { Mail, RefreshCw, Send, CheckCircle, XCircle } from 'lucide-react'
-import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import toast from 'react-hot-toast'

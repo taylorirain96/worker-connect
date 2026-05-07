@@ -48,7 +48,7 @@ export default function TradeLicencesPage() {
   const [expiryDate, setExpiryDate] = useState('')
   const [notes, setNotes] = useState('')
   const [docFile, setDocFile] = useState<File | null>(null)
-  const [docPreview, setDocPreview] = useState<string | null>(null)
+  const [, setDocPreview] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [submitting, setSubmitting] = useState(false)

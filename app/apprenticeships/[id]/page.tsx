@@ -63,13 +63,18 @@ export default function ApprenticeshipDetailPage() {
     try {
       const appId = await applyToJob(
         job.id,
-        job.title,
-        job.employerId,
-        user.uid,
-        profile?.displayName ?? user.displayName ?? 'Applicant',
-        profile?.photoURL ?? user.photoURL ?? undefined,
+        {
+          title: job.title,
+          employerId: job.employerId,
+          employerName: job.employerName,
+        },
+        {
+          uid: user.uid,
+          displayName: profile?.displayName ?? user.displayName ?? 'Applicant',
+          photoURL: profile?.photoURL ?? user.photoURL ?? undefined,
+          rating: profile?.rating,
+        },
         'I am interested in this apprenticeship opportunity.',
-        0,
       )
       setApplicationId(appId)
       toast.success('Application submitted!')

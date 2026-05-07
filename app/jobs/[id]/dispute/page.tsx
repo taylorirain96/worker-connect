@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
@@ -31,7 +31,6 @@ type DesiredOutcome = (typeof DESIRED_OUTCOMES)[number]['value']
 
 export default function RaiseDisputePage() {
   const params = useParams()
-  const router = useRouter()
   const { user, profile } = useAuth()
   const jobId = params.id as string
 

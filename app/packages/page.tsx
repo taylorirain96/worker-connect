@@ -84,7 +84,7 @@ function PackagesBrowsePage() {
               Fixed-Price Service Packages
             </h1>
             <p className="text-primary-200 text-base sm:text-lg max-w-xl mx-auto">
-              Know exactly what you're paying. Browse packages from verified workers and book instantly — no quoting required.
+              Know exactly what you&apos;re paying. Browse packages from verified workers and book instantly — no quoting required.
             </p>
           </div>
         </div>

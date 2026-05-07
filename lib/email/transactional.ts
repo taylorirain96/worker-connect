@@ -22,6 +22,7 @@
  *   sendServicePackageBookedHomeownerEmail — sent to homeowner confirming their instant package booking
  */
 import { Resend } from 'resend'
+import { absoluteUrl } from '@/lib/seo/config'
 
 const FROM = process.env.RESEND_FROM_EMAIL ?? 'QuickTrade <hello@quicktrade.co.nz>'
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://quicktrade.co.nz'
@@ -100,7 +101,7 @@ export async function sendJobAcceptedEmail(opts: {
   jobId: string
 }): Promise<void> {
   const { workerEmail, workerName, jobTitle, amount, jobId } = opts
-  const jobUrl = `${APP_URL}/jobs/${jobId}`
+  const jobUrl = absoluteUrl(`/jobs/${jobId}`)
 
   const html = emailWrapper(`
     <h1 style="font-size:24px;font-weight:700;color:#fff;margin:0 0 8px;">Your quote's been accepted! 🎉</h1>
@@ -139,12 +140,14 @@ export async function sendPaymentReleasedEmail(opts: {
 }): Promise<void> {
   const { workerEmail, workerName, jobTitle, grossAmount, commissionAmount, workerAmount, jobId } = opts
   const earningsUrl = `${APP_URL}/dashboard/worker`
+  const jobUrl = absoluteUrl(`/jobs/${jobId}`)
 
   const html = emailWrapper(`
     <h1 style="font-size:24px;font-weight:700;color:#fff;margin:0 0 8px;">Payment on its way! 💸</h1>
     <p style="color:#94a3b8;line-height:1.6;margin:0 0 20px;">Ka pai, ${workerName}! The payment for your completed job has been released from escrow. Here's your breakdown:</p>
     ${infoTable(`
       ${infoRow('Job', jobTitle)}
+      ${infoRow('Job link', `<a href="${jobUrl}" style="color:#6366f1;">View job details</a>`)}
       ${infoRow('Job total', formatNzd(grossAmount))}
       ${infoRow('QuickTrade fee', `−${formatNzd(commissionAmount)}`)}
       ${infoRow('Your payout', formatNzd(workerAmount))}
@@ -454,6 +457,7 @@ export async function sendBookingRequestEmail(opts: {
       ${infoRow('Time', requestedTime)}
       ${infoRow('Duration', `${duration} hour${duration !== 1 ? 's' : ''}`)}
       ${infoRow('Address', address)}
+      ${infoRow('Booking reference', bookingId)}
     `)}
     <div style="background:#1e293b;border-left:4px solid #4f46e5;border-radius:8px;padding:16px 20px;margin:20px 0;">
       <p style="color:#94a3b8;font-size:12px;margin:0 0 6px;text-transform:uppercase;letter-spacing:0.05em;">Job Description</p>
@@ -499,6 +503,7 @@ export async function sendBookingConfirmedEmail(opts: {
       ${infoRow('Date', requestedDate)}
       ${infoRow('Time', requestedTime)}
       ${infoRow('Duration', `${duration} hour${duration !== 1 ? 's' : ''}`)}
+      ${infoRow('Booking reference', bookingId)}
     `)}
     ${workerMessage ? `
     <div style="background:#1e293b;border-left:4px solid #22c55e;border-radius:8px;padding:16px 20px;margin:20px 0;">
@@ -545,6 +550,7 @@ export async function sendBookingDeclinedEmail(opts: {
       <p style="color:#e2e8f0;font-size:15px;line-height:1.6;margin:0;font-style:italic;">"${workerMessage}"</p>
     </div>
     ` : ''}
+    <p style="color:#94a3b8;font-size:13px;margin:0 0 20px;">Booking reference: ${bookingId}</p>
     ${ctaButton(workersUrl, 'Find Another Worker →')}
     <p style="color:#64748b;font-size:13px;text-align:center;margin:0;">Plenty more great tradies are available — find one that works for you.</p>
   `)
@@ -574,12 +580,14 @@ export async function sendJobCompletedWorkerEmail(opts: {
 }): Promise<void> {
   const { workerEmail, workerName, homeownerName, jobTitle, jobId, paymentAmount } = opts
   const earningsUrl = `${APP_URL}/dashboard/worker`
+  const jobUrl = `${APP_URL}/jobs/${jobId}`
 
   const html = emailWrapper(`
     <h1 style="font-size:24px;font-weight:700;color:#fff;margin:0 0 8px;">Great news — payment released! 🎉</h1>
     <p style="color:#94a3b8;line-height:1.6;margin:0 0 20px;">Ka pai, ${workerName}! <strong style="color:#e2e8f0;">${homeownerName}</strong> has marked your job as complete and your payment has been released.</p>
     ${infoTable(`
       ${infoRow('Job', jobTitle)}
+      ${infoRow('Job link', `<a href="${jobUrl}" style="color:#6366f1;">View job details</a>`)}
       ${infoRow('Payment released', formatNzd(paymentAmount))}
     `)}
     ${ctaButton(earningsUrl, 'View Your Earnings →')}
