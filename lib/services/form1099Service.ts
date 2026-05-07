@@ -145,8 +145,9 @@ export async function archiveForm(form1099Id: string): Promise<void> {
 }
 
 /**
- * Send 1099 to worker via email.
- * In production: integrate SendGrid / Resend and attach a PDF.
+ * Send 1099 to worker via email using Resend.
+ * Requires RESEND_API_KEY environment variable.
+ * Falls back to logging when not configured.
  */
 export async function send1099ToWorker(form1099Id: string): Promise<void> {
   if (!db) throw new Error('Firestore not available')
@@ -154,17 +155,58 @@ export async function send1099ToWorker(form1099Id: string): Promise<void> {
   if (!snap.exists()) throw new Error(`1099 form ${form1099Id} not found`)
   const form = docToForm(snap.id, snap.data())
 
-  // TODO: Integrate email provider (SendGrid / Resend) here.
-  // Example with SendGrid:
-  // await sgMail.send({
-  //   to: form.workerEmail,
-  //   from: 'noreply@quicktrade.com',
-  //   subject: `Your ${form.year} 1099-NEC Tax Form (${BUSINESS_NAME})`,
-  //   text: buildEmailBody(form),
-  //   attachments: [{ content: pdfBase64, filename: `1099-NEC-${form.year}.pdf`, type: 'application/pdf' }],
-  // })
+  const resendApiKey = process.env.RESEND_API_KEY
+  const fromAddress = process.env.TAX_EMAIL_FROM ?? `noreply@${BUSINESS_NAME.toLowerCase().replace(/\s+/g, '')}.co.nz`
 
-  console.info(`[form1099Service] Would send 1099 to ${form.workerEmail} for year ${form.year}`)
+  const subject = `Your ${form.year} 1099-NEC Tax Form — ${BUSINESS_NAME}`
+  const text = [
+    `Hi ${form.workerName},`,
+    '',
+    `Please find your ${form.year} Form 1099-NEC from ${BUSINESS_NAME} attached.`,
+    '',
+    `Nonemployee Compensation (Box 1): $${form.nonemployeeCompensation.toFixed(2)}`,
+    `Payer EIN: ${BUSINESS_EIN || 'On file with ' + BUSINESS_NAME}`,
+    '',
+    'Please consult a tax professional if you have questions about filing.',
+    '',
+    `— ${BUSINESS_NAME} Team`,
+  ].join('\n')
+
+  const html = `
+    <p>Hi ${form.workerName},</p>
+    <p>Please find your ${form.year} Form 1099-NEC from <strong>${BUSINESS_NAME}</strong> attached.</p>
+    <table style="border-collapse:collapse;margin:16px 0">
+      <tr><td style="padding:4px 12px 4px 0;font-weight:600">Nonemployee Compensation (Box 1)</td><td>$${form.nonemployeeCompensation.toFixed(2)}</td></tr>
+      <tr><td style="padding:4px 12px 4px 0;font-weight:600">Payer EIN</td><td>${BUSINESS_EIN || 'On file with ' + BUSINESS_NAME}</td></tr>
+    </table>
+    <p>Please consult a tax professional if you have questions about filing.</p>
+    <p>— ${BUSINESS_NAME} Team</p>
+  `.trim()
+
+  if (resendApiKey) {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${resendApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: fromAddress,
+        to: [form.workerEmail],
+        subject,
+        text,
+        html,
+      }),
+    })
+
+    if (!res.ok) {
+      const errText = await res.text()
+      throw new Error(`Resend email error sending 1099: ${errText}`)
+    }
+  } else {
+    console.info(`[form1099Service] RESEND_API_KEY not set — would send 1099 to ${form.workerEmail} for year ${form.year}`)
+  }
+
   await markFormSent(form1099Id)
 }
 
