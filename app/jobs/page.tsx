@@ -6,6 +6,7 @@ import Footer from '@/components/layout/Footer'
 import JobCard from '@/components/jobs/JobCard'
 import JobFilters from '@/components/jobs/JobFilters'
 import JobsForYouFeed from '@/components/jobs/JobsForYouFeed'
+import SearchAlerts from '@/components/search/SearchAlerts'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import Link from 'next/link'
 import { Plus, Briefcase, Sparkles } from 'lucide-react'
@@ -136,7 +137,7 @@ const EMPTY_FILTERS = {
 }
 
 function JobsPageContent() {
-  const { profile } = useAuth()
+  const { user, profile } = useAuth()
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
@@ -309,12 +310,15 @@ function JobsPageContent() {
             <div className="flex flex-col lg:flex-row gap-6">
               {/* Filters Sidebar */}
               <div className="lg:w-72 flex-shrink-0">
-                <div className="sticky top-20">
+                <div className="sticky top-20 space-y-6">
                   <JobFilters
                     filters={filters}
                     onChange={handleFilterChange}
                     onReset={handleFilterReset}
                   />
+                  {profile?.role === 'worker' && user && (
+                    <SearchAlerts userId={user.uid} />
+                  )}
                 </div>
               </div>
 
