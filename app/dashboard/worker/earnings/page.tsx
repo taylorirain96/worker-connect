@@ -30,7 +30,7 @@ import {
   Award,
   CheckCircle,
 } from 'lucide-react'
-import { collection, query, where, orderBy, getDocs } from 'firebase/firestore'
+import { collection, query, where, orderBy, getDocs, type DocumentData } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { WORKER_TIERS, getWorkerTier, type EscrowRecord } from '@/types'
 import FeeBreakdown from '@/components/payments/FeeBreakdown'
@@ -44,10 +44,15 @@ function formatNZD(amount: number): string {
   }).format(amount)
 }
 
-function mapEscrowTransaction(docId: string, data: Omit<EscrowRecord, 'id'>): EscrowRecord & { jobTitle: string } {
+function mapEscrowTransaction(docId: string, data: DocumentData): (EscrowRecord & { jobTitle: string }) | null {
+  if (!data || typeof data !== 'object' || typeof data.jobTitle !== 'string') {
+    return null
+  }
+
   return {
     id: docId,
-    ...data,
+    ...(data as Omit<EscrowRecord, 'id'>),
+    jobTitle: data.jobTitle,
   }
 }
 
@@ -90,7 +95,9 @@ export default function WorkerEarningsPage() {
     )
     getDocs(q)
       .then((snap) => {
-        const rows = snap.docs.map((d) => mapEscrowTransaction(d.id, d.data() as Omit<EscrowRecord, 'id'>))
+        const rows = snap.docs
+          .map((d) => mapEscrowTransaction(d.id, d.data()))
+          .filter((row): row is EscrowRecord & { jobTitle: string } => row !== null)
         setTransactions(rows)
       })
       .catch((error) => {
