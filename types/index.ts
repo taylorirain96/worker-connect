@@ -46,8 +46,6 @@ export interface UserProfile {
   videoUrl?: string
   /** ABN for Australian employers (11 digits) */
   abn?: string
-  /** NZ Police vetting result for workers — set by admin after review */
-  backgroundCheckStatus?: 'approved' | 'rejected'
   backgroundCheckApprovedAt?: string
   /** Referral code unique to this user, stored in Firestore */
   referralCode?: string
