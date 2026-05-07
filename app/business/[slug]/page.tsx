@@ -191,7 +191,8 @@ const companySizeLabels: Record<string, string> = {
   '50+': '50+ Employees',
 }
 
-export default function BusinessProfilePage({ params }: { params: { slug: string } }) {
+export default async function BusinessProfilePage(props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   const biz = MOCK_BUSINESSES[params.slug]
   const { verifiedCount, trustScore } = biz ? computeProfileVerification(biz) : { verifiedCount: 0, trustScore: 0 }
 

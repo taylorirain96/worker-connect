@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
@@ -49,7 +49,8 @@ function generateTimeSlots(start: string, end: string): string[] {
   return slots
 }
 
-export default function BookWorkerPage({ params }: { params: { id: string } }) {
+export default function BookWorkerPage(props: { params: Promise<{ id: string }> }) {
+  const params = use(props.params);
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
   const [worker, setWorker] = useState<UserProfile | null>(null)

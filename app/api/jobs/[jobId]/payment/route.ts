@@ -8,10 +8,8 @@ import type { EscrowRecord } from '@/types'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: { jobId: string } }
-) {
+export async function GET(_req: NextRequest, props: { params: Promise<{ jobId: string }> }) {
+  const params = await props.params;
   const { jobId } = params
 
   try {
@@ -42,10 +40,8 @@ export async function GET(
   }
 }
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: { jobId: string } }
-) {
+export async function POST(req: NextRequest, props: { params: Promise<{ jobId: string }> }) {
+  const params = await props.params;
   const { jobId } = params
 
   try {

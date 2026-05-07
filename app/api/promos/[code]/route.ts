@@ -21,10 +21,8 @@ async function requireAdmin(req: NextRequest): Promise<string | null> {
   }
 }
 
-export async function PUT(
-  req: NextRequest,
-  { params }: { params: { code: string } },
-) {
+export async function PUT(req: NextRequest, props: { params: Promise<{ code: string }> }) {
+  const params = await props.params;
   const uid = await requireAdmin(req)
   if (!uid) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
 
@@ -53,10 +51,8 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { code: string } },
-) {
+export async function DELETE(req: NextRequest, props: { params: Promise<{ code: string }> }) {
+  const params = await props.params;
   const uid = await requireAdmin(req)
   if (!uid) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
 

@@ -33,10 +33,8 @@ async function sendBookingStatusSMS(
  * GET /api/bookings/[id]
  * Returns a single booking by ID.
  */
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const userId = req.headers.get('x-user-id')
     if (!userId) {
@@ -78,10 +76,8 @@ export async function GET(
  * Updates the booking status (worker accepts or declines).
  * Body: { status: 'confirmed' | 'declined', workerMessage?: string }
  */
-export async function PUT(
-  req: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const userId = req.headers.get('x-user-id')
     if (!userId) {

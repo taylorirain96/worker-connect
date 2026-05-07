@@ -8,10 +8,8 @@ export const dynamic = 'force-dynamic'
  * GET /api/availability/[workerId]
  * Returns the public availability schedule for any worker.
  */
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: { workerId: string } },
-) {
+export async function GET(_req: NextRequest, props: { params: Promise<{ workerId: string }> }) {
+  const params = await props.params;
   try {
     const { workerId } = params
 

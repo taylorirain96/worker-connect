@@ -23,10 +23,8 @@ import { buildSMSMessage } from '@/lib/notifications/sms'
 
 export const dynamic = 'force-dynamic'
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { jobId: string } }
-) {
+export async function POST(request: NextRequest, props: { params: Promise<{ jobId: string }> }) {
+  const params = await props.params;
   const { jobId } = params
 
   try {

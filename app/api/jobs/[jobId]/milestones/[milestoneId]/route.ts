@@ -17,8 +17,9 @@ function milestoneRef(jobId: string, milestoneId: string) {
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { jobId: string; milestoneId: string } }
+  props: { params: Promise<{ jobId: string; milestoneId: string }> }
 ) {
+  const params = await props.params;
   const { jobId, milestoneId } = params
 
   if (!adminDb) {
@@ -40,8 +41,9 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { jobId: string; milestoneId: string } }
+  props: { params: Promise<{ jobId: string; milestoneId: string }> }
 ) {
+  const params = await props.params;
   const { jobId, milestoneId } = params
   const userId = req.headers.get('x-user-id')
   if (!userId) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
@@ -86,8 +88,9 @@ export async function PUT(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { jobId: string; milestoneId: string } }
+  props: { params: Promise<{ jobId: string; milestoneId: string }> }
 ) {
+  const params = await props.params;
   const { jobId, milestoneId } = params
   const userId = req.headers.get('x-user-id')
   if (!userId) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })

@@ -20,10 +20,8 @@ export const dynamic = 'force-dynamic'
  * Header: x-user-id  (homeowner UID)
  * Body: { preferredDate, preferredTime, address, notes? }
  */
-export async function POST(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   if (rateLimit(req, { max: 10, windowMs: 60_000 })) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
   }

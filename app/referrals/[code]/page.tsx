@@ -8,10 +8,11 @@ import { REFERRAL_BONUSES } from '@/lib/referrals/referralLogic'
 import { formatCurrency } from '@/lib/utils'
 
 interface ReferralLandingProps {
-  params: { code: string }
+  params: Promise<{ code: string }>
 }
 
-export default function ReferralLandingPage({ params }: ReferralLandingProps) {
+export default async function ReferralLandingPage(props: ReferralLandingProps) {
+  const params = await props.params;
   const { code } = params
 
   return (

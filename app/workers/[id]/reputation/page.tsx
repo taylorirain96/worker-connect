@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, use } from 'react';
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import Navbar from '@/components/layout/Navbar'
@@ -59,7 +59,8 @@ const MOCK_PORTFOLIO: WorkerPortfolio = {
 
 const MOCK_BADGES = ['Expert Worker', 'Premium Access', 'Highly Trusted']
 
-export default function WorkerReputationPage({ params }: { params: { id: string } }) {
+export default function WorkerReputationPage(props: { params: Promise<{ id: string }> }) {
+  const params = use(props.params);
   const [reputationScore, setReputationScore] = useState<ReputationScoreType | null>(null)
   const [verification, setVerification] = useState<WorkerVerification | null>(null)
   const [completionStats, setCompletionStats] = useState<CompletionStats | null>(null)
