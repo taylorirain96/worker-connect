@@ -2268,6 +2268,22 @@ export interface ServicePackageBooking {
 }
 
 
+export interface QuoteTemplate {
+  id: string
+  workerId: string
+  name: string
+  basePrice: number
+  laborHours: number
+  laborRate: number
+  materials: { description: string; cost: number }[]
+  travelCost: number
+  description: string
+  timeline: string
+  conditions: string
+  createdAt: string
+  updatedAt: string
+}
+
 export interface JobTemplate {
   id: string
   /** Human-friendly name for this template, e.g. "Monthly lawn mow" */

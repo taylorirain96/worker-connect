@@ -238,6 +238,20 @@ export default function HomeownerDashboardPage() {
             </div>
             <div className="flex items-center gap-2">
               <Link
+                href="/dashboard/homeowner/alerts"
+                className="py-2.5 px-3 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-xl hover:bg-white dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
+                aria-label="Job alerts"
+              >
+                🔔 <span className="hidden sm:inline">Alerts</span>
+              </Link>
+              <Link
+                href="/dashboard/homeowner/spending"
+                className="py-2.5 px-3 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-xl hover:bg-white dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
+                aria-label="Spending dashboard"
+              >
+                💰 <span className="hidden sm:inline">Spending</span>
+              </Link>
+              <Link
                 href="/dashboard/homeowner/bookings"
                 className="py-2.5 px-3 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-xl hover:bg-white dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
                 aria-label="My bookings"

@@ -112,6 +112,10 @@
 | Admin analytics dashboard | ✅ Live | /dashboard/admin/analytics, recharts, 5-min cache |
 | Affiliate payout dashboard | ✅ Live | /dashboard/admin/affiliates, Stripe Transfer |
 | Worker trade licences & certifications | ✅ Live | /dashboard/worker/trade-licences, displayed on public worker profile |
+| Homeowner Spending Dashboard | ✅ Live | /dashboard/homeowner/spending, monthly spend chart + category breakdown |
+| Homeowner Search Alerts Management | ✅ Live | /dashboard/homeowner/alerts, create/delete/toggle job alerts |
+| Worker Subscription / Pro Tier Page | ✅ Live | /dashboard/worker/subscription, plan management + upgrade flow |
+| Worker Quote Templates | ✅ Live | /api/quote-templates, /dashboard/worker/quote-templates, load-template in WorkerQuoteForm |
 
 ---
 
@@ -417,6 +421,10 @@ OPENAI_API_KEY=
 - [x] Open API for partner integrations ✅
 - [x] WorkSafe NZ compliance module ✅
 - [x] Apprenticeship / training listings category ✅
+- [x] Homeowner Spending Dashboard ✅
+- [x] Homeowner Search Alerts management page ✅
+- [x] Worker Subscription / Pro Tier management ✅
+- [x] Worker Quote Templates (save + load in quote form) ✅
 - [ ] A/B test homepage hero CTA
 - [ ] Mobile app (React Native / Expo)
 
