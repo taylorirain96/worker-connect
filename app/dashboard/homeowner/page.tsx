@@ -273,6 +273,13 @@ export default function HomeownerDashboardPage() {
                 📋 <span className="hidden sm:inline">Templates</span>
               </Link>
               <Link
+                href="/dashboard/homeowner/recurring"
+                className="py-2.5 px-3 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-xl hover:bg-white dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
+                aria-label="My recurring services"
+              >
+                🔁 <span className="hidden sm:inline">Recurring Services</span>
+              </Link>
+              <Link
                 href="/post/homeowner"
                 className="py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-colors"
               >
