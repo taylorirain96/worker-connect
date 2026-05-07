@@ -35,6 +35,7 @@ White: #FFFFFF
 Usage notes
 -----------
 - Use the QuickTrade name exactly as written, with capital Q and T.
+- In body copy and headlines, write the brand name as "QuickTrade". The supplied logo file is the approved stylised wordmark for visual use.
 - Keep the logo on dark or clean neutral backgrounds when possible.
 - Avoid stretching, rotating, or recolouring the provided logo asset.
 - When space is limited, use the company name "QuickTrade" in body copy rather than abbreviations.
