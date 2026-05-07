@@ -8,6 +8,7 @@ import PeakPeriodsAnalysis from '@/components/intelligence/PeakPeriodsAnalysis'
 import IncomeStabilityGauge from '@/components/intelligence/IncomeStabilityGauge'
 import EarningsBreakdownPie from '@/components/intelligence/EarningsBreakdownPie'
 import OptimizationRecommendations from '@/components/intelligence/OptimizationRecommendations'
+import { useAuth } from '@/components/providers/AuthProvider'
 import type { EarningsProjection, RateBenchmark } from '@/types'
 
 interface PeakPeriod { period: string; avgEarnings: number; jobCount: number; isHighSeason: boolean }
@@ -20,9 +21,11 @@ export default function EarningsPage() {
   const [stability, setStability] = useState<StabilityMetrics | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const workerId = 'demo'
+  const { user } = useAuth()
+  const workerId = user?.uid ?? ''
 
   useEffect(() => {
+    if (!workerId) return
     const fetchAll = async () => {
       setLoading(true)
       try {
@@ -41,7 +44,7 @@ export default function EarningsPage() {
       }
     }
     fetchAll()
-  }, [])
+  }, [workerId])
 
   if (loading || !stability) {
     return (
