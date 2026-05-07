@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
@@ -8,7 +8,7 @@ import { JOB_CATEGORIES, NZ_REGIONS } from '@/lib/utils'
 import { Package, Search, SlidersHorizontal, X } from 'lucide-react'
 import type { ServicePackage } from '@/types'
 
-export default function PackagesBrowsePage() {
+function PackagesBrowsePage() {
   const searchParams = useSearchParams()
   const router = useRouter()
 
@@ -217,5 +217,13 @@ export default function PackagesBrowsePage() {
       </main>
       <Footer />
     </div>
+  )
+}
+
+export default function PackagesBrowsePageWrapper() {
+  return (
+    <Suspense>
+      <PackagesBrowsePage />
+    </Suspense>
   )
 }
