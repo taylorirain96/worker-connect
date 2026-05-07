@@ -44,6 +44,13 @@ function formatNZD(amount: number): string {
   }).format(amount)
 }
 
+function mapEscrowTransaction(docId: string, data: Omit<EscrowRecord, 'id'>): EscrowRecord & { jobTitle: string } {
+  return {
+    id: docId,
+    ...data,
+  }
+}
+
 const ESCROW_STATUS_CONFIG: Record<
   EscrowRecord['status'],
   { label: string; variant: 'success' | 'warning' | 'info' | 'danger' | 'default'; icon: React.ElementType }
@@ -83,10 +90,11 @@ export default function WorkerEarningsPage() {
     )
     getDocs(q)
       .then((snap) => {
-        const rows = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<EscrowRecord, 'id'>) })) as Array<EscrowRecord & { jobTitle: string }>
+        const rows = snap.docs.map((d) => mapEscrowTransaction(d.id, d.data() as Omit<EscrowRecord, 'id'>))
         setTransactions(rows)
       })
-      .catch(() => {
+      .catch((error) => {
+        console.error('Failed to load worker earnings transactions', error)
         // On error keep empty list — component already handles empty state
       })
       .finally(() => setLoading(false))
