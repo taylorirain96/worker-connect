@@ -31,6 +31,10 @@ export default function ServicePackageForm({
   const [estimatedDurationHours, setEstimatedDurationHours] = useState<number | ''>(
     initial?.estimatedDurationHours ?? 1
   )
+  const [instantBook, setInstantBook] = useState(initial?.instantBook ?? false)
+  const [instantBookDepositPercent, setInstantBookDepositPercent] = useState<number>(
+    initial?.instantBookDepositPercent ?? 20
+  )
   const [saving, setSaving] = useState(false)
 
   function addInclusion() {
@@ -72,6 +76,8 @@ export default function ServicePackageForm({
           region,
           inclusions: cleanedInclusions,
           estimatedDurationHours: Number(estimatedDurationHours) || 1,
+          instantBook,
+          instantBookDepositPercent: instantBook ? instantBookDepositPercent : undefined,
         }),
       })
 
@@ -256,6 +262,38 @@ export default function ServicePackageForm({
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* Instant Book settings */}
+          <div className="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 p-4 space-y-3">
+            <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">Instant Book Settings</p>
+            <label className="flex items-center gap-2.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={instantBook}
+                onChange={(e) => setInstantBook(e.target.checked)}
+                className="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"
+              />
+              <span className="text-sm text-gray-700 dark:text-gray-300">
+                Enable Instant Booking — skip the quote queue
+              </span>
+            </label>
+            {instantBook && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Deposit %
+                </label>
+                <input
+                  type="number"
+                  min={10}
+                  max={50}
+                  value={instantBookDepositPercent}
+                  onChange={(e) => setInstantBookDepositPercent(Number(e.target.value))}
+                  className="w-32 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                />
+                <p className="text-xs text-gray-400 mt-1">Percentage of total price collected as deposit (10–50%)</p>
+              </div>
+            )}
           </div>
 
           <div className="flex gap-3 pt-2">

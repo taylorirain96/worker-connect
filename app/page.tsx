@@ -11,6 +11,8 @@ import PremiumBadge from '@/components/luxury/PremiumBadge'
 import PremiumCategoryCard from '@/components/luxury/PremiumCategoryCard'
 import HowItWorksTabs from '@/components/home/HowItWorksTabs'
 import FoundersDealBanner from '@/components/home/FoundersDealBanner'
+import SocialProofTicker from '@/components/home/SocialProofTicker'
+import WorkerOfMonth from '@/components/home/WorkerOfMonth'
 import { getAllPosts } from '@/lib/blog/posts'
 import { JOB_CATEGORIES, CATEGORY_ICONS, CATEGORY_GRADIENTS, type CategoryId } from '@/lib/utils'
 import { SITE_URL } from '@/lib/seo/config'
@@ -124,6 +126,7 @@ export default function HomePage() {
       />
       <Navbar />
       <TrustSignalBar />
+      <SocialProofTicker />
       <FoundersDealBanner />
 
       {/* Hero Section */}
@@ -261,6 +264,17 @@ export default function HomePage() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Worker of the Month */}
+      <section className="py-12 bg-gray-950 border-b border-slate-800/60">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold text-white">This Month&apos;s Top Worker</h2>
+            <p className="text-slate-400 text-sm mt-1">Recognised for outstanding service across New Zealand</p>
+          </div>
+          <WorkerOfMonth />
         </div>
       </section>
 

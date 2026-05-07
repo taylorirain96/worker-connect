@@ -116,6 +116,14 @@
 | Homeowner Search Alerts Management | ✅ Live | /dashboard/homeowner/alerts, create/delete/toggle job alerts |
 | Worker Subscription / Pro Tier Page | ✅ Live | /dashboard/worker/subscription, plan management + upgrade flow |
 | Worker Quote Templates | ✅ Live | /api/quote-templates, /dashboard/worker/quote-templates, load-template in WorkerQuoteForm |
+| Instant Booking (Service Packages) | ✅ Live | `instantBook` flag on ServicePackage; POST /api/instant-book (Stripe deposit); homeowner checkout flow |
+| Recurring Jobs | ✅ Live | `recurring` + `recurrenceInterval` on Job; cron at /api/cron/recurring-jobs (daily 6am NZST); /dashboard/homeowner/recurring |
+| NZ Licence Verification (MBIE) | ✅ Live | POST /api/worker-trade-licences/verify; LBP/electrical/plumbing pattern match; governmentVerified badge |
+| NPS Survey System | ✅ Live | POST /api/nps; cron /api/cron/nps-trigger (7-day post-completion trigger); /nps page |
+| Social Proof Ticker | ✅ Live | GET /api/platform/live-activity (5-min cache); SocialProofTicker component on homepage |
+| Worker of the Month | ✅ Live | GET /api/platform/worker-of-month (1-hr cache); WorkerOfMonth card on homepage |
+| Property Manager Role & Dashboard | ✅ Live | `property_manager` role; Property type; GET/POST /api/properties; /dashboard/property-manager |
+| Dependabot Dependency Scanning | ✅ Live | .github/dependabot.yml — weekly npm + actions updates, NZ timezone |
 
 ---
 

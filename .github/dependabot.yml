@@ -1,0 +1,57 @@
+version: 2
+updates:
+  # Keep npm dependencies up to date
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Pacific/Auckland"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "taylorirain96"
+    labels:
+      - "dependencies"
+      - "security"
+    groups:
+      # Batch non-breaking minor/patch Next.js + React ecosystem updates
+      next-ecosystem:
+        patterns:
+          - "next"
+          - "@next/*"
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
+        update-types:
+          - "minor"
+          - "patch"
+      # Batch Firebase SDK updates
+      firebase:
+        patterns:
+          - "firebase"
+          - "firebase-admin"
+        update-types:
+          - "minor"
+          - "patch"
+      # Batch Stripe SDK updates
+      stripe:
+        patterns:
+          - "stripe"
+          - "@stripe/*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Keep GitHub Actions up to date
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Pacific/Auckland"
+    labels:
+      - "dependencies"
+      - "ci"

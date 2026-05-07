@@ -5,7 +5,7 @@ export interface UserProfile {
   email: string | null
   displayName: string | null
   photoURL: string | null
-  role: 'worker' | 'employer' | 'admin' | 'homeowner' | 'tradie' | 'jobseeker'
+  role: 'worker' | 'employer' | 'admin' | 'homeowner' | 'tradie' | 'jobseeker' | 'property_manager'
   createdAt: string
   updatedAt?: string
   profileComplete: boolean
@@ -125,6 +125,12 @@ export interface WorkerTradeLicence {
   documentUrl?: string
   /** Worker-provided notes */
   notes?: string
+  /** Whether this licence has been verified against the government register */
+  governmentVerified?: boolean
+  /** ISO timestamp of when government verification was confirmed */
+  governmentVerifiedAt?: string
+  /** Which government register was used for verification */
+  verificationSource?: 'lbp_register' | 'electrical_register' | 'plumbing_register' | 'manual'
   createdAt: string
   updatedAt: string
 }
@@ -191,6 +197,14 @@ export interface Job {
   workerDisputeDeadline?: string
   /** Country the job is located in */
   country?: Country
+  /** Whether this job recurs automatically */
+  recurring?: boolean
+  /** How often to re-create this job */
+  recurrenceInterval?: 'weekly' | 'fortnightly' | 'monthly'
+  /** ISO date of the next scheduled recurrence */
+  nextRecurrenceAt?: string
+  /** ID of the parent (original) recurring job */
+  parentJobId?: string
 }
 
 export type JobCategory =
@@ -2230,6 +2244,10 @@ export interface ServicePackage {
   estimatedDurationHours: number
   /** Whether the package is publicly visible */
   active: boolean
+  /** Whether this package supports instant booking (skip quote, pay deposit) */
+  instantBook?: boolean
+  /** Deposit percentage (0-100) required to instant-book; defaults to 20 */
+  instantBookDepositPercent?: number
   createdAt: string
   updatedAt: string
 }
@@ -2304,6 +2322,77 @@ export interface JobTemplate {
   budgetType: 'fixed' | 'hourly'
   urgency: 'low' | 'medium' | 'high' | 'emergency'
   skills: string
+  createdAt: string
+  updatedAt: string
+}
+
+// ─── Instant Booking ─────────────────────────────────────────────────────────
+
+export interface InstantBooking {
+  id: string
+  packageId: string
+  packageTitle: string
+  workerId: string
+  workerName: string
+  homeownerId: string
+  homeownerName: string
+  homeownerEmail: string
+  totalPrice: number
+  depositAmount: number
+  depositPercent: number
+  address: string
+  requestedDate: string
+  requestedTime: string
+  notes?: string
+  status: 'deposit_pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled'
+  stripePaymentIntentId?: string
+  createdAt: string
+  updatedAt: string
+}
+
+// ─── Recurring Jobs ───────────────────────────────────────────────────────────
+
+export interface RecurringJobSchedule {
+  jobId: string
+  employerId: string
+  interval: 'weekly' | 'fortnightly' | 'monthly'
+  nextRunAt: string
+  lastRunAt?: string
+  active: boolean
+  totalRuns: number
+  createdAt: string
+  updatedAt: string
+}
+
+// ─── NPS Survey ───────────────────────────────────────────────────────────────
+
+export interface NPSSurvey {
+  id: string
+  userId: string
+  jobId: string
+  role: 'worker' | 'homeowner' | 'employer'
+  score: number
+  comment?: string
+  triggeredAt: string
+  submittedAt?: string
+  createdAt: string
+}
+
+// ─── Property Manager ─────────────────────────────────────────────────────────
+
+export interface Property {
+  id: string
+  managerId: string
+  address: string
+  suburb: string
+  city: string
+  postcode: string
+  propertyType: 'residential' | 'commercial' | 'industrial'
+  notes?: string
+  tenantName?: string
+  tenantPhone?: string
+  activeJobCount: number
+  totalJobsPosted: number
   createdAt: string
   updatedAt: string
 }
