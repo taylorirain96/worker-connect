@@ -193,7 +193,10 @@ export default function HomeownerSpendingPage() {
                           width={50}
                         />
                         <Tooltip
-                          formatter={(v: number) => [fmtNZD(v), 'Spent']}
+                          formatter={(value) => [
+                            fmtNZD(typeof value === 'number' ? value : 0),
+                            'Spent',
+                          ]}
                           contentStyle={{ borderRadius: '8px', fontSize: '13px' }}
                         />
                         <Area
@@ -236,7 +239,7 @@ export default function HomeownerSpendingPage() {
                               ))}
                             </Pie>
                             <Tooltip
-                              formatter={(v: number) => fmtNZD(v)}
+                              formatter={(value) => fmtNZD(typeof value === 'number' ? value : 0)}
                               contentStyle={{ borderRadius: '8px', fontSize: '12px' }}
                             />
                           </PieChart>

@@ -68,8 +68,8 @@ export async function getWorkerPublicProfileData(
   ])
 
   const worker: UserProfile = {
-    uid: workerDoc.id,
     ...(rawWorker as UserProfile),
+    uid: workerDoc.id,
     createdAt: serializeDate(rawWorker.createdAt),
     updatedAt: serializeDate(rawWorker.updatedAt, serializeDate(rawWorker.createdAt)),
   }

@@ -14,6 +14,9 @@ const TYPE_CATEGORY_MAP: Record<NotificationType, NotificationCategory> = {
   application_received: 'jobs',
   job_status_change: 'jobs',
   job_completed: 'jobs',
+  application_accepted: 'jobs',
+  application_rejected: 'jobs',
+  job_posted: 'jobs',
   application: 'jobs',
   new_message: 'messages',
   message_reply: 'messages',
@@ -35,10 +38,15 @@ const TYPE_CATEGORY_MAP: Record<NotificationType, NotificationCategory> = {
   account_update: 'system',
   security_alert: 'system',
   maintenance: 'system',
+  general: 'system',
   points_earned: 'gamification',
   badge_unlocked: 'gamification',
   milestone_reached: 'gamification',
   leaderboard_change: 'gamification',
+  placement_checkin_worker: 'system',
+  placement_checkin_employer: 'system',
+  placement_ended_worker: 'system',
+  placement_ended_employer: 'system',
 }
 
 function isQuietHours(prefs: Awaited<ReturnType<typeof getNotificationPreferences>>): boolean {

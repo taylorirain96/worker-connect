@@ -86,13 +86,19 @@ export default function WorkerCard({ worker, isFavourited = false, onFavouriteTo
                 <CheckCircle className="h-4 w-4 text-blue-500 flex-shrink-0" aria-label="Verified" />
               )}
               {worker.backgroundCheckStatus === 'approved' && (
-                <ShieldCheck className="h-4 w-4 text-green-500 flex-shrink-0" aria-label="Background check passed" title="Background check passed" />
+                <ShieldCheck
+                  className="h-4 w-4 text-green-500 flex-shrink-0"
+                  aria-label="Background check passed"
+                />
               )}
               {worker.worksafeCompliance?.inductionComplete &&
                 worker.worksafeCompliance?.ppeConfirmed &&
                 worker.worksafeCompliance?.hazardRegisterViewed &&
                 worker.worksafeCompliance?.safetyPlanUploaded && (
-                  <HardHat className="h-4 w-4 text-orange-500 flex-shrink-0" aria-label="WorkSafe NZ compliant" title="WorkSafe NZ compliant" />
+                  <HardHat
+                    className="h-4 w-4 text-orange-500 flex-shrink-0"
+                    aria-label="WorkSafe NZ compliant"
+                  />
                 )}
             </div>
             {worker.location && (

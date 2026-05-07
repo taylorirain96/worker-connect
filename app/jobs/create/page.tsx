@@ -142,19 +142,15 @@ function CreateJobPage() {
 
     try {
       const { saveJob } = await import('@/lib/services/jobService')
-      const tags = data.tags ? data.tags.split(',').map((t) => t.trim()).filter(Boolean).slice(0, 10) : []
       const jobId = await saveJob({
         title: data.title,
         description: data.description,
         category: data.category as import('@/types').JobCategory,
         location: data.location,
         budget: data.budgetMax,
-        budgetMin: data.budgetMin,
-        budgetMax: data.budgetMax,
         budgetType: data.budgetType,
         urgency: data.urgency,
         skills: data.skills ? data.skills.split(',').map((s) => s.trim()).filter(Boolean) : [],
-        tags,
         employerId: user.uid,
         employerName: user.displayName || user.email || 'Employer',
         status: 'open',

@@ -202,12 +202,13 @@ export default function JobChatPage() {
 
   const uploadImages = useCallback(async (convId: string): Promise<string[]> => {
     if (!storage || pendingImages.length === 0) return []
+    const currentStorage = storage
     setUploadingImages(true)
     try {
       const urls = await Promise.all(
         pendingImages.map(async (file) => {
           const path = `messages/${convId}/${Date.now()}_${file.name}`
-          const sRef = storageRef(storage, path)
+          const sRef = storageRef(currentStorage, path)
           await uploadBytes(sRef, file)
           return getDownloadURL(sRef)
         })

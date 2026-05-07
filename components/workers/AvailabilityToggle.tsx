@@ -37,16 +37,17 @@ export default function AvailabilityToggle() {
   const config = STATUS_CONFIG[current]
 
   const handleSelect = async (status: AvailabilityStatus) => {
-    if (!user || status === current) {
+    if (!user || !db || status === current) {
       setOpen(false)
       return
     }
+    const firestore = db
 
     setSaving(true)
     setOpen(false)
     try {
       // Optimistic update via Firestore client SDK so AuthProvider picks it up
-      await updateDoc(doc(db, 'users', user.uid), {
+      await updateDoc(doc(firestore, 'users', user.uid), {
         availability: status,
         availabilityUpdatedAt: new Date().toISOString(),
       })
