@@ -8,14 +8,15 @@ import type {
   WorkerTradeLicence,
 } from '@/types'
 
-function serializeDate(value: unknown, fallback = new Date().toISOString()) {
-  if (!value) return fallback
+function serializeDate(value: unknown, fallback?: string) {
+  const resolvedFallback = fallback ?? new Date().toISOString()
+  if (!value) return resolvedFallback
   if (typeof value === 'string') return value
   if (value instanceof Date) return value.toISOString()
   if (typeof value === 'object' && value !== null && 'toDate' in value && typeof value.toDate === 'function') {
     return value.toDate().toISOString()
   }
-  return fallback
+  return resolvedFallback
 }
 
 function hasPublicAvailability(availability?: WorkerAvailability | null) {

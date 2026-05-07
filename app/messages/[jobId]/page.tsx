@@ -233,7 +233,7 @@ export default function JobChatPage() {
     stopTyping()
 
     try {
-      // Ensure we already have a conversation before sending.
+      // This page only sends into an existing conversation; it does not create one.
       const convId = conversation?.id ?? null
       if (!convId) {
         toast.error('Conversation not found.')
