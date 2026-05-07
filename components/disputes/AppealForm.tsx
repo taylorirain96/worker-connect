@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { X, Send, Paperclip, ShieldAlert } from 'lucide-react'
 
 export default function AppealForm({
-  ratingId: _ratingId,
+  ratingId,
   onClose,
 }: {
   ratingId: string
@@ -16,6 +16,7 @@ export default function AppealForm({
     setIsSubmitting(true)
     // Simulated API call
     setTimeout(() => {
+      void { ratingId, reason }
       setIsSubmitting(false)
       onClose()
     }, 1500)

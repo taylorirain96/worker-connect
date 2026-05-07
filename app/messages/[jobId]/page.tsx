@@ -233,10 +233,9 @@ export default function JobChatPage() {
     stopTyping()
 
     try {
-      // Ensure conversation exists; create if needed (e.g., when initiated from job page)
+      // Ensure we already have a conversation before sending.
       const convId = conversation?.id ?? null
       if (!convId) {
-        // If no conversation yet, we can't proceed without other participant info
         toast.error('Conversation not found.')
         setMessageText(content)
         return
