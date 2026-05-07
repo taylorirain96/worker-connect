@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
@@ -10,6 +10,8 @@ import Button from '@/components/ui/Button'
 import Link from 'next/link'
 import { ArrowLeft, CheckCircle, Camera } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { db } from '@/lib/firebase'
+import { doc, getDoc } from 'firebase/firestore'
 
 export default function UploadPhotosPage() {
   const params = useParams()
@@ -17,8 +19,24 @@ export default function UploadPhotosPage() {
   const { user, profile } = useAuth()
   const [done, setDone] = useState(false)
   const [uploadedCount, setUploadedCount] = useState(0)
+  const [jobCompletedAt, setJobCompletedAt] = useState<string | null>(null)
 
   const jobId = params.id as string
+
+  useEffect(() => {
+    if (!db || !jobId) return
+    getDoc(doc(db, 'jobs', jobId))
+      .then((snap) => {
+        if (snap.exists()) {
+          const data = snap.data() as { completedAt?: string }
+          setJobCompletedAt(data.completedAt ?? null)
+        }
+      })
+      .catch((err) => {
+        console.error('[upload-photos] Failed to fetch job completedAt:', err)
+        // non-critical — gamification will use current time as fallback
+      })
+  }, [jobId])
 
   if (!user || profile?.role !== 'worker') {
     return (
@@ -47,8 +65,8 @@ export default function UploadPhotosPage() {
         await import('@/lib/photos/gamificationLogic')
       const { getWorkerPhotoStats } = await import('@/lib/photos/firebase')
 
-      const jobCompletedAt = new Date().toISOString() // TODO: fetch actual completion timestamp from Firestore job document
-      await awardPhotoUploadPoints(user.uid, jobCompletedAt, count)
+      const completedTimestamp = jobCompletedAt ?? new Date().toISOString()
+      await awardPhotoUploadPoints(user.uid, completedTimestamp, count)
 
       const stats = await getWorkerPhotoStats(user.uid)
       await checkAndAwardPhotoMasterBadge(user.uid, stats.totalPhotos)
