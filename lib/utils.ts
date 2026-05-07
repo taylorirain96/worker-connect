@@ -4,6 +4,7 @@ import { format, formatDistanceToNow } from 'date-fns'
 import {
   Droplet, Zap, Hammer, Wind, Home, Trees,
   Paintbrush, Layers, Sparkles, Package, Wrench,
+  GraduationCap, BookOpen,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -91,6 +92,8 @@ export const JOB_CATEGORIES = [
   { id: 'flooring', label: 'Flooring', icon: '🪵', description: 'Hardwood, tile, carpet', color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' },
   { id: 'cleaning', label: 'Cleaning', icon: '🧹', description: 'Deep clean, regular maintenance', color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' },
   { id: 'moving', label: 'Moving', icon: '📦', description: 'Packing, loading, transport', color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' },
+  { id: 'apprenticeship', label: 'Apprenticeship', icon: '🎓', description: 'Entry-level trade training roles', color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' },
+  { id: 'training', label: 'Training', icon: '📚', description: 'Upskilling, courses & workshops', color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' },
   { id: 'general', label: 'General', icon: '🛠️', description: 'Handyman, misc repairs', color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' },
 ] as const
 
@@ -107,6 +110,8 @@ export const CATEGORY_ICONS: Record<CategoryId, LucideIcon> = {
   flooring: Layers,
   cleaning: Sparkles,
   moving: Package,
+  apprenticeship: GraduationCap,
+  training: BookOpen,
   general: Wrench,
 }
 
@@ -121,6 +126,8 @@ export const CATEGORY_GRADIENTS: Record<CategoryId, string> = {
   flooring: 'from-indigo-600 to-violet-600',
   cleaning: 'from-indigo-600 to-violet-600',
   moving: 'from-indigo-600 to-violet-600',
+  apprenticeship: 'from-indigo-600 to-violet-600',
+  training: 'from-indigo-600 to-violet-600',
   general: 'from-indigo-600 to-violet-600',
 }
 
