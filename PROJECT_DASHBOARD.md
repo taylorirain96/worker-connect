@@ -116,6 +116,14 @@
 | Homeowner Search Alerts Management | ✅ Live | /dashboard/homeowner/alerts, create/delete/toggle job alerts |
 | Worker Subscription / Pro Tier Page | ✅ Live | /dashboard/worker/subscription, plan management + upgrade flow |
 | Worker Quote Templates | ✅ Live | /api/quote-templates, /dashboard/worker/quote-templates, load-template in WorkerQuoteForm |
+| Instant Booking (Service Packages) | ✅ Live | `instantBook` flag on ServicePackage; POST /api/instant-book (Stripe deposit); homeowner checkout flow |
+| Recurring Jobs | ✅ Live | `recurring` + `recurrenceInterval` on Job; cron at /api/cron/recurring-jobs (daily 6am NZST); /dashboard/homeowner/recurring |
+| NZ Licence Verification (MBIE) | ✅ Live | POST /api/worker-trade-licences/verify; LBP/electrical/plumbing pattern match; governmentVerified badge |
+| NPS Survey System | ✅ Live | POST /api/nps; cron /api/cron/nps-trigger (7-day post-completion trigger); /nps page |
+| Social Proof Ticker | ✅ Live | GET /api/platform/live-activity (5-min cache); SocialProofTicker component on homepage |
+| Worker of the Month | ✅ Live | GET /api/platform/worker-of-month (1-hr cache); WorkerOfMonth card on homepage |
+| Property Manager Role & Dashboard | ✅ Live | `property_manager` role; Property type; GET/POST /api/properties; /dashboard/property-manager |
+| Dependabot Dependency Scanning | ✅ Live | .github/dependabot.yml — weekly npm + actions updates, NZ timezone |
 
 ---
 
@@ -404,7 +412,7 @@ UNSUBSCRIBE_SECRET=
 | Worker verification badge | ID verification at /dashboard/worker/verify, badge on profile + worker cards |
 | Push notifications (FCM) | FCM background + foreground push, permission prompt, service worker |
 | Job completion flow | Worker requests → homeowner confirms → escrow releases → review |
-| Stripe payout dashboard | /dashboard/worker/payout-setup |
+| Stripe payout dashboard | /dashboard/worker/payout-setup + /payouts balance view + earnings dashboard reads live escrows |
 | Employer business profile | /dashboard/business/profile (NZBN, logo, team) |
 | Mobile PWA manifest + service worker | manifest.json + sw.js + firebase-messaging-sw.js |
 | Worker availability calendar | /dashboard/worker/availability |
@@ -414,6 +422,7 @@ UNSUBSCRIBE_SECRET=
 | Rich job post editor | Category, urgency, budget type, save-as-template |
 | Worker trade licences & certifications | /dashboard/worker/trade-licences, displayed on public profile |
 | SMS notifications (Twilio) | Application events, payment released, booking confirmed |
+| A/B test homepage hero CTA | Variant persisted in localStorage with analytics event tracking |
 
 ### 📋 Future / V2
 - [x] Australian expansion (AUD, ABN, AU GST 10%) ✅
@@ -426,7 +435,6 @@ UNSUBSCRIBE_SECRET=
 - [x] Homeowner Search Alerts management page ✅
 - [x] Worker Subscription / Pro Tier management ✅
 - [x] Worker Quote Templates (save + load in quote form) ✅
-- [ ] A/B test homepage hero CTA
 - [ ] Mobile app (React Native / Expo)
 
 ---

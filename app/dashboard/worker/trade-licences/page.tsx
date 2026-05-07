@@ -39,6 +39,7 @@ export default function TradeLicencesPage() {
   const [fetching, setFetching] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [verifyingId, setVerifyingId] = useState<string | null>(null)
 
   // Form state
   const [licenceType, setLicenceType] = useState<TradeLicenceType>('lbp')
@@ -200,6 +201,35 @@ export default function TradeLicencesPage() {
       toast.error('Could not remove licence')
     } finally {
       setDeletingId(null)
+    }
+  }
+
+  async function handleVerify(licenceId: string) {
+    if (!user) return
+    setVerifyingId(licenceId)
+    try {
+      const res = await fetch('/api/worker-trade-licences/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-user-id': user.uid },
+        body: JSON.stringify({ licenceId }),
+      })
+      if (!res.ok) {
+        const data = await res.json() as { error?: string }
+        throw new Error(data.error ?? 'Verification failed')
+      }
+      const data = await res.json() as { governmentVerified: boolean; verificationSource: string }
+      toast.success(data.governmentVerified ? 'Licence verified!' : 'Verification submitted — pending admin review')
+      setLicences((prev) =>
+        prev.map((l) =>
+          l.id === licenceId
+            ? { ...l, governmentVerified: data.governmentVerified, governmentVerifiedAt: new Date().toISOString(), verificationSource: data.verificationSource as WorkerTradeLicence['verificationSource'] }
+            : l
+        )
+      )
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not verify licence')
+    } finally {
+      setVerifyingId(null)
     }
   }
 
@@ -518,9 +548,28 @@ export default function TradeLicencesPage() {
                         {licence.notes && (
                           <p className="mt-1 text-xs text-gray-400 italic">{licence.notes}</p>
                         )}
+
+                        {licence.governmentVerified && (
+                          <div className="mt-2">
+                            <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 font-medium border border-emerald-200 dark:border-emerald-800">
+                              <CheckCircle className="h-3 w-3" />
+                              Government Verified ✓
+                            </span>
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex items-center gap-2 shrink-0">
+                        {!licence.governmentVerified && (
+                          <button
+                            onClick={() => handleVerify(licence.id)}
+                            disabled={verifyingId === licence.id}
+                            className="text-xs px-2.5 py-1 rounded-lg border border-indigo-500/40 text-indigo-400 hover:bg-indigo-500/10 transition-colors disabled:opacity-40 whitespace-nowrap"
+                            title="Verify with MBIE"
+                          >
+                            {verifyingId === licence.id ? 'Verifying…' : 'Verify with MBIE ✓'}
+                          </button>
+                        )}
                         {licence.documentUrl && (
                           <a
                             href={licence.documentUrl}

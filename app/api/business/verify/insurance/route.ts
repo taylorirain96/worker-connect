@@ -1,6 +1,14 @@
 import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+import { adminDb } from '@/lib/firebase-admin'
+import { FieldValue } from 'firebase-admin/firestore'
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const uid = request.headers.get('x-user-id')
+  if (!uid) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   const body = await request.json()
   const {
     hasGeneralLiability,
@@ -31,6 +39,11 @@ export async function POST(request: Request) {
     verified: true,
     verifiedAt: new Date().toISOString(),
   }
+
+  await adminDb.collection('businessVerifications').doc(uid).set(
+    { insurance: result, updatedAt: FieldValue.serverTimestamp() },
+    { merge: true }
+  )
 
   return NextResponse.json(result, { status: 201 })
 }

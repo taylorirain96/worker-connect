@@ -294,24 +294,66 @@ export async function getWorkerEarningsSummary(
 
 /**
  * Build the earnings transaction history for a worker.
- *
- * NOTE: `jobTitle` and `employerName` are not stored on the escrow record.
- * Callers that need these fields should enrich each record by fetching the
- * corresponding job document from Firestore.
+ * Enriches each record with the job title and employer display name
+ * by fetching the corresponding job document from Firestore.
  */
 export async function getWorkerEarningsTransactions(workerId: string): Promise<EscrowEarningsTransaction[]> {
   const escrows = await getWorkerEscrows(workerId, 100)
-  return escrows.map((e) => ({
-    id: e.id,
-    jobId: e.jobId,
-    jobTitle: `Job #${e.jobId.slice(-6)}`,
-    employerName: '', // TODO: enrich by fetching employer profile from Firestore
-    grossAmount: e.amount,
-    commissionAmount: e.commissionAmount,
-    commissionRate: e.commissionRate,
-    netAmount: e.workerAmount,
-    status: e.status,
-    createdAt: e.createdAt,
-    releasedAt: e.releasedAt,
-  }))
+  if (!db || escrows.length === 0) {
+    return escrows.map((e) => ({
+      id: e.id,
+      jobId: e.jobId,
+      jobTitle: `Job #${e.jobId.slice(-6)}`,
+      employerName: '',
+      grossAmount: e.amount,
+      commissionAmount: e.commissionAmount,
+      commissionRate: e.commissionRate,
+      netAmount: e.workerAmount,
+      status: e.status,
+      createdAt: e.createdAt,
+      releasedAt: e.releasedAt,
+    }))
+  }
+
+  // Fetch all job documents in parallel to enrich title and employer name
+  const jobDocs = await Promise.all(
+    escrows.map((e) => getDoc(doc(db!, 'jobs', e.jobId)))
+  )
+
+  // Build a map of unique employer IDs to fetch their profiles
+  const employerIds = new Set<string>()
+  jobDocs.forEach((snap) => {
+    const employerId = snap.exists() ? (snap.data() as { employerId?: string }).employerId : undefined
+    if (employerId) employerIds.add(employerId)
+  })
+
+  const employerProfiles: Record<string, string> = {}
+  await Promise.all(
+    Array.from(employerIds).map(async (employerId) => {
+      const snap = await getDoc(doc(db!, 'users', employerId))
+      if (snap.exists()) {
+        const data = snap.data() as { displayName?: string; name?: string; email?: string }
+        employerProfiles[employerId] = data.displayName ?? data.name ?? data.email ?? employerId
+      }
+    })
+  )
+
+  return escrows.map((e, i) => {
+    const jobSnap = jobDocs[i]
+    const jobData = jobSnap.exists() ? (jobSnap.data() as { title?: string; employerId?: string }) : {}
+    const employerName = jobData.employerId ? (employerProfiles[jobData.employerId] ?? '') : ''
+    return {
+      id: e.id,
+      jobId: e.jobId,
+      jobTitle: jobData.title ?? `Job #${e.jobId.slice(-6)}`,
+      employerName,
+      grossAmount: e.amount,
+      commissionAmount: e.commissionAmount,
+      commissionRate: e.commissionRate,
+      netAmount: e.workerAmount,
+      status: e.status,
+      createdAt: e.createdAt,
+      releasedAt: e.releasedAt,
+    }
+  })
 }
