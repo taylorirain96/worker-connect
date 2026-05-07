@@ -7,17 +7,7 @@ import type {
   WorkerAvailability,
   WorkerTradeLicence,
 } from '@/types'
-
-function serializeDate(value: unknown, fallback?: string) {
-  const resolvedFallback = fallback ?? new Date().toISOString()
-  if (!value) return resolvedFallback
-  if (typeof value === 'string') return value
-  if (value instanceof Date) return value.toISOString()
-  if (typeof value === 'object' && value !== null && 'toDate' in value && typeof value.toDate === 'function') {
-    return value.toDate().toISOString()
-  }
-  return resolvedFallback
-}
+import { toIsoDate } from '@/lib/utils/dateSerialization'
 
 function hasPublicAvailability(availability?: WorkerAvailability | null) {
   if (!availability) return false
@@ -71,8 +61,16 @@ export async function getWorkerPublicProfileData(
   const worker: UserProfile = {
     ...(rawWorker as UserProfile),
     uid: workerDoc.id,
-    createdAt: serializeDate(rawWorker.createdAt),
-    updatedAt: serializeDate(rawWorker.updatedAt, serializeDate(rawWorker.createdAt)),
+    createdAt: toIsoDate(
+      rawWorker.createdAt,
+      workerDoc.createTime?.toDate().toISOString() ?? new Date(0).toISOString(),
+    ),
+    updatedAt: toIsoDate(
+      rawWorker.updatedAt,
+      workerDoc.updateTime?.toDate().toISOString() ??
+        workerDoc.createTime?.toDate().toISOString() ??
+        new Date(0).toISOString(),
+    ),
   }
 
   const portfolio: PortfolioPhoto[] = portfolioSnap.docs.map((doc) => {
@@ -86,7 +84,10 @@ export async function getWorkerPublicProfileData(
       category: data.category as string,
       description: (data.description as string | undefined) ?? undefined,
       order: (data.order as number | undefined) ?? 0,
-      createdAt: serializeDate(data.createdAt),
+      createdAt: toIsoDate(
+        data.createdAt,
+        doc.createTime?.toDate().toISOString() ?? new Date(0).toISOString(),
+      ),
     }
   })
 
@@ -108,8 +109,16 @@ export async function getWorkerPublicProfileData(
       inclusions: Array.isArray(data.inclusions) ? (data.inclusions as string[]) : [],
       estimatedDurationHours: (data.estimatedDurationHours as number | undefined) ?? 1,
       active: Boolean(data.active),
-      createdAt: serializeDate(data.createdAt),
-      updatedAt: serializeDate(data.updatedAt),
+      createdAt: toIsoDate(
+        data.createdAt,
+        doc.createTime?.toDate().toISOString() ?? new Date(0).toISOString(),
+      ),
+      updatedAt: toIsoDate(
+        data.updatedAt,
+        doc.updateTime?.toDate().toISOString() ??
+          doc.createTime?.toDate().toISOString() ??
+          new Date(0).toISOString(),
+      ),
     }
   })
 
@@ -125,8 +134,16 @@ export async function getWorkerPublicProfileData(
       expiryDate: (data.expiryDate as string | undefined) ?? undefined,
       documentUrl: (data.documentUrl as string | undefined) ?? undefined,
       notes: (data.notes as string | undefined) ?? undefined,
-      createdAt: serializeDate(data.createdAt),
-      updatedAt: serializeDate(data.updatedAt),
+      createdAt: toIsoDate(
+        data.createdAt,
+        doc.createTime?.toDate().toISOString() ?? new Date(0).toISOString(),
+      ),
+      updatedAt: toIsoDate(
+        data.updatedAt,
+        doc.updateTime?.toDate().toISOString() ??
+          doc.createTime?.toDate().toISOString() ??
+          new Date(0).toISOString(),
+      ),
     }
   })
 
@@ -134,7 +151,12 @@ export async function getWorkerPublicProfileData(
     ? ({
         id: reviewAggDoc.id,
         ...(reviewAggDoc.data() as Omit<ReviewAggregates, 'id'>),
-        updatedAt: serializeDate(reviewAggDoc.data()?.updatedAt),
+        updatedAt: toIsoDate(
+          reviewAggDoc.data()?.updatedAt,
+          reviewAggDoc.updateTime?.toDate().toISOString() ??
+            reviewAggDoc.createTime?.toDate().toISOString() ??
+            new Date(0).toISOString(),
+        ),
       } satisfies ReviewAggregates)
     : null
 

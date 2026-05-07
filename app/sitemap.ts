@@ -3,19 +3,10 @@ import { getAllPosts } from '@/lib/blog/posts'
 import { adminDb } from '@/lib/firebase-admin'
 import { absoluteUrl } from '@/lib/seo/config'
 import { LOCATIONS, SERVICES } from '@/lib/seo/servicesData'
+import { toIsoDate } from '@/lib/utils/dateSerialization'
 import { AU_CITIES } from '@/lib/utils'
 
 const now = new Date().toISOString()
-
-function asIsoDate(value: unknown) {
-  if (!value) return now
-  if (typeof value === 'string') return value
-  if (value instanceof Date) return value.toISOString()
-  if (typeof value === 'object' && value !== null && 'toDate' in value && typeof value.toDate === 'function') {
-    return value.toDate().toISOString()
-  }
-  return now
-}
 
 function staticEntry(
   path: string,
@@ -37,7 +28,12 @@ async function getWorkerEntries(): Promise<MetadataRoute.Sitemap> {
       const data = doc.data()
       return {
         url: absoluteUrl(`/workers/${doc.id}`),
-        lastModified: asIsoDate(data.updatedAt ?? data.createdAt),
+        lastModified: toIsoDate(
+          data.updatedAt ?? data.createdAt,
+          doc.updateTime?.toDate().toISOString() ??
+            doc.createTime?.toDate().toISOString() ??
+            now,
+        ),
         changeFrequency: 'weekly',
         priority: 0.7,
       }

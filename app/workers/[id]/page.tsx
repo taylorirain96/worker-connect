@@ -65,6 +65,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const title = titleBits.join(' | ')
   const description = buildWorkerDescription(profileData)
   const canonical = absoluteUrl(`/workers/${worker.uid}`)
+  const hasIndexableContent = Boolean(
+    worker.bio ||
+      worker.skills?.length ||
+      profileData.portfolio.length ||
+      profileData.servicePackages.length ||
+      reviewAgg?.totalReviews ||
+      worker.completedJobs,
+  )
 
   return {
     title,
@@ -90,9 +98,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description,
       images: worker.photoURL ? [worker.photoURL] : [`${SITE_URL}/opengraph-image`],
     },
-    robots: reviewAgg?.totalReviews === 0 && !worker.bio
-      ? { index: false, follow: true }
-      : undefined,
+    robots: hasIndexableContent ? undefined : { index: false, follow: true },
   }
 }
 

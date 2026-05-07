@@ -146,7 +146,7 @@ export async function sendPaymentReleasedEmail(opts: {
     <p style="color:#94a3b8;line-height:1.6;margin:0 0 20px;">Ka pai, ${workerName}! The payment for your completed job has been released from escrow. Here's your breakdown:</p>
     ${infoTable(`
       ${infoRow('Job', jobTitle)}
-      ${infoRow('Job link', jobUrl)}
+      ${infoRow('Job link', `<a href="${jobUrl}" style="color:#6366f1;">View job details</a>`)}
       ${infoRow('Job total', formatNzd(grossAmount))}
       ${infoRow('QuickTrade fee', `−${formatNzd(commissionAmount)}`)}
       ${infoRow('Your payout', formatNzd(workerAmount))}
@@ -586,7 +586,7 @@ export async function sendJobCompletedWorkerEmail(opts: {
     <p style="color:#94a3b8;line-height:1.6;margin:0 0 20px;">Ka pai, ${workerName}! <strong style="color:#e2e8f0;">${homeownerName}</strong> has marked your job as complete and your payment has been released.</p>
     ${infoTable(`
       ${infoRow('Job', jobTitle)}
-      ${infoRow('Job link', jobUrl)}
+      ${infoRow('Job link', `<a href="${jobUrl}" style="color:#6366f1;">View job details</a>`)}
       ${infoRow('Payment released', formatNzd(paymentAmount))}
     `)}
     ${ctaButton(earningsUrl, 'View Your Earnings →')}

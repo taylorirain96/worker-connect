@@ -5,7 +5,7 @@ interface Props { location: string; workerLocation?: string; matchScore: number 
 
 export default function LocationMatchDisplay({
   location,
-  workerLocation = 'New York, NY',
+  workerLocation,
   matchScore,
 }: Props) {
   const isGood = matchScore >= 70
