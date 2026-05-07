@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { rateLimit } from '@/lib/rateLimit'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,6 +21,13 @@ interface ChatMessage {
 }
 
 export async function POST(request: NextRequest) {
+  if (rateLimit(request, { max: 10, windowMs: 60_000 })) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please wait a moment before trying again.' },
+      { status: 429 }
+    )
+  }
+
   try {
     const { messages } = await request.json() as { messages: ChatMessage[] }
 

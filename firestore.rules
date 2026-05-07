@@ -1,0 +1,127 @@
+rules_version = '2';
+
+// NOTE: Rate limiting is not natively supported in Firestore security rules.
+// API-level rate limiting is already in place via lib/rateLimit.ts (sliding
+// window, in-memory, 10 req/min for AI routes, 20 req/min for Stripe routes).
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Users ────────────────────────────────────────────────────────────────
+    // • Any authenticated user can read another user's profile (worker browsing).
+    // • Only the owner can write their own document.
+    // • Admin SDK (server-side) bypasses these rules automatically.
+    // • verificationLevel field can be used to prioritise verified workers in
+    //   queries — higher values indicate stronger identity verification.
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // ── Jobs ─────────────────────────────────────────────────────────────────
+    // • Any authenticated user can read and create jobs.
+    // • Only the job owner (postedBy) OR the assigned worker can update.
+    // • Only the job owner can delete, and only while the job is still 'open'.
+    match /jobs/{jobId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null
+        && (resource.data.postedBy == request.auth.uid
+            || resource.data.assignedTo == request.auth.uid);
+      allow delete: if request.auth != null
+        && resource.data.postedBy == request.auth.uid
+        && resource.data.status == 'open';
+    }
+
+    // ── Quotes ───────────────────────────────────────────────────────────────
+    // • The job owner OR the quote author can read a quote.
+    // • Only authenticated workers (role == 'worker' or 'tradie') can create.
+    // • Only the quote author can update their own quote.
+    // • Only the quote author can delete, and only while not yet accepted.
+    match /quotes/{quoteId} {
+      allow read: if request.auth != null
+        && (resource.data.workerId == request.auth.uid
+            || resource.data.employerId == request.auth.uid);
+      allow create: if request.auth != null
+        && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'worker'
+            || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'tradie');
+      allow update: if request.auth != null
+        && resource.data.workerId == request.auth.uid;
+      allow delete: if request.auth != null
+        && resource.data.workerId == request.auth.uid
+        && resource.data.status != 'accepted';
+    }
+
+    // ── Conversations (messaging) ─────────────────────────────────────────────
+    // Only participants listed in the conversation document can read or write.
+    match /conversations/{conversationId} {
+      allow create: if request.auth != null
+        && request.auth.uid in request.resource.data.participants;
+      allow read, update, delete: if request.auth != null
+        && request.auth.uid in resource.data.participants;
+    }
+
+    match /conversations/{conversationId}/messages/{messageId} {
+      allow read, write: if request.auth != null
+        && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants;
+    }
+
+    // ── Reviews ──────────────────────────────────────────────────────────────
+    // • Anyone (including unauthenticated visitors) can read reviews — public.
+    // • Authenticated users can create a review only for a completed job.
+    // • Only the review author can update or delete their own review.
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && get(/databases/$(database)/documents/jobs/$(request.resource.data.jobId)).data.status == 'completed';
+      allow update, delete: if request.auth != null
+        && resource.data.reviewerId == request.auth.uid;
+    }
+
+    // ── Payments ─────────────────────────────────────────────────────────────
+    // All writes are handled exclusively by server-side code using the Admin
+    // SDK (which bypasses security rules) — no client-side writes are permitted.
+    // Only the payer or payee can read their own payment records.
+    match /payments/{paymentId} {
+      allow create, update, delete: if false;
+      allow read: if request.auth != null
+        && (resource.data.payerId == request.auth.uid
+            || resource.data.payeeId == request.auth.uid
+            || resource.data.workerId == request.auth.uid
+            || resource.data.employerId == request.auth.uid);
+    }
+
+    // ── Escrow ───────────────────────────────────────────────────────────────
+    // Mirrors payments: server-side writes only; payer/payee can read.
+    match /escrow/{escrowId} {
+      allow create, update, delete: if false;
+      allow read: if request.auth != null
+        && (resource.data.payerId == request.auth.uid
+            || resource.data.payeeId == request.auth.uid
+            || resource.data.workerId == request.auth.uid
+            || resource.data.employerId == request.auth.uid);
+    }
+
+    // ── Referrals ────────────────────────────────────────────────────────────
+    // All writes are server-side only (Admin SDK).
+    // Only the referrer or the referred user can read their referral record.
+    match /referrals/{referralId} {
+      allow create, update, delete: if false;
+      allow read: if request.auth != null
+        && (resource.data.referrerId == request.auth.uid
+            || resource.data.referredUserId == request.auth.uid);
+    }
+
+    // ── Notifications ────────────────────────────────────────────────────────
+    // Only the notification owner can read or write their notifications.
+    // Creation via client is also permitted so real-time listeners work;
+    // server-side Admin SDK handles bulk creation and bypasses these rules.
+    match /notifications/{notificationId} {
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid;
+      allow read, update, delete: if request.auth != null
+        && resource.data.userId == request.auth.uid;
+    }
+
+  }
+}

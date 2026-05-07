@@ -164,7 +164,7 @@ export async function send1099ToWorker(form1099Id: string): Promise<void> {
     '',
     `Please find your ${form.year} Form 1099-NEC from ${BUSINESS_NAME} attached.`,
     '',
-    `Nonemployee Compensation (Box 1): $${form.nonemployeeCompensation.toFixed(2)}`,
+    `Nonemployee Compensation (Box 1): $${form.boxNC2.toFixed(2)}`,
     `Payer EIN: ${BUSINESS_EIN || 'On file with ' + BUSINESS_NAME}`,
     '',
     'Please consult a tax professional if you have questions about filing.',
@@ -176,7 +176,7 @@ export async function send1099ToWorker(form1099Id: string): Promise<void> {
     <p>Hi ${form.workerName},</p>
     <p>Please find your ${form.year} Form 1099-NEC from <strong>${BUSINESS_NAME}</strong> attached.</p>
     <table style="border-collapse:collapse;margin:16px 0">
-      <tr><td style="padding:4px 12px 4px 0;font-weight:600">Nonemployee Compensation (Box 1)</td><td>$${form.nonemployeeCompensation.toFixed(2)}</td></tr>
+      <tr><td style="padding:4px 12px 4px 0;font-weight:600">Nonemployee Compensation (Box 1)</td><td>$${form.boxNC2.toFixed(2)}</td></tr>
       <tr><td style="padding:4px 12px 4px 0;font-weight:600">Payer EIN</td><td>${BUSINESS_EIN || 'On file with ' + BUSINESS_NAME}</td></tr>
     </table>
     <p>Please consult a tax professional if you have questions about filing.</p>

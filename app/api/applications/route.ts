@@ -3,6 +3,9 @@ import type { NextRequest } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
 import { FieldValue } from 'firebase-admin/firestore'
 import type { Application } from '@/types'
+import { sendEmail } from '@/lib/email/sendEmail'
+import { applicationReceivedTemplate } from '@/lib/email/templates/applicationReceived'
+import { createUnsubscribeToken } from '@/lib/email/unsubscribeToken'
 
 export async function GET() {
   try {
@@ -70,6 +73,35 @@ export async function POST(request: NextRequest) {
       .collection('jobs')
       .doc(jobId)
       .update({ applicantsCount: FieldValue.increment(1) })
+
+    // Send "Application Received" email to employer (non-fatal)
+    try {
+      const employerSnap = await adminDb.collection('users').doc(employerId).get()
+      const employerData = employerSnap.data()
+      const employerEmail = employerData?.email as string | undefined
+      const employerName = (employerData?.displayName ?? employerData?.name ?? 'there') as string
+      const optedOut = employerData?.emailNotifications?.applicationReceived === false ||
+                       employerData?.emailNotifications?.all === false
+
+      if (employerEmail && !optedOut) {
+        const unsubscribeUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/api/email/unsubscribe?token=${encodeURIComponent(createUnsubscribeToken(employerId, 'applicationReceived'))}`
+        const html = applicationReceivedTemplate({
+          employerName,
+          applicantName: workerName ?? 'A worker',
+          coverLetterPreview: coverLetter.slice(0, 120),
+          jobTitle: jobTitle ?? 'your job',
+          applicationId: docRef.id,
+          unsubscribeUrl,
+        })
+        await sendEmail({
+          to: employerEmail,
+          subject: `New application from ${workerName ?? 'a worker'} — ${jobTitle ?? 'your job'}`,
+          html,
+        })
+      }
+    } catch (emailErr) {
+      console.error('Failed to send application-received email:', emailErr)
+    }
 
     return NextResponse.json({ id: docRef.id, ...applicationData, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }, { status: 201 })
   } catch (error) {

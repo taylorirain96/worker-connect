@@ -130,7 +130,8 @@ export async function sendMessage(
   senderName: string,
   content: string,
   senderAvatar?: string,
-  type: Message['type'] = 'text'
+  type: Message['type'] = 'text',
+  imageUrls?: string[]
 ): Promise<string> {
   if (!db) throw new Error('Firestore is not initialized')
 
@@ -143,6 +144,7 @@ export async function sendMessage(
     type,
     read: false,
     ...(senderAvatar && { senderAvatar }),
+    ...(imageUrls && imageUrls.length > 0 && { imageUrls }),
     createdAt: serverTimestamp(),
   }
 

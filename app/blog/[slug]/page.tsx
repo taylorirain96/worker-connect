@@ -38,6 +38,54 @@ const mdxModules: Record<string, () => Promise<{ default: React.ComponentType }>
     import('@/content/blog/how-to-hire-a-plasterer-nz.mdx'),
   'moving-house-nz-checklist': () =>
     import('@/content/blog/moving-house-nz-checklist.mdx'),
+  'how-much-does-a-heat-pump-cost-nz': () =>
+    import('@/content/blog/how-much-does-a-heat-pump-cost-nz.mdx'),
+  'find-licensed-plumber-new-zealand': () =>
+    import('@/content/blog/find-licensed-plumber-new-zealand.mdx'),
+  'best-handyman-services-nz': () =>
+    import('@/content/blog/best-handyman-services-nz.mdx'),
+  'end-of-tenancy-cleaning-nz': () =>
+    import('@/content/blog/end-of-tenancy-cleaning-nz.mdx'),
+  'deck-building-cost-nz': () =>
+    import('@/content/blog/deck-building-cost-nz.mdx'),
+  'hire-painter-new-zealand': () =>
+    import('@/content/blog/hire-painter-new-zealand.mdx'),
+  'lawn-mowing-service-nz': () =>
+    import('@/content/blog/lawn-mowing-service-nz.mdx'),
+  'electrician-call-out-fee-nz': () =>
+    import('@/content/blog/electrician-call-out-fee-nz.mdx'),
+  'home-renovation-cost-nz': () =>
+    import('@/content/blog/home-renovation-cost-nz.mdx'),
+  'how-to-find-a-reliable-electrician-nz': () =>
+    import('@/content/blog/how-to-find-a-reliable-electrician-nz.mdx'),
+  'nz-building-consent-guide-2026': () =>
+    import('@/content/blog/nz-building-consent-guide-2026.mdx'),
+  'best-time-to-renovate-your-nz-home': () =>
+    import('@/content/blog/best-time-to-renovate-your-nz-home.mdx'),
+  'how-much-does-a-bathroom-renovation-cost-nz': () =>
+    import('@/content/blog/how-much-does-a-bathroom-renovation-cost-nz.mdx'),
+  'deck-building-costs-nz-2026': () =>
+    import('@/content/blog/deck-building-costs-nz-2026.mdx'),
+  'find-tradies-tauranga': () =>
+    import('@/content/blog/find-tradies-tauranga.mdx'),
+  'find-tradies-hamilton': () =>
+    import('@/content/blog/find-tradies-hamilton.mdx'),
+  'solar-panel-installation-nz-guide': () =>
+    import('@/content/blog/solar-panel-installation-nz-guide.mdx'),
+  'landlord-maintenance-obligations-nz': () =>
+    import('@/content/blog/landlord-maintenance-obligations-nz.mdx'),
+  'plumbers-palmerston-north': () =>
+    import('@/content/blog/plumbers-palmerston-north.mdx'),
+  'find-tradies-rotorua': () =>
+    import('@/content/blog/find-tradies-rotorua.mdx'),
+  'pest-control-nz-guide': () =>
+    import('@/content/blog/pest-control-nz-guide.mdx'),
+  'home-insulation-nz-guide': () =>
+    import('@/content/blog/home-insulation-nz-guide.mdx'),
+  'how-to-get-multiple-quotes-nz': () =>
+    import('@/content/blog/how-to-get-multiple-quotes-nz.mdx'),
+  'hiring-a-cleaner-nz': () =>
+    import('@/content/blog/hiring-a-cleaner-nz.mdx'),
 }
 
 export function generateStaticParams() {

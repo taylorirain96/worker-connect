@@ -330,7 +330,7 @@ export default function CVSection({ userId, profile, hasAI }: CVSectionProps) {
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">Step 2 — Your work</p>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">What are you best known for or most proud of?</label>
-                  <p className="text-xs text-gray-500 mb-1">Just write naturally — we'll make it sound professional</p>
+                  <p className="text-xs text-gray-500 mb-1">Just write naturally — we&apos;ll make it sound professional</p>
                   <textarea
                     rows={3}
                     value={aiInputs.strengths}

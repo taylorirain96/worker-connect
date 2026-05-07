@@ -1,62 +1,73 @@
-import { NextRequest, NextResponse } from 'next/server'
-import type { SMSNotification } from '@/lib/notifications/sms'
-
 /**
  * POST /api/notifications/sms
- * Sends an SMS via Twilio. Requires TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN,
- * and TWILIO_PHONE_NUMBER environment variables.
+ *
+ * Server-side SMS dispatch endpoint.
+ * Supports callers that provide a direct `to` number or only a `userId`
+ * (the user's phone number is resolved from Firestore).
  */
-export async function POST(req: NextRequest) {
-  const accountSid = process.env.TWILIO_ACCOUNT_SID
-  const authToken = process.env.TWILIO_AUTH_TOKEN
-  const fromNumber = process.env.TWILIO_PHONE_NUMBER
+import { NextRequest, NextResponse } from 'next/server'
+import { sendSMS } from '@/lib/sms'
+import { rateLimit } from '@/lib/rateLimit'
+import { adminDb } from '@/lib/firebase-admin'
 
-  if (!accountSid || !authToken || !fromNumber) {
-    console.error('SMS not configured: missing Twilio environment variables')
-    return NextResponse.json({ error: 'SMS not configured' }, { status: 503 })
-  }
+export const dynamic = 'force-dynamic'
 
-  let body: SMSNotification
-  try {
-    body = await req.json() as SMSNotification
-  } catch {
-    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
-  }
+interface SMSBody {
+  to?: string
+  type?: string
+  message: string
+  userId?: string
+}
 
-  const { to, message } = body
-
-  if (!to || !message) {
-    return NextResponse.json({ error: 'Missing required fields: to, message' }, { status: 400 })
-  }
-
-  // E.164 validation
-  if (!/^\+[1-9]\d{6,14}$/.test(to)) {
-    return NextResponse.json({ error: 'Invalid phone number format. Use E.164 (e.g. +6421234567)' }, { status: 400 })
-  }
-
-  try {
-    const credentials = Buffer.from(`${accountSid}:${authToken}`).toString('base64')
-    const res = await fetch(
-      `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Basic ${credentials}`,
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({ To: to, From: fromNumber, Body: message }).toString(),
-      }
+export async function POST(request: NextRequest) {
+  if (rateLimit(request, { max: 20, windowMs: 60_000 })) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please wait a moment before trying again.' },
+      { status: 429 },
     )
+  }
 
-    if (!res.ok) {
-      const errorData = await res.text()
-      console.error('Twilio SMS error:', errorData)
-      return NextResponse.json({ error: 'Failed to send SMS' }, { status: 502 })
+  try {
+    const body = (await request.json()) as SMSBody
+    const { to, message } = body
+    const userId = request.headers.get('x-user-id') ?? body.userId
+
+    if (!message || (!to && !userId)) {
+      return NextResponse.json(
+        { error: 'Missing required fields: message and either to or userId' },
+        { status: 400 },
+      )
     }
 
-    return NextResponse.json({ success: true }, { status: 200 })
+    if (message.length > 160) {
+      return NextResponse.json(
+        { error: 'Message exceeds 160 characters (one SMS segment)' },
+        { status: 400 },
+      )
+    }
+
+    let recipient = to
+
+    if (!recipient && userId) {
+      const userSnap = await adminDb.collection('users').doc(userId).get()
+      recipient = (userSnap.data()?.phone as string | undefined) ?? undefined
+    }
+
+    if (!recipient) {
+      return NextResponse.json({ success: true, delivered: false, skipped: true }, { status: 200 })
+    }
+
+    if (!/^\+[1-9]\d{1,14}$/.test(recipient)) {
+      return NextResponse.json(
+        { error: 'Invalid phone number format. Use E.164 (e.g. +6421234567)' },
+        { status: 400 },
+      )
+    }
+
+    const sent = await sendSMS({ to: recipient, body: message })
+    return NextResponse.json({ success: true, delivered: sent })
   } catch (err) {
-    console.error('SMS route error:', err)
+    console.error('[POST /api/notifications/sms] error:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

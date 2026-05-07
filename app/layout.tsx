@@ -3,12 +3,20 @@ import './globals.css'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
 import { AuthProvider } from '@/components/providers/AuthProvider'
 import { RoleProvider } from '@/context/RoleContext'
+import { NotificationProvider } from '@/context/NotificationContext'
 import { Toaster } from 'react-hot-toast'
 import dynamic from 'next/dynamic'
 import { GoogleAnalytics } from '@next/third-parties/google'
 import { SITE_URL } from '@/lib/seo/config'
 
 const SupportChatbot = dynamic(() => import('@/components/chat/SupportChatbot'), { ssr: false })
+const PWAInstallPrompt = dynamic(() => import('@/components/PWAInstallPrompt'), { ssr: false })
+const MobileTabBar = dynamic(() => import('@/components/MobileTabBar'), { ssr: false })
+const GA_ID = process.env.NEXT_PUBLIC_GA_ID ?? 'G-VNY47FMBTR'
+const NotificationPrompt = dynamic(
+  () => import('@/components/notifications/NotificationPrompt'),
+  { ssr: false }
+)
 
 export const metadata: Metadata = {
   title: {
@@ -17,7 +25,7 @@ export const metadata: Metadata = {
   },
   description:
     "QuickTrade is New Zealand's trusted marketplace for local tradespeople. Hire verified plumbers, electricians, builders, cleaners and more — fast, safe, and affordable.",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'https://quicktrade-pi.vercel.app'),
+  metadataBase: new URL(SITE_URL),
   alternates: {
     canonical: '/',
   },
@@ -49,6 +57,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en-NZ" suppressHydrationWarning>
       <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#6366f1" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="QuickTrade" />
+        <link rel="apple-touch-icon" href="/icons/icon-152.png" />
+        <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152.png" />
+        <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png" />
         <link rel="preconnect" href="https://firestore.googleapis.com" />
         <link rel="preconnect" href="https://identitytoolkit.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -101,14 +118,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <AuthProvider>
             <RoleProvider>
-              {children}
-              <Toaster position="top-right" />
-              <SupportChatbot />
+              <NotificationProvider>
+                {children}
+                <Toaster position="top-right" />
+                <SupportChatbot />
+                <PWAInstallPrompt />
+                <MobileTabBar />
+                <NotificationPrompt />
+              </NotificationProvider>
             </RoleProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>
-      <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID ?? 'G-VNY47FMBTR'} />
+      <GoogleAnalytics gaId={GA_ID} />
     </html>
   )
 }

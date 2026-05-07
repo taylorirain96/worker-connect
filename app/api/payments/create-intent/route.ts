@@ -5,6 +5,7 @@ import { BUNDLE_PRICING } from '@/types/payment'
 import { getPostingFee } from '@/types'
 import type { BundleType } from '@/types/payment'
 import Stripe from 'stripe'
+import { rateLimit } from '@/lib/rateLimit'
 
 /**
  * POST /api/payments/create-intent
@@ -22,6 +23,13 @@ import Stripe from 'stripe'
 const PLATFORM_FEE_RATE = 0.05
 
 export async function POST(req: NextRequest) {
+  if (rateLimit(req, { max: 20, windowMs: 60_000 })) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please wait a moment before trying again.' },
+      { status: 429 }
+    )
+  }
+
   try {
     const body = await req.json() as {
       amount?: number
@@ -33,7 +41,6 @@ export async function POST(req: NextRequest) {
       paymentMethod?: string
       bundleType?: BundleType
       workerStripeAccountId?: string
-      /** Posting fee mode: provide estimatedBudget instead of amount */
       estimatedBudget?: number
     }
 
@@ -51,9 +58,8 @@ export async function POST(req: NextRequest) {
 
     void paymentMethod
 
-    // ── Posting fee mode ────────────────────────────────────────────────────
     if (estimatedBudget !== undefined) {
-      if (!jobId || !employerId || estimatedBudget === undefined) {
+      if (!jobId || !employerId) {
         return NextResponse.json({ error: 'Missing required fields: jobId, employerId, estimatedBudget' }, { status: 400 })
       }
       const feeInfo = getPostingFee(estimatedBudget)
@@ -64,7 +70,7 @@ export async function POST(req: NextRequest) {
         metadata: {
           type: 'posting_fee',
           jobId,
-          employerId: employerId ?? '',
+          employerId,
           feeSize: feeInfo.size,
           estimatedBudget: String(estimatedBudget),
         },
@@ -72,7 +78,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ...result, feeInfo, currency: 'nzd' })
     }
 
-    // ── Job payment with Connect / bundle ───────────────────────────────────
     if (!jobId || !employerId || !workerId) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
@@ -99,7 +104,6 @@ export async function POST(req: NextRequest) {
       amount = body.amount
     }
 
-    // Use Stripe Connect path when workerStripeAccountId is provided
     if (workerStripeAccountId) {
       const stripeSecretKey = process.env.STRIPE_SECRET_KEY
       if (!stripeSecretKey) {
@@ -130,7 +134,6 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    // Standard path via createPaymentIntent wrapper
     const result = await createPaymentIntent({
       amount,
       currency: currency ?? 'nzd',

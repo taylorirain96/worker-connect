@@ -3,9 +3,12 @@ import { twMerge } from 'tailwind-merge'
 import { format, formatDistanceToNow } from 'date-fns'
 import {
   Droplet, Zap, Hammer, Wind, Home, Trees,
-  Paintbrush, Layers, Sparkles, Package, Wrench,
+  Paintbrush, Layers, Sparkles, Package, Wrench, GraduationCap, BookOpen,
   type LucideIcon,
 } from 'lucide-react'
+import type { Country } from '@/types'
+
+export type { Country }
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -57,6 +60,60 @@ export function getInitials(name: string): string {
     .slice(0, 2)
 }
 
+export const NZ_REGIONS = [
+  'Auckland',
+  'Wellington',
+  'Christchurch',
+  'Hamilton',
+  'Tauranga',
+  'Dunedin',
+  'Palmerston North',
+  'Nelson',
+  'Rotorua',
+  'New Plymouth',
+  'Whanganui',
+  'Blenheim/Marlborough',
+  'Invercargill',
+  'Napier/Hawke\'s Bay',
+  'Queenstown',
+  'Gisborne',
+  'Whangarei',
+  'Timaru',
+] as const
+
+export type NZRegion = (typeof NZ_REGIONS)[number]
+
+export const AU_CITIES = [
+  'Sydney',
+  'Melbourne',
+  'Brisbane',
+  'Perth',
+  'Adelaide',
+  'Gold Coast',
+  'Canberra',
+  'Newcastle',
+  'Wollongong',
+  'Geelong',
+] as const
+
+export type AUCity = (typeof AU_CITIES)[number]
+
+/**
+ * Validates an Australian Business Number (ABN).
+ * Algorithm: subtract 1 from first digit, multiply each digit by its
+ * weighting factor [10,1,3,5,7,9,11,13,15,17,19], sum must be divisible by 89.
+ */
+export function validateABN(abn: string): boolean {
+  const digits = abn.replace(/\s/g, '')
+  if (!/^\d{11}$/.test(digits)) return false
+  const weights = [10, 1, 3, 5, 7, 9, 11, 13, 15, 17, 19]
+  const sum = digits.split('').reduce((acc, d, i) => {
+    const digit = parseInt(d, 10) - (i === 0 ? 1 : 0)
+    return acc + digit * weights[i]
+  }, 0)
+  return sum % 89 === 0
+}
+
 export const JOB_CATEGORIES = [
   { id: 'plumbing', label: 'Plumbing', icon: '🔧', description: 'Pipes, fixtures, water systems', color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' },
   { id: 'electrical', label: 'Electrical', icon: '⚡', description: 'Wiring, panels, lighting', color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' },
@@ -68,6 +125,8 @@ export const JOB_CATEGORIES = [
   { id: 'flooring', label: 'Flooring', icon: '🪵', description: 'Hardwood, tile, carpet', color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' },
   { id: 'cleaning', label: 'Cleaning', icon: '🧹', description: 'Deep clean, regular maintenance', color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' },
   { id: 'moving', label: 'Moving', icon: '📦', description: 'Packing, loading, transport', color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' },
+  { id: 'apprenticeship', label: 'Apprenticeship', icon: '🎓', description: 'Entry-level trade training roles', color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' },
+  { id: 'training', label: 'Training', icon: '📚', description: 'Upskilling, courses & workshops', color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' },
   { id: 'general', label: 'General', icon: '🛠️', description: 'Handyman, misc repairs', color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' },
 ] as const
 
@@ -84,6 +143,8 @@ export const CATEGORY_ICONS: Record<CategoryId, LucideIcon> = {
   flooring: Layers,
   cleaning: Sparkles,
   moving: Package,
+  apprenticeship: GraduationCap,
+  training: BookOpen,
   general: Wrench,
 }
 
@@ -98,6 +159,8 @@ export const CATEGORY_GRADIENTS: Record<CategoryId, string> = {
   flooring: 'from-indigo-600 to-violet-600',
   cleaning: 'from-indigo-600 to-violet-600',
   moving: 'from-indigo-600 to-violet-600',
+  apprenticeship: 'from-indigo-600 to-violet-600',
+  training: 'from-indigo-600 to-violet-600',
   general: 'from-indigo-600 to-violet-600',
 }
 
@@ -111,10 +174,33 @@ export const URGENCY_LABELS: Record<string, { label: string; color: string }> = 
 export const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   open: { label: 'Open', color: 'bg-indigo-500/15 text-indigo-300' },
   in_progress: { label: 'In Progress', color: 'bg-slate-500/20 text-slate-300' },
-  completed: { label: 'Completed', color: 'bg-slate-700/50 text-slate-400' },
+  completed: { label: 'Completed ✓', color: 'bg-green-500/15 text-green-400' },
   cancelled: { label: 'Cancelled', color: 'bg-slate-700/50 text-slate-400' },
   pending: { label: 'Pending', color: 'bg-slate-500/20 text-slate-300' },
   accepted: { label: 'Accepted', color: 'bg-indigo-500/15 text-indigo-300' },
   rejected: { label: 'Rejected', color: 'bg-slate-700/50 text-slate-400' },
   withdrawn: { label: 'Withdrawn', color: 'bg-slate-700/50 text-slate-400' },
+}
+
+/**
+ * Rounds a currency value to 2 decimal places using standard rounding.
+ * Use this for any NZD monetary calculation to ensure consistent precision.
+ */
+export function roundCurrency(value: number): number {
+  return Math.round(value * 100) / 100
+}
+
+/**
+ * Calculates the discount amount for a promo code.
+ * Returns the discount in NZD, capped at the original amount.
+ */
+export function calculatePromoDiscount(
+  discountType: 'percent' | 'fixed',
+  discountValue: number,
+  amount: number,
+): number {
+  if (discountType === 'percent') {
+    return roundCurrency((amount * discountValue) / 100)
+  }
+  return Math.min(discountValue, amount)
 }

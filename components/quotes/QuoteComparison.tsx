@@ -132,7 +132,12 @@ export default function QuoteComparison({ quotes, onAccept, onReject }: QuoteCom
 
                   {/* Worker */}
                   <div>
-                    <p className="font-semibold text-gray-900 dark:text-white">{quote.workerName}</p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="font-semibold text-gray-900 dark:text-white">{quote.workerName}</p>
+                      {quote.workerVerified && (
+                        <CheckCircle className="h-4 w-4 text-blue-500 flex-shrink-0" aria-label="Verified" />
+                      )}
+                    </div>
                     {quote.availability && (
                       <p className="text-xs text-green-600 dark:text-green-400">{quote.availability}</p>
                     )}

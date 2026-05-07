@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { adminDb } from '@/lib/firebase-admin'
+import { sendJobAcceptedEmail } from '@/lib/email/transactional'
+import { sendAdminNotification } from '@/lib/notifications/admin'
+import { sendSMS } from '@/lib/sms'
 
 export const dynamic = 'force-dynamic'
 
@@ -41,9 +45,9 @@ export async function PUT(
     const body = await req.json() as { status?: string }
     const { status } = body
 
-    if (!status || !['accepted', 'rejected', 'expired'].includes(status)) {
+    if (!status || !['accepted', 'rejected', 'expired', 'countered'].includes(status)) {
       return NextResponse.json(
-        { error: 'status must be one of: accepted, rejected, expired' },
+        { error: 'status must be one of: accepted, rejected, expired, countered' },
         { status: 400 }
       )
     }
@@ -54,7 +58,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Quote not found' }, { status: 404 })
     }
 
-    await updateQuoteStatus(params.id, status as 'accepted' | 'rejected' | 'expired')
+    await updateQuoteStatus(params.id, status as 'accepted' | 'rejected' | 'expired' | 'countered')
 
     // If accepted, auto-create invoice
     if (status === 'accepted') {
@@ -101,6 +105,57 @@ export async function PUT(
       } catch (invoiceErr) {
         console.error('Failed to auto-create invoice:', invoiceErr)
         // Non-fatal — quote was still accepted
+      }
+
+      // Send "Job Accepted" email to worker (non-fatal)
+      try {
+        let workerEmail: string | undefined
+        if (adminDb) {
+          const workerSnap = await adminDb.collection('users').doc(quote.workerId).get()
+          if (!workerSnap.exists) {
+            console.warn(`Job-accepted email: worker document not found for id ${quote.workerId}`)
+          } else {
+            workerEmail = workerSnap.data()?.email as string | undefined
+          }
+        }
+        if (workerEmail) {
+          await sendJobAcceptedEmail({
+            workerEmail,
+            workerName: quote.workerName,
+            jobTitle: quote.jobTitle,
+            amount: quote.totalPrice,
+            jobId: quote.jobId,
+          })
+        }
+
+        // Push notification to worker: quote accepted
+        sendAdminNotification({
+          userId: quote.workerId,
+          title: 'Your quote was accepted! 🎉',
+          body: `Your quote for "${quote.jobTitle}" has been accepted. View job details to get started.`,
+          type: 'job_status_change',
+          link: `/jobs/${quote.jobId}`,
+        }).catch((err) => console.warn('[quotes/accept] Failed to send worker push notification:', err))
+
+        // SMS fallback — non-blocking, best-effort
+        Promise.resolve().then(async () => {
+          try {
+            if (adminDb) {
+              const workerSnap = await adminDb.collection('users').doc(quote.workerId).get()
+              const phone = workerSnap.data()?.phone as string | undefined
+              if (phone) {
+                await sendSMS({
+                  to: phone,
+                  body: `QuickTrade: Your quote for "${quote.jobTitle}" was accepted! Log in to confirm. quicktrade.co.nz`,
+                })
+              }
+            }
+          } catch (smsErr) {
+            console.warn('[quotes/accept] SMS fallback failed:', smsErr)
+          }
+        }).catch(() => {})
+      } catch (emailErr) {
+        console.error('Failed to send job-accepted email:', emailErr)
       }
     }
 

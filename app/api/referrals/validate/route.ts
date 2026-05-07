@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const code = searchParams.get('code')
@@ -11,9 +13,8 @@ export async function GET(req: NextRequest) {
 
   try {
     const snap = await adminDb
-      .collection('referralCodes')
-      .where('code', '==', code)
-      .where('active', '==', true)
+      .collection('users')
+      .where('referralCode', '==', code)
       .limit(1)
       .get()
 
@@ -21,10 +22,18 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ valid: false, error: 'Invalid referral code' }, { status: 404 })
     }
 
-    const data = snap.docs[0].data() as { code: string; ownerId?: string; usesRemaining?: number }
-    return NextResponse.json({ valid: true, code: data.code, ownerId: data.ownerId ?? null, usesRemaining: data.usesRemaining ?? null })
+    const doc = snap.docs[0]
+    const data = doc.data() as { displayName?: string; referralCode?: string }
+
+    return NextResponse.json({
+      valid: true,
+      code: data.referralCode ?? code,
+      ownerId: doc.id,
+      referrerName: data.displayName ?? null,
+      usesRemaining: null,
+    })
   } catch (err) {
-    console.error('Referral validate error:', err)
+    console.error('Failed to validate referral code:', err)
     return NextResponse.json({ valid: false, error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -119,9 +119,10 @@ export default function EmployerDashboardPage() {
       setLoadingApplications(false)
       return
     }
+    const userId = user.uid
     async function fetchApplications() {
       try {
-        const apps = await getEmployerApplications(user.uid)
+        const apps = await getEmployerApplications(userId)
         setPendingApplications(apps.filter((a) => a.status === 'pending'))
       } catch {
         setPendingApplications([])
@@ -200,6 +201,12 @@ export default function EmployerDashboardPage() {
               <Button variant="outline" className="flex items-center gap-2">
                 <Settings className="h-4 w-4" />
                 Edit Profile
+              </Button>
+            </Link>
+            <Link href="/dashboard/employer/business-profile">
+              <Button variant="outline" className="flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
+                Business Profile
               </Button>
             </Link>
           </div>
@@ -573,4 +580,3 @@ export default function EmployerDashboardPage() {
     </div>
   )
 }
-

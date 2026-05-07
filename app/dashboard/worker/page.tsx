@@ -10,8 +10,9 @@ import Button from '@/components/ui/Button'
 import RatingStars from '@/components/reviews/RatingStars'
 import Link from 'next/link'
 import {
-  Briefcase, DollarSign, Star, Clock, TrendingUp,
-  CheckCircle, AlertCircle, Search, Settings, FileText, MessageSquare, Send
+  Briefcase, DollarSign, Star, Clock, TrendingUp, BarChart2,
+  CheckCircle, AlertCircle, Search, Settings, FileText, MessageSquare, Send, Sparkles, ShieldCheck,
+  Video, HardHat, Shield, Package, Award, Calendar, CalendarCheck,
 } from 'lucide-react'
 import { formatCurrency, STATUS_LABELS, formatRelativeDate } from '@/lib/utils'
 import { collection, query, where, orderBy, getDocs, type DocumentData } from 'firebase/firestore'
@@ -20,6 +21,9 @@ import type { Application, DetailedReview } from '@/types'
 import { getWorkerReviews, respondToReview } from '@/lib/reviews/index'
 import { getWorkerActivePlacement, type Placement } from '@/lib/placements/firebase'
 import toast from 'react-hot-toast'
+import QuoteStats from '@/components/quotes/QuoteStats'
+import JobsForYouFeed from '@/components/jobs/JobsForYouFeed'
+import AvailabilityToggle from '@/components/workers/AvailabilityToggle'
 
 const MAX_DISPLAYED_REVIEWS = 10
 const MS_PER_DAY = 86_400_000
@@ -34,14 +38,28 @@ interface RecentApplication {
   budgetType: 'fixed' | 'hourly'
 }
 
+function toISO(v: unknown): string {
+  if (v && typeof v === 'object' && 'toDate' in v) {
+    return (v as { toDate: () => Date }).toDate().toISOString()
+  }
+  return typeof v === 'string' ? v : new Date().toISOString()
+}
+
 function docToApplication(id: string, data: DocumentData): Application {
-  const toISO = (v: unknown) =>
-    v && typeof v === 'object' && 'toDate' in v
-      ? (v as { toDate: () => Date }).toDate().toISOString()
-      : typeof v === 'string'
-      ? v
-      : new Date().toISOString()
   return { ...data, id, createdAt: toISO(data.createdAt), updatedAt: toISO(data.updatedAt) } as Application
+}
+
+interface DisputedWorkerJob {
+  id: string
+  title: string
+  lastModified: string
+}
+
+interface AwaitingPaymentJob {
+  id: string
+  title: string
+  budget: number
+  updatedAt: string
 }
 
 export default function WorkerDashboardPage() {
@@ -58,6 +76,8 @@ export default function WorkerDashboardPage() {
   const [placementConfirmed, setPlacementConfirmed] = useState(false)
   const [placementEnded, setPlacementEnded] = useState(false)
   const [confirmingPlacement, setConfirmingPlacement] = useState(false)
+  const [disputedJobs, setDisputedJobs] = useState<DisputedWorkerJob[]>([])
+  const [awaitingPaymentJobs, setAwaitingPaymentJobs] = useState<AwaitingPaymentJob[]>([])
 
   useEffect(() => {
     if (!loading && !user) {
@@ -94,6 +114,61 @@ export default function WorkerDashboardPage() {
       }
     }
     fetchApplications()
+  }, [user])
+
+  // Fetch in_progress jobs assigned to this worker (awaiting payment release)
+  useEffect(() => {
+    if (!user?.uid || !db) return
+    async function fetchAwaitingPayment() {
+      try {
+        const jobsRef = collection(db!, 'jobs')
+        const q = query(
+          jobsRef,
+          where('assignedWorkerId', '==', user!.uid),
+          where('status', '==', 'in_progress'),
+          orderBy('updatedAt', 'desc')
+        )
+        const snapshot = await getDocs(q)
+        setAwaitingPaymentJobs(
+          snapshot.docs.map((d) => ({
+            id: d.id,
+            title: d.data().title ?? 'Untitled job',
+            budget: d.data().budget ?? 0,
+            updatedAt: toISO(d.data().updatedAt ?? d.data().createdAt),
+          }))
+        )
+      } catch {
+        setAwaitingPaymentJobs([])
+      }
+    }
+    fetchAwaitingPayment()
+  }, [user])
+
+  // Fetch disputed jobs where this worker is assigned
+  useEffect(() => {
+    if (!user?.uid || !db) return
+    async function fetchDisputedJobs() {
+      try {
+        const jobsRef = collection(db!, 'jobs')
+        const q = query(
+          jobsRef,
+          where('assignedWorkerId', '==', user!.uid),
+          where('status', '==', 'disputed'),
+          orderBy('updatedAt', 'desc')
+        )
+        const snapshot = await getDocs(q)
+        setDisputedJobs(
+          snapshot.docs.map((d) => ({
+            id: d.id,
+            title: d.data().title ?? 'Untitled job',
+            lastModified: toISO(d.data().updatedAt ?? d.data().createdAt),
+          }))
+        )
+      } catch {
+        setDisputedJobs([])
+      }
+    }
+    fetchDisputedJobs()
   }, [user])
 
   // Fetch reviews received by this worker
@@ -245,9 +320,17 @@ export default function WorkerDashboardPage() {
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                 Welcome back, {profile?.displayName?.split(' ')[0] || user?.displayName?.split(' ')[0] || 'Worker'}! 👋
               </h1>
-              <p className="text-gray-500 dark:text-gray-400 mt-1">
-                {profile?.availability === 'available' ? '🟢 You are visible to employers' : '🔴 Update your availability to get more jobs'}
-              </p>
+              <div className="flex items-center gap-3 mt-1 flex-wrap">
+                <AvailabilityToggle />
+                {(profile?.rating ?? 0) > 0 && (
+                  <div className="flex items-center gap-1 text-sm">
+                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                    <span className="font-semibold text-gray-900 dark:text-white">{profile?.rating?.toFixed(1)}</span>
+                    <span className="text-gray-500 dark:text-gray-400">/ 5</span>
+                    <span className="text-gray-400 dark:text-gray-500 ml-1">({profile?.reviewCount ?? 0} review{(profile?.reviewCount ?? 0) === 1 ? '' : 's'})</span>
+                  </div>
+                )}
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <Link href="/settings/profile">
@@ -256,7 +339,7 @@ export default function WorkerDashboardPage() {
                   Edit Profile
                 </Button>
               </Link>
-              <Link href="/analytics">
+              <Link href="/dashboard/worker/analytics">
                 <Button variant="outline" className="flex items-center gap-2">
                   <TrendingUp className="h-4 w-4" />
                   Analytics
@@ -270,6 +353,27 @@ export default function WorkerDashboardPage() {
               </Link>
             </div>
           </div>
+
+          {/* Low rating warning */}
+          {(profile?.rating ?? 0) > 0 && (profile?.rating ?? 0) < 3.5 && (
+            <div className="mb-6 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl p-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-amber-800 dark:text-amber-300">Your rating is low — tips to improve</p>
+                  <p className="text-sm text-amber-700 dark:text-amber-400 mt-1">
+                    Your current rating is <strong>{profile?.rating?.toFixed(1)}</strong>. Here are some ways to improve it:
+                  </p>
+                  <ul className="mt-2 space-y-1 text-sm text-amber-700 dark:text-amber-400 list-disc list-inside">
+                    <li>Respond to messages promptly and professionally</li>
+                    <li>Arrive on time and complete work to a high standard</li>
+                    <li>Communicate clearly about timelines and any issues</li>
+                    <li>Follow up after the job to ensure the client is happy</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Active Placement Check-in Card */}
           {placement && !placementConfirmed && (
@@ -334,6 +438,81 @@ export default function WorkerDashboardPage() {
             ))}
           </div>
 
+          {/* Jobs For You */}
+          {/* Awaiting Payment Release Banner */}
+          {awaitingPaymentJobs.length > 0 && (
+            <div className="mb-6 space-y-3">
+              <p className="text-base font-semibold text-green-700 dark:text-green-400">💰 Awaiting Payment Release</p>
+              {awaitingPaymentJobs.map((job) => (
+                <div
+                  key={job.id}
+                  className="flex items-center justify-between bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-xl p-4"
+                >
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-white text-sm">{job.title}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {formatCurrency(job.budget)} · Updated {formatRelativeDate(job.updatedAt)}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Link
+                      href={`/dashboard/worker/jobs/${job.id}/milestones`}
+                      className="text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 whitespace-nowrap hover:opacity-80 transition-opacity"
+                    >
+                      Milestones
+                    </Link>
+                    <Link
+                      href={`/jobs/${job.id}`}
+                      className="text-xs font-semibold px-2.5 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 whitespace-nowrap hover:opacity-80 transition-opacity"
+                    >
+                      Request Release →
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Disputed Jobs Banner */}
+          {disputedJobs.length > 0 && (
+            <div className="mb-6 space-y-3">
+              <p className="text-base font-semibold text-orange-700 dark:text-orange-400">⚠️ Jobs Under Dispute</p>
+              {disputedJobs.map((job) => (
+                <Link
+                  key={job.id}
+                  href={`/jobs/${job.id}`}
+                  className="flex items-center justify-between bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-xl p-4 hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors"
+                >
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-white text-sm">{job.title}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{formatRelativeDate(job.lastModified)}</p>
+                  </div>
+                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300 whitespace-nowrap">
+                    Under Review
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
+
+          <Card className="mb-8">
+            <CardHeader>
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-indigo-400" />
+                  <CardTitle>Jobs For You</CardTitle>
+                  <span className="text-xs bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full font-medium">AI-powered</span>
+                </div>
+                <Link href="/jobs?tab=for-you" className="text-sm text-primary-600 hover:text-primary-700">
+                  See all matches →
+                </Link>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <JobsForYouFeed limit={3} />
+            </CardContent>
+          </Card>
+
           <div className="grid lg:grid-cols-3 gap-6">
             {/* Applied Jobs */}
             <div className="lg:col-span-2 space-y-6">
@@ -377,6 +556,9 @@ export default function WorkerDashboardPage() {
                   )}
                 </CardContent>
               </Card>
+
+              {/* Quote Performance Stats */}
+              {user && <QuoteStats workerId={user.uid} />}
 
               {/* Reviews Received */}
               <Card>
@@ -473,6 +655,43 @@ export default function WorkerDashboardPage() {
 
             {/* Profile Completion & Quick Stats */}
             <div className="space-y-4">
+              {/* Video Profile Card */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Video className="h-4 w-4 text-violet-500" />
+                    <CardTitle>Video Profile</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {profile?.videoProfileUrl ? (
+                    <div className="space-y-3">
+                      <video
+                        src={profile.videoProfileUrl}
+                        controls
+                        className="w-full rounded-lg max-h-40 object-cover"
+                        aria-label="Your video profile"
+                      />
+                      <Link href="/dashboard/worker/video-profile">
+                        <button className="w-full text-xs text-center text-indigo-500 hover:text-indigo-400 py-1">
+                          Update video →
+                        </button>
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="text-center py-4">
+                      <Video className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                      <p className="text-sm text-gray-500 mb-3">Add a video to stand out</p>
+                      <Link href="/dashboard/worker/video-profile">
+                        <button className="w-full py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium transition-colors">
+                          Upload Video
+                        </button>
+                      </Link>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
               {/* Profile Completion */}
               <Card>
                 <CardHeader>
@@ -522,6 +741,33 @@ export default function WorkerDashboardPage() {
                 </div>
               </Link>
 
+              {/* My Reviews link */}
+              <Link href="/dashboard/reviews">
+                <div className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
+                  <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <Star className="h-4 w-4 text-yellow-500 fill-yellow-400" />
+                    My Reviews
+                    {(profile?.reviewCount ?? 0) > 0 && (
+                      <span className="ml-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-medium px-1.5 py-0.5 rounded-full">
+                        {profile?.reviewCount}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs text-primary-600">→</span>
+                </div>
+              </Link>
+
+              {/* Analytics link */}
+              <Link href="/dashboard/worker/analytics">
+                <div className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
+                  <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <BarChart2 className="h-4 w-4 text-indigo-500" />
+                    Analytics & Stats
+                  </div>
+                  <span className="text-xs text-primary-600">→</span>
+                </div>
+              </Link>
+
               {/* My Applications link */}
               <Link href="/dashboard/worker/applications">
                 <div className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
@@ -533,6 +779,166 @@ export default function WorkerDashboardPage() {
                         {applications.filter((a) => a.status === 'pending').length} pending
                       </span>
                     )}
+                  </div>
+                  <span className="text-xs text-primary-600">→</span>
+                </div>
+              </Link>
+
+              {/* Bookings link */}
+              <Link href="/dashboard/worker/bookings">
+                <div className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
+                  <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <CalendarCheck className="h-4 w-4 text-indigo-500" />
+                    Booking Requests
+                  </div>
+                  <span className="text-xs text-primary-600">→</span>
+                </div>
+              </Link>
+
+              {/* Availability link */}
+              <Link href="/dashboard/worker/availability">
+                <div className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
+                  <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <Calendar className="h-4 w-4 text-teal-500" />
+                    My Availability
+                  </div>
+                  <span className="text-xs text-primary-600">→</span>
+                </div>
+              </Link>
+
+              {/* Verify Identity link */}
+              <Link href="/dashboard/worker/verify">
+                <div className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
+                  <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <ShieldCheck className="h-4 w-4 text-green-600" />
+                    {profile?.verified ? (
+                      <span className="flex items-center gap-1">
+                        Identity Verified
+                        <span className="text-green-600 font-semibold text-xs">✓</span>
+                      </span>
+                    ) : profile?.verificationStatus === 'pending' ? (
+                      <span className="flex items-center gap-1">
+                        Verification Pending
+                        <span className="ml-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-xs font-medium px-1.5 py-0.5 rounded-full">
+                          Review in progress
+                        </span>
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1">
+                        Verify Your Identity
+                        <span className="ml-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-medium px-1.5 py-0.5 rounded-full">
+                          Get Verified
+                        </span>
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs text-primary-600">→</span>
+                </div>
+              </Link>
+
+              {/* Trade Licences link */}
+              <Link href="/dashboard/worker/trade-licences">
+                <div className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
+                  <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <Award className="h-4 w-4 text-indigo-500" />
+                    Trade Licences
+                  </div>
+                  <span className="text-xs text-primary-600">→</span>
+                </div>
+              </Link>
+
+              {/* Portfolio link */}
+              <Link href="/dashboard/worker/portfolio">
+                <div className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
+                  <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <Send className="h-4 w-4 text-primary-600" />
+                    My Portfolio
+                  </div>
+                  <span className="text-xs text-primary-600">→</span>
+                </div>
+              </Link>
+
+              {/* Service Packages link */}
+              <Link href="/dashboard/worker/service-packages">
+                <div className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
+                  <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <Package className="h-4 w-4 text-green-600" />
+                    Service Packages
+                  </div>
+                  <span className="text-xs text-primary-600">→</span>
+                </div>
+              </Link>
+
+              {/* Video Profile link */}
+              <Link href="/dashboard/worker/video-profile">
+                <div className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
+                  <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <Video className="h-4 w-4 text-violet-500" />
+                    Video Profile
+                    {!profile?.videoProfileUrl && (
+                      <span className="ml-1 bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400 text-xs font-medium px-1.5 py-0.5 rounded-full">
+                        New
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs text-primary-600">→</span>
+                </div>
+              </Link>
+
+              {/* Background Check link */}
+              <Link href="/dashboard/worker/background-check">
+                <div className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
+                  <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <Shield className="h-4 w-4 text-green-600" />
+                    Background Check
+                    {profile?.backgroundCheckStatus === 'approved' && (
+                      <span className="ml-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-medium px-1.5 py-0.5 rounded-full">
+                        ✓ Passed
+                      </span>
+                    )}
+                    {profile?.backgroundCheckStatus === 'pending' && (
+                      <span className="ml-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-xs font-medium px-1.5 py-0.5 rounded-full">
+                        Pending
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs text-primary-600">→</span>
+                </div>
+              </Link>
+
+              {/* WorkSafe Compliance link */}
+              <Link href="/dashboard/worker/worksafe">
+                <div className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
+                  <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <HardHat className="h-4 w-4 text-orange-500" />
+                    WorkSafe Compliance
+                    {profile?.worksafeCompliance?.completedAt && (
+                      <span className="ml-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-xs font-medium px-1.5 py-0.5 rounded-full">
+                        ✓ Compliant
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs text-primary-600">→</span>
+                </div>
+              </Link>
+
+              {/* Quote Templates link */}
+              <Link href="/dashboard/worker/quote-templates">
+                <div className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
+                  <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <FileText className="h-4 w-4 text-sky-500" />
+                    Quote Templates
+                  </div>
+                  <span className="text-xs text-primary-600">→</span>
+                </div>
+              </Link>
+
+              {/* My Plan / Subscription link */}
+              <Link href="/dashboard/worker/subscription">
+                <div className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
+                  <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <Sparkles className="h-4 w-4 text-indigo-500" />
+                    My Plan
                   </div>
                   <span className="text-xs text-primary-600">→</span>
                 </div>

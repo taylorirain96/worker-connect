@@ -30,7 +30,7 @@ import {
   Award,
   CheckCircle,
 } from 'lucide-react'
-import { WORKER_TIERS, getWorkerTier, type EscrowRecord, type JobPaymentRecord } from '@/types'
+import { WORKER_TIERS, getWorkerTier, type EscrowRecord } from '@/types'
 import FeeBreakdown from '@/components/payments/FeeBreakdown'
 
 function formatNZD(amount: number): string {
@@ -44,9 +44,7 @@ function formatNZD(amount: number): string {
 
 // ─── Mock data (replace with real Firestore queries in production) ─────────────
 
-const MOCK_TRANSACTIONS: Array<
-  (EscrowRecord | JobPaymentRecord) & { jobTitle: string }
-> = [
+const MOCK_TRANSACTIONS: Array<EscrowRecord & { jobTitle: string }> = [
   {
     id: 'escrow_1',
     jobId: 'job_1',
@@ -333,6 +331,25 @@ export default function WorkerEarningsPage() {
                       You&apos;re at the top tier — lowest commission rate!
                     </div>
                   )}
+                </CardContent>
+              </Card>
+
+              {/* Payout setup link */}
+              <Card>
+                <CardContent className="p-5 flex items-start gap-4">
+                  <CreditCard className="h-7 w-7 text-indigo-400 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-gray-900 dark:text-white font-semibold mb-1">Payout Setup</p>
+                    <p className="text-gray-500 dark:text-gray-400 text-xs mb-3">
+                      Connect your bank account to receive payments when jobs are completed.
+                    </p>
+                    <Link
+                      href="/dashboard/worker/payout-setup"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-colors"
+                    >
+                      Set up payouts →
+                    </Link>
+                  </div>
                 </CardContent>
               </Card>
 

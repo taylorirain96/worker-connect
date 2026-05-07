@@ -12,8 +12,17 @@ import { getStripe, isStripeConfigured, toCents } from '@/lib/stripe'
 import { getEscrowById, updateEscrowStatus } from '@/lib/services/escrowService'
 import { adminDb } from '@/lib/firebase-admin'
 import { sendNotification } from '@/lib/notificationService'
+import { sendPaymentReleasedEmail } from '@/lib/email/transactional'
+import { rateLimit } from '@/lib/rateLimit'
 
 export async function POST(request: NextRequest) {
+  if (rateLimit(request, { max: 20, windowMs: 60_000 })) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please wait a moment before trying again.' },
+      { status: 429 }
+    )
+  }
+
   try {
     const body = await request.json() as {
       escrowId?: string
@@ -112,6 +121,44 @@ export async function POST(request: NextRequest) {
         amount: escrow.workerAmount,
       },
     })
+
+    // Send "Payment Released" email to worker (non-fatal)
+    try {
+      let workerEmail: string | undefined
+      let workerName: string | undefined
+      let jobTitle: string | undefined
+      if (adminDb) {
+        const [workerSnap, jobSnap] = await Promise.all([
+          adminDb.collection('users').doc(escrow.workerId).get(),
+          adminDb.collection('jobs').doc(escrow.jobId).get(),
+        ])
+        if (!workerSnap.exists) {
+          console.warn(`Payment-released email: worker document not found for id ${escrow.workerId}`)
+        } else {
+          const workerData = workerSnap.data()
+          workerEmail = workerData?.email as string | undefined
+          workerName = (workerData?.displayName ?? workerData?.name) as string | undefined
+        }
+        if (!jobSnap.exists) {
+          console.warn(`Payment-released email: job document not found for id ${escrow.jobId}`)
+        } else {
+          jobTitle = jobSnap.data()?.title as string | undefined
+        }
+      }
+      if (workerEmail) {
+        await sendPaymentReleasedEmail({
+          workerEmail,
+          workerName: workerName ?? 'there',
+          jobTitle: jobTitle ?? `Job #${escrow.jobId.slice(-6)}`,
+          grossAmount: escrow.amount,
+          commissionAmount: escrow.commissionAmount,
+          workerAmount: escrow.workerAmount,
+          jobId: escrow.jobId,
+        })
+      }
+    } catch (emailErr) {
+      console.error('Failed to send payment-released email:', emailErr)
+    }
 
     return NextResponse.json({
       success: true,
