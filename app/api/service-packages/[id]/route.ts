@@ -9,10 +9,8 @@ export const dynamic = 'force-dynamic'
  * GET /api/service-packages/[id]
  * Returns a single service package by ID.
  */
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(_req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     if (!adminDb) return NextResponse.json({ error: 'Database not available' }, { status: 503 })
 
@@ -33,10 +31,8 @@ export async function GET(
  * Updates a service package. Only the owning worker may update it.
  * Header: x-user-id
  */
-export async function PUT(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   if (rateLimit(req, { max: 20, windowMs: 60_000 })) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
   }
@@ -78,10 +74,8 @@ export async function PUT(
  * Deletes a service package. Only the owning worker may delete it.
  * Header: x-user-id
  */
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const workerId = req.headers.get('x-user-id')
     if (!workerId) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })

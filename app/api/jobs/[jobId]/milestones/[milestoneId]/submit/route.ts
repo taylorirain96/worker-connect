@@ -13,8 +13,9 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { jobId: string; milestoneId: string } }
+  props: { params: Promise<{ jobId: string; milestoneId: string }> }
 ) {
+  const params = await props.params;
   const { jobId, milestoneId } = params
   const userId = req.headers.get('x-user-id')
   if (!userId) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })

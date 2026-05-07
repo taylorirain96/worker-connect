@@ -4,17 +4,22 @@ Last validated: 2026-05-07
 
 ## Lint / Build warnings
 
-- `app/dashboard/jobseeker/profile/page.tsx:360` — `@next/next/no-img-element`
-- `app/dashboard/jobseeker/profile/page.tsx:685` — `@next/next/no-img-element`
+_None_ — lint and build both pass cleanly on Next.js 15.5.18.
 
 ## Dependency / maintenance concerns
 
 - `npm ci` reports deprecated transitive packages (`eslint@8`, `glob@7`, `rimraf@3`, others).
-- `npm ci` reports 25 vulnerabilities in the dependency tree (`8 low`, `11 moderate`, `5 high`, `1 critical`).
-- Dependabot is now configured (`.github/dependabot.yml`) and will automatically open PRs for these.
+- 21 vulnerabilities remain in the dependency tree (`8 low`, `12 moderate`, `1 high`).
+  - The 1 **critical** `protobufjs` vulnerability was resolved via `npm audit fix`.
+  - `next` was upgraded all the way to **15.5.18** — all Next.js CVEs are now patched (DoS, SSRF, cache poisoning, image injection, HTTP smuggling, deserialization).
+  - `@tootallnate/once` / `firebase-admin` transitive vulnerability requires downgrading `firebase-admin` to v10 (breaking change); deferred.
+  - `undici` / `firebase` transitive vulnerabilities require downgrading `firebase` to v12.13.0 (breaking change); deferred.
+  - `postcss` bundled inside `next/node_modules/postcss` — advisory may be stale; Next.js 15.5.18 is fully patched per the advisory database.
+  - Dependabot is configured (`.github/dependabot.yml`) and will automatically open PRs for these.
 
 ## Notes
 
 - `npm run lint` and `npm run build` both pass.
-- Follow-up should prioritize moving to a patched Next.js version and re-running full regression checks.
 - NZ Licence Verification currently uses pattern-matching only (not a live MBIE API call). Real MBIE integration can replace `app/api/worker-trade-licences/verify/route.ts` when the public register API becomes available.
+- Business verification stubs (`/api/business/verify/*`) use simulated responses — real integrations (Checkr, insurance providers, state licensing DB) are deferred.
+- `/services/[service]` and city/region pages use mock `aggregateRating` data — can be replaced with real per-service review aggregation once volume exists.

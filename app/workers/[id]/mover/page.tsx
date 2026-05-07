@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, use } from 'react';
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import Navbar from '@/components/layout/Navbar'
@@ -15,7 +15,8 @@ const MOCK_LEADERBOARD: MoverLeaderboardEntry[] = [
   { workerId: '3', name: 'Sam Chen', targetRelocationCity: 'Chicago', relocationSuccessRate: 87, completionRate: 94, rank: 3 },
 ]
 
-export default function MoverModePage({ params }: { params: { id: string } }) {
+export default function MoverModePage(props: { params: Promise<{ id: string }> }) {
+  const params = use(props.params);
   const [settings, setSettings] = useState<MoverSettings | null>(null)
   const [leaderboard, setLeaderboard] = useState<MoverLeaderboardEntry[]>([])
   const [opportunities, setOpportunities] = useState<MoverOpportunity[]>([])

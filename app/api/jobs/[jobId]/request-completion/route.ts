@@ -21,10 +21,8 @@ const FORTY_EIGHT_HOURS_MS = 48 * 60 * 60 * 1000
 
 export const dynamic = 'force-dynamic'
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { jobId: string } }
-) {
+export async function POST(request: NextRequest, props: { params: Promise<{ jobId: string }> }) {
+  const params = await props.params;
   if (rateLimit(request, { max: 10, windowMs: 60_000 })) {
     return NextResponse.json(
       { error: 'Too many requests. Please wait a moment before trying again.' },

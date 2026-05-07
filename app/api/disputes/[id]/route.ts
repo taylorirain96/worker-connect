@@ -113,6 +113,6 @@ export async function PATCH(
   request: Request,
   context: { params: Promise<{ id: string }> }
 ) {
-  return PUT(request, context)
+  return PUT(request, context);
 }
 

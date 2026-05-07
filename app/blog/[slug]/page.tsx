@@ -8,7 +8,7 @@ import { getAllPosts, getPostBySlug } from '@/lib/blog/posts'
 import { SITE_URL } from '@/lib/seo/config'
 
 interface Props {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }
 
 const mdxModules: Record<string, () => Promise<{ default: React.ComponentType }>> = {
@@ -92,7 +92,8 @@ export function generateStaticParams() {
   return getAllPosts().map((post) => ({ slug: post.slug }))
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const params = await props.params;
   const post = getPostBySlug(params.slug)
   if (!post) return {}
   return {
@@ -109,7 +110,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default async function BlogPostPage({ params }: Props) {
+export default async function BlogPostPage(props: Props) {
+  const params = await props.params;
   const post = getPostBySlug(params.slug)
   if (!post) notFound()
 

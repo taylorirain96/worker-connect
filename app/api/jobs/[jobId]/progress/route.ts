@@ -11,10 +11,8 @@ export const dynamic = 'force-dynamic'
 
 // ─── GET ──────────────────────────────────────────────────────────────────────
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: { jobId: string } }
-) {
+export async function GET(_req: NextRequest, props: { params: Promise<{ jobId: string }> }) {
+  const params = await props.params;
   const { jobId } = params
   if (!adminDb) return NextResponse.json({ error: 'Database not available' }, { status: 503 })
 
@@ -39,10 +37,8 @@ export async function GET(
 
 // ─── POST ─────────────────────────────────────────────────────────────────────
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: { jobId: string } }
-) {
+export async function POST(req: NextRequest, props: { params: Promise<{ jobId: string }> }) {
+  const params = await props.params;
   const { jobId } = params
   const userId = req.headers.get('x-user-id')
   if (!userId) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
