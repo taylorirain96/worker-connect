@@ -1,5 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
+import { rateLimit } from '@/lib/rateLimit'
+
+function isValidVideoUrl(value: string): boolean {
+  if (value.length > 2_000) return false
+  try {
+    const url = new URL(value)
+    if (url.protocol !== 'https:') return false
+    return true
+  } catch {
+    return false
+  }
+}
 
 export async function POST(req: NextRequest) {
   const uid = req.headers.get('x-user-id')
@@ -8,9 +20,16 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    if (rateLimit(req, { max: 20, windowMs: 60_000 })) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+    }
+
     const { videoUrl } = await req.json()
     if (!videoUrl || typeof videoUrl !== 'string') {
       return NextResponse.json({ error: 'videoUrl is required' }, { status: 400 })
+    }
+    if (!isValidVideoUrl(videoUrl)) {
+      return NextResponse.json({ error: 'Invalid video URL' }, { status: 400 })
     }
 
     await adminDb.collection('users').doc(uid).update({
