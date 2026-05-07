@@ -1,263 +1,197 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
-import {
-  ShieldCheck, AlertTriangle, CheckCircle, ExternalLink,
-  HardHat, FileText, Phone, BookOpen, ChevronDown, ChevronUp,
-} from 'lucide-react'
+import { useAuth } from '@/components/providers/AuthProvider'
+import { HardHat, CheckCircle, Circle, ExternalLink, Save } from 'lucide-react'
+import toast from 'react-hot-toast'
 import Link from 'next/link'
 
-const CHECKLIST_ITEMS = [
+const CHECKLIST = [
   {
-    category: 'Personal Protective Equipment (PPE)',
-    items: [
-      { id: 'ppe1', label: 'Hard hat (when working in construction zones or overhead hazards)' },
-      { id: 'ppe2', label: 'Hi-visibility vest (required on roadsides and many sites)' },
-      { id: 'ppe3', label: 'Safety boots with steel toecap' },
-      { id: 'ppe4', label: 'Ear protection when using loud equipment' },
-      { id: 'ppe5', label: 'Eye protection (safety glasses or goggles)' },
-      { id: 'ppe6', label: 'Gloves appropriate to the task' },
-    ],
+    key: 'inductionComplete' as const,
+    label: 'Site Induction Complete',
+    description: 'You have completed a site-specific health & safety induction.',
   },
   {
-    category: 'Health & Safety Plan',
-    items: [
-      { id: 'plan1', label: 'Site-specific Safety Plan (SSSP) completed for each new job site' },
-      { id: 'plan2', label: 'Hazard and Risk Register maintained and reviewed' },
-      { id: 'plan3', label: 'Emergency evacuation procedures documented and communicated' },
-      { id: 'plan4', label: 'First aid kit available on site at all times' },
-      { id: 'plan5', label: 'Incident reporting procedure known to all workers' },
-    ],
+    key: 'ppeConfirmed' as const,
+    label: 'PPE Requirements Confirmed',
+    description: 'You have confirmed the required personal protective equipment for your role.',
   },
   {
-    category: 'Licences & Certifications',
-    items: [
-      { id: 'cert1', label: 'Trade licence is current and valid (LBP, Electrical, Plumbing, etc.)' },
-      { id: 'cert2', label: 'SiteSafe passport or equivalent (for construction sites)' },
-      { id: 'cert3', label: 'First Aid Certificate (current within 3 years)' },
-      { id: 'cert4', label: 'Working at Heights training (if applicable)' },
-      { id: 'cert5', label: 'Forklift or Elevated Work Platform (EWP) certificate (if applicable)' },
-    ],
+    key: 'hazardRegisterViewed' as const,
+    label: 'Hazard Register Reviewed',
+    description: 'You have reviewed the site hazard register and understand identified risks.',
   },
   {
-    category: 'Hazardous Work',
-    items: [
-      { id: 'haz1', label: 'Asbestos awareness training completed (pre-1990 buildings)' },
-      { id: 'haz2', label: 'Confined space entry procedures followed (if applicable)' },
-      { id: 'haz3', label: 'Electrical isolation (lockout/tagout) procedures known' },
-      { id: 'haz4', label: 'Hazardous substances register maintained' },
-      { id: 'haz5', label: 'Safety Data Sheets (SDS) available for all hazardous products' },
-    ],
-  },
-  {
-    category: 'Employer/Contractor Obligations',
-    items: [
-      { id: 'emp1', label: 'All workers have signed an employment agreement or contractor agreement' },
-      { id: 'emp2', label: "ACC Cover Plus or Cover Plus Extra is in place (sole traders must manage their own ACC)" },
-      { id: 'emp3', label: "Workers are covered under the PCBU's (your) health and safety system" },
-      { id: 'emp4', label: 'Regular toolbox meetings conducted' },
-      { id: 'emp5', label: 'Notifiable work events reported to WorkSafe within required timeframes' },
-    ],
+    key: 'safetyPlanUploaded' as const,
+    label: 'Safety Plan Uploaded',
+    description: 'A site-specific safety plan has been reviewed or uploaded.',
   },
 ]
 
-const RESOURCES = [
-  {
-    title: 'WorkSafe NZ',
-    description: 'Official guidance, forms, and regulations for NZ workplaces.',
-    href: 'https://www.worksafe.govt.nz',
-    icon: ShieldCheck,
-  },
-  {
-    title: 'Health and Safety at Work Act 2015',
-    description: 'The primary legislation governing workplace health and safety.',
-    href: 'https://www.legislation.govt.nz/act/public/2015/0070/latest/DLM5976660.html',
-    icon: FileText,
-  },
-  {
-    title: 'SiteSafe Passport',
-    description: 'Industry-recognised health and safety passport for construction workers.',
-    href: 'https://www.sitesafe.org.nz/training/site-safe-passport/',
-    icon: HardHat,
-  },
-  {
-    title: 'ACC for Self-Employed',
-    description: 'Cover Plus and Cover Plus Extra options for sole traders and contractors.',
-    href: 'https://www.acc.co.nz/im-a/business/sole-traders-and-contractors/',
-    icon: BookOpen,
-  },
-  {
-    title: 'WorkSafe Notifiable Events',
-    description: 'Report serious injuries, illnesses, and near misses to WorkSafe.',
-    href: 'https://www.worksafe.govt.nz/notifications/',
-    icon: AlertTriangle,
-  },
-  {
-    title: 'WorkSafe Helpline',
-    description: 'Call 0800 030 040 for WorkSafe advice and guidance.',
-    href: 'tel:0800030040',
-    icon: Phone,
-  },
-]
+type ComplianceKey = 'inductionComplete' | 'ppeConfirmed' | 'hazardRegisterViewed' | 'safetyPlanUploaded'
 
-type CheckState = Record<string, boolean>
+interface ComplianceState {
+  inductionComplete: boolean
+  ppeConfirmed: boolean
+  hazardRegisterViewed: boolean
+  safetyPlanUploaded: boolean
+}
 
-export default function WorkSafePage() {
-  const [checked, setChecked] = useState<CheckState>({})
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({})
+export default function WorkSafeCompliancePage() {
+  const { user, loading } = useAuth()
+  const router = useRouter()
+  const [compliance, setCompliance] = useState<ComplianceState>({
+    inductionComplete: false,
+    ppeConfirmed: false,
+    hazardRegisterViewed: false,
+    safetyPlanUploaded: false,
+  })
+  const [fetching, setFetching] = useState(true)
+  const [saving, setSaving] = useState(false)
 
-  const allItems = CHECKLIST_ITEMS.flatMap((c) => c.items)
-  const totalChecked = allItems.filter((i) => checked[i.id]).length
-  const totalItems = allItems.length
-  const percent = Math.round((totalChecked / totalItems) * 100)
+  useEffect(() => {
+    if (!loading && !user) router.push('/auth/login')
+  }, [loading, user, router])
 
-  function toggle(id: string) {
-    setChecked((prev) => ({ ...prev, [id]: !prev[id] }))
+  useEffect(() => {
+    if (!user) return
+    fetch('/api/worksafe', { headers: { 'x-user-id': user.uid } })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.worksafeCompliance) {
+          setCompliance({
+            inductionComplete: data.worksafeCompliance.inductionComplete ?? false,
+            ppeConfirmed: data.worksafeCompliance.ppeConfirmed ?? false,
+            hazardRegisterViewed: data.worksafeCompliance.hazardRegisterViewed ?? false,
+            safetyPlanUploaded: data.worksafeCompliance.safetyPlanUploaded ?? false,
+          })
+        }
+      })
+      .catch(() => {})
+      .finally(() => setFetching(false))
+  }, [user])
+
+  const toggle = (key: ComplianceKey) => {
+    setCompliance((prev) => ({ ...prev, [key]: !prev[key] }))
   }
 
-  function toggleCategory(cat: string) {
-    setExpanded((prev) => ({ ...prev, [cat]: !prev[cat] }))
+  const handleSave = async () => {
+    if (!user) return
+    setSaving(true)
+    try {
+      const res = await fetch('/api/worksafe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-user-id': user.uid },
+        body: JSON.stringify(compliance),
+      })
+      if (!res.ok) throw new Error('Save failed')
+      toast.success('Compliance status saved!')
+    } catch {
+      toast.error('Could not save. Please try again.')
+    } finally {
+      setSaving(false)
+    }
   }
 
-  const scoreColor =
-    percent >= 80 ? 'text-green-400' : percent >= 50 ? 'text-amber-400' : 'text-red-400'
-  const barColor =
-    percent >= 80 ? 'bg-green-500' : percent >= 50 ? 'bg-amber-500' : 'bg-red-500'
+  const allComplete = Object.values(compliance).every(Boolean)
+
+  if (loading || fetching) {
+    return (
+      <div className="flex flex-col min-h-screen luxury-bg">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="h-8 w-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+        </main>
+        <Footer />
+      </div>
+    )
+  }
+
+  if (!user) return null
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="flex flex-col min-h-screen luxury-bg">
       <Navbar />
-
-      <main className="mx-auto max-w-4xl px-4 py-10">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-4 py-1.5 text-sm text-indigo-300">
-            <ShieldCheck className="h-4 w-4" />
-            WorkSafe NZ Compliance
-          </div>
-          <h1 className="mb-2 text-3xl font-bold text-white">Health &amp; Safety Compliance</h1>
-          <p className="text-slate-400">
-            Use this checklist to make sure you&apos;re meeting your obligations under the Health and Safety at Work
-            Act 2015 (HSWA). This is a guide only — always refer to official WorkSafe NZ guidance for your specific
-            situation.
-          </p>
-        </div>
-
-        {/* Score Card */}
-        <div className="mb-8 rounded-2xl border border-white/5 bg-white/5 p-6">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <p className="text-sm text-slate-400">Compliance Score</p>
-              <p className={`text-4xl font-bold ${scoreColor}`}>{percent}%</p>
-              <p className="text-sm text-slate-400">
-                {totalChecked} / {totalItems} items completed
-              </p>
-            </div>
-            <div className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-white/10">
-              {percent === 100 ? (
-                <CheckCircle className="h-10 w-10 text-green-400" />
-              ) : (
-                <ShieldCheck className={`h-10 w-10 ${scoreColor}`} />
+      <main className="flex-1">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          {/* Header */}
+          <div className="mb-8">
+            <Link href="/dashboard/worker" className="inline-flex items-center gap-1 text-sm text-slate-400 hover:text-white mb-4 transition-colors">
+              ← Back to Dashboard
+            </Link>
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <h1 className="text-2xl font-bold text-white flex items-center gap-3">
+                <HardHat className="h-7 w-7 text-orange-400" />
+                WorkSafe NZ Compliance
+              </h1>
+              {allComplete && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-500/15 border border-orange-500/30 text-orange-300 text-sm font-semibold">
+                  <HardHat className="h-4 w-4" />
+                  Compliant
+                </span>
               )}
             </div>
-          </div>
-          <div className="h-2 w-full rounded-full bg-white/10">
-            <div
-              className={`h-2 rounded-full transition-all duration-500 ${barColor}`}
-              style={{ width: `${percent}%` }}
-            />
-          </div>
-          {percent < 80 && (
-            <div className="mt-4 flex items-start gap-2 rounded-xl bg-amber-500/10 p-3 text-sm text-amber-300">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-              <span>
-                Your score is below 80%. Review the unchecked items and take action — you may have legal obligations
-                under the HSWA.
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* Checklist */}
-        <div className="mb-10 space-y-4">
-          {CHECKLIST_ITEMS.map((category) => {
-            const catChecked = category.items.filter((i) => checked[i.id]).length
-            const isOpen = expanded[category.category] !== false // default open
-            return (
-              <div key={category.category} className="rounded-2xl border border-white/5 bg-white/5">
-                <button
-                  type="button"
-                  onClick={() => toggleCategory(category.category)}
-                  className="flex w-full items-center justify-between px-5 py-4 text-left"
-                >
-                  <div>
-                    <h2 className="font-semibold text-white">{category.category}</h2>
-                    <p className="text-xs text-slate-400">
-                      {catChecked}/{category.items.length} completed
-                    </p>
-                  </div>
-                  {isOpen ? (
-                    <ChevronUp className="h-5 w-5 text-slate-400" />
-                  ) : (
-                    <ChevronDown className="h-5 w-5 text-slate-400" />
-                  )}
-                </button>
-                {isOpen && (
-                  <div className="border-t border-white/5 px-5 py-4 space-y-3">
-                    {category.items.map((item) => (
-                      <label key={item.id} className="flex cursor-pointer items-start gap-3">
-                        <input
-                          type="checkbox"
-                          checked={!!checked[item.id]}
-                          onChange={() => toggle(item.id)}
-                          className="mt-0.5 h-4 w-4 shrink-0 rounded accent-indigo-500"
-                        />
-                        <span className={`text-sm ${checked[item.id] ? 'text-slate-400 line-through' : 'text-slate-300'}`}>
-                          {item.label}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
-
-        {/* Resources */}
-        <div>
-          <h2 className="mb-6 text-xl font-bold text-white">Official Resources</h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {RESOURCES.map(({ title, description, href, icon: Icon }) => (
-              <Link
-                key={title}
-                href={href}
-                target={href.startsWith('http') ? '_blank' : undefined}
-                rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
-                className="group flex flex-col gap-3 rounded-2xl border border-white/5 bg-white/5 p-5 transition hover:border-indigo-500/30 hover:bg-white/10"
+            <p className="text-slate-400 mt-2">
+              Confirm your WorkSafe NZ compliance to show employers you work safely.{' '}
+              <a
+                href="https://www.worksafe.govt.nz"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-0.5"
               >
-                <div className="inline-flex rounded-xl bg-indigo-500/10 p-2.5">
-                  <Icon className="h-5 w-5 text-indigo-400" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-1.5 font-semibold text-white group-hover:text-indigo-300">
-                    {title}
-                    {href.startsWith('http') && <ExternalLink className="h-3.5 w-3.5" />}
+                worksafe.govt.nz <ExternalLink className="h-3 w-3" />
+              </a>
+            </p>
+          </div>
+
+          {/* Checklist */}
+          <div className="space-y-3 mb-8">
+            {CHECKLIST.map((item) => {
+              const checked = compliance[item.key]
+              return (
+                <button
+                  key={item.key}
+                  onClick={() => toggle(item.key)}
+                  className={`w-full flex items-start gap-4 p-5 rounded-xl border text-left transition-all ${
+                    checked
+                      ? 'border-orange-500/30 bg-orange-900/15'
+                      : 'border-slate-700/50 bg-slate-800/50 hover:border-slate-600'
+                  }`}
+                >
+                  {checked ? (
+                    <CheckCircle className="h-6 w-6 text-orange-400 flex-shrink-0 mt-0.5" />
+                  ) : (
+                    <Circle className="h-6 w-6 text-slate-500 flex-shrink-0 mt-0.5" />
+                  )}
+                  <div>
+                    <p className={`font-medium ${checked ? 'text-orange-200' : 'text-slate-300'}`}>
+                      {item.label}
+                    </p>
+                    <p className="text-sm text-slate-500 mt-0.5">{item.description}</p>
                   </div>
-                  <p className="mt-1 text-sm text-slate-400">{description}</p>
-                </div>
-              </Link>
-            ))}
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-sm text-slate-500">
+              {Object.values(compliance).filter(Boolean).length} of {CHECKLIST.length} items confirmed
+            </p>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 disabled:opacity-60 text-white font-semibold text-sm transition-all"
+            >
+              <Save className="h-4 w-4" />
+              {saving ? 'Saving…' : 'Save Compliance Status'}
+            </button>
           </div>
         </div>
-
-        <p className="mt-10 text-center text-xs text-slate-500">
-          This tool is for guidance only and does not constitute legal advice. Always consult official WorkSafe NZ
-          resources and seek professional advice for your specific situation.
-        </p>
       </main>
-
       <Footer />
     </div>
   )

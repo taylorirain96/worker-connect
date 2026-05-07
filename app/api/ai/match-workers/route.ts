@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { jobId, jobTitle, jobDescription, jobCategory, jobLocation } = await request.json()
+    const { jobTitle, jobDescription, jobCategory, jobLocation } = await request.json()
 
     const workersSnap = await adminDb.collection('users')
       .where('role', '==', 'worker')

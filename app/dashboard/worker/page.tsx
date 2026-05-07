@@ -11,7 +11,8 @@ import RatingStars from '@/components/reviews/RatingStars'
 import Link from 'next/link'
 import {
   Briefcase, DollarSign, Star, Clock, TrendingUp, BarChart2,
-  CheckCircle, AlertCircle, Search, Settings, FileText, MessageSquare, Send, Sparkles, ShieldCheck
+  CheckCircle, AlertCircle, Search, Settings, FileText, MessageSquare, Send, Sparkles, ShieldCheck,
+  Video, HardHat, Shield, Package, Award, Calendar, CalendarCheck,
 } from 'lucide-react'
 import { formatCurrency, STATUS_LABELS, formatRelativeDate } from '@/lib/utils'
 import { collection, query, where, orderBy, getDocs, type DocumentData } from 'firebase/firestore'
@@ -22,6 +23,7 @@ import { getWorkerActivePlacement, type Placement } from '@/lib/placements/fireb
 import toast from 'react-hot-toast'
 import QuoteStats from '@/components/quotes/QuoteStats'
 import JobsForYouFeed from '@/components/jobs/JobsForYouFeed'
+import AvailabilityToggle from '@/components/workers/AvailabilityToggle'
 
 const MAX_DISPLAYED_REVIEWS = 10
 const MS_PER_DAY = 86_400_000
@@ -319,9 +321,7 @@ export default function WorkerDashboardPage() {
                 Welcome back, {profile?.displayName?.split(' ')[0] || user?.displayName?.split(' ')[0] || 'Worker'}! 👋
               </h1>
               <div className="flex items-center gap-3 mt-1 flex-wrap">
-                <p className="text-gray-500 dark:text-gray-400">
-                  {profile?.availability === 'available' ? '🟢 You are visible to employers' : '🔴 Update your availability to get more jobs'}
-                </p>
+                <AvailabilityToggle />
                 {(profile?.rating ?? 0) > 0 && (
                   <div className="flex items-center gap-1 text-sm">
                     <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
@@ -444,10 +444,9 @@ export default function WorkerDashboardPage() {
             <div className="mb-6 space-y-3">
               <p className="text-base font-semibold text-green-700 dark:text-green-400">💰 Awaiting Payment Release</p>
               {awaitingPaymentJobs.map((job) => (
-                <Link
+                <div
                   key={job.id}
-                  href={`/jobs/${job.id}`}
-                  className="flex items-center justify-between bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-xl p-4 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors"
+                  className="flex items-center justify-between bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-xl p-4"
                 >
                   <div>
                     <p className="font-semibold text-gray-900 dark:text-white text-sm">{job.title}</p>
@@ -455,10 +454,21 @@ export default function WorkerDashboardPage() {
                       {formatCurrency(job.budget)} · Updated {formatRelativeDate(job.updatedAt)}
                     </p>
                   </div>
-                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 whitespace-nowrap">
-                    Request Release →
-                  </span>
-                </Link>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Link
+                      href={`/dashboard/worker/jobs/${job.id}/milestones`}
+                      className="text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 whitespace-nowrap hover:opacity-80 transition-opacity"
+                    >
+                      Milestones
+                    </Link>
+                    <Link
+                      href={`/jobs/${job.id}`}
+                      className="text-xs font-semibold px-2.5 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 whitespace-nowrap hover:opacity-80 transition-opacity"
+                    >
+                      Request Release →
+                    </Link>
+                  </div>
+                </div>
               ))}
             </div>
           )}
@@ -645,6 +655,43 @@ export default function WorkerDashboardPage() {
 
             {/* Profile Completion & Quick Stats */}
             <div className="space-y-4">
+              {/* Video Profile Card */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Video className="h-4 w-4 text-violet-500" />
+                    <CardTitle>Video Profile</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {profile?.videoProfileUrl ? (
+                    <div className="space-y-3">
+                      <video
+                        src={profile.videoProfileUrl}
+                        controls
+                        className="w-full rounded-lg max-h-40 object-cover"
+                        aria-label="Your video profile"
+                      />
+                      <Link href="/dashboard/worker/video-profile">
+                        <button className="w-full text-xs text-center text-indigo-500 hover:text-indigo-400 py-1">
+                          Update video →
+                        </button>
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="text-center py-4">
+                      <Video className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                      <p className="text-sm text-gray-500 mb-3">Add a video to stand out</p>
+                      <Link href="/dashboard/worker/video-profile">
+                        <button className="w-full py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium transition-colors">
+                          Upload Video
+                        </button>
+                      </Link>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
               {/* Profile Completion */}
               <Card>
                 <CardHeader>
@@ -737,6 +784,28 @@ export default function WorkerDashboardPage() {
                 </div>
               </Link>
 
+              {/* Bookings link */}
+              <Link href="/dashboard/worker/bookings">
+                <div className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
+                  <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <CalendarCheck className="h-4 w-4 text-indigo-500" />
+                    Booking Requests
+                  </div>
+                  <span className="text-xs text-primary-600">→</span>
+                </div>
+              </Link>
+
+              {/* Availability link */}
+              <Link href="/dashboard/worker/availability">
+                <div className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
+                  <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <Calendar className="h-4 w-4 text-teal-500" />
+                    My Availability
+                  </div>
+                  <span className="text-xs text-primary-600">→</span>
+                </div>
+              </Link>
+
               {/* Verify Identity link */}
               <Link href="/dashboard/worker/verify">
                 <div className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
@@ -767,6 +836,17 @@ export default function WorkerDashboardPage() {
                 </div>
               </Link>
 
+              {/* Trade Licences link */}
+              <Link href="/dashboard/worker/trade-licences">
+                <div className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
+                  <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <Award className="h-4 w-4 text-indigo-500" />
+                    Trade Licences
+                  </div>
+                  <span className="text-xs text-primary-600">→</span>
+                </div>
+              </Link>
+
               {/* Portfolio link */}
               <Link href="/dashboard/worker/portfolio">
                 <div className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
@@ -778,23 +858,87 @@ export default function WorkerDashboardPage() {
                 </div>
               </Link>
 
-              {/* WorkSafe Compliance */}
-              <Link href="/dashboard/worker/worksafe">
+              {/* Service Packages link */}
+              <Link href="/dashboard/worker/service-packages">
                 <div className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
                   <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                    <ShieldCheck className="h-4 w-4 text-green-600" />
-                    WorkSafe Compliance
+                    <Package className="h-4 w-4 text-green-600" />
+                    Service Packages
                   </div>
                   <span className="text-xs text-primary-600">→</span>
                 </div>
               </Link>
 
-              {/* Background Check */}
+              {/* Video Profile link */}
+              <Link href="/dashboard/worker/video-profile">
+                <div className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
+                  <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <Video className="h-4 w-4 text-violet-500" />
+                    Video Profile
+                    {!profile?.videoProfileUrl && (
+                      <span className="ml-1 bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400 text-xs font-medium px-1.5 py-0.5 rounded-full">
+                        New
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs text-primary-600">→</span>
+                </div>
+              </Link>
+
+              {/* Background Check link */}
               <Link href="/dashboard/worker/background-check">
                 <div className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
                   <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                    <ShieldCheck className="h-4 w-4 text-indigo-600" />
+                    <Shield className="h-4 w-4 text-green-600" />
                     Background Check
+                    {profile?.backgroundCheckStatus === 'approved' && (
+                      <span className="ml-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-medium px-1.5 py-0.5 rounded-full">
+                        ✓ Passed
+                      </span>
+                    )}
+                    {profile?.backgroundCheckStatus === 'pending' && (
+                      <span className="ml-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-xs font-medium px-1.5 py-0.5 rounded-full">
+                        Pending
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs text-primary-600">→</span>
+                </div>
+              </Link>
+
+              {/* WorkSafe Compliance link */}
+              <Link href="/dashboard/worker/worksafe">
+                <div className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
+                  <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <HardHat className="h-4 w-4 text-orange-500" />
+                    WorkSafe Compliance
+                    {profile?.worksafeCompliance?.completedAt && (
+                      <span className="ml-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-xs font-medium px-1.5 py-0.5 rounded-full">
+                        ✓ Compliant
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs text-primary-600">→</span>
+                </div>
+              </Link>
+
+              {/* Quote Templates link */}
+              <Link href="/dashboard/worker/quote-templates">
+                <div className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
+                  <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <FileText className="h-4 w-4 text-sky-500" />
+                    Quote Templates
+                  </div>
+                  <span className="text-xs text-primary-600">→</span>
+                </div>
+              </Link>
+
+              {/* My Plan / Subscription link */}
+              <Link href="/dashboard/worker/subscription">
+                <div className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
+                  <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <Sparkles className="h-4 w-4 text-indigo-500" />
+                    My Plan
                   </div>
                   <span className="text-xs text-primary-600">→</span>
                 </div>

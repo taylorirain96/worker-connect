@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { Users, Briefcase, DollarSign, Mail, Gift, AlertTriangle,
-  UserPlus, TrendingUp, CheckCircle, Clock } from 'lucide-react'
+  UserPlus, CheckCircle, Clock } from 'lucide-react'
 import Badge from '@/components/ui/Badge'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 

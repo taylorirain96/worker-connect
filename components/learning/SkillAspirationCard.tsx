@@ -49,7 +49,7 @@ export default function SkillAspirationCard({ aspiration, onDelete, onUpdate }: 
       </div>
 
       {aspiration.motivation && (
-        <p className="text-sm text-gray-600 italic">"{aspiration.motivation}"</p>
+        <p className="text-sm text-gray-600 italic">&ldquo;{aspiration.motivation}&rdquo;</p>
       )}
 
       {aspiration.resourcesUsed.length > 0 && (

@@ -1,6 +1,5 @@
 'use client'
 import { useState, useRef } from 'react'
-import Image from 'next/image'
 import Button from '@/components/ui/Button'
 import { Upload, X, Camera } from 'lucide-react'
 import toast from 'react-hot-toast'

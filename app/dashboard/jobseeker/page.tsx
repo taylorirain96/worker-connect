@@ -6,12 +6,10 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
-import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import {
-  Briefcase, Eye, Send, Star, Bookmark, CheckCircle,
-  AlertCircle, Clock, TrendingUp, User, MapPin, DollarSign,
+  Briefcase, Eye, Send, Bookmark, TrendingUp, User, MapPin, DollarSign,
   ChevronRight, Zap, CalendarDays,
 } from 'lucide-react'
 import { formatRelativeDate } from '@/lib/utils'

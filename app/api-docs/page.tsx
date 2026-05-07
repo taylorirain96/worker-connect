@@ -1,213 +1,266 @@
 import type { Metadata } from 'next'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
-import Link from 'next/link'
-import { Key, Code, Shield, ExternalLink, BookOpen } from 'lucide-react'
+import { Code, Terminal, Key, Layers, Users } from 'lucide-react'
+import { SITE_URL } from '@/lib/seo/config'
 
 export const metadata: Metadata = {
-  title: 'API Documentation | QuickTrade Partners',
-  description:
-    'QuickTrade Partner API — integrate NZ trade job listings and worker profiles into your application.',
+  title: 'API Documentation | QuickTrade',
+  description: 'Partner API documentation for QuickTrade. Access open jobs and verified workers programmatically.',
+  alternates: { canonical: `${SITE_URL}/api-docs` },
 }
 
-const BASE_URL = 'https://quicktrade-pi.vercel.app'
+function CodeBlock({ children }: { children: string }) {
+  return (
+    <pre className="bg-slate-950 border border-slate-700/50 rounded-xl p-4 overflow-x-auto text-sm font-mono text-slate-300 leading-relaxed">
+      <code>{children}</code>
+    </pre>
+  )
+}
 
-const ENDPOINTS = [
-  {
-    method: 'GET',
-    path: '/api/jobs',
-    description: 'List open job listings. Supports filtering by category, location, urgency and status.',
-    params: [
-      { name: 'category', type: 'string', optional: true, description: 'Filter by job category (e.g. plumbing)' },
-      { name: 'location', type: 'string', optional: true, description: 'Filter by NZ region or city' },
-      { name: 'urgency', type: 'string', optional: true, description: 'low | medium | high | emergency' },
-      { name: 'page', type: 'number', optional: true, description: 'Page number (default: 1)' },
-      { name: 'limit', type: 'number', optional: true, description: 'Results per page (default: 20, max: 100)' },
-    ],
-    example: `curl "${BASE_URL}/api/jobs?category=plumbing&location=Auckland&limit=10" \\
-  -H "Authorization: Bearer qt_YOUR_API_KEY"`,
-    scope: 'jobs:read',
-  },
-  {
-    method: 'GET',
-    path: '/api/workers',
-    description: 'Search workers by category, location, availability and rating.',
-    params: [
-      { name: 'category', type: 'string', optional: true, description: 'Trade category' },
-      { name: 'location', type: 'string', optional: true, description: 'NZ region or city' },
-      { name: 'available', type: 'boolean', optional: true, description: 'Only show available workers' },
-      { name: 'minRating', type: 'number', optional: true, description: 'Minimum star rating (1–5)' },
-    ],
-    example: `curl "${BASE_URL}/api/workers?category=electrical&location=Wellington" \\
-  -H "Authorization: Bearer qt_YOUR_API_KEY"`,
-    scope: 'workers:read',
-  },
-]
+function EndpointSection({
+  method,
+  path,
+  description,
+  params,
+  curlExample,
+  responseExample,
+}: {
+  method: string
+  path: string
+  description: string
+  params: { name: string; type: string; description: string; required?: boolean }[]
+  curlExample: string
+  responseExample: string
+}) {
+  return (
+    <div className="rounded-xl border border-slate-700/50 bg-slate-900/60 overflow-hidden mb-6">
+      <div className="px-6 py-4 border-b border-slate-700/50 flex items-center gap-3">
+        <span className={`text-xs font-bold px-2.5 py-1 rounded ${
+          method === 'GET' ? 'bg-green-900/40 text-green-300' : 'bg-blue-900/40 text-blue-300'
+        }`}>
+          {method}
+        </span>
+        <code className="text-slate-200 font-mono text-sm">{path}</code>
+      </div>
+      <div className="px-6 py-5 space-y-6">
+        <p className="text-slate-400 text-sm">{description}</p>
 
-const METHOD_COLORS: Record<string, string> = {
-  GET: 'bg-green-500/10 text-green-400 border-green-500/30',
-  POST: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
-  DELETE: 'bg-red-500/10 text-red-400 border-red-500/30',
+        {params.length > 0 && (
+          <div>
+            <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Parameters</h4>
+            <div className="space-y-2">
+              {params.map((p) => (
+                <div key={p.name} className="flex items-start gap-3 text-sm">
+                  <code className="text-indigo-300 font-mono shrink-0">{p.name}</code>
+                  <span className="text-slate-500 text-xs mt-0.5 shrink-0">{p.type}</span>
+                  {p.required && (
+                    <span className="text-red-400 text-xs mt-0.5 shrink-0">required</span>
+                  )}
+                  <span className="text-slate-400">{p.description}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div>
+          <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+            <Terminal className="h-3.5 w-3.5" />
+            Example Request
+          </h4>
+          <CodeBlock>{curlExample}</CodeBlock>
+        </div>
+
+        <div>
+          <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+            <Code className="h-3.5 w-3.5" />
+            Example Response
+          </h4>
+          <CodeBlock>{responseExample}</CodeBlock>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export default function ApiDocsPage() {
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="flex flex-col min-h-screen luxury-bg">
       <Navbar />
-
-      <main className="mx-auto max-w-4xl px-4 py-14">
+      <main className="flex-1">
         {/* Hero */}
-        <div className="mb-12 text-center">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-4 py-2 text-sm text-indigo-300">
-            <BookOpen className="h-4 w-4" />
-            Partner API — Beta
-          </div>
-          <h1 className="mb-4 text-4xl font-bold text-white">QuickTrade API</h1>
-          <p className="mx-auto max-w-xl text-lg text-slate-400">
-            Integrate NZ trade job listings and worker profiles into your platform.
-            Ideal for job boards, CRMs, and trade management software.
-          </p>
-          <div className="mt-6 flex items-center justify-center gap-4">
-            <Link
-              href="/dashboard/settings/api-keys"
-              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-3 font-semibold text-white shadow-lg shadow-indigo-500/20 hover:opacity-90 transition"
-            >
+        <section
+          className="relative py-20 px-4"
+          style={{ background: 'linear-gradient(135deg, #0a0f1e 0%, #111827 60%, #0a0f1e 100%)' }}
+        >
+          <div className="max-w-4xl mx-auto">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 text-sm font-medium mb-6">
               <Key className="h-4 w-4" />
-              Get API Keys
-            </Link>
-            <Link
-              href="mailto:api@workerconnect.co.nz"
-              className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-6 py-3 font-semibold text-white hover:bg-white/10 transition"
-            >
-              <ExternalLink className="h-4 w-4" />
-              Contact Partner Team
-            </Link>
+              Partner API
+            </div>
+            <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4 tracking-tight">
+              QuickTrade{' '}
+              <span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
+                Open API
+              </span>
+            </h1>
+            <p className="text-lg text-slate-400 max-w-2xl mb-8">
+              Integrate QuickTrade job listings and verified worker profiles into your platform.
+              Contact us to obtain a partner API key.
+            </p>
+            <div className="flex items-center gap-4 flex-wrap">
+              <div className="flex items-center gap-2 text-sm text-slate-400">
+                <span className="h-2 w-2 rounded-full bg-green-400" />
+                REST API
+              </div>
+              <div className="flex items-center gap-2 text-sm text-slate-400">
+                <span className="h-2 w-2 rounded-full bg-green-400" />
+                JSON responses
+              </div>
+              <div className="flex items-center gap-2 text-sm text-slate-400">
+                <span className="h-2 w-2 rounded-full bg-green-400" />
+                API key authentication
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div className="max-w-4xl mx-auto px-4 py-12">
+          {/* Authentication */}
+          <div className="mb-10">
+            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+              <Key className="h-5 w-5 text-indigo-400" />
+              Authentication
+            </h2>
+            <div className="rounded-xl border border-slate-700/50 bg-slate-900/60 p-6">
+              <p className="text-slate-400 text-sm mb-4">
+                All partner API endpoints require an <code className="text-indigo-300">x-api-key</code> header.
+                Contact <a href="mailto:support@quicktrade.co.nz" className="text-indigo-400 hover:text-indigo-300">support@quicktrade.co.nz</a> to obtain a key.
+              </p>
+              <CodeBlock>{`# Include in every request:
+x-api-key: your_api_key_here`}</CodeBlock>
+            </div>
+          </div>
+
+          {/* Base URL */}
+          <div className="mb-10">
+            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+              <Layers className="h-5 w-5 text-indigo-400" />
+              Base URL
+            </h2>
+            <CodeBlock>{`${SITE_URL}`}</CodeBlock>
+          </div>
+
+          {/* Endpoints */}
+          <div className="mb-10">
+            <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+              <Code className="h-5 w-5 text-indigo-400" />
+              Endpoints
+            </h2>
+
+            <EndpointSection
+              method="GET"
+              path="/api/partner/jobs"
+              description="Returns a paginated list of open job listings. Jobs are ordered by creation date, newest first."
+              params={[
+                { name: 'page', type: 'integer', description: 'Page number (default: 1)' },
+                { name: 'pageSize', type: 'integer', description: 'Results per page, max 100 (default: 20)' },
+              ]}
+              curlExample={`curl -X GET "${SITE_URL}/api/partner/jobs?page=1&pageSize=10" \\
+  -H "x-api-key: your_api_key_here"`}
+              responseExample={`{
+  "jobs": [
+    {
+      "id": "abc123",
+      "title": "Bathroom Renovation — Plumbing",
+      "description": "Need a licensed plumber for a full bathroom remodel...",
+      "category": "plumbing",
+      "location": "Auckland",
+      "budget": 2500,
+      "budgetType": "fixed",
+      "urgency": "medium",
+      "createdAt": "2025-01-15T08:30:00.000Z",
+      "country": "NZ"
+    }
+  ],
+  "total": 42,
+  "page": 1,
+  "pageSize": 10
+}`}
+            />
+
+            <EndpointSection
+              method="GET"
+              path="/api/partner/workers"
+              description="Returns a paginated list of verified worker profiles. Includes availability, skills, and ratings."
+              params={[
+                { name: 'page', type: 'integer', description: 'Page number (default: 1)' },
+                { name: 'pageSize', type: 'integer', description: 'Results per page, max 100 (default: 20)' },
+              ]}
+              curlExample={`curl -X GET "${SITE_URL}/api/partner/workers?page=1&pageSize=10" \\
+  -H "x-api-key: your_api_key_here"`}
+              responseExample={`{
+  "workers": [
+    {
+      "uid": "worker_uid_here",
+      "displayName": "James Wilson",
+      "location": "Wellington",
+      "skills": ["Plumbing", "Gas Fitting", "Drainage"],
+      "hourlyRate": 95,
+      "rating": 4.9,
+      "reviewCount": 38,
+      "completedJobs": 45,
+      "availability": "available",
+      "country": "NZ"
+    }
+  ],
+  "total": 87,
+  "page": 1,
+  "pageSize": 10
+}`}
+            />
+          </div>
+
+          {/* Error codes */}
+          <div className="mb-10">
+            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+              <Users className="h-5 w-5 text-indigo-400" />
+              Error Codes
+            </h2>
+            <div className="rounded-xl border border-slate-700/50 bg-slate-900/60 overflow-hidden">
+              <div className="divide-y divide-slate-800">
+                {[
+                  { code: 200, label: 'OK', description: 'Request succeeded.' },
+                  { code: 400, label: 'Bad Request', description: 'Invalid parameters.' },
+                  { code: 401, label: 'Unauthorised', description: 'Missing or invalid API key.' },
+                  { code: 500, label: 'Internal Server Error', description: 'Something went wrong on our end.' },
+                ].map(({ code, label, description }) => (
+                  <div key={code} className="flex items-center gap-4 px-6 py-4 text-sm">
+                    <code className={`font-mono font-bold ${code === 200 ? 'text-green-400' : 'text-red-400'}`}>
+                      {code}
+                    </code>
+                    <span className="text-slate-300 font-medium">{label}</span>
+                    <span className="text-slate-500">{description}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Rate limits */}
+          <div className="rounded-xl border border-indigo-500/20 bg-indigo-900/10 p-6">
+            <h3 className="text-sm font-semibold text-indigo-300 mb-2">Rate Limits & Fair Use</h3>
+            <p className="text-sm text-slate-400">
+              Partner API keys are subject to fair use policies. Contact{' '}
+              <a href="mailto:support@quicktrade.co.nz" className="text-indigo-400 hover:text-indigo-300">
+                support@quicktrade.co.nz
+              </a>{' '}
+              if you need higher limits or a dedicated integration agreement.
+            </p>
           </div>
         </div>
-
-        {/* Authentication */}
-        <section className="mb-10 rounded-2xl border border-white/5 bg-white/5 p-6">
-          <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-white">
-            <Shield className="h-5 w-5 text-indigo-400" />
-            Authentication
-          </h2>
-          <p className="mb-4 text-slate-400">
-            All API requests require a bearer token in the <code className="text-indigo-300">Authorization</code> header.
-            Generate keys from your{' '}
-            <Link href="/dashboard/settings/api-keys" className="text-indigo-400 hover:underline">
-              API settings
-            </Link>.
-          </p>
-          <pre className="overflow-x-auto rounded-xl bg-slate-900 p-4 text-sm text-slate-300">
-            <code>{`curl "${BASE_URL}/api/jobs" \\
-  -H "Authorization: Bearer qt_YOUR_API_KEY"`}</code>
-          </pre>
-          <div className="mt-4 rounded-xl bg-amber-500/10 border border-amber-500/20 p-3 text-sm text-amber-300">
-            Keep your API key secret. Do not expose it in client-side code or public repositories.
-          </div>
-        </section>
-
-        {/* Rate limiting */}
-        <section className="mb-10 rounded-2xl border border-white/5 bg-white/5 p-6">
-          <h2 className="mb-3 text-xl font-bold text-white">Rate Limiting</h2>
-          <p className="text-slate-400">
-            Requests are rate-limited to <strong className="text-white">60 requests/minute</strong> per API key.
-            Exceeding this returns a <code className="text-red-400">429 Too Many Requests</code> response.
-          </p>
-        </section>
-
-        {/* Endpoints */}
-        <section className="mb-10">
-          <h2 className="mb-6 flex items-center gap-2 text-xl font-bold text-white">
-            <Code className="h-5 w-5 text-indigo-400" />
-            Endpoints
-          </h2>
-          <div className="space-y-6">
-            {ENDPOINTS.map((ep) => (
-              <div key={ep.path} className="rounded-2xl border border-white/5 bg-white/5 p-6">
-                <div className="mb-3 flex flex-wrap items-center gap-3">
-                  <span className={`rounded-full border px-2.5 py-0.5 text-xs font-bold ${METHOD_COLORS[ep.method] ?? ''}`}>
-                    {ep.method}
-                  </span>
-                  <code className="text-sm font-mono text-white">{ep.path}</code>
-                  <span className="ml-auto rounded-full bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 text-xs text-indigo-300">
-                    Scope: {ep.scope}
-                  </span>
-                </div>
-                <p className="mb-4 text-sm text-slate-400">{ep.description}</p>
-
-                {ep.params.length > 0 && (
-                  <div className="mb-4 overflow-x-auto rounded-xl border border-white/5">
-                    <table className="w-full text-sm">
-                      <thead className="border-b border-white/5 text-xs uppercase tracking-wide text-slate-500">
-                        <tr>
-                          <th className="px-4 py-2.5 text-left">Parameter</th>
-                          <th className="px-4 py-2.5 text-left">Type</th>
-                          <th className="px-4 py-2.5 text-left">Required</th>
-                          <th className="px-4 py-2.5 text-left">Description</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-white/5">
-                        {ep.params.map((p) => (
-                          <tr key={p.name} className="text-slate-300">
-                            <td className="px-4 py-2.5 font-mono text-xs text-indigo-300">{p.name}</td>
-                            <td className="px-4 py-2.5 text-xs text-slate-400">{p.type}</td>
-                            <td className="px-4 py-2.5 text-xs">
-                              {p.optional ? (
-                                <span className="text-slate-500">Optional</span>
-                              ) : (
-                                <span className="text-red-400">Required</span>
-                              )}
-                            </td>
-                            <td className="px-4 py-2.5 text-xs text-slate-400">{p.description}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-
-                <pre className="overflow-x-auto rounded-xl bg-slate-900 p-4 text-xs text-slate-300">
-                  <code>{ep.example}</code>
-                </pre>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Error codes */}
-        <section className="rounded-2xl border border-white/5 bg-white/5 p-6">
-          <h2 className="mb-4 text-xl font-bold text-white">Error Codes</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="border-b border-white/5 text-xs uppercase tracking-wide text-slate-500">
-                <tr>
-                  <th className="px-4 py-2.5 text-left">Code</th>
-                  <th className="px-4 py-2.5 text-left">Meaning</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5 text-slate-300">
-                {[
-                  ['200', 'OK — request succeeded'],
-                  ['201', 'Created — resource created successfully'],
-                  ['400', 'Bad Request — missing or invalid parameters'],
-                  ['401', 'Unauthorised — missing or invalid API key'],
-                  ['403', 'Forbidden — API key lacks required scope'],
-                  ['404', 'Not Found — resource does not exist'],
-                  ['429', 'Too Many Requests — rate limit exceeded'],
-                  ['500', 'Server Error — contact support'],
-                ].map(([code, meaning]) => (
-                  <tr key={code}>
-                    <td className="px-4 py-2.5 font-mono text-xs text-indigo-300">{code}</td>
-                    <td className="px-4 py-2.5 text-xs">{meaning}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
       </main>
-
       <Footer />
     </div>
   )

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import type { Communication, ChatMessage } from '@/types'
+import type { ChatMessage } from '@/types'
 
 interface NegotiationChatProps {
   chatId?: string

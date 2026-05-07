@@ -1,213 +1,190 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { useAuth } from '@/components/providers/AuthProvider'
-import toast from 'react-hot-toast'
-import {
-  ShieldCheck, Clock, CheckCircle, XCircle, AlertTriangle,
-  ExternalLink, User, Calendar,
-} from 'lucide-react'
+import { Shield, ShieldCheck, Clock, XCircle, ExternalLink } from 'lucide-react'
+import { formatDate } from '@/lib/utils'
+import Link from 'next/link'
 
-interface BackgroundCheck {
-  id: string
-  status: 'pending' | 'approved' | 'rejected'
-  submittedAt: string
-  reviewedAt: string | null
-  notes: string | null
-}
+const STEPS = [
+  { label: 'Submit Application', description: 'Apply online via the NZ Police vetting portal.' },
+  { label: 'Police Vetting', description: 'NZ Police review your application (typically 1–3 weeks).' },
+  { label: 'Certificate Issued', description: 'Your vetting certificate is issued and your profile is updated.' },
+]
 
-const STATUS_CONFIG = {
-  pending: {
-    icon: Clock,
-    label: 'Under Review',
-    color: 'text-amber-400',
-    bg: 'bg-amber-500/10 border-amber-500/30',
-    description: 'Your request has been received and is being reviewed by our team. This typically takes 3–5 business days.',
-  },
-  approved: {
-    icon: CheckCircle,
-    label: 'Approved',
-    color: 'text-green-400',
-    bg: 'bg-green-500/10 border-green-500/30',
-    description: 'Your background check has been approved. A verified badge will appear on your public profile.',
-  },
-  rejected: {
-    icon: XCircle,
-    label: 'Not Approved',
-    color: 'text-red-400',
-    bg: 'bg-red-500/10 border-red-500/30',
-    description: 'Your background check was not approved. Please contact support for more information.',
-  },
-}
+type CheckStatus = 'notStarted' | 'pending' | 'approved' | 'rejected'
 
 export default function BackgroundCheckPage() {
-  const { user } = useAuth()
+  const { user, loading } = useAuth()
   const router = useRouter()
-  const [check, setCheck] = useState<BackgroundCheck | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [submitting, setSubmitting] = useState(false)
-  const [form, setForm] = useState({ fullName: '', dateOfBirth: '', consent: false })
+  const [status, setStatus] = useState<CheckStatus>('notStarted')
+  const [expiry, setExpiry] = useState<string | null>(null)
+  const [fetching, setFetching] = useState(true)
 
   useEffect(() => {
-    if (!user) { router.push('/auth/login'); return }
-    fetch('/api/background-checks', { headers: { 'x-user-id': user.uid } })
+    if (!loading && !user) router.push('/auth/login')
+  }, [loading, user, router])
+
+  useEffect(() => {
+    if (!user) return
+    fetch('/api/background-check', { headers: { 'x-user-id': user.uid } })
       .then((r) => r.json())
-      .then((data) => setCheck(data.check))
-      .catch(() => {})
-      .finally(() => setLoading(false))
-  }, [user, router])
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!user || !form.consent) return
-    setSubmitting(true)
-    try {
-      const res = await fetch('/api/background-checks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-user-id': user.uid },
-        body: JSON.stringify(form),
+      .then((data) => {
+        setStatus(data.backgroundCheckStatus ?? 'notStarted')
+        setExpiry(data.backgroundCheckExpiry ?? null)
       })
-      const data = await res.json()
-      if (!res.ok) { toast.error(data.error || 'Submission failed'); return }
-      setCheck(data.check)
-      toast.success('Background check request submitted!')
-    } catch {
-      toast.error('Something went wrong. Please try again.')
-    } finally {
-      setSubmitting(false)
-    }
-  }
+      .catch(() => {})
+      .finally(() => setFetching(false))
+  }, [user])
 
-  if (!user || loading) {
+  if (loading || fetching) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white">
+      <div className="flex flex-col min-h-screen luxury-bg">
         <Navbar />
-        <div className="flex h-64 items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent" />
-        </div>
+        <main className="flex-1 flex items-center justify-center">
+          <div className="h-8 w-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+        </main>
         <Footer />
       </div>
     )
   }
 
+  if (!user) return null
+
+  const currentStep = status === 'notStarted' ? 0 : status === 'pending' ? 1 : status === 'approved' ? 2 : -1
+
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="flex flex-col min-h-screen luxury-bg">
       <Navbar />
-      <main className="mx-auto max-w-2xl px-4 py-10">
-        <div className="mb-8">
-          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-4 py-1.5 text-sm text-indigo-300">
-            <ShieldCheck className="h-4 w-4" />
-            Background Check
+      <main className="flex-1">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          {/* Header */}
+          <div className="mb-8">
+            <Link href="/dashboard/worker" className="inline-flex items-center gap-1 text-sm text-slate-400 hover:text-white mb-4 transition-colors">
+              ← Back to Dashboard
+            </Link>
+            <h1 className="text-2xl font-bold text-white flex items-center gap-3">
+              <Shield className="h-7 w-7 text-green-400" />
+              Background Check
+            </h1>
+            <p className="text-slate-400 mt-2">
+              An NZ Police vetting certificate helps build trust with employers and homeowners.
+            </p>
           </div>
-          <h1 className="mb-2 text-3xl font-bold text-white">Background Check Verification</h1>
-          <p className="text-slate-400">
-            A verified background check badge gives clients extra confidence when hiring you.
-            QuickTrade submits requests on your behalf via the NZ Police vetting service.
-          </p>
-        </div>
 
-        {/* Notice */}
-        <div className="mb-6 flex items-start gap-3 rounded-2xl border border-indigo-500/20 bg-indigo-500/5 p-4 text-sm text-slate-300">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-indigo-400" />
-          <span>
-            NZ Police vetting requests must be submitted by an authorised agency.{' '}
-            <a
-              href="https://www.police.govt.nz/advice-services/businesses-and-organisations/vetting"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-indigo-300 underline hover:text-indigo-200"
-            >
-              Learn more <ExternalLink className="h-3 w-3" />
-            </a>
-          </span>
-        </div>
-
-        {check ? (
-          /* Existing check status */
-          (() => {
-            const cfg = STATUS_CONFIG[check.status]
-            const Icon = cfg.icon
-            return (
-              <div className={`rounded-2xl border p-6 ${cfg.bg}`}>
-                <div className="mb-4 flex items-center gap-3">
-                  <Icon className={`h-8 w-8 ${cfg.color}`} />
-                  <div>
-                    <p className="font-semibold text-white">{cfg.label}</p>
-                    {check.submittedAt && (
-                      <p className="text-xs text-slate-400">
-                        Submitted {new Date(check.submittedAt).toLocaleDateString('en-NZ')}
-                      </p>
+          {/* Status banner */}
+          <div className={`rounded-xl border p-5 mb-8 ${
+            status === 'approved'
+              ? 'bg-green-900/20 border-green-500/30'
+              : status === 'pending'
+              ? 'bg-amber-900/20 border-amber-500/30'
+              : status === 'rejected'
+              ? 'bg-red-900/20 border-red-500/30'
+              : 'bg-slate-800/60 border-slate-700/50'
+          }`}>
+            <div className="flex items-center gap-3">
+              {status === 'approved' && <ShieldCheck className="h-6 w-6 text-green-400 flex-shrink-0" />}
+              {status === 'pending' && <Clock className="h-6 w-6 text-amber-400 flex-shrink-0" />}
+              {status === 'rejected' && <XCircle className="h-6 w-6 text-red-400 flex-shrink-0" />}
+              {status === 'notStarted' && <Shield className="h-6 w-6 text-slate-400 flex-shrink-0" />}
+              <div>
+                {status === 'approved' && (
+                  <>
+                    <p className="font-semibold text-green-300">✓ Background Check Passed</p>
+                    {expiry && (
+                      <p className="text-sm text-green-500 mt-0.5">Valid until {formatDate(expiry)}</p>
                     )}
-                  </div>
-                </div>
-                <p className="text-sm text-slate-300">{cfg.description}</p>
-                {check.notes && (
-                  <div className="mt-4 rounded-xl bg-white/5 p-3 text-sm text-slate-400">
-                    <strong className="text-slate-300">Admin notes:</strong> {check.notes}
-                  </div>
+                  </>
+                )}
+                {status === 'pending' && (
+                  <>
+                    <p className="font-semibold text-amber-300">Application Under Review</p>
+                    <p className="text-sm text-amber-500 mt-0.5">NZ Police are processing your vetting application.</p>
+                  </>
+                )}
+                {status === 'rejected' && (
+                  <>
+                    <p className="font-semibold text-red-300">Application Unsuccessful</p>
+                    <p className="text-sm text-red-500 mt-0.5">Please contact NZ Police for further information.</p>
+                  </>
+                )}
+                {status === 'notStarted' && (
+                  <>
+                    <p className="font-semibold text-slate-300">Not yet applied</p>
+                    <p className="text-sm text-slate-500 mt-0.5">Apply for an NZ Police vetting check to get started.</p>
+                  </>
                 )}
               </div>
-            )
-          })()
-        ) : (
-          /* Request form */
-          <form onSubmit={handleSubmit} className="space-y-5 rounded-2xl border border-white/5 bg-white/5 p-6">
-            <h2 className="font-semibold text-white">Submit a Background Check Request</h2>
-
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-300">
-                <User className="mr-1.5 inline h-4 w-4 text-indigo-400" />
-                Full Legal Name
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="As it appears on your ID"
-                value={form.fullName}
-                onChange={(e) => setForm((f) => ({ ...f, fullName: e.target.value }))}
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
-              />
             </div>
 
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-300">
-                <Calendar className="mr-1.5 inline h-4 w-4 text-indigo-400" />
-                Date of Birth
-              </label>
-              <input
-                type="date"
-                required
-                value={form.dateOfBirth}
-                onChange={(e) => setForm((f) => ({ ...f, dateOfBirth: e.target.value }))}
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-indigo-500 focus:outline-none [color-scheme:dark]"
-              />
+            {status === 'notStarted' && (
+              <a
+                href="https://www.police.govt.nz/advice-services/personal-vetting"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white font-semibold text-sm transition-colors"
+              >
+                Apply for NZ Police Check
+                <ExternalLink className="h-4 w-4" />
+              </a>
+            )}
+          </div>
+
+          {/* 3-step process */}
+          <div className="space-y-4 mb-8">
+            <h2 className="text-lg font-semibold text-white">How it works</h2>
+            <div className="space-y-3">
+              {STEPS.map((step, i) => {
+                const done = i < currentStep
+                const active = i === currentStep
+                return (
+                  <div
+                    key={step.label}
+                    className={`flex items-start gap-4 p-4 rounded-xl border ${
+                      done
+                        ? 'border-green-500/30 bg-green-900/10'
+                        : active
+                        ? 'border-indigo-500/40 bg-indigo-900/20'
+                        : 'border-slate-700/50 bg-slate-800/40'
+                    }`}
+                  >
+                    <div className={`h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${
+                      done ? 'bg-green-600 text-white' : active ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-400'
+                    }`}>
+                      {done ? '✓' : i + 1}
+                    </div>
+                    <div>
+                      <p className={`font-medium ${done ? 'text-green-300' : active ? 'text-white' : 'text-slate-400'}`}>
+                        {step.label}
+                      </p>
+                      <p className="text-sm text-slate-500 mt-0.5">{step.description}</p>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
+          </div>
 
-            <label className="flex cursor-pointer items-start gap-3">
-              <input
-                type="checkbox"
-                required
-                checked={form.consent}
-                onChange={(e) => setForm((f) => ({ ...f, consent: e.target.checked }))}
-                className="mt-0.5 h-4 w-4 shrink-0 rounded accent-indigo-500"
-              />
-              <span className="text-sm text-slate-300">
-                I consent to QuickTrade submitting a NZ Police vetting request on my behalf and sharing the result
-                (pass/fail only) on my public profile.
-              </span>
-            </label>
-
-            <button
-              type="submit"
-              disabled={submitting || !form.consent}
-              className="w-full rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 py-3 font-semibold text-white shadow-lg shadow-indigo-500/20 transition hover:opacity-90 disabled:opacity-50"
-            >
-              {submitting ? 'Submitting…' : 'Submit Request'}
-            </button>
-          </form>
-        )}
+          {/* Reference link */}
+          <div className="rounded-xl border border-slate-700/50 bg-slate-800/40 p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-300">NZ Police Vetting Service</p>
+                <p className="text-xs text-slate-500 mt-0.5">Official information about the vetting process</p>
+              </div>
+              <a
+                href="https://www.police.govt.nz/advice-services/personal-vetting"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-sm text-indigo-400 hover:text-indigo-300 transition-colors"
+              >
+                Visit <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+            </div>
+          </div>
+        </div>
       </main>
       <Footer />
     </div>
