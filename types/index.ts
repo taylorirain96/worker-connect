@@ -46,6 +46,7 @@ export interface UserProfile {
   videoUrl?: string
   /** ABN for Australian employers (11 digits) */
   abn?: string
+
   /** Referral code unique to this user, stored in Firestore */
   referralCode?: string
   /** UID of the user who referred this user */
