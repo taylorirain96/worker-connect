@@ -15,7 +15,6 @@ const nextConfig = {
       { source: '/jobs/post', destination: '/jobs/create', permanent: true },
     ]
   },
-  swcMinify: true,
   images: {
     remotePatterns: [
       {

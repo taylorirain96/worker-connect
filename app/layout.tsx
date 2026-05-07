@@ -5,18 +5,9 @@ import { AuthProvider } from '@/components/providers/AuthProvider'
 import { RoleProvider } from '@/context/RoleContext'
 import { NotificationProvider } from '@/context/NotificationContext'
 import { Toaster } from 'react-hot-toast'
-import dynamic from 'next/dynamic'
 import { GoogleAnalytics } from '@next/third-parties/google'
 import { SITE_URL } from '@/lib/seo/config'
-
-const SupportChatbot = dynamic(() => import('@/components/chat/SupportChatbot'), { ssr: false })
-const PWAInstallPrompt = dynamic(() => import('@/components/PWAInstallPrompt'), { ssr: false })
-const MobileTabBar = dynamic(() => import('@/components/MobileTabBar'), { ssr: false })
-const GA_ID = process.env.NEXT_PUBLIC_GA_ID ?? 'G-VNY47FMBTR'
-const NotificationPrompt = dynamic(
-  () => import('@/components/notifications/NotificationPrompt'),
-  { ssr: false }
-)
+import ClientProviders from './ClientProviders'
 
 export const metadata: Metadata = {
   title: {
@@ -54,6 +45,7 @@ export const metadata: Metadata = {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const GA_ID = process.env.NEXT_PUBLIC_GA_ID ?? 'G-VNY47FMBTR'
   return (
     <html lang="en-NZ" suppressHydrationWarning>
       <head>
@@ -121,10 +113,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <NotificationProvider>
                 {children}
                 <Toaster position="top-right" />
-                <SupportChatbot />
-                <PWAInstallPrompt />
-                <MobileTabBar />
-                <NotificationPrompt />
+                <ClientProviders />
               </NotificationProvider>
             </RoleProvider>
           </AuthProvider>
