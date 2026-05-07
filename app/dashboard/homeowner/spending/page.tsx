@@ -194,7 +194,7 @@ export default function HomeownerSpendingPage() {
                         />
                         <Tooltip
                           formatter={(value) => [
-                            fmtNZD(typeof value === 'number' ? value : 0),
+                            typeof value === 'number' ? fmtNZD(value) : 'N/A',
                             'Spent',
                           ]}
                           contentStyle={{ borderRadius: '8px', fontSize: '13px' }}
@@ -239,7 +239,9 @@ export default function HomeownerSpendingPage() {
                               ))}
                             </Pie>
                             <Tooltip
-                              formatter={(value) => fmtNZD(typeof value === 'number' ? value : 0)}
+                              formatter={(value) =>
+                                typeof value === 'number' ? fmtNZD(value) : 'N/A'
+                              }
                               contentStyle={{ borderRadius: '8px', fontSize: '12px' }}
                             />
                           </PieChart>

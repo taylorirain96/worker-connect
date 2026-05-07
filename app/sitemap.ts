@@ -75,6 +75,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })
   }
 
+  // Keep one representative location per regionSlug for region-level landing pages.
   const uniqueRegions = Array.from(
     new Map(LOCATIONS.map((location) => [location.regionSlug, location])).values(),
   )

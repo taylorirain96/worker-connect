@@ -22,6 +22,7 @@
  *   sendServicePackageBookedHomeownerEmail — sent to homeowner confirming their instant package booking
  */
 import { Resend } from 'resend'
+import { absoluteUrl } from '@/lib/seo/config'
 
 const FROM = process.env.RESEND_FROM_EMAIL ?? 'QuickTrade <hello@quicktrade.co.nz>'
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://quicktrade.co.nz'
@@ -100,7 +101,7 @@ export async function sendJobAcceptedEmail(opts: {
   jobId: string
 }): Promise<void> {
   const { workerEmail, workerName, jobTitle, amount, jobId } = opts
-  const jobUrl = `${APP_URL}/jobs/${jobId}`
+  const jobUrl = absoluteUrl(`/jobs/${jobId}`)
 
   const html = emailWrapper(`
     <h1 style="font-size:24px;font-weight:700;color:#fff;margin:0 0 8px;">Your quote's been accepted! 🎉</h1>
@@ -139,7 +140,7 @@ export async function sendPaymentReleasedEmail(opts: {
 }): Promise<void> {
   const { workerEmail, workerName, jobTitle, grossAmount, commissionAmount, workerAmount, jobId } = opts
   const earningsUrl = `${APP_URL}/dashboard/worker`
-  const jobUrl = `${APP_URL}/jobs/${jobId}`
+  const jobUrl = absoluteUrl(`/jobs/${jobId}`)
 
   const html = emailWrapper(`
     <h1 style="font-size:24px;font-weight:700;color:#fff;margin:0 0 8px;">Payment on its way! 💸</h1>

@@ -57,6 +57,9 @@ export async function GET(
       id: doc.id,
       ...bookingData,
     }
+    if (!booking.workerId || !booking.homeownerId) {
+      return NextResponse.json({ error: 'Booking is missing ownership data' }, { status: 500 })
+    }
 
     // Only the worker or homeowner can view the booking
     if (booking.workerId !== userId && booking.homeownerId !== userId) {

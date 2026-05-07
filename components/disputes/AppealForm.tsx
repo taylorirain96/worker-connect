@@ -3,6 +3,8 @@ import { useState } from 'react'
 import { X, Send, Paperclip, ShieldAlert } from 'lucide-react'
 import toast from 'react-hot-toast'
 
+const RATING_ID_DISPLAY_LENGTH = 8
+
 export default function AppealForm({
   ratingId,
   onClose,
@@ -21,7 +23,9 @@ export default function AppealForm({
     // Simulated API call
     setTimeout(() => {
       setIsSubmitting(false)
-      toast.success(`Appeal submitted for review ${ratingId.slice(0, 8)}`)
+      toast.success(
+        `Appeal submitted for review ${ratingId.slice(0, RATING_ID_DISPLAY_LENGTH)}`,
+      )
       onClose()
     }, 1500)
   }
