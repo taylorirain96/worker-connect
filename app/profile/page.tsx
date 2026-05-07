@@ -11,7 +11,7 @@ import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import toast from 'react-hot-toast'
-import { User, MapPin, DollarSign, FileText } from 'lucide-react'
+import { User, MapPin, DollarSign, FileText, Video } from 'lucide-react'
 
 const profileSchema = z.object({
   displayName: z.string().min(2, 'Name must be at least 2 characters'),
@@ -19,6 +19,7 @@ const profileSchema = z.object({
   location: z.string().optional(),
   phone: z.string().optional(),
   website: z.string().url('Please enter a valid URL').optional().or(z.literal('')),
+  videoUrl: z.string().url('Please enter a valid YouTube or Vimeo URL').optional().or(z.literal('')),
   hourlyRate: z.coerce.number().min(0).optional(),
   skills: z.string().optional(),
   availability: z.enum(['available', 'busy', 'unavailable']).optional(),
@@ -43,6 +44,7 @@ export default function ProfilePage() {
       location: profile?.location || '',
       phone: profile?.phone || '',
       website: profile?.website || '',
+      videoUrl: profile?.videoUrl || '',
       hourlyRate: profile?.hourlyRate || undefined,
       skills: profile?.skills?.join(', ') || '',
       availability: profile?.availability || 'available',
@@ -72,6 +74,7 @@ export default function ProfilePage() {
           location: data.location || '',
           phone: data.phone || '',
           website: data.website || '',
+          videoUrl: data.videoUrl || '',
           skills: data.skills ? data.skills.split(',').map((s) => s.trim()).filter(Boolean) : [],
           availability: data.availability || 'available',
           profileComplete: true,
@@ -182,7 +185,7 @@ export default function ProfilePage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <Input
-                    label="Hourly Rate ($)"
+                    label="Hourly Rate (NZD/hr)"
                     type="number"
                     min="0"
                     placeholder="e.g., 65"
@@ -190,6 +193,16 @@ export default function ProfilePage() {
                     helperText="Your rate per hour"
                     error={errors.hourlyRate?.message}
                     {...register('hourlyRate')}
+                  />
+
+                  <Input
+                    label="Profile Video (YouTube or Vimeo URL)"
+                    type="url"
+                    placeholder="https://youtube.com/watch?v=..."
+                    leftIcon={<Video className="h-4 w-4" />}
+                    helperText="Add a short intro video so clients can see your work"
+                    error={errors.videoUrl?.message}
+                    {...register('videoUrl')}
                   />
 
                   <Input

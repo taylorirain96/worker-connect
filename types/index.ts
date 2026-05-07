@@ -39,6 +39,13 @@ export interface UserProfile {
   employerSubscriptionTier?: 'free' | 'pro' | 'business' | 'enterprise'
   /** Array of worker UIDs this homeowner has favourited */
   favourites?: string[]
+  /** YouTube or Vimeo URL for the worker's intro/profile video */
+  videoUrl?: string
+  /** ABN for Australian employers (11 digits) */
+  abn?: string
+  /** NZ Police vetting result for workers — set by admin after review */
+  backgroundCheckStatus?: 'approved' | 'rejected'
+  backgroundCheckApprovedAt?: string
   /** Referral code unique to this user, stored in Firestore */
   referralCode?: string
   /** UID of the user who referred this user */

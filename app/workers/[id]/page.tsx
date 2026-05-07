@@ -18,6 +18,7 @@ import { getOrCreateConversation } from '@/lib/messaging'
 import toast from 'react-hot-toast'
 import FavouriteButton from '@/components/workers/FavouriteButton'
 import PortfolioGallery from '@/components/portfolio/PortfolioGallery'
+import WorkerVideoEmbed from '@/components/workers/WorkerVideoEmbed'
 
 export default function WorkerProfilePage({ params }: { params: { id: string } }) {
   const router = useRouter()
@@ -257,6 +258,11 @@ export default function WorkerProfilePage({ params }: { params: { id: string } }
                     viewAllHref={portfolio.length > 6 ? `/workers/${params.id}/portfolio` : undefined}
                   />
                 </div>
+              )}
+
+              {/* Profile Video */}
+              {worker.videoUrl && (
+                <WorkerVideoEmbed url={worker.videoUrl} workerName={worker.displayName ?? 'Worker'} />
               )}
 
               {/* Reviews */}

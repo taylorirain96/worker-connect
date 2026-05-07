@@ -71,7 +71,7 @@ export default function ApprenticeshipsPage() {
             </span>
           </h1>
           <p className="mx-auto mb-10 max-w-2xl text-lg text-slate-400">
-            Discover apprenticeship and training opportunities across New Zealand's trades sector.
+            Discover apprenticeship and training opportunities across New Zealand&apos;s trades sector.
             Connect with employers who are ready to invest in your future.
           </p>
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">

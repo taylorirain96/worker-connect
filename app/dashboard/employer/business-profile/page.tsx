@@ -17,6 +17,8 @@ import {
 import Link from 'next/link'
 
 const NZBN_REGEX = /^\d{13}$/
+/** ABN: 11 digits, optionally grouped as "XX XXX XXX XXX" */
+const ABN_REGEX = /^\d{11}$/
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
 const MIME_TO_EXT: Record<string, string> = {
   'image/jpeg': 'jpg',
@@ -41,6 +43,7 @@ const COMPANY_SIZES = [
 interface FormState {
   companyName: string
   nzbn: string
+  abn: string
   companyDescription: string
   companySize: string
   website: string
@@ -56,6 +59,7 @@ export default function BusinessProfilePage() {
   const [form, setForm] = useState<FormState>({
     companyName: '',
     nzbn: '',
+    abn: '',
     companyDescription: '',
     companySize: '',
     website: '',
@@ -85,6 +89,7 @@ export default function BusinessProfilePage() {
           setForm({
             companyName: (data.companyName as string | undefined) ?? '',
             nzbn: (data.nzbn as string | undefined) ?? '',
+            abn: (data.abn as string | undefined) ?? '',
             companyDescription: (data.companyDescription as string | undefined) ?? '',
             companySize: (data.companySize as string | undefined) ?? '',
             website: (data.website as string | undefined) ?? '',
@@ -150,6 +155,12 @@ export default function BusinessProfilePage() {
       return
     }
 
+    // Validate ABN
+    if (form.abn && !ABN_REGEX.test(form.abn)) {
+      toast.error('ABN must be exactly 11 digits (omit spaces)')
+      return
+    }
+
     // Validate website URL
     if (form.website) {
       try {
@@ -165,6 +176,7 @@ export default function BusinessProfilePage() {
       await updateDoc(doc(db, 'users', user.uid), {
         companyName: form.companyName,
         nzbn: form.nzbn,
+        abn: form.abn,
         companyDescription: form.companyDescription,
         companySize: form.companySize,
         website: normaliseWebsite(form.website),
@@ -292,6 +304,27 @@ export default function BusinessProfilePage() {
               {form.nzbn && !NZBN_REGEX.test(form.nzbn) && (
                 <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
                   NZBN must be exactly 13 digits
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                ABN{' '}
+                <span className="text-gray-400 font-normal">(Australian Business Number — 11 digits, AU employers only)</span>
+              </label>
+              <input
+                type="text"
+                inputMode="numeric"
+                maxLength={11}
+                placeholder="51824753556"
+                value={form.abn}
+                onChange={(e) => setForm((prev) => ({ ...prev, abn: e.target.value.replace(/\D/g, '') }))}
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono"
+              />
+              {form.abn && !ABN_REGEX.test(form.abn) && (
+                <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+                  ABN must be exactly 11 digits (no spaces)
                 </p>
               )}
             </div>
