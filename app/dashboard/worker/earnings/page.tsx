@@ -30,7 +30,7 @@ import {
   Award,
   CheckCircle,
 } from 'lucide-react'
-import { WORKER_TIERS, getWorkerTier, type EscrowRecord, type JobPaymentRecord } from '@/types'
+import { WORKER_TIERS, getWorkerTier, type EscrowRecord } from '@/types'
 import FeeBreakdown from '@/components/payments/FeeBreakdown'
 
 function formatNZD(amount: number): string {
@@ -44,9 +44,7 @@ function formatNZD(amount: number): string {
 
 // ─── Mock data (replace with real Firestore queries in production) ─────────────
 
-const MOCK_TRANSACTIONS: Array<
-  (EscrowRecord | JobPaymentRecord) & { jobTitle: string }
-> = [
+const MOCK_TRANSACTIONS: Array<EscrowRecord & { jobTitle: string }> = [
   {
     id: 'escrow_1',
     jobId: 'job_1',

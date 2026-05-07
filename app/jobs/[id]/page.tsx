@@ -7,7 +7,6 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import PhotoGallery from '@/components/jobs/PhotoGallery'
-import RatingStars from '@/components/reviews/RatingStars'
 import toast from 'react-hot-toast'
 import {
   MapPin, Clock, DollarSign, Users, AlertCircle, ArrowLeft,
@@ -17,9 +16,8 @@ import { formatCurrency, formatRelativeDate, JOB_CATEGORIES, URGENCY_LABELS } fr
 import type { Job, JobPhoto, Quote } from '@/types'
 import Link from 'next/link'
 import { applyToJob, getApplicationId, withdrawApplication, getJobApplications } from '@/lib/applications'
-import { hasReviewed, submitWorkerReview } from '@/lib/reviews/index'
+import { hasReviewed } from '@/lib/reviews/index'
 import { db } from '@/lib/firebase'
-import { getUserProfile } from '@/lib/users/getProfile'
 import { hasWorkerAI } from '@/lib/subscriptions'
 import AIWorkerMatches from '@/components/ai/AIWorkerMatches'
 import QuoteList from '@/components/quotes/QuoteList'
@@ -88,14 +86,6 @@ const MOCK_JOB_PHOTOS: JobPhoto[] = [
   },
 ]
 
-const RATING_LABELS: Record<number, string> = {
-  5: 'Excellent',
-  4: 'Very Good',
-  3: 'Good',
-  2: 'Fair',
-  1: 'Poor',
-}
-
 function JobDetailInner() {
   const params = useParams()
   const router = useRouter()
@@ -113,11 +103,6 @@ function JobDetailInner() {
   // Review state
   const [alreadyReviewed, setAlreadyReviewed] = useState(false)
   const [checkingReview, setCheckingReview] = useState(false)
-  const [showReviewForm, setShowReviewForm] = useState(false)
-  const [reviewRating, setReviewRating] = useState(0)
-  const [reviewComment, setReviewComment] = useState('')
-  const [submittingReview, setSubmittingReview] = useState(false)
-  const [assignedWorkerName, setAssignedWorkerName] = useState<string>('Worker')
 
   // Quote comparison state (employer view)
   const [jobQuotes, setJobQuotes] = useState<Quote[]>([])
@@ -187,18 +172,6 @@ function JobDetailInner() {
       .finally(() => setCheckingReview(false))
   }, [user, profile, params.id, isEmployer])
 
-  // Fetch assigned worker's display name for use in the review
-  useEffect(() => {
-    if (!job.assignedWorkerId) return
-    getUserProfile(job.assignedWorkerId)
-      .then((workerProfile) => {
-        if (workerProfile?.displayName) {
-          setAssignedWorkerName(workerProfile.displayName)
-        }
-      })
-      .catch(() => {})
-  }, [job.assignedWorkerId])
-
   // Fetch quotes for employer comparison view
   useEffect(() => {
     if (!isEmployer || quotesLoaded) return
@@ -209,45 +182,6 @@ function JobDetailInner() {
       .catch(() => {})
       .finally(() => setQuotesLoaded(true))
   }, [isEmployer, params.id, user?.uid, quotesLoaded])
-
-  const handleSubmitReview = async () => {
-    if (!user || !profile) return
-    if (reviewRating === 0) {
-      toast.error('Please select a star rating')
-      return
-    }
-    if (reviewComment.trim().length < 10) {
-      toast.error('Comment must be at least 10 characters')
-      return
-    }
-    setSubmittingReview(true)
-    try {
-      await submitWorkerReview({
-        jobId: params.id as string,
-        jobTitle: job.title,
-        workerId: job.assignedWorkerId!,
-        workerName: assignedWorkerName,
-        employerId: user.uid,
-        employerName: profile.displayName ?? user.displayName ?? 'Employer',
-        employerPhotoURL: profile.photoURL ?? user.photoURL ?? undefined,
-        rating: reviewRating,
-        comment: reviewComment,
-      })
-      setAlreadyReviewed(true)
-      setShowReviewForm(false)
-      toast.success('Review submitted!')
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to submit review')
-    } finally {
-      setSubmittingReview(false)
-    }
-  }
-
-  const handleCancelReview = () => {
-    setShowReviewForm(false)
-    setReviewRating(0)
-    setReviewComment('')
-  }
 
   const handleAcceptQuote = async (quoteId: string) => {
     const acceptedQuote = jobQuotes.find((q) => q.id === quoteId)

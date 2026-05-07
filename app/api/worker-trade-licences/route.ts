@@ -1,36 +1,28 @@
-/**
- * GET  /api/worker-trade-licences?uid=<workerId>
- *   Returns all trade licences for the given worker UID.
- *
- * POST /api/worker-trade-licences
- *   Header: x-user-id: <uid>
- *   Body: { licenceType, licenceNumber?, issuer?, expiryDate?, documentUrl? }
- *   Creates a new trade licence record. Maximum 20 licences per worker.
- *
- * DELETE /api/worker-trade-licences?licenceId=<id>
- *   Header: x-user-id: <uid>
- *   Deletes the specified licence (must belong to the authenticated worker).
- */
-
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
 import { FieldValue } from 'firebase-admin/firestore'
-import { TRADE_LICENCE_LABELS, type TradeLicenceType, type WorkerTradeLicence } from '@/types'
+import { rateLimit } from '@/lib/rateLimit'
+import type { TradeLicenceType } from '@/types'
 
 export const dynamic = 'force-dynamic'
 
-const MAX_LICENCES = 20
-const VALID_TYPES = Object.keys(TRADE_LICENCE_LABELS) as TradeLicenceType[]
+const VALID_LICENCE_TYPES: TradeLicenceType[] = [
+  'lbp', 'electrical', 'plumbing', 'gasfitting', 'drainlaying',
+  'hvac', 'scaffolding', 'site_safe', 'first_aid', 'asbestos', 'forklift', 'other',
+]
 
-// ── GET ──────────────────────────────────────────────────────────────────────
-
+/**
+ * GET /api/worker-trade-licences?uid={uid}
+ * Returns all trade licences for a worker.
+ * Public — no auth required (read-only, used on public profile page).
+ */
 export async function GET(request: NextRequest) {
-  const uid = request.nextUrl.searchParams.get('uid')
+  const { searchParams } = new URL(request.url)
+  const uid = searchParams.get('uid')
+
   if (!uid) {
-    return NextResponse.json({ error: 'uid query parameter is required' }, { status: 400 })
-  }
-  if (!adminDb) {
-    return NextResponse.json({ licences: [] })
+    return NextResponse.json({ error: 'uid is required' }, { status: 400 })
   }
 
   try {
@@ -41,100 +33,118 @@ export async function GET(request: NextRequest) {
       .orderBy('createdAt', 'desc')
       .get()
 
-    const licences: WorkerTradeLicence[] = snap.docs.map((d) => ({
-      id: d.id,
-      ...(d.data() as Omit<WorkerTradeLicence, 'id'>),
-    }))
+    const licences = snap.docs.map((d) => {
+      const data = d.data()
+      return {
+        id: d.id,
+        ...data,
+        createdAt:
+          data.createdAt && typeof data.createdAt.toDate === 'function'
+            ? data.createdAt.toDate().toISOString()
+            : (data.createdAt as string | undefined) ?? new Date().toISOString(),
+        updatedAt:
+          data.updatedAt && typeof data.updatedAt.toDate === 'function'
+            ? data.updatedAt.toDate().toISOString()
+            : (data.updatedAt as string | undefined) ?? new Date().toISOString(),
+      }
+    })
 
     return NextResponse.json({ licences })
-  } catch (error) {
-    console.error('GET /api/worker-trade-licences error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  } catch (err) {
+    console.error('GET /api/worker-trade-licences error:', err)
+    return NextResponse.json({ licences: [] })
   }
 }
 
-// ── POST ─────────────────────────────────────────────────────────────────────
-
+/**
+ * POST /api/worker-trade-licences
+ * Creates a new trade licence record for the authenticated worker.
+ * Header: x-user-id
+ * Body: { licenceType, licenceNumber?, issuingBody?, issueDate?, expiryDate?, documentUrl?, notes? }
+ */
 export async function POST(request: NextRequest) {
+  if (rateLimit(request, { max: 20, windowMs: 60_000 })) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+  }
+
   const uid = request.headers.get('x-user-id')
   if (!uid) {
-    return NextResponse.json({ error: 'x-user-id header is required' }, { status: 401 })
-  }
-  if (!adminDb) {
-    return NextResponse.json({ error: 'Database not available' }, { status: 503 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   try {
     const body = await request.json() as {
       licenceType?: string
       licenceNumber?: string
-      issuer?: string
+      issuingBody?: string
+      issueDate?: string
       expiryDate?: string
       documentUrl?: string
+      notes?: string
     }
 
-    const { licenceType, licenceNumber, issuer, expiryDate, documentUrl } = body
+    const { licenceType, licenceNumber, issuingBody, issueDate, expiryDate, documentUrl, notes } = body
 
-    if (!licenceType || !VALID_TYPES.includes(licenceType as TradeLicenceType)) {
-      return NextResponse.json(
-        { error: `licenceType must be one of: ${VALID_TYPES.join(', ')}` },
-        { status: 400 }
-      )
+    if (!licenceType) {
+      return NextResponse.json({ error: 'licenceType is required' }, { status: 400 })
     }
 
-    // Enforce max licences
-    const itemsRef = adminDb
+    if (!VALID_LICENCE_TYPES.includes(licenceType as TradeLicenceType)) {
+      return NextResponse.json({ error: 'Invalid licenceType' }, { status: 400 })
+    }
+
+    // Verify the user exists and is a worker
+    const userSnap = await adminDb.collection('users').doc(uid).get()
+    if (!userSnap.exists) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    const now = FieldValue.serverTimestamp()
+    const docData: Record<string, unknown> = {
+      uid,
+      licenceType,
+      createdAt: now,
+      updatedAt: now,
+    }
+    if (licenceNumber) docData.licenceNumber = licenceNumber
+    if (issuingBody) docData.issuingBody = issuingBody
+    if (issueDate) docData.issueDate = issueDate
+    if (expiryDate) docData.expiryDate = expiryDate
+    if (documentUrl) docData.documentUrl = documentUrl
+    if (notes) docData.notes = notes
+
+    const ref = await adminDb
       .collection('workerTradeLicences')
       .doc(uid)
       .collection('items')
+      .add(docData)
 
-    const existingSnap = await itemsRef.count().get()
-    if (existingSnap.data().count >= MAX_LICENCES) {
-      return NextResponse.json(
-        { error: `Maximum of ${MAX_LICENCES} trade licences allowed` },
-        { status: 400 }
-      )
-    }
-
-    const now = new Date().toISOString()
-    const data: Omit<WorkerTradeLicence, 'id'> = {
-      uid,
-      licenceType: licenceType as TradeLicenceType,
-      createdAt: now,
-      updatedAt: now,
-      ...(licenceNumber ? { licenceNumber } : {}),
-      ...(issuer ? { issuer } : {}),
-      ...(expiryDate ? { expiryDate } : {}),
-      ...(documentUrl ? { documentUrl } : {}),
-    }
-
-    const docRef = await itemsRef.add({
-      ...data,
-      createdAt: FieldValue.serverTimestamp(),
-      updatedAt: FieldValue.serverTimestamp(),
-    })
-
-    return NextResponse.json({ success: true, licenceId: docRef.id, licence: { id: docRef.id, ...data } }, { status: 201 })
-  } catch (error) {
-    console.error('POST /api/worker-trade-licences error:', error)
+    return NextResponse.json({ id: ref.id, success: true }, { status: 201 })
+  } catch (err) {
+    console.error('POST /api/worker-trade-licences error:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
-// ── DELETE ───────────────────────────────────────────────────────────────────
-
+/**
+ * DELETE /api/worker-trade-licences?id={licenceId}
+ * Deletes a trade licence belonging to the authenticated worker.
+ * Header: x-user-id
+ */
 export async function DELETE(request: NextRequest) {
-  const uid = request.headers.get('x-user-id')
-  const licenceId = request.nextUrl.searchParams.get('licenceId')
+  if (rateLimit(request, { max: 20, windowMs: 60_000 })) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+  }
 
+  const uid = request.headers.get('x-user-id')
   if (!uid) {
-    return NextResponse.json({ error: 'x-user-id header is required' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+
+  const { searchParams } = new URL(request.url)
+  const licenceId = searchParams.get('id')
   if (!licenceId) {
-    return NextResponse.json({ error: 'licenceId query parameter is required' }, { status: 400 })
-  }
-  if (!adminDb) {
-    return NextResponse.json({ error: 'Database not available' }, { status: 503 })
+    return NextResponse.json({ error: 'id is required' }, { status: 400 })
   }
 
   try {
@@ -148,15 +158,16 @@ export async function DELETE(request: NextRequest) {
     if (!snap.exists) {
       return NextResponse.json({ error: 'Licence not found' }, { status: 404 })
     }
-    if ((snap.data() as WorkerTradeLicence).uid !== uid) {
+
+    // Ensure the licence belongs to the requesting user
+    if ((snap.data()?.uid as string | undefined) !== uid) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     await docRef.delete()
-
     return NextResponse.json({ success: true })
-  } catch (error) {
-    console.error('DELETE /api/worker-trade-licences error:', error)
+  } catch (err) {
+    console.error('DELETE /api/worker-trade-licences error:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

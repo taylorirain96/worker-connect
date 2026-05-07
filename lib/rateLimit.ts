@@ -53,7 +53,7 @@ export function rateLimit(
   // Use a fixed 60-second cleanup threshold independent of the request window size.
   if (now - lastCleanup > 60_000) {
     const cutoff = now - 60_000
-    for (const [key, entry] of store.entries()) {
+    for (const [key, entry] of Array.from(store.entries())) {
       entry.requests = entry.requests.filter((t) => t > cutoff)
       if (entry.requests.length === 0) {
         store.delete(key)

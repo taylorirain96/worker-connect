@@ -6,21 +6,23 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import {
   LayoutDashboard, Users, Briefcase, DollarSign,
-  AlertTriangle, Mail, Shield, Menu, X, ChevronRight, ShieldCheck, Tag, BarChart2,
+  AlertTriangle, Mail, Shield, Menu, X, ChevronRight, ShieldCheck, Tag, BarChart2, Key,
 } from 'lucide-react'
 
 const NAV_ITEMS = [
-  { label: 'Overview',       href: '/dashboard/admin',                    icon: LayoutDashboard },
-  { label: 'Analytics',      href: '/dashboard/admin/analytics',          icon: BarChart2 },
-  { label: 'Users',          href: '/dashboard/admin/users',              icon: Users },
-  { label: 'Jobs',           href: '/dashboard/admin/jobs',               icon: Briefcase },
-  { label: 'Payments',       href: '/dashboard/admin/payments',           icon: DollarSign },
-  { label: 'Affiliates',     href: '/dashboard/admin/affiliates',         icon: DollarSign },
-  { label: 'Disputes',       href: '/dashboard/admin/disputes',           icon: AlertTriangle },
-  { label: 'Verification',   href: '/dashboard/admin/verification',       icon: ShieldCheck },
-  { label: 'ID Verifications', href: '/dashboard/admin/verifications',    icon: ShieldCheck },
-  { label: 'Promo Codes',    href: '/dashboard/admin/promos',             icon: Tag },
-  { label: 'Email Logs',     href: '/dashboard/admin/emails',             icon: Mail },
+  { label: 'Overview',           href: '/dashboard/admin',                      icon: LayoutDashboard },
+  { label: 'Analytics',          href: '/dashboard/admin/analytics',            icon: BarChart2 },
+  { label: 'Users',              href: '/dashboard/admin/users',                icon: Users },
+  { label: 'Jobs',               href: '/dashboard/admin/jobs',                 icon: Briefcase },
+  { label: 'Payments',           href: '/dashboard/admin/payments',             icon: DollarSign },
+  { label: 'Affiliates',         href: '/dashboard/admin/affiliates',           icon: DollarSign },
+  { label: 'Disputes',           href: '/dashboard/admin/disputes',             icon: AlertTriangle },
+  { label: 'Verification',       href: '/dashboard/admin/verification',         icon: ShieldCheck },
+  { label: 'ID Verifications',   href: '/dashboard/admin/verifications',        icon: ShieldCheck },
+  { label: 'Background Checks',  href: '/dashboard/admin/background-checks',   icon: ShieldCheck },
+  { label: 'API Keys',           href: '/dashboard/admin/api-keys',             icon: Key },
+  { label: 'Promo Codes',        href: '/dashboard/admin/promos',               icon: Tag },
+  { label: 'Email Logs',         href: '/dashboard/admin/emails',               icon: Mail },
 ]
 
 function AdminSidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {

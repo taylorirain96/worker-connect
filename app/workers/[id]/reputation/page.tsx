@@ -16,6 +16,7 @@ import CompletionRateChart from '@/components/completion/CompletionRateChart'
 import PortfolioGallery from '@/components/portfolio/PortfolioGallery'
 import PortfolioStats from '@/components/portfolio/PortfolioStats'
 import type { ReputationScore as ReputationScoreType, WorkerVerification, CompletionStats, VerificationType, WorkerPortfolio } from '@/types/reputation'
+import type { PortfolioPhoto } from '@/types'
 import { getCompletionLabel } from '@/lib/utils/completionRateCalc'
 
 const MOCK_REPUTATION: ReputationScoreType = {
@@ -67,6 +68,23 @@ export default function WorkerReputationPage({ params }: { params: { id: string 
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedType, setSelectedType] = useState<VerificationType>('government_id')
+
+  const portfolioPhotos: PortfolioPhoto[] = portfolio
+    ? portfolio.items.flatMap((item) =>
+        [item.beforeImageUrl, item.afterImageUrl]
+          .filter((url): url is string => Boolean(url))
+          .map((url, index) => ({
+            id: `${item.id}-${index}`,
+            uid: item.workerId,
+            url,
+            title: item.title,
+            category: item.category,
+            description: item.description,
+            order: index,
+            createdAt: item.completedAt,
+          })),
+      )
+    : []
 
   useEffect(() => {
     const load = async () => {
@@ -205,7 +223,7 @@ export default function WorkerReputationPage({ params }: { params: { id: string 
               {portfolio && (
                 <div className="space-y-4">
                   <PortfolioStats portfolio={portfolio} />
-                  <PortfolioGallery portfolio={portfolio} />
+                  <PortfolioGallery photos={portfolioPhotos} />
                 </div>
               )}
             </div>

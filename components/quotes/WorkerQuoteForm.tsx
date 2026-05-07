@@ -4,12 +4,12 @@ import { useForm, useFieldArray } from 'react-hook-form'
 import Button from '@/components/ui/Button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { formatCurrency } from '@/lib/utils'
-import { Plus, Trash2, Paperclip, X, FileText, Camera, CheckSquare, Square } from 'lucide-react'
+import { Plus, Trash2, Paperclip, X, FileText, Camera, CheckSquare, Square, Copy } from 'lucide-react'
 import AIPriceSuggestion from './AIPriceSuggestion'
 import { storage } from '@/lib/firebase'
 import { ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
 import { trackEvent } from '@/lib/analytics'
-import type { PortfolioPhoto } from '@/types'
+import type { PortfolioPhoto, QuoteTemplate } from '@/types'
 
 interface WorkerQuoteFormProps {
   jobId: string
@@ -67,6 +67,11 @@ export default function WorkerQuoteForm({
   const [attachments, setAttachments] = useState<AttachmentFile[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // Quote template loading
+  const [templates, setTemplates] = useState<QuoteTemplate[]>([])
+  const [showTemplatePicker, setShowTemplatePicker] = useState(false)
+  const [loadingTemplates, setLoadingTemplates] = useState(false)
+
   // Portfolio photo attachment (up to 3)
   const [portfolioPhotos, setPortfolioPhotos] = useState<PortfolioPhoto[]>([])
   const [selectedPortfolioIds, setSelectedPortfolioIds] = useState<Set<string>>(new Set())
@@ -99,6 +104,39 @@ export default function WorkerQuoteForm({
       }
       return next
     })
+  }
+
+  const openTemplatePicker = async () => {
+    if (!workerId) return
+    setShowTemplatePicker(true)
+    if (templates.length > 0) return
+    setLoadingTemplates(true)
+    try {
+      const res = await fetch('/api/quote-templates', {
+        headers: { 'x-user-id': workerId },
+      })
+      if (!res.ok) throw new Error('Failed to load templates')
+      const data = await res.json() as { templates: QuoteTemplate[] }
+      setTemplates(data.templates)
+    } catch {
+      // Silent fail – template picker is optional
+    } finally {
+      setLoadingTemplates(false)
+    }
+  }
+
+  const applyTemplate = (t: QuoteTemplate) => {
+    setValue('basePrice', t.basePrice)
+    setValue('laborHours', t.laborHours)
+    setValue('laborRate', t.laborRate)
+    setValue('travelCost', t.travelCost)
+    setValue('description', t.description)
+    setValue('timeline', t.timeline)
+    setValue('conditions', t.conditions)
+    if (Array.isArray(t.materials) && t.materials.length > 0) {
+      setValue('materials', t.materials)
+    }
+    setShowTemplatePicker(false)
   }
 
   const { register, control, watch, handleSubmit, setValue, formState: { errors } } = useForm<FormValues>({
@@ -264,27 +302,40 @@ export default function WorkerQuoteForm({
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Submit Quote for: {jobTitle}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {error && (
-            <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 text-sm">
-              {error}
-            </div>
-          )}
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>Submit Quote for: {jobTitle}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {error && (
+              <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 text-sm">
+                {error}
+              </div>
+            )}
 
           {/* AI Price Suggestion */}
-          <AIPriceSuggestion
-            jobTitle={jobTitle}
-            jobDescription={jobDescription}
-            category={category}
-            location={location}
-            workerId={workerId}
-            onUsePrice={(price) => setValue('basePrice', price)}
-          />
+          <div className="flex items-center gap-2">
+            <div className="flex-1">
+              <AIPriceSuggestion
+                jobTitle={jobTitle}
+                jobDescription={jobDescription}
+                category={category}
+                location={location}
+                workerId={workerId}
+                onUsePrice={(price) => setValue('basePrice', price)}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => void openTemplatePicker()}
+              className="shrink-0 flex items-center gap-1.5 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 border border-indigo-200 dark:border-indigo-800 rounded-lg px-2.5 py-1.5 transition-colors hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+            >
+              <Copy className="h-3.5 w-3.5" />
+              Load Template
+            </button>
+          </div>
 
           {/* Base Price */}
           <div>
@@ -648,6 +699,77 @@ export default function WorkerQuoteForm({
         </form>
       </CardContent>
     </Card>
+
+      {/* Template picker modal */}
+      {showTemplatePicker && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          onClick={() => setShowTemplatePicker(false)}
+        >
+          <div
+            className="w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-5 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-base font-semibold text-gray-900 dark:text-white">Load Quote Template</h2>
+              <button
+                onClick={() => setShowTemplatePicker(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xl leading-none"
+              >
+                &times;
+              </button>
+            </div>
+            <div className="p-4 max-h-80 overflow-y-auto">
+              {loadingTemplates && (
+                <p className="text-sm text-gray-400 text-center py-4">Loading templates…</p>
+              )}
+              {!loadingTemplates && templates.length === 0 && (
+                <div className="text-center py-6">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">No templates saved yet.</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-600 mt-1">
+                    Save templates from{' '}
+                    <a
+                      href="/dashboard/worker/quote-templates"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-indigo-600 hover:underline"
+                    >
+                      Quote Templates
+                    </a>.
+                  </p>
+                </div>
+              )}
+              {!loadingTemplates && templates.length > 0 && (
+                <ul className="space-y-2">
+                  {templates.map((t) => {
+                    const total = t.basePrice + t.laborHours * t.laborRate + (t.materials ?? []).reduce((s, m) => s + m.cost, 0) + t.travelCost
+                    return (
+                      <li key={t.id}>
+                        <button
+                          type="button"
+                          onClick={() => applyTemplate(t)}
+                          className="w-full text-left px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-indigo-400 dark:hover:border-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-gray-900 dark:text-white">{t.name}</span>
+                            <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+                              ${total.toLocaleString('en-NZ')}
+                            </span>
+                          </div>
+                          {t.description && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-1">{t.description}</p>
+                          )}
+                        </button>
+                      </li>
+                    )
+                  })}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
 

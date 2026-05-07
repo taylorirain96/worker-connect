@@ -1,3 +1,5 @@
+export type Country = 'NZ' | 'AU'
+
 export interface UserProfile {
   uid: string
   email: string | null
@@ -14,6 +16,7 @@ export interface UserProfile {
   skills?: string[]
   hourlyRate?: number
   availability?: 'available' | 'busy' | 'unavailable'
+  availabilityUpdatedAt?: string
   rating?: number
   reviewCount?: number
   completedJobs?: number
@@ -39,6 +42,13 @@ export interface UserProfile {
   employerSubscriptionTier?: 'free' | 'pro' | 'business' | 'enterprise'
   /** Array of worker UIDs this homeowner has favourited */
   favourites?: string[]
+  /** YouTube or Vimeo URL for the worker's intro/profile video */
+  videoUrl?: string
+  /** ABN for Australian employers (11 digits) */
+  abn?: string
+  /** NZ Police vetting result for workers — set by admin after review */
+  backgroundCheckStatus?: 'approved' | 'rejected'
+  backgroundCheckApprovedAt?: string
   /** Referral code unique to this user, stored in Firestore */
   referralCode?: string
   /** UID of the user who referred this user */
@@ -53,6 +63,71 @@ export interface UserProfile {
   affiliateBalance?: number
   /** Total NZD paid out to this affiliate via Stripe Transfer */
   affiliatePaidOut?: number
+  /** Country the user operates in */
+  country?: Country
+  /** Australian Business Number (AU users only) */
+  abnNumber?: string
+  /** URL of the worker's video profile stored in Firebase Storage */
+  videoProfileUrl?: string
+  /** NZ Police vetting / background check status */
+  backgroundCheckStatus?: 'notStarted' | 'pending' | 'approved' | 'rejected'
+  /** ISO date string when the background check certificate expires */
+  backgroundCheckExpiry?: string
+  /** WorkSafe NZ compliance checklist */
+  worksafeCompliance?: {
+    inductionComplete: boolean
+    ppeConfirmed: boolean
+    hazardRegisterViewed: boolean
+    safetyPlanUploaded: boolean
+    completedAt?: string
+  }
+}
+
+// ─── Worker Trade Licences ────────────────────────────────────────────────────
+
+export type TradeLicenceType =
+  | 'lbp'
+  | 'electrical'
+  | 'plumbing'
+  | 'gasfitting'
+  | 'drainlaying'
+  | 'hvac'
+  | 'scaffolding'
+  | 'site_safe'
+  | 'first_aid'
+  | 'asbestos'
+  | 'forklift'
+  | 'other'
+
+export const TRADE_LICENCE_LABELS: Record<TradeLicenceType, string> = {
+  lbp: 'LBP — Licensed Building Practitioner',
+  electrical: 'Registered Electrician',
+  plumbing: 'Registered Plumber',
+  gasfitting: 'Gasfitter Licence',
+  drainlaying: 'Drainlayer Licence',
+  hvac: 'HVAC / Refrigeration Certificate',
+  scaffolding: 'Scaffolding Certificate',
+  site_safe: 'Site Safe Certificate',
+  first_aid: 'First Aid Certificate',
+  asbestos: 'Asbestos Removal Licence',
+  forklift: 'Forklift Licence',
+  other: 'Other Certification',
+}
+
+export interface WorkerTradeLicence {
+  id: string
+  uid: string
+  licenceType: TradeLicenceType
+  licenceNumber?: string
+  issuingBody?: string
+  issueDate?: string
+  expiryDate?: string
+  /** Firebase Storage download URL of the uploaded certificate document */
+  documentUrl?: string
+  /** Worker-provided notes */
+  notes?: string
+  createdAt: string
+  updatedAt: string
 }
 
 export interface DirectRequest {
@@ -115,6 +190,8 @@ export interface Job {
   completedAt?: string
   /** ISO deadline (completedAt + 24h) within which the worker may dispute completion */
   workerDisputeDeadline?: string
+  /** Country the job is located in */
+  country?: Country
 }
 
 export type JobCategory =
@@ -129,6 +206,7 @@ export type JobCategory =
   | 'cleaning'
   | 'moving'
   | 'general'
+  | 'apprenticeship'
 
 export interface Application {
   id: string
@@ -2047,48 +2125,62 @@ export interface PromoCode {
   updatedAt?: string
 }
 
-// ─── Worker Trade Licence Types ──────────────────────────────────────────────
+// ─── Job Milestone & Progress Tracking Types ──────────────────────────────────
 
-export type TradeLicenceType =
-  | 'lbp'
-  | 'electrical'
-  | 'plumbing'
-  | 'gasfitting'
-  | 'drainlaying'
-  | 'hvac'
-  | 'scaffolding'
-  | 'site_safe'
-  | 'first_aid'
-  | 'asbestos'
-  | 'forklift'
-  | 'other'
+/** Status lifecycle: pending → in_progress → submitted → approved | rejected */
+export type MilestoneStatus = 'pending' | 'in_progress' | 'submitted' | 'approved' | 'rejected'
 
-export const TRADE_LICENCE_LABELS: Record<TradeLicenceType, string> = {
-  lbp: 'Licensed Building Practitioner (LBP)',
-  electrical: 'Electrical Worker Licence',
-  plumbing: 'Plumbing Licence',
-  gasfitting: 'Gasfitting Licence',
-  drainlaying: 'Drainlaying Licence',
-  hvac: 'HVAC / Refrigeration Licence',
-  scaffolding: 'Scaffolding Certificate',
-  site_safe: 'Site Safe Certificate',
-  first_aid: 'First Aid Certificate',
-  asbestos: 'Asbestos Removal Licence',
-  forklift: 'Forklift Licence',
-  other: 'Other Certification',
+/**
+ * A billing milestone on a job.
+ * Stored at: jobs/{jobId}/milestones/{milestoneId}
+ */
+export interface JobMilestone {
+  id: string
+  jobId: string
+  /** Human-readable title, e.g. "Frame & rough-in" */
+  title: string
+  description?: string
+  /** Amount to release to the worker on approval (NZD) */
+  amount: number
+  /** 0-100 — what percentage of total job value this milestone represents */
+  percentage: number
+  status: MilestoneStatus
+  /** Expected completion date */
+  dueDate?: string
+  /** ISO timestamp when the worker submitted the milestone for approval */
+  submittedAt?: string
+  /** ISO timestamp when the employer approved the milestone */
+  approvedAt?: string
+  /** Stripe Transfer ID created when this milestone was paid out */
+  stripeTransferId?: string
+  /** Message left by the worker when submitting */
+  submissionNote?: string
+  /** Message left by the employer when approving or rejecting */
+  reviewNote?: string
+  /** URLs of photos attached to the submission */
+  submissionPhotos?: string[]
+  /** Order index for display */
+  order: number
+  createdAt: string
+  updatedAt: string
 }
 
-export interface WorkerTradeLicence {
+/**
+ * A progress update posted by the worker during an active job.
+ * Stored at: jobs/{jobId}/progressUpdates/{updateId}
+ */
+export interface JobProgressUpdate {
   id: string
-  uid: string
-  licenceType: TradeLicenceType
-  licenceNumber?: string
-  issuer?: string
-  /** ISO date string e.g. '2027-06-30' */
-  expiryDate?: string
-  documentUrl?: string
+  jobId: string
+  workerId: string
+  workerName: string
+  workerAvatar?: string
+  message: string
+  /** Optional photos attached to this update */
+  photos?: string[]
+  /** Linked milestone ID (if this update relates to a specific milestone) */
+  milestoneId?: string
   createdAt: string
-  updatedAt?: string
 }
 
 // ─── Credit Transaction Types ─────────────────────────────────────────────────
@@ -2107,3 +2199,111 @@ export interface CreditTransaction {
   createdAt: string
 }
 
+// ─── Service Package Types ────────────────────────────────────────────────────
+
+/**
+ * A fixed-price service package created by a worker (e.g. "1BR clean – $80").
+ * Homeowners can browse and instantly book a package without quoting.
+ * Firestore: servicePackages/{packageId}
+ */
+export interface ServicePackage {
+  id: string
+  workerId: string
+  workerName: string
+  workerPhotoURL?: string | null
+  workerRating?: number
+  workerReviewCount?: number
+  workerCompletedJobs?: number
+  /** Short title shown on the card */
+  title: string
+  /** Longer description of what is included */
+  description: string
+  /** Fixed price in NZD */
+  price: number
+  /** Job category matching JOB_CATEGORIES ids */
+  category: string
+  /** NZ region where the service is available */
+  region: string
+  /** Bullet-point inclusions shown on the card (max 8) */
+  inclusions: string[]
+  /** Estimated hours to complete the job */
+  estimatedDurationHours: number
+  /** Whether the package is publicly visible */
+  active: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+/** Status of an instant-book service package order */
+export type ServicePackageBookingStatus =
+  | 'pending'
+  | 'confirmed'
+  | 'in_progress'
+  | 'completed'
+  | 'cancelled'
+
+/**
+ * A booking created when a homeowner clicks "Book Now" on a ServicePackage.
+ * Firestore: servicePackageBookings/{bookingId}
+ */
+export interface ServicePackageBooking {
+  id: string
+  packageId: string
+  packageTitle: string
+  workerId: string
+  workerName: string
+  workerEmail: string
+  homeownerId: string
+  homeownerName: string
+  homeownerEmail: string
+  price: number
+  category: string
+  region: string
+  /** Preferred date (ISO date string, e.g. '2026-07-01') */
+  preferredDate: string
+  /** Preferred time slot, e.g. '09:00' */
+  preferredTime: string
+  /** Homeowner's service address */
+  address: string
+  /** Optional extra notes from the homeowner */
+  notes?: string
+  status: ServicePackageBookingStatus
+  /** ID of the job document created from this booking */
+  jobId?: string
+  createdAt: string
+  updatedAt: string
+}
+
+
+export interface QuoteTemplate {
+  id: string
+  workerId: string
+  name: string
+  basePrice: number
+  laborHours: number
+  laborRate: number
+  materials: { description: string; cost: number }[]
+  travelCost: number
+  description: string
+  timeline: string
+  conditions: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface JobTemplate {
+  id: string
+  /** Human-friendly name for this template, e.g. "Monthly lawn mow" */
+  name: string
+  title: string
+  description: string
+  category: string
+  location: string
+  budgetMin: number
+  budgetMax: number
+  budgetType: 'fixed' | 'hourly'
+  urgency: 'low' | 'medium' | 'high' | 'emergency'
+  skills: string
+  createdAt: string
+  updatedAt: string
+}

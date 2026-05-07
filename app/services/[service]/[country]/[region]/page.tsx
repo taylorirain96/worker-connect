@@ -30,7 +30,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!service || !region) return {}
 
-  const countryName = COUNTRY_NAMES[country] ?? country.toUpperCase()
   const title = `${service.label} Services in ${region.city}, ${region.region} | QuickTrade`
   const description = `Find trusted ${service.label.toLowerCase()} professionals in ${region.city}, ${region.region}. Browse vetted workers, compare rates, and get quotes — QuickTrade makes hiring easy in ${region.city}.`
   const canonical = `${SITE_URL}/services/${service.id}/${country}/${region.slug}`
@@ -117,7 +116,7 @@ export default async function ServiceLocationPage({ params }: Props) {
 
             <div className="flex flex-wrap gap-3">
               <Link
-                href="/jobs/new"
+                href="/jobs/create"
                 className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition-colors"
               >
                 Post a Job in {region.city}
@@ -170,7 +169,7 @@ export default async function ServiceLocationPage({ params }: Props) {
               </p>
               <div className="flex flex-wrap justify-center gap-3">
                 <Link
-                  href="/jobs/new"
+                  href="/jobs/create"
                   className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition-colors"
                 >
                   Post a Job

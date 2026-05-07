@@ -22,7 +22,7 @@ function formatNZD(amount: number) {
 }
 
 export default function ReferralDashboardPage() {
-  const { user, profile } = useAuth()
+  const { user } = useAuth()
   const [referralCode, setReferralCode] = useState<string>('')
   const [referrals, setReferrals] = useState<Referral[]>([])
   const [creditBalance, setCreditBalance] = useState<number>(0)

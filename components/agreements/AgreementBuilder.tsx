@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import type { Agreement } from '@/types'
 
 interface AgreementBuilderProps {
   proposalId: string

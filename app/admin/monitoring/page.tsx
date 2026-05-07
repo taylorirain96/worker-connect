@@ -5,7 +5,6 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import MetricCard from '@/components/analytics/MetricCard'
-import AnalyticsLineChart from '@/components/analytics/AnalyticsLineChart'
 import AnalyticsBarChart from '@/components/analytics/AnalyticsBarChart'
 import Button from '@/components/ui/Button'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
@@ -13,7 +12,7 @@ import Badge from '@/components/ui/Badge'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useRouter } from 'next/navigation'
 import {
-  Activity, Server, Database, AlertTriangle, CheckCircle,
+  Activity, Server, AlertTriangle, CheckCircle,
   ArrowLeft, RefreshCw, Zap, Clock, Globe, Mail,
 } from 'lucide-react'
 

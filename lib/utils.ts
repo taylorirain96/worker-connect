@@ -3,9 +3,12 @@ import { twMerge } from 'tailwind-merge'
 import { format, formatDistanceToNow } from 'date-fns'
 import {
   Droplet, Zap, Hammer, Wind, Home, Trees,
-  Paintbrush, Layers, Sparkles, Package, Wrench,
+  Paintbrush, Layers, Sparkles, Package, Wrench, GraduationCap, BookOpen,
   type LucideIcon,
 } from 'lucide-react'
+import type { Country } from '@/types'
+
+export type { Country }
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -80,6 +83,37 @@ export const NZ_REGIONS = [
 
 export type NZRegion = (typeof NZ_REGIONS)[number]
 
+export const AU_CITIES = [
+  'Sydney',
+  'Melbourne',
+  'Brisbane',
+  'Perth',
+  'Adelaide',
+  'Gold Coast',
+  'Canberra',
+  'Newcastle',
+  'Wollongong',
+  'Geelong',
+] as const
+
+export type AUCity = (typeof AU_CITIES)[number]
+
+/**
+ * Validates an Australian Business Number (ABN).
+ * Algorithm: subtract 1 from first digit, multiply each digit by its
+ * weighting factor [10,1,3,5,7,9,11,13,15,17,19], sum must be divisible by 89.
+ */
+export function validateABN(abn: string): boolean {
+  const digits = abn.replace(/\s/g, '')
+  if (!/^\d{11}$/.test(digits)) return false
+  const weights = [10, 1, 3, 5, 7, 9, 11, 13, 15, 17, 19]
+  const sum = digits.split('').reduce((acc, d, i) => {
+    const digit = parseInt(d, 10) - (i === 0 ? 1 : 0)
+    return acc + digit * weights[i]
+  }, 0)
+  return sum % 89 === 0
+}
+
 export const JOB_CATEGORIES = [
   { id: 'plumbing', label: 'Plumbing', icon: '🔧', description: 'Pipes, fixtures, water systems', color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' },
   { id: 'electrical', label: 'Electrical', icon: '⚡', description: 'Wiring, panels, lighting', color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' },
@@ -91,6 +125,8 @@ export const JOB_CATEGORIES = [
   { id: 'flooring', label: 'Flooring', icon: '🪵', description: 'Hardwood, tile, carpet', color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' },
   { id: 'cleaning', label: 'Cleaning', icon: '🧹', description: 'Deep clean, regular maintenance', color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' },
   { id: 'moving', label: 'Moving', icon: '📦', description: 'Packing, loading, transport', color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' },
+  { id: 'apprenticeship', label: 'Apprenticeship', icon: '🎓', description: 'Entry-level trade training roles', color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' },
+  { id: 'training', label: 'Training', icon: '📚', description: 'Upskilling, courses & workshops', color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' },
   { id: 'general', label: 'General', icon: '🛠️', description: 'Handyman, misc repairs', color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' },
 ] as const
 
@@ -107,6 +143,8 @@ export const CATEGORY_ICONS: Record<CategoryId, LucideIcon> = {
   flooring: Layers,
   cleaning: Sparkles,
   moving: Package,
+  apprenticeship: GraduationCap,
+  training: BookOpen,
   general: Wrench,
 }
 
@@ -121,6 +159,8 @@ export const CATEGORY_GRADIENTS: Record<CategoryId, string> = {
   flooring: 'from-indigo-600 to-violet-600',
   cleaning: 'from-indigo-600 to-violet-600',
   moving: 'from-indigo-600 to-violet-600',
+  apprenticeship: 'from-indigo-600 to-violet-600',
+  training: 'from-indigo-600 to-violet-600',
   general: 'from-indigo-600 to-violet-600',
 }
 

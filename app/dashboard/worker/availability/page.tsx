@@ -7,9 +7,9 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Link from 'next/link'
-import { ArrowLeft, Save, Plus, X, Clock, Calendar } from 'lucide-react'
+import { ArrowLeft, Save, Plus, X, Calendar, Clock } from 'lucide-react'
 import toast from 'react-hot-toast'
-import type { WorkerAvailability, DayAvailability } from '@/types'
+import type { WorkerAvailability } from '@/types'
 
 const DAYS: { key: keyof Omit<WorkerAvailability, 'blockedDates' | 'minNoticeHours'>; label: string }[] = [
   { key: 'monday',    label: 'Monday' },
@@ -20,8 +20,6 @@ const DAYS: { key: keyof Omit<WorkerAvailability, 'blockedDates' | 'minNoticeHou
   { key: 'saturday',  label: 'Saturday' },
   { key: 'sunday',    label: 'Sunday' },
 ]
-
-const DEFAULT_DAY: DayAvailability = { available: false, start: '08:00', end: '17:00' }
 
 const DEFAULT_AVAILABILITY: WorkerAvailability = {
   monday:    { available: true,  start: '08:00', end: '17:00' },
@@ -36,7 +34,7 @@ const DEFAULT_AVAILABILITY: WorkerAvailability = {
 }
 
 export default function WorkerAvailabilityPage() {
-  const { user, profile, loading } = useAuth()
+  const { user, loading } = useAuth()
   const router = useRouter()
   const [availability, setAvailability] = useState<WorkerAvailability>(DEFAULT_AVAILABILITY)
   const [fetching, setFetching] = useState(true)
