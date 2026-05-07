@@ -25,9 +25,13 @@ export async function GET(req: NextRequest) {
     const doc = snap.docs[0]
     const data = doc.data() as { displayName?: string; referralCode?: string }
 
+    if (!data.referralCode) {
+      return NextResponse.json({ valid: false, error: 'Referral code missing on referrer record' }, { status: 500 })
+    }
+
     return NextResponse.json({
       valid: true,
-      code: data.referralCode ?? code,
+      code: data.referralCode,
       ownerId: doc.id,
       referrerName: data.displayName ?? null,
       usesRemaining: null,

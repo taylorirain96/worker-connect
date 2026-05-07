@@ -1,5 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+function isValidEmail(email: string) {
+  const trimmed = email.trim()
+  const atIndex = trimmed.indexOf('@')
+  if (atIndex <= 0 || atIndex !== trimmed.lastIndexOf('@')) return false
+
+  const local = trimmed.slice(0, atIndex)
+  const domain = trimmed.slice(atIndex + 1)
+
+  if (!local || !domain || domain.startsWith('.') || domain.endsWith('.')) return false
+  if (domain.includes('..')) return false
+
+  const labels = domain.split('.')
+  if (labels.length < 2 || labels.some((label) => label.length === 0)) return false
+
+  return true
+}
+
 /**
  * POST /api/contact
  * Sends a contact form message via email.
@@ -20,7 +37,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'All fields are required' }, { status: 400 })
   }
 
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!isValidEmail(email)) {
     return NextResponse.json({ error: 'Invalid email address' }, { status: 400 })
   }
 

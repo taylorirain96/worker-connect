@@ -39,6 +39,10 @@ export async function GET() {
       return sum
     }, 0)
 
+    // Conversation counts are not yet aggregated into a dedicated collection,
+    // so this endpoint exposes 0 until messaging analytics are implemented.
+    const activeConversations = 0
+
     return NextResponse.json({
       totalUsers,
       totalWorkers,
@@ -49,7 +53,7 @@ export async function GET() {
       totalRevenue,
       monthlyRevenue,
       pendingApplications,
-      activeConversations: 0,
+      activeConversations,
       openDisputes: disputesSnap.size,
     })
   } catch (error) {
