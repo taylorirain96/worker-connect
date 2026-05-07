@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -24,6 +24,7 @@ import {
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import TrustBadge, { TrustScoreBar, VerificationStatusBadge } from '@/components/business/TrustBadge'
+import { useAuth } from '@/components/providers/AuthProvider'
 import type {
   LicenseDetails,
   InsuranceDetails,
@@ -33,19 +34,8 @@ import type {
   BusinessVerification,
 } from '@/types'
 
-// ─── Mock initial state (replace with API fetch) ──────────────────────────────
-const MOCK_VERIFICATION: BusinessVerification = {
-  id: 'v1',
-  businessId: 'b1',
-  license: null,
-  insurance: null,
-  backgroundCheck: { status: 'not_started' },
-  externalRatings: {},
-  certifications: [],
-  trustScore: 0,
-  verifiedCount: 0,
-  updatedAt: new Date().toISOString(),
-}
+// ─── Mock initial state ────────────────────────────────────────────────────────
+// Kept for reference only; real data is loaded from /api/business/verification-status
 
 const LICENSE_TYPES = [
   'General Contractor',
@@ -102,7 +92,7 @@ function computeVerifiedCount(v: BusinessVerification): number {
 
 // ─── Sub-forms ───────────────────────────────────────────────────────────────
 
-function LicenseForm({ onSave }: { onSave: (data: LicenseDetails) => void }) {
+function LicenseForm({ onSave, userId }: { onSave: (data: LicenseDetails) => void; userId: string }) {
   const [form, setForm] = useState({
     licenseNumber: '', licenseType: '', state: '', expirationDate: '',
   })
@@ -118,7 +108,7 @@ function LicenseForm({ onSave }: { onSave: (data: LicenseDetails) => void }) {
     try {
       const res = await fetch('/api/business/verify/license', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-user-id': userId },
         body: JSON.stringify(form),
       })
       const data = await res.json()
@@ -189,7 +179,7 @@ function LicenseForm({ onSave }: { onSave: (data: LicenseDetails) => void }) {
   )
 }
 
-function InsuranceForm({ onSave }: { onSave: (data: InsuranceDetails) => void }) {
+function InsuranceForm({ onSave, userId }: { onSave: (data: InsuranceDetails) => void; userId: string }) {
   const [form, setForm] = useState({
     hasGeneralLiability: false,
     generalLiabilityPolicyNumber: '',
@@ -217,7 +207,7 @@ function InsuranceForm({ onSave }: { onSave: (data: InsuranceDetails) => void })
       }
       const res = await fetch('/api/business/verify/insurance', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-user-id': userId },
         body: JSON.stringify(payload),
       })
       const data = await res.json()
@@ -318,9 +308,11 @@ function InsuranceForm({ onSave }: { onSave: (data: InsuranceDetails) => void })
 function BackgroundCheckSection({
   details,
   onInitiate,
+  userId,
 }: {
   details: BackgroundCheckDetails
   onInitiate: (data: BackgroundCheckDetails) => void
+  userId: string
 }) {
   const [loading, setLoading] = useState(false)
 
@@ -329,7 +321,7 @@ function BackgroundCheckSection({
     try {
       const res = await fetch('/api/business/verify/background-check', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-user-id': userId },
         body: JSON.stringify({ provider: 'Checkr' }),
       })
       const data = await res.json()
@@ -382,9 +374,11 @@ function BackgroundCheckSection({
 function ExternalRatingsForm({
   details,
   onSave,
+  userId,
 }: {
   details: ExternalRatingDetails
   onSave: (data: ExternalRatingDetails) => void
+  userId: string
 }) {
   const [form, setForm] = useState({
     bbbNumber: details.bbbNumber ?? '',
@@ -403,7 +397,7 @@ function ExternalRatingsForm({
     try {
       const res = await fetch('/api/business/sync-external-ratings', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-user-id': userId },
         body: JSON.stringify(form),
       })
       const data = await res.json()
@@ -494,10 +488,12 @@ function CertificationsManager({
   certs,
   onAdd,
   onRemove,
+  userId,
 }: {
   certs: CertificationRecord[]
   onAdd: (cert: CertificationRecord) => void
   onRemove: (id: string) => void
+  userId: string
 }) {
   const [form, setForm] = useState({
     name: '', issuingOrganization: '', certificateNumber: '', issueDate: '', expirationDate: '',
@@ -511,7 +507,7 @@ function CertificationsManager({
     try {
       const res = await fetch('/api/business/verify/certifications', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-user-id': userId },
         body: JSON.stringify(form),
       })
       const data = await res.json()
@@ -523,6 +519,18 @@ function CertificationsManager({
       toast.error(err instanceof Error ? err.message : 'Error adding certification')
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function handleRemove(id: string) {
+    try {
+      await fetch(`/api/business/verify/certifications?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        headers: { 'x-user-id': userId },
+      })
+      onRemove(id)
+    } catch {
+      toast.error('Failed to remove certification')
     }
   }
 
@@ -556,7 +564,7 @@ function CertificationsManager({
                   </span>
                 )}
                 <button
-                  onClick={() => onRemove(cert.id)}
+                  onClick={() => handleRemove(cert.id)}
                   className="p-1 rounded text-gray-400 hover:text-red-500 transition-colors"
                   aria-label="Remove certification"
                 >
@@ -689,9 +697,38 @@ function getStepStatus(v: BusinessVerification): {
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 
+const EMPTY_VERIFICATION: BusinessVerification = {
+  id: '',
+  businessId: '',
+  license: null,
+  insurance: null,
+  backgroundCheck: { status: 'not_started' },
+  externalRatings: {},
+  certifications: [],
+  trustScore: 0,
+  verifiedCount: 0,
+  updatedAt: new Date().toISOString(),
+}
+
 export default function VerificationPage() {
-  const [verification, setVerification] = useState<BusinessVerification>(MOCK_VERIFICATION)
+  const { user } = useAuth()
+  const [verification, setVerification] = useState<BusinessVerification>(EMPTY_VERIFICATION)
   const [openStep, setOpenStep] = useState<string | null>('license')
+  const userId = user?.uid ?? ''
+
+  // Load real verification data on mount
+  useEffect(() => {
+    if (!userId) return
+    fetch('/api/business/verification-status', { headers: { 'x-user-id': userId } })
+      .then((r) => r.json())
+      .then((data: BusinessVerification) => {
+        const next = { ...EMPTY_VERIFICATION, ...data }
+        next.trustScore = computeTrustScore(next)
+        next.verifiedCount = computeVerifiedCount(next)
+        setVerification(next)
+      })
+      .catch(() => {/* keep empty state on error */})
+  }, [userId])
 
   function update(patch: Partial<BusinessVerification>) {
     setVerification((prev) => {
@@ -715,6 +752,7 @@ export default function VerificationPage() {
       content: (
         <LicenseForm
           onSave={(license) => update({ license })}
+          userId={userId}
         />
       ),
     },
@@ -728,6 +766,7 @@ export default function VerificationPage() {
       content: (
         <InsuranceForm
           onSave={(insurance) => update({ insurance })}
+          userId={userId}
         />
       ),
     },
@@ -742,6 +781,7 @@ export default function VerificationPage() {
         <BackgroundCheckSection
           details={verification.backgroundCheck}
           onInitiate={(backgroundCheck) => update({ backgroundCheck })}
+          userId={userId}
         />
       ),
     },
@@ -756,6 +796,7 @@ export default function VerificationPage() {
         <ExternalRatingsForm
           details={verification.externalRatings}
           onSave={(externalRatings) => update({ externalRatings })}
+          userId={userId}
         />
       ),
     },
@@ -773,6 +814,7 @@ export default function VerificationPage() {
           onRemove={(id) =>
             update({ certifications: verification.certifications.filter((c) => c.id !== id) })
           }
+          userId={userId}
         />
       ),
     },
