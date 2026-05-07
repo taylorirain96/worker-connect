@@ -325,6 +325,138 @@ export async function POST(req: NextRequest) {
         break
       }
 
+      // ── Payout paid (bank deposit landed) ────────────────────────────────
+      case 'payout.paid': {
+        const payout = event.data.object as Stripe.Payout
+        const payoutSnap = await adminDb
+          .collection('withdrawals')
+          .where('stripePayoutId', '==', payout.id)
+          .limit(1)
+          .get()
+        if (!payoutSnap.empty) {
+          const payoutDoc = payoutSnap.docs[0]
+          const workerId = payoutDoc.data().workerId as string | undefined
+          await payoutDoc.ref.update({ status: 'completed', completedAt: new Date().toISOString() })
+          if (workerId) {
+            await sendNotification({
+              userId: workerId,
+              type: 'payout_processed',
+              title: 'Payout Deposited',
+              message: `Your payout of $${(payout.amount / 100).toFixed(2)} has been deposited.`,
+              metadata: { stripePayoutId: payout.id, amount: payout.amount },
+            })
+          }
+        }
+        break
+      }
+
+      // ── Payout failed ────────────────────────────────────────────────────
+      case 'payout.failed': {
+        const payout = event.data.object as Stripe.Payout
+        const payoutSnap = await adminDb
+          .collection('withdrawals')
+          .where('stripePayoutId', '==', payout.id)
+          .limit(1)
+          .get()
+        if (!payoutSnap.empty) {
+          const payoutDoc = payoutSnap.docs[0]
+          const workerId = payoutDoc.data().workerId as string | undefined
+          await payoutDoc.ref.update({
+            status: 'failed',
+            failureCode: payout.failure_code ?? null,
+            failureMessage: payout.failure_message ?? null,
+            failedAt: new Date().toISOString(),
+          })
+          if (workerId) {
+            await sendNotification({
+              userId: workerId,
+              type: 'payment_failed',
+              title: 'Payout Failed',
+              message: `Your payout of $${(payout.amount / 100).toFixed(2)} could not be processed. ${payout.failure_message ?? ''}`.trim(),
+              metadata: {
+                stripePayoutId: payout.id,
+                ...(payout.failure_code ? { failureCode: payout.failure_code } : {}),
+              },
+            })
+          }
+        }
+        break
+      }
+
+      // ── Connect account updated ───────────────────────────────────────────
+      case 'account.updated': {
+        const account = event.data.object as Stripe.Account
+        const accountSnap = await adminDb
+          .collection('workers')
+          .where('stripeConnectAccountId', '==', account.id)
+          .limit(1)
+          .get()
+        if (!accountSnap.empty) {
+          await accountSnap.docs[0].ref.update({
+            stripeConnectStatus: {
+              chargesEnabled: account.charges_enabled,
+              payoutsEnabled: account.payouts_enabled,
+              detailsSubmitted: account.details_submitted,
+              updatedAt: new Date().toISOString(),
+            },
+          })
+        }
+        break
+      }
+
+      // ── Charge disputed ───────────────────────────────────────────────────
+      case 'charge.dispute.created': {
+        const dispute = event.data.object as Stripe.Dispute
+        const paymentIdFromDispute = typeof dispute.charge === 'string'
+          ? (await adminDb.collection('payments').where('stripeChargeId', '==', dispute.charge).limit(1).get()).docs[0]?.id
+          : undefined
+        await adminDb.collection('disputes').add({
+          stripeDisputeId: dispute.id,
+          stripeChargeId: dispute.charge,
+          ...(paymentIdFromDispute ? { paymentId: paymentIdFromDispute } : {}),
+          amount: dispute.amount,
+          currency: dispute.currency,
+          reason: dispute.reason,
+          description: `Stripe dispute: ${dispute.reason}`,
+          evidence: [],
+          status: 'open',
+          notes: '',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          dueDate: dispute.evidence_details?.due_by
+            ? new Date(dispute.evidence_details.due_by * 1000).toISOString()
+            : new Date(Date.now() + 7 * 86400000).toISOString(),
+        })
+        break
+      }
+
+      // ── Charge refunded ───────────────────────────────────────────────────
+      case 'charge.refunded': {
+        const charge = event.data.object as Stripe.Charge
+        const chargePaymentId = (charge.metadata as Record<string, string> | undefined)?.paymentId
+        if (chargePaymentId) {
+          await adminDb.collection('payments').doc(chargePaymentId).update({
+            status: 'refunded',
+            refundedAt: new Date().toISOString(),
+          })
+        }
+        const lastRefund = charge.refunds?.data?.[0]
+        if (lastRefund) {
+          await adminDb.collection('refunds').add({
+            ...(chargePaymentId ? { paymentId: chargePaymentId } : {}),
+            stripeRefundId: lastRefund.id,
+            stripeChargeId: charge.id,
+            amount: lastRefund.amount / 100,
+            reason: lastRefund.reason ?? 'customer_request',
+            status: lastRefund.status === 'succeeded' ? 'completed' : 'pending',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            ...(lastRefund.status === 'succeeded' ? { completedAt: new Date().toISOString() } : {}),
+          })
+        }
+        break
+      }
+
       default:
         // Unhandled event types are silently ignored
         break
