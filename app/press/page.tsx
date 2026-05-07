@@ -47,7 +47,7 @@ const breadcrumbJsonLd = {
   ],
 }
 
-const stats = [
+const pressStats = [
   { value: '17+', label: 'Services available at launch' },
   { value: '10', label: 'NZ regions covered' },
   { value: 'Blenheim', label: 'Founding hometown' },
@@ -213,7 +213,7 @@ export default function PressPage() {
               <div className="rounded-2xl bg-slate-900/70 border border-slate-700/50 p-8">
                 <h2 className="text-2xl font-bold text-white mb-6">Key stats</h2>
                 <div className="grid grid-cols-2 gap-4">
-                  {stats.map(({ value, label }) => (
+                  {pressStats.map(({ value, label }) => (
                     <div
                       key={label}
                       className="rounded-xl bg-slate-950/60 border border-slate-700/50 p-5"
