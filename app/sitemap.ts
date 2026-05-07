@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next'
 import { getAllPosts } from '@/lib/blog/posts'
 import { adminDb } from '@/lib/firebase-admin'
-import { SITE_URL, absoluteUrl } from '@/lib/seo/config'
+import { absoluteUrl } from '@/lib/seo/config'
 import { LOCATIONS, SERVICES } from '@/lib/seo/servicesData'
 import { AU_CITIES } from '@/lib/utils'
 

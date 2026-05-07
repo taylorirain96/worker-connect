@@ -3,7 +3,7 @@ import { MapPin, CheckCircle } from 'lucide-react'
 
 interface Props { location: string; workerLocation?: string; matchScore: number }
 
-export default function LocationMatchDisplay({ location, workerLocation = 'New York, NY', matchScore }: Props) {
+export default function LocationMatchDisplay({ location, workerLocation: _workerLocation = 'New York, NY', matchScore }: Props) {
   const isGood = matchScore >= 70
   return (
     <div className="flex items-center gap-2 text-sm">

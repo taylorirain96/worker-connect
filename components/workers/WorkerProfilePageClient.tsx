@@ -132,7 +132,7 @@ export default function WorkerProfilePageClient({
     return () => {
       cancelled = true
     }
-  }, [workerId, initialData.portfolio, initialData.servicePackages, initialData.tradeLicences])
+  }, [workerId, initialData])
 
   const workerJsonLd = useMemo(() => {
     const person: Record<string, unknown> = {

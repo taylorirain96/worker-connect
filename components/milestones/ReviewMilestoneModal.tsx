@@ -64,7 +64,7 @@ export default function ReviewMilestoneModal({
 
         <div className="p-5 space-y-4">
           <p className="text-sm text-slate-300">
-            Review <span className="text-white font-medium">"{milestoneTitle}"</span>.
+            Review <span className="text-white font-medium">&ldquo;{milestoneTitle}&rdquo;</span>.
             Approving will release <span className="text-indigo-300 font-semibold">{formatCurrency(milestoneAmount)}</span> to the worker.
           </p>
 

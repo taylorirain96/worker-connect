@@ -233,7 +233,7 @@ export default function JobChatPage() {
 
     try {
       // Ensure conversation exists; create if needed (e.g., when initiated from job page)
-      let convId = conversation?.id ?? null
+      const convId = conversation?.id ?? null
       if (!convId) {
         // If no conversation yet, we can't proceed without other participant info
         toast.error('Conversation not found.')

@@ -57,7 +57,6 @@ export default async function AUServiceCityPage({ params }: Props) {
   if (!service || !cityName) notFound()
 
   const details = getServiceDetails(serviceSlug)
-  const canonical = `${SITE_URL}/services/${service.slug}/au/${citySlug}`
   const otherCities = AU_CITIES.filter((c) => c.toLowerCase().replace(/\s+/g, '-') !== citySlug)
   const otherServices = SERVICES.filter((s) => s.slug !== service.slug)
 

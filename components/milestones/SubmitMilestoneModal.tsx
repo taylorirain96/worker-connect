@@ -62,7 +62,7 @@ export default function SubmitMilestoneModal({
 
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <p className="text-sm text-slate-300">
-            Submit <span className="text-white font-medium">"{milestoneTitle}"</span> for employer approval.
+            Submit <span className="text-white font-medium">&ldquo;{milestoneTitle}&rdquo;</span> for employer approval.
           </p>
           <div>
             <label className="block text-xs font-medium text-slate-400 mb-1.5">

@@ -272,7 +272,6 @@ export default function VerifyIdentityPage() {
 
   // ── Upload flow ─────────────────────────────────────────────────────────────
 
-  const stepIndex = STEP_ORDER.indexOf(currentStep)
   const StepIcon = STEP_INFO[currentStep].icon
   const currentUpload = uploads[currentStep]
   const allDone = !!uploads.front && !!uploads.selfie

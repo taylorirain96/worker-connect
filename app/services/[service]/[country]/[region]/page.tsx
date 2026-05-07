@@ -30,7 +30,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!service || !region) return {}
 
-  const countryName = COUNTRY_NAMES[country] ?? country.toUpperCase()
   const title = `${service.label} Services in ${region.city}, ${region.region} | QuickTrade`
   const description = `Find trusted ${service.label.toLowerCase()} professionals in ${region.city}, ${region.region}. Browse vetted workers, compare rates, and get quotes — QuickTrade makes hiring easy in ${region.city}.`
   const canonical = `${SITE_URL}/services/${service.id}/${country}/${region.slug}`

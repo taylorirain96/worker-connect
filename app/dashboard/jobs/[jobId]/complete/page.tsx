@@ -44,7 +44,7 @@ function formatDisputeDeadline(dateString: string): string {
 export default function JobCompletePage() {
   const params = useParams()
   const router = useRouter()
-  const { user, profile, loading: authLoading } = useAuth()
+  const { user, loading: authLoading } = useAuth()
 
   const jobId = params.jobId as string
 

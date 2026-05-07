@@ -137,7 +137,7 @@ export async function sendPaymentReleasedEmail(opts: {
   workerAmount: number
   jobId: string
 }): Promise<void> {
-  const { workerEmail, workerName, jobTitle, grossAmount, commissionAmount, workerAmount, jobId } = opts
+  const { workerEmail, workerName, jobTitle, grossAmount, commissionAmount, workerAmount, jobId: _jobId } = opts
   const earningsUrl = `${APP_URL}/dashboard/worker`
 
   const html = emailWrapper(`
@@ -443,7 +443,7 @@ export async function sendBookingRequestEmail(opts: {
   address: string
   bookingId: string
 }): Promise<void> {
-  const { workerEmail, workerName, homeownerName, requestedDate, requestedTime, duration, description, address, bookingId } = opts
+  const { workerEmail, workerName, homeownerName, requestedDate, requestedTime, duration, description, address, bookingId: _bookingId } = opts
   const bookingUrl = `${APP_URL}/dashboard/worker/bookings`
 
   const html = emailWrapper(`
@@ -488,7 +488,7 @@ export async function sendBookingConfirmedEmail(opts: {
   workerMessage?: string
   bookingId: string
 }): Promise<void> {
-  const { homeownerEmail, homeownerName, workerName, requestedDate, requestedTime, duration, workerMessage, bookingId } = opts
+  const { homeownerEmail, homeownerName, workerName, requestedDate, requestedTime, duration, workerMessage, bookingId: _bookingId } = opts
   const bookingUrl = `${APP_URL}/dashboard/homeowner/bookings`
 
   const html = emailWrapper(`
@@ -533,7 +533,7 @@ export async function sendBookingDeclinedEmail(opts: {
   workerMessage?: string
   bookingId: string
 }): Promise<void> {
-  const { homeownerEmail, homeownerName, workerName, requestedDate, workerMessage, bookingId } = opts
+  const { homeownerEmail, homeownerName, workerName, requestedDate, workerMessage, bookingId: _bookingId } = opts
   const workersUrl = `${APP_URL}/workers`
 
   const html = emailWrapper(`
@@ -572,7 +572,7 @@ export async function sendJobCompletedWorkerEmail(opts: {
   jobId: string
   paymentAmount: number
 }): Promise<void> {
-  const { workerEmail, workerName, homeownerName, jobTitle, jobId, paymentAmount } = opts
+  const { workerEmail, workerName, homeownerName, jobTitle, jobId: _jobId, paymentAmount } = opts
   const earningsUrl = `${APP_URL}/dashboard/worker`
 
   const html = emailWrapper(`

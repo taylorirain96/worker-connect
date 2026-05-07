@@ -1,8 +1,14 @@
 'use client'
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { X, Send, Paperclip, ShieldAlert } from 'lucide-react'
 
-export default function AppealForm({ ratingId, onClose }: { ratingId: string, onClose: () => void }) {
+export default function AppealForm({
+  ratingId: _ratingId,
+  onClose,
+}: {
+  ratingId: string
+  onClose: () => void
+}) {
   const [reason, setReason] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 

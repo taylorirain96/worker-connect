@@ -15,12 +15,6 @@ const nextConfig = {
       { source: '/jobs/post', destination: '/jobs/create', permanent: true },
     ]
   },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   swcMinify: true,
   images: {
     remotePatterns: [

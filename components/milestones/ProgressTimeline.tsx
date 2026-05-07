@@ -22,7 +22,7 @@ export default function ProgressTimeline({ updates }: ProgressTimelineProps) {
       {/* Vertical line */}
       <div className="absolute left-4 top-4 bottom-4 w-px bg-white/10" />
 
-      {updates.map((update, i) => (
+      {updates.map((update) => (
         <div key={update.id} className="relative flex gap-4 pb-5 last:pb-0">
           {/* Dot */}
           <div className="relative z-10 w-8 h-8 rounded-full bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center shrink-0">

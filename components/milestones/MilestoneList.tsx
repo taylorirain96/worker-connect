@@ -63,7 +63,7 @@ function MilestoneCard({ milestone, isEmployer, isWorker, onSubmit, onApprove, o
           {milestone.submissionNote && (
             <div className="rounded-lg bg-indigo-500/10 border border-indigo-500/20 p-3">
               <p className="text-xs font-medium text-indigo-300 mb-1 flex items-center gap-1">
-                <MessageSquare className="w-3 h-3" /> Worker's note
+                <MessageSquare className="w-3 h-3" /> Worker&apos;s note
               </p>
               <p className="text-sm text-slate-300">{milestone.submissionNote}</p>
             </div>
