@@ -205,6 +205,7 @@ export type JobCategory =
   | 'moving'
   | 'general'
   | 'apprenticeship'
+  | 'training'
 
 export interface Application {
   id: string
