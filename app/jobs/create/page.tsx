@@ -157,6 +157,28 @@ function CreateJobPage() {
         ...(data.deadline ? { deadline: data.deadline } : {}),
       })
 
+      // Fire-and-forget SMS to matching workers for urgent jobs
+      if (data.urgency === 'high' || data.urgency === 'emergency') {
+        fetch('/api/jobs/urgent-notify', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-user-id': user.uid,
+          },
+          body: JSON.stringify({
+            jobId,
+            title: data.title,
+            location: data.location,
+            category: data.category,
+            urgency: data.urgency,
+            budget: data.budgetMax,
+          }),
+        }).catch((err) => {
+          // Non-blocking — log for observability but never block job creation
+          console.warn('[urgent-notify] SMS dispatch failed:', err)
+        })
+      }
+
       // Optionally save this post as a reusable template
       if (saveAsTemplate && templateName.trim()) {
         setSavingTemplate(true)

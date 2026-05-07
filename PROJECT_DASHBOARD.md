@@ -404,7 +404,7 @@ UNSUBSCRIBE_SECRET=
 | Worker verification badge | ID verification at /dashboard/worker/verify, badge on profile + worker cards |
 | Push notifications (FCM) | FCM background + foreground push, permission prompt, service worker |
 | Job completion flow | Worker requests → homeowner confirms → escrow releases → review |
-| Stripe payout dashboard | /dashboard/worker/payout-setup |
+| Stripe payout dashboard | /dashboard/worker/payout-setup + /payouts balance view + earnings dashboard reads live escrows |
 | Employer business profile | /dashboard/business/profile (NZBN, logo, team) |
 | Mobile PWA manifest + service worker | manifest.json + sw.js + firebase-messaging-sw.js |
 | Worker availability calendar | /dashboard/worker/availability |
@@ -414,6 +414,7 @@ UNSUBSCRIBE_SECRET=
 | Rich job post editor | Category, urgency, budget type, save-as-template |
 | Worker trade licences & certifications | /dashboard/worker/trade-licences, displayed on public profile |
 | SMS notifications (Twilio) | Application events, payment released, booking confirmed |
+| A/B test homepage hero CTA | Variant persisted in localStorage with analytics event tracking |
 
 ### 📋 Future / V2
 - [x] Australian expansion (AUD, ABN, AU GST 10%) ✅
@@ -426,7 +427,6 @@ UNSUBSCRIBE_SECRET=
 - [x] Homeowner Search Alerts management page ✅
 - [x] Worker Subscription / Pro Tier management ✅
 - [x] Worker Quote Templates (save + load in quote form) ✅
-- [ ] A/B test homepage hero CTA
 - [ ] Mobile app (React Native / Expo)
 
 ---
