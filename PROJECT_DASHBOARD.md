@@ -94,6 +94,28 @@
 | Disputes page | ✅ Live | |
 | Settings page | ✅ Live | |
 | Reports page | ✅ Live | |
+| Australian expansion (AU landing + service×city pages) | ✅ Live | AUD, ABN validation, 10% GST |
+| Video worker profiles (upload + playback) | ✅ Live | Firebase Storage, HTML5 player |
+| Background check integration | ✅ Live | Worker-initiated, admin-reviewed |
+| Open API for partner integrations | ✅ Live | x-api-key auth, jobs + workers endpoints |
+| WorkSafe NZ compliance module | ✅ Live | Checklist, badge on worker card |
+| Apprenticeship / training listings | ✅ Live | Dedicated category + pages + navbar link |
+| Job Milestone Billing & Progress Tracking | ✅ Live | Milestone escrow releases, worker progress log, approval flow |
+| SMS notifications (Twilio) | ✅ Live | Application accepted/rejected, payment released, booking confirmed/declined |
+| Worker portfolio with photo gallery | ✅ Live | /dashboard/worker/portfolio, gallery on public profile |
+| Booking & availability system | ✅ Live | /dashboard/worker/availability, /workers/[id]/book |
+| Service packages (fixed-price packages) | ✅ Live | /dashboard/worker/service-packages, /packages, on worker profile |
+| In-app messaging (Firestore) | ✅ Live | Real-time chat, typing indicators, image upload, unread badge |
+| FCM push notifications | ✅ Live | Background + foreground push, 7-day snooze prompt |
+| Promo codes & credit system | ✅ Live | /dashboard/admin/promos, /api/promos, /api/credits |
+| Favourite workers | ✅ Live | FavouriteButton, /dashboard/homeowner/favourites |
+| Admin analytics dashboard | ✅ Live | /dashboard/admin/analytics, recharts, 5-min cache |
+| Affiliate payout dashboard | ✅ Live | /dashboard/admin/affiliates, Stripe Transfer |
+| Worker trade licences & certifications | ✅ Live | /dashboard/worker/trade-licences, displayed on public worker profile |
+| Homeowner Spending Dashboard | ✅ Live | /dashboard/homeowner/spending, monthly spend chart + category breakdown |
+| Homeowner Search Alerts Management | ✅ Live | /dashboard/homeowner/alerts, create/delete/toggle job alerts |
+| Worker Subscription / Pro Tier Page | ✅ Live | /dashboard/worker/subscription, plan management + upgrade flow |
+| Worker Quote Templates | ✅ Live | /api/quote-templates, /dashboard/worker/quote-templates, load-template in WorkerQuoteForm |
 
 ---
 
@@ -141,6 +163,13 @@ app/
 │   └── [service]/              # Service detail page
 │       └── nz/
 │           └── [region]/       # Region-level SEO landing pages
+│               └── [city]/     # NZ city-level SEO pages
+│       └── au/
+│           └── [city]/         # AU city-level SEO pages
+├── apprenticeships/            # Apprenticeship listings
+│   └── [id]/                   # Apprenticeship detail
+├── au/                         # Australia landing page
+├── api-docs/                   # Public Partner API documentation
 ├── settings/                   # Account settings
 ├── stripe/                     # Stripe Connect onboarding
 ├── timesheets/                 # Per-job timesheet & cost tracker
@@ -211,12 +240,10 @@ NEXT_PUBLIC_FIREBASE_PROJECT_ID=
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
 NEXT_PUBLIC_FIREBASE_APP_ID=
-NEXT_PUBLIC_FIREBASE_DATABASE_URL=
+NEXT_PUBLIC_FIREBASE_VAPID_KEY=
 
 # Firebase (Admin SDK)
-FIREBASE_ADMIN_PROJECT_ID=
-FIREBASE_ADMIN_CLIENT_EMAIL=
-FIREBASE_ADMIN_PRIVATE_KEY=
+FIREBASE_SERVICE_ACCOUNT_KEY=
 
 # Stripe
 STRIPE_SECRET_KEY=
@@ -224,11 +251,14 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
 STRIPE_WEBHOOK_SECRET=
 
 # App
-NEXT_PUBLIC_SITE_URL=https://quicktrade-pi.vercel.app
-NEXT_PUBLIC_GA_MEASUREMENT_ID=
+NEXT_PUBLIC_APP_URL=https://quicktrade-pi.vercel.app
+NEXT_PUBLIC_GA_ID=G-VNY47FMBTR
 
 # AI
 OPENAI_API_KEY=
+
+# Email unsubscribe signing
+UNSUBSCRIBE_SECRET=
 ```
 
 ---
@@ -368,31 +398,36 @@ OPENAI_API_KEY=
 
 ## 🗺️ Roadmap — Next Priorities
 
-### 🔥 High Priority (Next Sprint)
-- [x] Worker verification badge (trade licence / ID check) — BadgeShowcase component + trade licences on /workers/[id]
-- [x] Push notifications (FCM) for job alerts — FCM wired across jobs, quotes, reviews, disputes, messages
-- [x] Job completion flow (employer marks done → releases escrow → triggers review prompt) — milestone approve + auto-release
-- [x] Stripe payout dashboard (worker sees pending/available balance breakdown) — /payouts page + real Stripe balance API; earnings page now uses real Firestore escrows
-- [x] Employer business profile (logo, NZBN, team members) — /dashboard/employer/business-profile
-- [x] Mobile PWA manifest + service worker — public/manifest.json, service-worker.js, sw.js
-
-### 🟡 Medium Priority
-- [x] Worker availability calendar — /dashboard/worker/availability
-- [x] Job scheduling / booking system (date + time picker on job post) — /bookings, service-package booking flow
-- [x] SMS notifications (Twilio) for urgent job alerts — lib/sms.ts, lib/notifications/sms.ts
-- [x] Public worker portfolio page (shareable /workers/[id] URL) — portfolio gallery on worker public profile
-- [x] Affiliate payout system (pay referrers via Stripe) — /api/affiliates/payout, /dashboard/admin/affiliates
-- [x] Rich job post editor (categories, tags, budget range, urgency level) — /jobs/create with urgency selector, tags, budgetMin/Max, AI assist
-- [x] A/B test homepage hero CTA — heroVariant A/B persisted in localStorage, GA event tracking
+### ✅ High Priority — All Shipped
+| Feature | Notes |
+|---------|-------|
+| Worker verification badge | ID verification at /dashboard/worker/verify, badge on profile + worker cards |
+| Push notifications (FCM) | FCM background + foreground push, permission prompt, service worker |
+| Job completion flow | Worker requests → homeowner confirms → escrow releases → review |
+| Stripe payout dashboard | /dashboard/worker/payout-setup + /payouts balance view + earnings dashboard reads live escrows |
+| Employer business profile | /dashboard/business/profile (NZBN, logo, team) |
+| Mobile PWA manifest + service worker | manifest.json + sw.js + firebase-messaging-sw.js |
+| Worker availability calendar | /dashboard/worker/availability |
+| Job booking system | /workers/[id]/book, /dashboard/worker/bookings |
+| Public worker portfolio | Portfolio section on worker profile, /dashboard/worker/portfolio |
+| Affiliate payout system | /api/affiliates + /dashboard/admin/affiliates |
+| Rich job post editor | Category, urgency, budget type, save-as-template |
+| Worker trade licences & certifications | /dashboard/worker/trade-licences, displayed on public profile |
+| SMS notifications (Twilio) | Application events, payment released, booking confirmed |
+| A/B test homepage hero CTA | Variant persisted in localStorage with analytics event tracking |
 
 ### 📋 Future / V2
+- [x] Australian expansion (AUD, ABN, AU GST 10%) ✅
+- [x] Video worker profiles ✅
+- [x] Background check integration (NZ Police vetting API) ✅
+- [x] Open API for partner integrations ✅
+- [x] WorkSafe NZ compliance module ✅
+- [x] Apprenticeship / training listings category ✅
+- [x] Homeowner Spending Dashboard ✅
+- [x] Homeowner Search Alerts management page ✅
+- [x] Worker Subscription / Pro Tier management ✅
+- [x] Worker Quote Templates (save + load in quote form) ✅
 - [ ] Mobile app (React Native / Expo)
-- [ ] Australian expansion (AUD, ABN, AU GST 10%)
-- [ ] Video worker profiles
-- [ ] Background check integration (NZ Police vetting API)
-- [ ] Open API for partner integrations
-- [ ] WorkSafe NZ compliance module
-- [ ] Apprenticeship / training listings category
 
 ---
 

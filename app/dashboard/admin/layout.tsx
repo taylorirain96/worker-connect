@@ -6,7 +6,7 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import {
   LayoutDashboard, Users, Briefcase, DollarSign,
-  AlertTriangle, Mail, Shield, Menu, X, ChevronRight, ShieldCheck, Tag, BarChart2,
+  AlertTriangle, Mail, Shield, Menu, X, ChevronRight, ShieldCheck, Tag, BarChart2, Key,
 } from 'lucide-react'
 
 const NAV_ITEMS = [
@@ -21,6 +21,7 @@ const NAV_ITEMS = [
   { label: 'ID Verifications', href: '/dashboard/admin/verifications',    icon: ShieldCheck },
   { label: 'Promo Codes',    href: '/dashboard/admin/promos',             icon: Tag },
   { label: 'Email Logs',     href: '/dashboard/admin/emails',             icon: Mail },
+  { label: 'API Keys',       href: '/dashboard/admin/api-keys',           icon: Key },
 ]
 
 function AdminSidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {

@@ -3,9 +3,31 @@ import type { NextRequest } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
 import { sendBookingConfirmedEmail, sendBookingDeclinedEmail } from '@/lib/email/transactional'
 import { sendAdminNotification } from '@/lib/notifications/admin'
+import { sendSMS as sendTwilioSMS } from '@/lib/sms'
+import { buildSMSMessage } from '@/lib/notifications/sms'
 import type { BookingStatus } from '@/types'
 
 export const dynamic = 'force-dynamic'
+
+/** Send an SMS to the homeowner when their booking is confirmed or declined. Best-effort, never throws. */
+async function sendBookingStatusSMS(
+  homeownerId: string,
+  workerName: string,
+  requestedDate: string,
+  status: 'confirmed' | 'declined',
+): Promise<void> {
+  try {
+    const homeownerSnap = await adminDb.collection('users').doc(homeownerId).get()
+    const homeownerPhone = homeownerSnap.data()?.phone as string | undefined
+    if (homeownerPhone) {
+      const smsType = status === 'confirmed' ? 'booking_confirmed' : 'booking_declined'
+      const smsBody = buildSMSMessage(smsType, { workerName, date: requestedDate })
+      await sendTwilioSMS({ to: homeownerPhone, body: smsBody })
+    }
+  } catch {
+    // SMS is best-effort
+  }
+}
 
 /**
  * GET /api/bookings/[id]
@@ -26,7 +48,18 @@ export async function GET(
       return NextResponse.json({ error: 'Booking not found' }, { status: 404 })
     }
 
-    const booking = { id: doc.id, ...doc.data() } as { workerId: string; homeownerId: string } & Record<string, unknown>
+    const bookingData = doc.data() as { workerId: string; homeownerId: string } | undefined
+    if (!bookingData) {
+      return NextResponse.json({ error: 'Booking data missing' }, { status: 500 })
+    }
+
+    const booking: { id: string; workerId: string; homeownerId: string } & Record<string, unknown> = {
+      id: doc.id,
+      ...bookingData,
+    }
+    if (!booking.workerId || !booking.homeownerId) {
+      return NextResponse.json({ error: 'Booking is missing ownership data' }, { status: 500 })
+    }
 
     // Only the worker or homeowner can view the booking
     if (booking.workerId !== userId && booking.homeownerId !== userId) {
@@ -61,6 +94,7 @@ export async function PUT(
     if (!status || !['confirmed', 'declined'].includes(status)) {
       return NextResponse.json({ error: 'Invalid status. Must be confirmed or declined.' }, { status: 400 })
     }
+    const nextStatus = status as 'confirmed' | 'declined'
 
     const bookingRef = adminDb.collection('bookings').doc(params.id)
     const doc = await bookingRef.get()
@@ -91,7 +125,7 @@ export async function PUT(
     }
 
     await bookingRef.update({
-      status,
+      status: nextStatus,
       workerMessage: workerMessage ?? '',
       updatedAt: new Date().toISOString(),
     })
@@ -136,6 +170,14 @@ export async function PUT(
         link: `/dashboard/homeowner/bookings`,
       }).catch(() => {})
     }
+
+    // SMS to homeowner (non-blocking)
+    sendBookingStatusSMS(
+      booking.homeownerId,
+      booking.workerName,
+      booking.requestedDate,
+      nextStatus,
+    ).catch(() => {})
 
     return NextResponse.json({ success: true })
   } catch (err) {

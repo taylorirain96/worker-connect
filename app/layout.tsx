@@ -12,6 +12,7 @@ import { SITE_URL } from '@/lib/seo/config'
 const SupportChatbot = dynamic(() => import('@/components/chat/SupportChatbot'), { ssr: false })
 const PWAInstallPrompt = dynamic(() => import('@/components/PWAInstallPrompt'), { ssr: false })
 const MobileTabBar = dynamic(() => import('@/components/MobileTabBar'), { ssr: false })
+const GA_ID = process.env.NEXT_PUBLIC_GA_ID ?? 'G-VNY47FMBTR'
 const NotificationPrompt = dynamic(
   () => import('@/components/notifications/NotificationPrompt'),
   { ssr: false }
@@ -24,7 +25,7 @@ export const metadata: Metadata = {
   },
   description:
     "QuickTrade is New Zealand's trusted marketplace for local tradespeople. Hire verified plumbers, electricians, builders, cleaners and more — fast, safe, and affordable.",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'https://quicktrade-pi.vercel.app'),
+  metadataBase: new URL(SITE_URL),
   alternates: {
     canonical: '/',
   },
@@ -129,7 +130,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </AuthProvider>
         </ThemeProvider>
       </body>
-      <GoogleAnalytics gaId="G-VNY47FMBTR" />
+      <GoogleAnalytics gaId={GA_ID} />
     </html>
   )
 }

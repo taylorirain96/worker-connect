@@ -8,7 +8,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import {
-  User, MapPin, Phone, Mail, Briefcase, GraduationCap,
+  User, MapPin, Phone, Briefcase, GraduationCap,
   Tag, Star, Upload, Video, DollarSign, Save, Plus, Trash2,
   CheckCircle, CalendarDays, X,
 } from 'lucide-react'
@@ -263,8 +263,6 @@ export default function JobseekerProfilePage() {
       </div>
     )
   }
-
-  const currentAvailability = AVAILABILITY_OPTIONS.find((o) => o.value === profileData.availabilityStatus)
 
   return (
     <div className="flex flex-col min-h-screen bg-[#0a0f1e]">

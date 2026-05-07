@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import type { Proposal } from '@/types'
 
 interface ProposalFormProps {
   jobId: string

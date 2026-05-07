@@ -18,6 +18,8 @@ import {
   sendJobCompletedWorkerEmail,
   sendJobCompletedHomeownerEmail,
 } from '@/lib/email/transactional'
+import { sendSMS as sendTwilioSMS } from '@/lib/sms'
+import { buildSMSMessage } from '@/lib/notifications/sms'
 
 export const dynamic = 'force-dynamic'
 
@@ -253,6 +255,18 @@ export async function POST(
             jobTitle,
             jobId,
           })
+        }
+
+        // SMS to worker when payment released (non-blocking)
+        if (workerIdToNotify && escrowReleased && workerAmount !== undefined) {
+          const workerPhone = workerSnap?.data()?.phone as string | undefined
+          if (workerPhone) {
+            const smsBody = buildSMSMessage('payment_received', {
+              amount: workerAmount,
+              jobTitle,
+            })
+            sendTwilioSMS({ to: workerPhone, body: smsBody }).catch(() => {})
+          }
         }
       } catch (emailErr) {
         console.error('Failed to send job completion emails:', emailErr)

@@ -8,7 +8,7 @@ import { Card, CardContent } from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import Link from 'next/link'
-import { ArrowLeft, Calendar, Clock, MapPin, User, CheckCircle, XCircle, MessageSquare } from 'lucide-react'
+import { ArrowLeft, Calendar, Clock, MapPin, CheckCircle, XCircle, MessageSquare } from 'lucide-react'
 import toast from 'react-hot-toast'
 import type { BookingRequest, BookingStatus } from '@/types'
 

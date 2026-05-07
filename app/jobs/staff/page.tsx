@@ -217,11 +217,11 @@ function StaffJobsContent() {
         }),
       })
       if (!resp.ok) throw new Error(`Apply request failed with status ${resp.status}`)
-      setAppliedIds((prev) => new Set([...prev, job.id]))
+      setAppliedIds((prev) => new Set([...Array.from(prev), job.id]))
       toast.success(`Applied to "${job.title}" ✓`)
     } catch {
       // Fall back to mock success for demo/preview
-      setAppliedIds((prev) => new Set([...prev, job.id]))
+      setAppliedIds((prev) => new Set([...Array.from(prev), job.id]))
       toast.success(`Applied to "${job.title}" ✓`)
     } finally {
       setApplyingId(null)

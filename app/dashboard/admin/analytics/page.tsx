@@ -368,7 +368,11 @@ export default function AdminAnalyticsPage() {
                       <Cell key={i} fill={PIE_COLOURS[i % PIE_COLOURS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(v: number) => v.toLocaleString('en-NZ')} />
+                  <Tooltip
+                    formatter={(value) =>
+                      typeof value === 'number' ? value.toLocaleString('en-NZ') : String(value ?? '')
+                    }
+                  />
                   <Legend
                     formatter={(value) => <span style={{ color: '#94a3b8', fontSize: 11 }}>{value}</span>}
                     iconSize={10}
@@ -396,7 +400,11 @@ export default function AdminAnalyticsPage() {
                       <Cell key={i} fill={PIE_COLOURS[i % PIE_COLOURS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(v: number) => v.toLocaleString('en-NZ')} />
+                  <Tooltip
+                    formatter={(value) =>
+                      typeof value === 'number' ? value.toLocaleString('en-NZ') : String(value ?? '')
+                    }
+                  />
                   <Legend
                     formatter={(value) => <span style={{ color: '#94a3b8', fontSize: 11 }}>{value}</span>}
                     iconSize={10}

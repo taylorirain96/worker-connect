@@ -271,18 +271,18 @@ export default function HowItWorksPage() {
               {[
                 {
                   icon: <Shield className="h-7 w-7 text-indigo-400" />,
-                  title: 'Background Checks',
-                  description: 'All workers go through comprehensive background verification.',
+                  title: 'Identity Verification',
+                  description: 'Workers earn a verified badge after completing QuickTrade\'s identity check, confirming they are who they say they are.',
                 },
                 {
                   icon: <BadgeCheck className="h-7 w-7 text-emerald-400" />,
-                  title: 'License Verification',
-                  description: 'We verify professional licenses and certifications.',
+                  title: 'Licence & Credential Checks',
+                  description: 'Trade licences and certifications are reviewed where applicable, so you can hire with confidence.',
                 },
                 {
                   icon: <Star className="h-7 w-7 text-indigo-400" />,
-                  title: 'Review System',
-                  description: 'Transparent ratings and reviews from verified customers.',
+                  title: 'Verified Review System',
+                  description: 'Every review on a worker\'s profile was left by a real employer who hired them through QuickTrade — no fake or paid reviews.',
                 },
               ].map(({ icon, title, description }) => (
                 <div
@@ -294,6 +294,77 @@ export default function HowItWorksPage() {
                   </div>
                   <h3 className="font-semibold text-white mb-2">{title}</h3>
                   <p className="text-slate-400 text-sm">{description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* How Escrow Works */}
+        <section className="py-16 px-4 bg-slate-800/30">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-10">
+              <span className="border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 rounded-full px-4 py-1.5 text-sm font-medium">
+                Secure Payments
+              </span>
+              <h2 className="text-3xl font-bold text-white mt-4 mb-2">How Escrow Payments Work</h2>
+              <p className="text-slate-400 max-w-lg mx-auto">
+                QuickTrade uses an escrow payment system so both parties are protected at every step.
+              </p>
+            </div>
+            <div className="grid sm:grid-cols-4 gap-4">
+              {[
+                { step: '1', title: 'Job Accepted', body: 'Employer funds are placed in secure escrow when a quote is accepted.' },
+                { step: '2', title: 'Work Begins', body: 'Worker completes the job knowing funds are held safely and will be released on approval.' },
+                { step: '3', title: 'Employer Approves', body: 'Employer reviews the completed work and approves release of funds.' },
+                { step: '4', title: 'Payment Released', body: "Funds are transferred to the worker minus QuickTrade's commission." },
+              ].map(({ step, title, body }) => (
+                <div key={step} className="rounded-xl bg-slate-900/70 border border-slate-700/50 p-5 text-center">
+                  <div className="h-10 w-10 rounded-full bg-indigo-600/20 border border-indigo-500/40 text-indigo-300 font-bold text-lg flex items-center justify-center mx-auto mb-3">
+                    {step}
+                  </div>
+                  <h3 className="text-white font-semibold text-sm mb-1">{title}</h3>
+                  <p className="text-slate-400 text-xs leading-relaxed">{body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* FAQ */}
+        <section className="py-16 px-4">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-2xl font-bold text-white mb-8 text-center">Frequently Asked Questions</h2>
+            <div className="space-y-4">
+              {[
+                {
+                  q: 'Is it really free to post a job?',
+                  a: 'Yes — posting a job is 100% free for homeowners and businesses. You never pay anything to browse workers, receive quotes, or communicate through the platform. You only pay the agreed job price to the worker when the work is complete.',
+                },
+                {
+                  q: 'What happens if the worker does not show up?',
+                  a: 'Because payments are held in escrow, you are never out of pocket if a worker fails to show up. Your funds are only released when you approve the completed work. If a worker is unreliable, you can cancel and the escrow is refunded.',
+                },
+                {
+                  q: 'How quickly will I receive quotes after posting a job?',
+                  a: 'Most jobs receive their first quote within a few hours. Emergency or high-urgency jobs typically attract quotes within 30 minutes. You can compare all quotes, read profiles, and message workers before deciding who to hire.',
+                },
+                {
+                  q: 'Can I use QuickTrade for large projects like full home renovations?',
+                  a: 'Absolutely. QuickTrade supports both small one-off jobs and large multi-trade projects. For bigger projects you can post individual job stages, use the milestone payment feature to pay in installments, and track progress all in one place.',
+                },
+                {
+                  q: 'Are there jobs for employment roles as well as gig work?',
+                  a: 'Yes. QuickTrade supports both gig-style trade jobs (one-off projects) and ongoing employment roles. Businesses can post full-time, part-time, or contract roles and jobseekers can filter specifically for employment opportunities.',
+                },
+                {
+                  q: 'What trades are covered on QuickTrade?',
+                  a: 'QuickTrade covers all major trades and home services — plumbing, electrical, building and carpentry, painting, landscaping, roofing, HVAC, cleaning, flooring, tiling, plastering, concreting, and many more. Browse our services page for a full list.',
+                },
+              ].map(({ q, a }) => (
+                <div key={q} className="rounded-xl bg-slate-900/70 border border-slate-700/50 p-6">
+                  <h3 className="text-white font-semibold mb-2">{q}</h3>
+                  <p className="text-slate-400 text-sm leading-relaxed">{a}</p>
                 </div>
               ))}
             </div>

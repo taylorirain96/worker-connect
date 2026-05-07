@@ -202,12 +202,13 @@ export default function JobChatPage() {
 
   const uploadImages = useCallback(async (convId: string): Promise<string[]> => {
     if (!storage || pendingImages.length === 0) return []
+    const currentStorage = storage
     setUploadingImages(true)
     try {
       const urls = await Promise.all(
         pendingImages.map(async (file) => {
           const path = `messages/${convId}/${Date.now()}_${file.name}`
-          const sRef = storageRef(storage, path)
+          const sRef = storageRef(currentStorage, path)
           await uploadBytes(sRef, file)
           return getDownloadURL(sRef)
         })
@@ -232,10 +233,9 @@ export default function JobChatPage() {
     stopTyping()
 
     try {
-      // Ensure conversation exists; create if needed (e.g., when initiated from job page)
-      let convId = conversation?.id ?? null
+      // This page only sends into an existing conversation; it does not create one.
+      const convId = conversation?.id ?? null
       if (!convId) {
-        // If no conversation yet, we can't proceed without other participant info
         toast.error('Conversation not found.')
         setMessageText(content)
         return

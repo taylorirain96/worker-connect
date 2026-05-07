@@ -1,16 +1,31 @@
 'use client'
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { X, Send, Paperclip, ShieldAlert } from 'lucide-react'
+import toast from 'react-hot-toast'
 
-export default function AppealForm({ ratingId, onClose }: { ratingId: string, onClose: () => void }) {
+const RATING_ID_DISPLAY_LENGTH = 8
+
+export default function AppealForm({
+  ratingId,
+  onClose,
+}: {
+  ratingId: string
+  onClose: () => void
+}) {
   const [reason, setReason] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async () => {
+    const trimmedReason = reason.trim()
+    if (!trimmedReason) return
+
     setIsSubmitting(true)
     // Simulated API call
     setTimeout(() => {
       setIsSubmitting(false)
+      toast.success(
+        `Appeal submitted for review ${ratingId.slice(0, RATING_ID_DISPLAY_LENGTH)}`,
+      )
       onClose()
     }, 1500)
   }
@@ -26,6 +41,10 @@ export default function AppealForm({ ratingId, onClose }: { ratingId: string, on
             <X className="h-6 w-6" />
           </button>
         </div>
+
+        <p className="text-sm text-slate-400 mb-6">
+          Reference: <span className="font-mono text-slate-300">{ratingId}</span>
+        </p>
 
         <div className="space-y-6">
           <div>

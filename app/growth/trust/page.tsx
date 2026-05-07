@@ -1,4 +1,3 @@
-// @ts-nocheck
 'use client'
 
 import { useState } from 'react'
@@ -40,7 +39,10 @@ export default function TrustMediationPage() {
     setShowNewAppealForm(false)
   }
 
-  const STATUS_CONFIG = {
+  const STATUS_CONFIG: Record<
+    DisputeAppeal['status'],
+    { label: string; color: string; bg: string; icon: typeof Clock }
+  > = {
     pending: { label: 'Pending Review', color: 'text-yellow-400', bg: 'bg-yellow-900/20', icon: Clock },
     reviewing: { label: 'Under Review', color: 'text-blue-400', bg: 'bg-blue-900/20', icon: FileText },
     resolved: { label: 'Resolved', color: 'text-emerald-400', bg: 'bg-emerald-900/20', icon: CheckCircle },

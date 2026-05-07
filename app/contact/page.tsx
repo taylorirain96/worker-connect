@@ -93,7 +93,7 @@ export default function ContactPage() {
         </section>
 
         {/* Contact Grid */}
-        <section className="py-16 px-4">
+        <section className="py-16 px-4 border-b border-slate-800">
           <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-12">
             {/* Contact Form */}
             <div>
@@ -234,6 +234,48 @@ export default function ContactPage() {
                   ))}
                 </div>
               </div>
+            </div>
+          </div>
+        </section>
+        {/* FAQ */}
+        <section className="py-16 px-4">
+          <div className="max-w-5xl mx-auto">
+            <h2 className="text-2xl font-bold text-white mb-3">Common Questions</h2>
+            <p className="text-slate-400 mb-8">
+              Can&apos;t find your answer below? Send us a message above and we&apos;ll get back to you.
+            </p>
+            <div className="grid sm:grid-cols-2 gap-4">
+              {[
+                {
+                  q: 'How do I reset my password?',
+                  a: 'Go to the login page and click "Forgot password?" to receive a reset email.',
+                },
+                {
+                  q: 'I posted a job but am not getting quotes. What should I do?',
+                  a: "Make sure your job description is detailed, the budget is realistic for the work involved, and the location is accurate. You can also try broadening the location to attract more workers.",
+                },
+                {
+                  q: 'How do I request a refund from escrow?',
+                  a: 'If the work has not been started and the worker has not been accepted, you can cancel the job and your escrow funds will be returned. If the job is in progress and there is a dispute, contact support and we will mediate.',
+                },
+                {
+                  q: 'How long does verification take?',
+                  a: 'Identity verification is usually completed within 1–2 business days. You will receive an email notification once reviewed.',
+                },
+                {
+                  q: 'Can I edit or delete a job after posting it?',
+                  a: 'Yes — you can edit open jobs from your dashboard. If you need to cancel a job that already has accepted quotes, please contact support so we can ensure all parties are notified correctly.',
+                },
+                {
+                  q: 'How do I report a worker or dispute a review?',
+                  a: 'Use the "Report" option on the worker\'s profile or job page, or email support@quicktrade.co.nz. Our team investigates all reports within 2–3 business days.',
+                },
+              ].map(({ q, a }) => (
+                <div key={q} className="rounded-xl bg-slate-900/60 border border-slate-700/50 p-6">
+                  <h3 className="text-white font-semibold mb-2 text-sm">{q}</h3>
+                  <p className="text-slate-400 text-sm leading-relaxed">{a}</p>
+                </div>
+              ))}
             </div>
           </div>
         </section>
