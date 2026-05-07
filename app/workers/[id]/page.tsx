@@ -61,13 +61,13 @@ export default function WorkerProfilePage({ params }: { params: { id: string } }
             if (data.photos) setPortfolio(data.photos)
           })
           .catch(() => {})
-        // Fetch trade licences
+        // Fetch trade licences — non-critical, failures are intentionally silent
         fetch(`/api/worker-trade-licences?uid=${params.id}`)
           .then((r) => r.json())
           .then((data: { licences?: WorkerTradeLicence[] }) => {
             if (data.licences) setTradeLicences(data.licences)
           })
-          .catch(() => {})
+          .catch(() => {}) // non-critical; profile still renders without licences
       }
       setReviewAgg(agg)
       setLoading(false)

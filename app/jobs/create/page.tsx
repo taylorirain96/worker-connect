@@ -147,7 +147,10 @@ export default function CreateJobPage() {
             urgency: data.urgency,
             budget: data.budgetMax,
           }),
-        }).catch(() => {}) // non-blocking — never delay navigation
+        }).catch((err) => {
+          // Non-blocking — log for observability but never block job creation
+          console.warn('[urgent-notify] SMS dispatch failed:', err)
+        })
       }
       toast.success('Job posted successfully!')
       trackEvent('job_posted', { job_id: jobId, category: data.category, budget: data.budgetMax })
