@@ -21,6 +21,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
 
+  const syncAuthCookie = (uid: string | null) => {
+    if (typeof document === 'undefined') return
+
+    const cookieDirectives = 'Path=/; SameSite=Lax; Secure'
+
+    if (!uid) {
+      document.cookie = `x-user-id=; ${cookieDirectives}; Max-Age=0`
+      return
+    }
+
+    document.cookie = `x-user-id=${encodeURIComponent(uid)}; ${cookieDirectives}; Max-Age=2592000`
+  }
+
   useEffect(() => {
     setMounted(true)
   }, [])
@@ -45,6 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         unsubscribe = onAuthStateChanged(firebaseAuth, async (firebaseUser) => {
           setUser(firebaseUser)
+          syncAuthCookie(firebaseUser?.uid ?? null)
           if (firebaseUser && firebaseDb) {
             try {
               const docRef = doc(firebaseDb, 'users', firebaseUser.uid)
