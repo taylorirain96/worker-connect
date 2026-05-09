@@ -100,11 +100,12 @@ export default function ApplicantsPage() {
         if (db && apps.length > 0) {
           const firestore = db
           const workerProfiles = await Promise.all(
-            apps.map(async (app) => {
-              if (!app.workerId) return [app.workerId, null] as const
+            apps
+              .filter((app): app is JobApplication & { workerId: string } => Boolean(app.workerId))
+              .map(async (app) => {
               const workerSnap = await getDoc(doc(firestore, 'users', app.workerId))
               return [app.workerId, workerSnap.exists() ? workerSnap.data() : null] as const
-            })
+              })
           )
 
           const workerProfileMap = new Map(workerProfiles)

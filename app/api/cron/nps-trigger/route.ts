@@ -38,6 +38,8 @@ export async function GET(request: Request) {
     for (const doc of updatedAtSnap.docs) {
       if (candidateDocs.has(doc.id)) continue
       const data = doc.data()
+      // Legacy completed jobs can be missing completedAt but still have status=completed
+      // and an updatedAt timestamp in the target window, so include them as a backfill path.
       if (!data?.completedAt) {
         candidateDocs.set(doc.id, doc)
       }

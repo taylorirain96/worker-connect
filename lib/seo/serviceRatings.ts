@@ -45,11 +45,22 @@ const getCachedServiceAggregateRating = unstable_cache(
     if (!categories?.length) return null
 
     try {
-      const jobsSnap = await adminDb
-        .collection('jobs')
-        .where('category', 'in', categories)
-        .limit(400)
-        .get()
+      let jobsSnap
+      try {
+        jobsSnap = await adminDb
+          .collection('jobs')
+          .where('category', 'in', categories)
+          .where('status', '==', 'completed')
+          .limit(400)
+          .get()
+      } catch (error) {
+        console.warn('[serviceRatings] Falling back to category-only query:', error)
+        jobsSnap = await adminDb
+          .collection('jobs')
+          .where('category', 'in', categories)
+          .limit(400)
+          .get()
+      }
 
       const completedJobIds = jobsSnap.docs
         .filter((doc) => doc.data()?.status === 'completed')
@@ -60,13 +71,18 @@ const getCachedServiceAggregateRating = unstable_cache(
       let ratingSum = 0
       let reviewCount = 0
 
-      for (let i = 0; i < completedJobIds.length; i += 30) {
-        const jobIdChunk = completedJobIds.slice(i, i + 30)
-        const reviewsSnap = await adminDb
-          .collection('reviews')
-          .where('jobId', 'in', jobIdChunk)
-          .get()
+      const reviewChunks = Array.from(
+        { length: Math.ceil(completedJobIds.length / 30) },
+        (_, index) => completedJobIds.slice(index * 30, index * 30 + 30)
+      )
 
+      const reviewSnaps = await Promise.all(
+        reviewChunks.map((jobIdChunk) =>
+          adminDb.collection('reviews').where('jobId', 'in', jobIdChunk).get()
+        )
+      )
+
+      for (const reviewsSnap of reviewSnaps) {
         for (const reviewDoc of reviewsSnap.docs) {
           const review = reviewDoc.data()
           const moderationStatus = review?.moderationStatus
