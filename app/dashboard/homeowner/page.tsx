@@ -8,6 +8,7 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import { collection, query, where, orderBy, getDocs, type DocumentData } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { formatCurrency, formatRelativeDate } from '@/lib/utils'
+import toast from 'react-hot-toast'
 
 interface PostedJob {
   id: string
@@ -24,6 +25,7 @@ interface PostedJob {
 interface SimpleQuote {
   id: string
   jobId: string
+  workerId: string
   workerName: string
   workerRating?: number
   amount: number
@@ -153,10 +155,11 @@ export default function HomeownerDashboardPage() {
             return {
               id: d.id,
               jobId: data.jobId,
+              workerId: data.workerId ?? '',
               workerName: data.workerName ?? 'Tradie',
               workerRating: data.workerRating,
-              amount: data.amount ?? 0,
-              message: data.message ?? data.coverLetter ?? '',
+              amount: data.totalPrice ?? data.amount ?? 0,
+              message: data.description ?? data.message ?? data.coverLetter ?? '',
               status: data.status ?? 'pending',
               createdAt: toISO(data.createdAt),
             }
@@ -176,11 +179,31 @@ export default function HomeownerDashboardPage() {
   }, [user])
 
   const handleAcceptQuote = async (quote: SimpleQuote) => {
+    if (!user) return
     setAcceptingQuote(quote.id)
-    // In real implementation this would trigger escrow payment flow
-    await new Promise((r) => setTimeout(r, 600))
-    setAcceptingQuote(null)
-    setAcceptedQuote(quote)
+    try {
+      const res = await fetch('/api/payments/escrow/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-user-id': user.uid },
+        body: JSON.stringify({
+          jobId: quote.jobId,
+          quoteId: quote.id,
+          employerId: user.uid,
+          workerId: quote.workerId,
+          amount: quote.amount,
+          completedJobs: 0,
+        }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error((err as { error?: string }).error ?? 'Failed to accept quote')
+      }
+      setAcceptedQuote(quote)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to accept quote. Please try again.')
+    } finally {
+      setAcceptingQuote(null)
+    }
   }
 
   const filteredJobs = useMemo(

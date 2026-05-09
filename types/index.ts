@@ -81,6 +81,8 @@ export interface UserProfile {
     safetyPlanUploaded: boolean
     completedAt?: string
   }
+  /** NZD balance available for withdrawal (maintained by escrow release transactions) */
+  availableBalance?: number
 }
 
 // ─── Worker Trade Licences ────────────────────────────────────────────────────
