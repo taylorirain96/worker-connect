@@ -69,6 +69,7 @@ const MOCK_QUOTES: SimpleQuote[] = [
   {
     id: 'q1',
     jobId: 'demo-1',
+    workerId: 'worker-demo-1',
     workerName: 'Mike T.',
     workerRating: 4.8,
     amount: 120,
@@ -79,6 +80,7 @@ const MOCK_QUOTES: SimpleQuote[] = [
   {
     id: 'q2',
     jobId: 'demo-1',
+    workerId: 'worker-demo-2',
     workerName: 'Sarah P.',
     workerRating: 4.9,
     amount: 95,
