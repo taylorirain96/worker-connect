@@ -80,7 +80,7 @@ const getCachedServiceAggregateRating = unstable_cache(
         (_, index) =>
           completedJobIds.slice(
             index * FIRESTORE_IN_QUERY_LIMIT,
-            index * FIRESTORE_IN_QUERY_LIMIT + FIRESTORE_IN_QUERY_LIMIT
+            (index + 1) * FIRESTORE_IN_QUERY_LIMIT
           )
       )
 
