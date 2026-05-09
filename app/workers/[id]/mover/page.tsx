@@ -9,12 +9,6 @@ import MoverModeSettings from '@/components/mover/MoverModeSettings'
 import MoverLeaderboard from '@/components/mover/MoverLeaderboard'
 import type { MoverSettings, MoverLeaderboardEntry, MoverOpportunity } from '@/types/reputation'
 
-const MOCK_LEADERBOARD: MoverLeaderboardEntry[] = [
-  { workerId: '1', name: 'Alex Rivera', targetRelocationCity: 'New York', relocationSuccessRate: 95, completionRate: 98, rank: 1 },
-  { workerId: '2', name: 'Jordan Lee', targetRelocationCity: 'Los Angeles', relocationSuccessRate: 90, completionRate: 96, rank: 2 },
-  { workerId: '3', name: 'Sam Chen', targetRelocationCity: 'Chicago', relocationSuccessRate: 87, completionRate: 94, rank: 3 },
-]
-
 export default function MoverModePage(props: { params: Promise<{ id: string }> }) {
   const params = use(props.params);
   const [settings, setSettings] = useState<MoverSettings | null>(null)
@@ -64,12 +58,12 @@ export default function MoverModePage(props: { params: Promise<{ id: string }> }
               rank: e.rank,
             })
           )
-          setLeaderboard(entries.length > 0 ? entries : MOCK_LEADERBOARD)
+          setLeaderboard(entries)
         } else {
-          setLeaderboard(MOCK_LEADERBOARD)
+          setLeaderboard([])
         }
       } catch {
-        setLeaderboard(MOCK_LEADERBOARD)
+        setLeaderboard([])
       } finally {
         setLoading(false)
       }

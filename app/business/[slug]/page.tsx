@@ -23,105 +23,6 @@ import {
 import type { BusinessProfile, BusinessReview } from '@/types'
 import { TrustBadgeList, TrustScoreBar } from '@/components/business/TrustBadge'
 
-// Mock data — replace with Firestore fetch once DB is connected
-const MOCK_BUSINESSES: Record<string, BusinessProfile> = {
-  'marlborough-plumbing-gas': {
-    id: 'b1',
-    userId: 'u1',
-    companyName: 'Marlborough Plumbing & Gas',
-    slug: 'marlborough-plumbing-gas',
-    industry: 'Plumbing & Gasfitting',
-    companySize: '2-10',
-    yearsInBusiness: 12,
-    serviceAreas: ['Blenheim, Marlborough', 'Nelson', 'Picton, Marlborough'],
-    website: 'https://marlboroughplumbing.example.co.nz',
-    linkedIn: 'https://linkedin.com/company/marlborough-plumbing',
-    description:
-      'Marlborough Plumbing & Gas has been delivering quality plumbing, gasfitting and drainage services across the Marlborough and Nelson regions for over 12 years. We specialise in residential and light commercial work, heat pump hot water systems, and gas installations.',
-    missionStatement:
-      'Building lasting relationships through quality workmanship, on-time delivery, and honest communication.',
-    licenseNumber: 'PGD-12345',
-    licenseVerified: true,
-    hasGeneralLiability: true,
-    hasWorkersComp: true,
-    hasPublicLiability: true,
-    hasACCEmployerLevy: true,
-    isRatedTrader: true,
-    backgroundCheckStatus: 'clear',
-    googleRating: 4.8,
-    certifications: ['Licensed Building Practitioner (LBP)', 'Site Safe Passport', 'First Aid Certificate'],
-    subscriptionTier: 'premium',
-    isVerifiedContractor: true,
-    isEnterprisePartner: false,
-    totalJobsPosted: 134,
-    workersHiredYTD: 47,
-    avgJobValue: 1200,
-    successRate: 97,
-    avgTimeToFill: 2.3,
-    repeatHireRate: 68,
-    overallRating: 4.8,
-    reviewCount: 89,
-    ratingBreakdown: {
-      communication: 4.9,
-      quality: 4.8,
-      timeliness: 4.7,
-      fairPay: 4.8,
-    },
-    responseRate: 94,
-    profileCompletionPct: 95,
-    createdAt: new Date(Date.now() - 365 * 3 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-}
-
-const MOCK_REVIEWS: BusinessReview[] = [
-  {
-    id: 'r1',
-    businessId: 'b1',
-    workerId: 'w1',
-    workerName: 'Mike Tane',
-    jobTitle: 'Bathroom Renovation – Blenheim',
-    rating: 5,
-    communication: 5,
-    quality: 5,
-    timeliness: 5,
-    fairPay: 5,
-    comment:
-      'Marlborough Plumbing is one of the best contractors I have worked for. Clear scope, fair pay, and they always have materials ready on-site. Will definitely work with them again.',
-    createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 'r2',
-    businessId: 'b1',
-    workerId: 'w2',
-    workerName: 'Sarah Ngata',
-    jobTitle: 'Gas Hot Water System Install – Nelson',
-    rating: 5,
-    communication: 5,
-    quality: 5,
-    timeliness: 4,
-    fairPay: 5,
-    comment:
-      'Professional team, paid on time, and communicated every step of the way. Highly recommend to any plumber looking for steady work in the region.',
-    createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 'r3',
-    businessId: 'b1',
-    workerId: 'w3',
-    workerName: 'Carlos Rivera',
-    jobTitle: 'Heat Pump Installation – Marlborough',
-    rating: 4,
-    communication: 4,
-    quality: 5,
-    timeliness: 4,
-    fairPay: 4,
-    comment:
-      'Great project to work on. Organised crew and the project manager was responsive. A few timeline shifts, but overall a solid employer.',
-    createdAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-]
-
 // Compute trust verification count and score from BusinessProfile fields
 function computeProfileVerification(biz: BusinessProfile): { verifiedCount: number; trustScore: number } {
   let verifiedCount = 0
@@ -192,7 +93,29 @@ const companySizeLabels: Record<string, string> = {
 
 export default async function BusinessProfilePage(props: { params: Promise<{ slug: string }> }) {
   const params = await props.params;
-  const biz = MOCK_BUSINESSES[params.slug]
+  const slug = params.slug
+
+  let biz: BusinessProfile | null = null
+  let reviews: BusinessReview[] = []
+
+  try {
+    const { adminDb } = await import('@/lib/firebase-admin')
+    const bizSnap = await adminDb.collection('businesses').where('slug', '==', slug).limit(1).get()
+    if (!bizSnap.empty) {
+      const doc = bizSnap.docs[0]
+      biz = { id: doc.id, ...doc.data() } as BusinessProfile
+      const reviewsSnap = await adminDb
+        .collection('reviews')
+        .where('businessId', '==', doc.id)
+        .orderBy('createdAt', 'desc')
+        .limit(20)
+        .get()
+      reviews = reviewsSnap.docs.map((d) => ({ id: d.id, ...d.data() })) as BusinessReview[]
+    }
+  } catch {
+    // Firestore unavailable — biz remains null → 404
+  }
+
   const { verifiedCount, trustScore } = biz ? computeProfileVerification(biz) : { verifiedCount: 0, trustScore: 0 }
 
   if (!biz) {
@@ -204,7 +127,7 @@ export default async function BusinessProfilePage(props: { params: Promise<{ slu
             <Building2 className="h-16 w-16 text-gray-300 mx-auto mb-4" />
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Business Not Found</h1>
             <p className="text-gray-500 dark:text-gray-400 mb-6">
-              No business profile found for <strong>@{params.slug}</strong>.
+              No business profile found for <strong>@{slug}</strong>.
             </p>
             <Link
               href="/"
@@ -383,7 +306,7 @@ export default async function BusinessProfilePage(props: { params: Promise<{ slu
 
                   {/* Review list */}
                   <div className="space-y-4">
-                    {MOCK_REVIEWS.map((review) => (
+                    {reviews.map((review) => (
                       <div
                         key={review.id}
                         className="border-b border-gray-100 dark:border-gray-700 pb-4 last:border-0 last:pb-0"

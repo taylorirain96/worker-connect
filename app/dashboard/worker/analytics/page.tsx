@@ -44,12 +44,6 @@ function buildMonthWindows(count: number) {
   })
 }
 
-/** Deterministic pseudo-random (0..1) seeded on an integer */
-function det(seed: number) {
-  const x = Math.sin(seed * 9301 + 49297) * 233280
-  return x - Math.floor(x)
-}
-
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface CategoryStat {
@@ -62,28 +56,6 @@ const CATEGORY_COLORS = [
   '#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6',
   '#ef4444', '#14b8a6', '#f97316', '#84cc16', '#06b6d4',
 ]
-
-// ─── Mock data fallback ───────────────────────────────────────────────────────
-
-function buildMockData(uid: string, windows: ReturnType<typeof buildMonthWindows>) {
-  const seed = uid.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)
-  const monthly: MonthlyEarningsPoint[] = windows.map((w, i) => ({
-    month: w.label,
-    amount: Math.round(det(seed + i) * 3500 + 500),
-  }))
-  const totalEarned = monthly.reduce((s, m) => s + m.amount, 0)
-  const completedJobs = Math.round(det(seed + 10) * 25 + 5)
-  const avgRating = parseFloat((det(seed + 11) * 2 + 3).toFixed(1))
-  const completionRate = Math.round(det(seed + 12) * 30 + 70)
-  const categories: CategoryStat[] = [
-    { name: 'Plumbing', value: Math.round(det(seed + 20) * 8 + 2), color: CATEGORY_COLORS[0] },
-    { name: 'Electrical', value: Math.round(det(seed + 21) * 7 + 1), color: CATEGORY_COLORS[1] },
-    { name: 'Carpentry', value: Math.round(det(seed + 22) * 6 + 1), color: CATEGORY_COLORS[2] },
-    { name: 'General', value: Math.round(det(seed + 23) * 5 + 1), color: CATEGORY_COLORS[3] },
-    { name: 'Painting', value: Math.round(det(seed + 24) * 4 + 1), color: CATEGORY_COLORS[4] },
-  ]
-  return { monthly, totalEarned, completedJobs, avgRating, completionRate, categories }
-}
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -192,32 +164,22 @@ export default function WorkerAnalyticsPage() {
         setCompletionRate(Math.round((profile?.completionRate ?? 0) * 100))
         setCategories(cats)
       } else {
-        // ── Fall back to mock data ────────────────────────────────────────────
-        const mock = buildMockData(user.uid, windows)
-        setMonthly(mock.monthly)
-        setTotalEarned(mock.totalEarned)
-        setCompletedJobs(mock.completedJobs)
-        setAvgRating(profile?.rating ?? mock.avgRating)
-        setCompletionRate(
-          profile?.completionRate
-            ? Math.round(profile.completionRate * 100)
-            : mock.completionRate,
-        )
-        setCategories(mock.categories)
+        // No data yet — show empty charts
+        setMonthly(windows.map((w) => ({ month: w.label, amount: 0 })))
+        setTotalEarned(0)
+        setCompletedJobs(0)
+        setAvgRating(profile?.rating ?? 0)
+        setCompletionRate(Math.round((profile?.completionRate ?? 0) * 100))
+        setCategories([])
       }
     } catch {
-      // On error fall back to mock data
-      const mock = buildMockData(user.uid, windows)
-      setMonthly(mock.monthly)
-      setTotalEarned(mock.totalEarned)
-      setCompletedJobs(mock.completedJobs)
-      setAvgRating(profile?.rating ?? mock.avgRating)
-      setCompletionRate(
-        profile?.completionRate
-          ? Math.round(profile.completionRate * 100)
-          : mock.completionRate,
-      )
-      setCategories(mock.categories)
+      // On error — show empty state
+      setMonthly(windows.map((w) => ({ month: w.label, amount: 0 })))
+      setTotalEarned(0)
+      setCompletedJobs(0)
+      setAvgRating(profile?.rating ?? 0)
+      setCompletionRate(Math.round((profile?.completionRate ?? 0) * 100))
+      setCategories([])
     }
 
     setLastUpdated(new Date())
@@ -353,8 +315,7 @@ export default function WorkerAnalyticsPage() {
           <Card className="mb-6">
             <CardHeader>
               <div className="flex items-center justify-between flex-wrap gap-2">
-                <CardTitle>Monthly Earnings (NZD)</CardTitle>
-                <div className="flex items-center gap-3 flex-wrap">
+                <CardTitle>Monthly Earnings (NZD)</CardTitle>                <div className="flex items-center gap-3 flex-wrap">
                   {bestMonth.amount > 0 && (
                     <span className="text-sm text-gray-500 dark:text-gray-400">
                       Best month:{' '}

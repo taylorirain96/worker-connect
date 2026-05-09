@@ -19,46 +19,6 @@ import type { ReputationScore as ReputationScoreType, WorkerVerification, Comple
 import type { PortfolioPhoto } from '@/types'
 import { getCompletionLabel } from '@/lib/utils/completionRateCalc'
 
-const MOCK_REPUTATION: ReputationScoreType = {
-  userId: 'demo',
-  score: 78,
-  tier: 'expert',
-  trustShields: 4,
-  breakdown: {
-    completionRate: 97,
-    rating: 82,
-    verification: 60,
-    responseTime: 75,
-    portfolio: 80,
-  },
-  calculatedAt: new Date().toISOString(),
-}
-
-const MOCK_COMPLETION: CompletionStats = {
-  workerId: 'demo',
-  completionRate: 97,
-  totalJobs: 103,
-  completedJobs: 100,
-  cancelledJobs: 3,
-  label: 'pro',
-  trend: [
-    { month: 'Jan', rate: 92 },
-    { month: 'Feb', rate: 95 },
-    { month: 'Mar', rate: 97 },
-    { month: 'Apr', rate: 96 },
-    { month: 'May', rate: 97 },
-  ],
-}
-
-const MOCK_PORTFOLIO: WorkerPortfolio = {
-  workerId: 'demo',
-  items: [],
-  totalProjects: 0,
-  avgRating: 0,
-}
-
-const MOCK_BADGES = ['Expert Worker', 'Premium Access', 'Highly Trusted']
-
 export default function WorkerReputationPage(props: { params: Promise<{ id: string }> }) {
   const params = use(props.params);
   const [reputationScore, setReputationScore] = useState<ReputationScoreType | null>(null)
@@ -112,11 +72,11 @@ export default function WorkerReputationPage(props: { params: Promise<{ id: stri
             completedJobs: completed,
             cancelledJobs: total - completed,
             label: getCompletionLabel(cr),
-            trend: MOCK_COMPLETION.trend,
+            trend: [],
           })
         } else {
-          setReputationScore(MOCK_REPUTATION)
-          setCompletionStats(MOCK_COMPLETION)
+          setReputationScore(null)
+          setCompletionStats(null)
         }
 
         if (verRes.status === 'fulfilled' && verRes.value.ok) {
@@ -128,20 +88,20 @@ export default function WorkerReputationPage(props: { params: Promise<{ id: stri
           const data = await badgeRes.value.json()
           setBadges(data.badges ?? [])
         } else {
-          setBadges(MOCK_BADGES)
+          setBadges([])
         }
 
         if (portRes.status === 'fulfilled' && portRes.value.ok) {
           const data = await portRes.value.json()
-          setPortfolio(data.portfolio ?? MOCK_PORTFOLIO)
+          setPortfolio(data.portfolio ?? null)
         } else {
-          setPortfolio(MOCK_PORTFOLIO)
+          setPortfolio(null)
         }
       } catch {
-        setReputationScore(MOCK_REPUTATION)
-        setBadges(MOCK_BADGES)
-        setPortfolio(MOCK_PORTFOLIO)
-        setCompletionStats(MOCK_COMPLETION)
+        setReputationScore(null)
+        setBadges([])
+        setPortfolio(null)
+        setCompletionStats(null)
       } finally {
         setLoading(false)
       }
@@ -201,6 +161,12 @@ export default function WorkerReputationPage(props: { params: Promise<{ id: stri
                   <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Trust Badges</h3>
                   <TrustShields shields={reputationScore.trustShields} />
                   <BadgeDisplay badges={badges} tier={reputationScore.tier} />
+                </div>
+              )}
+
+              {!reputationScore && (
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6 text-center text-gray-400 text-sm">
+                  No reputation data available yet.
                 </div>
               )}
             </div>

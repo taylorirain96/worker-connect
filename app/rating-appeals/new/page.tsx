@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
@@ -9,21 +9,51 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import { fileRatingAppeal } from '@/lib/services/disputeService'
 import { Star, ArrowLeft, Send } from 'lucide-react'
 
-// Mock completed jobs with ratings the worker can appeal.
-// Replace with real Firestore queries in production.
-const MOCK_RATED_JOBS = [
-  { id: 'job_1', title: 'Plumbing Repair — Kitchen Sink', clientId: 'client_1', rating: 2 },
-  { id: 'job_2', title: 'Electrical Panel Upgrade', clientId: 'client_2', rating: 1 },
-]
+interface RatedJob {
+  id: string
+  title: string
+  clientId: string
+  rating: number
+}
 
 export default function NewRatingAppealPage() {
   const router = useRouter()
   const { user } = useAuth()
 
+  const [ratedJobs, setRatedJobs] = useState<RatedJob[]>([])
+  const [jobsLoading, setJobsLoading] = useState(true)
   const [selectedJobId, setSelectedJobId] = useState('')
   const [appealReason, setAppealReason] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!user) return
+    async function loadJobs() {
+      try {
+        const res = await fetch(`/api/jobs?status=completed`, {
+          headers: { 'x-user-id': user!.uid },
+        })
+        if (res.ok) {
+          const data = await res.json() as { jobs?: { id: string; title: string; clientId?: string; employerId?: string; rating?: number }[] }
+          const jobs = (data.jobs ?? [])
+            .filter((j) => j.rating !== undefined && j.rating <= 3)
+            .map((j) => ({
+              id: j.id,
+              title: j.title,
+              clientId: j.clientId ?? j.employerId ?? '',
+              rating: j.rating ?? 0,
+            }))
+          setRatedJobs(jobs)
+        }
+      } catch {
+        setRatedJobs([])
+      } finally {
+        setJobsLoading(false)
+      }
+    }
+    loadJobs()
+  }, [user])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -31,7 +61,7 @@ export default function NewRatingAppealPage() {
     if (!selectedJobId) { setError('Please select a job.'); return }
     if (!appealReason.trim()) { setError('Please explain your appeal.'); return }
 
-    const job = MOCK_RATED_JOBS.find((j) => j.id === selectedJobId)
+    const job = ratedJobs.find((j) => j.id === selectedJobId)
     if (!job) { setError('Job not found.'); return }
 
     setSubmitting(true)
@@ -88,21 +118,25 @@ export default function NewRatingAppealPage() {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Select Job *
                   </label>
-                  <select
-                    value={selectedJobId}
-                    onChange={(e) => setSelectedJobId(e.target.value)}
-                    required
-                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  >
-                    <option value="">Choose a job with a low rating…</option>
-                    {MOCK_RATED_JOBS.map((j) => (
-                      <option key={j.id} value={j.id}>
-                        {j.title} — ★{j.rating}/5
-                      </option>
-                    ))}
-                  </select>
-                  {MOCK_RATED_JOBS.length === 0 && (
-                    <p className="mt-1 text-xs text-gray-400">No jobs with low ratings found.</p>
+                  {jobsLoading ? (
+                    <p className="text-sm text-gray-400">Loading jobs…</p>
+                  ) : (
+                    <select
+                      value={selectedJobId}
+                      onChange={(e) => setSelectedJobId(e.target.value)}
+                      required
+                      className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    >
+                      <option value="">Choose a job with a low rating…</option>
+                      {ratedJobs.map((j) => (
+                        <option key={j.id} value={j.id}>
+                          {j.title} — ★{j.rating}/5
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  {!jobsLoading && ratedJobs.length === 0 && (
+                    <p className="mt-1 text-xs text-gray-400">No completed jobs with low ratings found.</p>
                   )}
                 </div>
 
@@ -137,7 +171,7 @@ export default function NewRatingAppealPage() {
                   </Link>
                   <button
                     type="submit"
-                    disabled={submitting}
+                    disabled={submitting || jobsLoading}
                     className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
                   >
                     <Send className="h-4 w-4" />

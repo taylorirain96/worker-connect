@@ -19,15 +19,29 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // TODO: call BBB API and Google Business Profile API for real rating data
+  if (bbbLink && !process.env.BBB_API_KEY) {
+    return NextResponse.json(
+      { error: 'BBB integration not configured. Contact support to enable BBB rating sync.' },
+      { status: 501 }
+    )
+  }
+
+  if (googleProfileLink && !process.env.GOOGLE_PLACES_API_KEY) {
+    return NextResponse.json(
+      { error: 'Google Business Profile integration not configured. Contact support to enable Google rating sync.' },
+      { status: 501 }
+    )
+  }
+
+  // Store the submitted links; live rating data will be populated once provider APIs are configured
   const result = {
     bbbNumber: bbbNumber ?? null,
     bbbLink: bbbLink ?? null,
-    bbbRating: bbbLink ? 'A+' : null,
-    bbbReviewCount: bbbLink ? 42 : null,
+    bbbRating: null,
+    bbbReviewCount: null,
     googleProfileLink: googleProfileLink ?? null,
-    googleRating: googleProfileLink ? 4.8 : null,
-    googleReviewCount: googleProfileLink ? 134 : null,
+    googleRating: null,
+    googleReviewCount: null,
     lastSyncedAt: new Date().toISOString(),
   }
 

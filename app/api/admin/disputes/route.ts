@@ -1,27 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { adminDb } from '@/lib/firebase-admin'
+import { FieldValue } from 'firebase-admin/firestore'
 
 export const dynamic = 'force-dynamic'
-
-// Simple deterministic pseudo-random based on seed (not for security use)
-function seededVal(seed: number, scale: number): number {
-  return Math.abs(Math.sin(seed * 9301 + 49297) * scale)
-}
-
-const MOCK_DISPUTES = Array.from({ length: 50 }, (_, i) => ({
-  id: `dispute-${i + 1}`,
-  workerId: `worker-${(i % 10) + 1}`,
-  workerName: ['Marcus Johnson', 'Elena Rodriguez', 'David Chen', 'Sarah Thompson', 'James Williams',
-    'Amy Parker', 'Robert Kim', 'Lisa Chen', 'Tom Wilson', 'Maria Garcia'][i % 10],
-  employerId: `employer-${(i % 8) + 1}`,
-  employerName: ['Acme Corp', 'BuildRight LLC', 'HomePro', 'FixIt Services', 'QuickBuild',
-    'ProConstruct', 'UrbanFix', 'CityWorks'][i % 8],
-  amount: Math.round(200 + seededVal(i, 1800)),
-  reason: ['quality_issues', 'non_delivery', 'overcharge', 'misrepresentation', 'other'][i % 5],
-  status: ['open', 'under_review', 'resolved', 'closed', 'awaiting_evidence'][i % 5],
-  createdAt: new Date(Date.now() - (i + 1) * 2 * 86400000).toISOString(),
-  dueDate: new Date(Date.now() + (7 - i % 7) * 86400000).toISOString(),
-  resolvedAt: i % 5 >= 2 ? new Date(Date.now() - i * 86400000).toISOString() : undefined,
-}))
 
 /**
  * GET /api/admin/disputes
@@ -35,29 +16,36 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(parseInt(searchParams.get('limit') ?? '50', 10), 100)
     const offset = parseInt(searchParams.get('offset') ?? '0', 10)
     const sortBy = searchParams.get('sortBy') ?? 'createdAt'
-    const order = searchParams.get('order') ?? 'desc'
+    const order = (searchParams.get('order') ?? 'desc') as 'asc' | 'desc'
 
-    let filtered = [...MOCK_DISPUTES]
+    let q = adminDb.collection('disputes') as FirebaseFirestore.Query
 
-    if (status) filtered = filtered.filter((d) => d.status === status)
-    if (reason) filtered = filtered.filter((d) => d.reason === reason)
+    if (status) q = q.where('status', '==', status)
+    if (reason) q = q.where('reason', '==', reason)
+    q = q.orderBy(sortBy, order)
 
-    filtered.sort((a, b) => {
-      const aVal = a[sortBy as keyof typeof a] as string | number
-      const bVal = b[sortBy as keyof typeof b] as string | number
-      if (typeof aVal === 'string' && typeof bVal === 'string') {
-        return order === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal)
+    const snap = await q.get()
+    const items = snap.docs.map((doc) => {
+      const d = doc.data()
+      return {
+        id: doc.id,
+        workerId: d.workerId ?? '',
+        workerName: d.workerName ?? '',
+        employerId: d.employerId ?? d.clientId ?? '',
+        employerName: d.employerName ?? d.clientName ?? '',
+        amount: d.amount ?? 0,
+        reason: d.reason ?? '',
+        status: d.status ?? '',
+        createdAt: d.createdAt?.toDate?.()?.toISOString?.() ?? (d.createdAt as string | undefined) ?? '',
+        dueDate: d.dueDate ?? null,
+        resolvedAt: d.resolvedAt?.toDate?.()?.toISOString?.() ?? (d.resolvedAt as string | undefined) ?? null,
       }
-      if (typeof aVal === 'number' && typeof bVal === 'number') {
-        return order === 'asc' ? aVal - bVal : bVal - aVal
-      }
-      return 0
     })
 
-    const total = filtered.length
-    const items = filtered.slice(offset, offset + limit)
+    const total = items.length
+    const paginated = items.slice(offset, offset + limit)
 
-    return NextResponse.json({ items, total, limit, offset })
+    return NextResponse.json({ items: paginated, total, limit, offset })
   } catch (error) {
     console.error('GET /api/admin/disputes error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -77,7 +65,13 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'disputeId and status are required' }, { status: 400 })
     }
 
-    // In production: update Firestore dispute document
+    const update: Record<string, unknown> = { status, updatedAt: FieldValue.serverTimestamp() }
+    if (note) update.note = note
+    if (status === 'resolved' || status === 'closed') {
+      update.resolvedAt = FieldValue.serverTimestamp()
+    }
+
+    await adminDb.collection('disputes').doc(disputeId).update(update)
     console.info('[Admin] Dispute updated', { disputeId, status, note })
 
     return NextResponse.json({ success: true, disputeId, status })
@@ -100,16 +94,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'disputeId, note, and authorId are required' }, { status: 400 })
     }
 
-    const noteRecord = {
-      id: `note-${Date.now()}`,
-      disputeId,
-      note,
-      authorId,
-      createdAt: new Date().toISOString(),
-    }
+    const docRef = await adminDb
+      .collection('disputes')
+      .doc(disputeId)
+      .collection('notes')
+      .add({ disputeId, note, authorId, createdAt: FieldValue.serverTimestamp() })
 
-    // In production: write to Firestore disputeNotes subcollection
-    return NextResponse.json({ success: true, note: noteRecord })
+    return NextResponse.json({ success: true, note: { id: docRef.id, disputeId, note, authorId } })
   } catch (error) {
     console.error('POST /api/admin/disputes error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
