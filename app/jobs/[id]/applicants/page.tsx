@@ -99,13 +99,12 @@ export default function ApplicantsPage() {
 
         if (db && apps.length > 0) {
           const firestore = db
+          const uniqueWorkerIds = Array.from(new Set(apps.map((app) => app.workerId).filter(Boolean)))
           const workerProfiles = await Promise.all(
-            apps
-              .filter((app): app is JobApplication & { workerId: string } => Boolean(app.workerId))
-              .map(async (app) => {
-              const workerSnap = await getDoc(doc(firestore, 'users', app.workerId))
-              return [app.workerId, workerSnap.exists() ? workerSnap.data() : null] as const
-              })
+            uniqueWorkerIds.map(async (workerId) => {
+              const workerSnap = await getDoc(doc(firestore, 'users', workerId))
+              return [workerId, workerSnap.exists() ? workerSnap.data() : null] as const
+            })
           )
 
           const workerProfileMap = new Map(workerProfiles)

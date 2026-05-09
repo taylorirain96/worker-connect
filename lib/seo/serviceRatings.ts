@@ -9,6 +9,9 @@ interface ServiceAggregateRating {
   worstRating: 1
 }
 
+const MAX_COMPLETED_JOBS_TO_SAMPLE = 400
+const FIRESTORE_IN_QUERY_LIMIT = 30
+
 const SERVICE_CATEGORY_MAP: Record<string, JobCategory[]> = {
   plumbing: ['plumbing'],
   electrical: ['electrical'],
@@ -51,14 +54,15 @@ const getCachedServiceAggregateRating = unstable_cache(
           .collection('jobs')
           .where('category', 'in', categories)
           .where('status', '==', 'completed')
-          .limit(400)
+          .limit(MAX_COMPLETED_JOBS_TO_SAMPLE)
           .get()
       } catch (error) {
         console.warn('[serviceRatings] Falling back to category-only query:', error)
         jobsSnap = await adminDb
           .collection('jobs')
           .where('category', 'in', categories)
-          .limit(400)
+          // Keep the sample bounded so cached SEO aggregation stays fast and cheap.
+          .limit(MAX_COMPLETED_JOBS_TO_SAMPLE)
           .get()
       }
 
@@ -72,8 +76,12 @@ const getCachedServiceAggregateRating = unstable_cache(
       let reviewCount = 0
 
       const reviewChunks = Array.from(
-        { length: Math.ceil(completedJobIds.length / 30) },
-        (_, index) => completedJobIds.slice(index * 30, index * 30 + 30)
+        { length: Math.ceil(completedJobIds.length / FIRESTORE_IN_QUERY_LIMIT) },
+        (_, index) =>
+          completedJobIds.slice(
+            index * FIRESTORE_IN_QUERY_LIMIT,
+            index * FIRESTORE_IN_QUERY_LIMIT + FIRESTORE_IN_QUERY_LIMIT
+          )
       )
 
       const reviewSnaps = await Promise.all(

@@ -3,6 +3,10 @@ import { adminDb } from '@/lib/firebase-admin'
 
 export const dynamic = 'force-dynamic'
 
+function getNpsNotificationId(jobId: string, userId: string) {
+  return `nps_${jobId}_${userId}`
+}
+
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization')
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -61,18 +65,19 @@ export async function GET(request: Request) {
       if (job.assignedWorkerId) userIds.push(job.assignedWorkerId)
 
       for (const userId of userIds) {
+        const notificationId = getNpsNotificationId(jobId, userId)
         const [existingSurvey, existingNotification] = await Promise.all([
           adminDb.collection('npsSurveys')
             .where('jobId', '==', jobId)
             .where('userId', '==', userId)
             .limit(1)
             .get(),
-          adminDb.collection('notifications').doc(`nps_${jobId}_${userId}`).get(),
+          adminDb.collection('notifications').doc(notificationId).get(),
         ])
 
         if (!existingSurvey.empty || existingNotification.exists) continue
 
-        await adminDb.collection('notifications').doc(`nps_${jobId}_${userId}`).set({
+        await adminDb.collection('notifications').doc(notificationId).set({
           userId,
           type: 'nps_survey',
           title: 'How did it go?',
