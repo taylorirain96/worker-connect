@@ -42,53 +42,8 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   disputed: { label: 'Disputed', color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' },
 }
 
-const MOCK_JOBS: PostedJob[] = [
-  {
-    id: 'demo-1',
-    title: 'Fix leaking bathroom tap',
-    description: 'The cold tap in the main bathroom has been dripping for a week.',
-    status: 'open',
-    budget: 0,
-    budgetType: 'fixed',
-    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    quoteCount: 2,
-  },
-  {
-    id: 'demo-2',
-    title: 'Paint the living room',
-    description: 'Need the living room repainted in a light grey colour.',
-    status: 'in_progress',
-    budget: 800,
-    budgetType: 'fixed',
-    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    quoteCount: 0,
-  },
-]
 
-const MOCK_QUOTES: SimpleQuote[] = [
-  {
-    id: 'q1',
-    jobId: 'demo-1',
-    workerId: 'worker-demo-1',
-    workerName: 'Mike T.',
-    workerRating: 4.8,
-    amount: 120,
-    message: "Happy to help — I can come out tomorrow morning and get it sorted in under an hour.",
-    status: 'pending',
-    createdAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 'q2',
-    jobId: 'demo-1',
-    workerId: 'worker-demo-2',
-    workerName: 'Sarah P.',
-    workerRating: 4.9,
-    amount: 95,
-    message: "I'm a licensed plumber with 10 years experience. Can do Thursday or Friday.",
-    status: 'pending',
-    createdAt: new Date(Date.now() - 90 * 60 * 1000).toISOString(),
-  },
-]
+
 
 function docToJob(id: string, data: DocumentData): PostedJob {
   const toISO = (v: unknown) =>
@@ -129,8 +84,6 @@ export default function HomeownerDashboardPage() {
 
   useEffect(() => {
     if (!user?.uid || !db) {
-      setJobs(MOCK_JOBS)
-      setQuotes(MOCK_QUOTES)
       setLoadingJobs(false)
       return
     }
@@ -140,7 +93,7 @@ export default function HomeownerDashboardPage() {
         const q = query(jobsRef, where('employerId', '==', user!.uid), orderBy('createdAt', 'desc'))
         const snapshot = await getDocs(q)
         const fetched = snapshot.docs.map((d) => docToJob(d.id, d.data()))
-        setJobs(fetched.length > 0 ? fetched : MOCK_JOBS)
+        setJobs(fetched)
 
         // Fetch quotes for these jobs
         if (fetched.length > 0) {
@@ -166,13 +119,10 @@ export default function HomeownerDashboardPage() {
               createdAt: toISO(data.createdAt),
             }
           })
-          setQuotes(fetchedQuotes.length > 0 ? fetchedQuotes : MOCK_QUOTES)
-        } else {
-          setQuotes(MOCK_QUOTES)
+          setQuotes(fetchedQuotes)
         }
       } catch {
-        setJobs(MOCK_JOBS)
-        setQuotes(MOCK_QUOTES)
+        // leave jobs/quotes as empty arrays
       } finally {
         setLoadingJobs(false)
       }

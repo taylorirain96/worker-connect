@@ -45,18 +45,6 @@ const APPLICATION_STATUS: Record<string, { label: string; color: string }> = {
   hired:       { label: 'Hired 🎉',    color: 'bg-green-500/20 text-green-300 border border-green-500/30' },
 }
 
-const MOCK_JOBS: StaffJob[] = [
-  { id: 'j1', title: 'Electrician — Full Time', companyName: 'Bright Spark Ltd', location: 'Auckland, NZ', salaryMin: 65000, salaryMax: 85000, workType: 'full-time', category: 'electrical', postedAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString() },
-  { id: 'j2', title: 'Plumber — Part Time', companyName: 'FlowRight Plumbing', location: 'Wellington, NZ', salaryMin: 30, salaryMax: 45, workType: 'part-time', category: 'plumbing', postedAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString() },
-  { id: 'j3', title: 'Carpenter / Joiner', companyName: 'Timber & Co', location: 'Christchurch, NZ', salaryMin: 55000, salaryMax: 70000, workType: 'full-time', category: 'carpentry', postedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() },
-  { id: 'j4', title: 'Building Maintenance Technician', companyName: 'NZ Properties Group', location: 'Hamilton, NZ', salaryMin: 50000, salaryMax: 65000, workType: 'contract', category: 'general', postedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() },
-]
-
-const MOCK_APPLICATIONS: MyApplication[] = [
-  { id: 'a1', jobTitle: 'Senior Electrician', companyName: 'PowerGrid NZ', status: 'shortlisted', appliedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() },
-  { id: 'a2', jobTitle: 'HVAC Technician', companyName: 'ClimateControl Ltd', status: 'viewed', appliedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString() },
-  { id: 'a3', jobTitle: 'Apprentice Plumber', companyName: 'FlowRight Plumbing', status: 'applied', appliedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString() },
-]
 
 function formatSalary(job: StaffJob) {
   if (!job.salaryMin) return 'Salary negotiable'
@@ -97,15 +85,14 @@ export default function JobseekerDashboardPage() {
     if (!user) return
     const fetchJobs = async () => {
       try {
-        if (!db) { setJobs(MOCK_JOBS); return }
+        if (!db) { setLoadingJobs(false); return }
         const q = query(
           collection(db, 'jobs'),
-          where('jobType', '==', 'staff'),
+          where('jobType', '==', 'employment'),
           orderBy('createdAt', 'desc'),
           limit(6),
         )
         const snap = await getDocs(q)
-        if (snap.empty) { setJobs(MOCK_JOBS); return }
         const fetched: StaffJob[] = snap.docs.map((d) => {
           const data = d.data() as DocumentData
           return {
@@ -122,7 +109,7 @@ export default function JobseekerDashboardPage() {
         })
         setJobs(fetched)
       } catch {
-        setJobs(MOCK_JOBS)
+        setJobs([])
       } finally {
         setLoadingJobs(false)
       }
@@ -134,7 +121,7 @@ export default function JobseekerDashboardPage() {
     if (!user) return
     const fetchApps = async () => {
       try {
-        if (!db) { setApplications(MOCK_APPLICATIONS); return }
+        if (!db) { setLoadingApps(false); return }
         const q = query(
           collection(db, 'jobApplications'),
           where('applicantId', '==', user.uid),
@@ -142,7 +129,6 @@ export default function JobseekerDashboardPage() {
           limit(10),
         )
         const snap = await getDocs(q)
-        if (snap.empty) { setApplications(MOCK_APPLICATIONS); return }
         const fetched: MyApplication[] = snap.docs.map((d) => {
           const data = d.data() as DocumentData
           return {
@@ -155,7 +141,7 @@ export default function JobseekerDashboardPage() {
         })
         setApplications(fetched)
       } catch {
-        setApplications(MOCK_APPLICATIONS)
+        setApplications([])
       } finally {
         setLoadingApps(false)
       }
@@ -279,6 +265,15 @@ export default function JobseekerDashboardPage() {
 
             {loadingJobs ? (
               <div className="flex justify-center py-8"><LoadingSpinner /></div>
+            ) : jobs.length === 0 ? (
+              <div className="text-center py-10 text-slate-400">
+                <Briefcase className="h-10 w-10 mx-auto mb-3 opacity-30" />
+                <p className="text-sm font-medium">No employment roles listed yet.</p>
+                <p className="text-xs mt-1 text-slate-500">Check back soon — new roles are added daily.</p>
+                <Link href="/jobs/staff" className="inline-block mt-4 text-sm text-indigo-400 hover:text-indigo-300 underline">
+                  Browse all jobs →
+                </Link>
+              </div>
             ) : (
               <div className="space-y-3">
                 {jobs.map((job) => (

@@ -156,7 +156,7 @@ function StaffJobsContent() {
         if (!db) { setJobs(MOCK_JOBS); return }
         const q = query(
           collection(db, 'jobs'),
-          where('jobType', '==', 'staff'),
+          where('jobType', '==', 'employment'),
           orderBy('createdAt', 'desc'),
         )
         const snap = await getDocs(q)
