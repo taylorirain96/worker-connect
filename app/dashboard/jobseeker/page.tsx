@@ -45,19 +45,6 @@ const APPLICATION_STATUS: Record<string, { label: string; color: string }> = {
   hired:       { label: 'Hired 🎉',    color: 'bg-green-500/20 text-green-300 border border-green-500/30' },
 }
 
-const MOCK_JOBS: StaffJob[] = [
-  { id: 'j1', title: 'Electrician — Full Time', companyName: 'Bright Spark Ltd', location: 'Auckland, NZ', salaryMin: 65000, salaryMax: 85000, workType: 'full-time', category: 'electrical', postedAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString() },
-  { id: 'j2', title: 'Plumber — Part Time', companyName: 'FlowRight Plumbing', location: 'Wellington, NZ', salaryMin: 30, salaryMax: 45, workType: 'part-time', category: 'plumbing', postedAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString() },
-  { id: 'j3', title: 'Carpenter / Joiner', companyName: 'Timber & Co', location: 'Christchurch, NZ', salaryMin: 55000, salaryMax: 70000, workType: 'full-time', category: 'carpentry', postedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() },
-  { id: 'j4', title: 'Building Maintenance Technician', companyName: 'NZ Properties Group', location: 'Hamilton, NZ', salaryMin: 50000, salaryMax: 65000, workType: 'contract', category: 'general', postedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() },
-]
-
-const MOCK_APPLICATIONS: MyApplication[] = [
-  { id: 'a1', jobTitle: 'Senior Electrician', companyName: 'PowerGrid NZ', status: 'shortlisted', appliedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() },
-  { id: 'a2', jobTitle: 'HVAC Technician', companyName: 'ClimateControl Ltd', status: 'viewed', appliedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString() },
-  { id: 'a3', jobTitle: 'Apprentice Plumber', companyName: 'FlowRight Plumbing', status: 'applied', appliedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString() },
-]
-
 function formatSalary(job: StaffJob) {
   if (!job.salaryMin) return 'Salary negotiable'
   if (job.workType === 'part-time') return `$${job.salaryMin}–$${job.salaryMax}/hr`
@@ -97,7 +84,7 @@ export default function JobseekerDashboardPage() {
     if (!user) return
     const fetchJobs = async () => {
       try {
-        if (!db) { setJobs(MOCK_JOBS); return }
+        if (!db) { setJobs([]); return }
         const q = query(
           collection(db, 'jobs'),
           where('jobType', '==', 'staff'),
@@ -105,7 +92,7 @@ export default function JobseekerDashboardPage() {
           limit(6),
         )
         const snap = await getDocs(q)
-        if (snap.empty) { setJobs(MOCK_JOBS); return }
+        if (snap.empty) { setJobs([]); return }
         const fetched: StaffJob[] = snap.docs.map((d) => {
           const data = d.data() as DocumentData
           return {
@@ -122,7 +109,7 @@ export default function JobseekerDashboardPage() {
         })
         setJobs(fetched)
       } catch {
-        setJobs(MOCK_JOBS)
+        setJobs([])
       } finally {
         setLoadingJobs(false)
       }
@@ -134,7 +121,7 @@ export default function JobseekerDashboardPage() {
     if (!user) return
     const fetchApps = async () => {
       try {
-        if (!db) { setApplications(MOCK_APPLICATIONS); return }
+        if (!db) { setApplications([]); return }
         const q = query(
           collection(db, 'jobApplications'),
           where('applicantId', '==', user.uid),
@@ -142,7 +129,7 @@ export default function JobseekerDashboardPage() {
           limit(10),
         )
         const snap = await getDocs(q)
-        if (snap.empty) { setApplications(MOCK_APPLICATIONS); return }
+        if (snap.empty) { setApplications([]); return }
         const fetched: MyApplication[] = snap.docs.map((d) => {
           const data = d.data() as DocumentData
           return {
@@ -155,7 +142,7 @@ export default function JobseekerDashboardPage() {
         })
         setApplications(fetched)
       } catch {
-        setApplications(MOCK_APPLICATIONS)
+        setApplications([])
       } finally {
         setLoadingApps(false)
       }
@@ -176,7 +163,7 @@ export default function JobseekerDashboardPage() {
 
   const appStats = {
     sent: applications.length,
-    views: 14,
+    views: '—' as number | string,
     responseRate: applications.length > 0
       ? Math.round((applications.filter((a) => a.status !== 'applied').length / applications.length) * 100)
       : 0,
@@ -279,6 +266,17 @@ export default function JobseekerDashboardPage() {
 
             {loadingJobs ? (
               <div className="flex justify-center py-8"><LoadingSpinner /></div>
+            ) : jobs.length === 0 ? (
+              <Card className="border-slate-700/60 bg-slate-800/40">
+                <CardContent className="p-8 text-center">
+                  <Briefcase className="h-10 w-10 text-slate-500 mx-auto mb-3" />
+                  <p className="text-slate-300 font-medium mb-1">No jobs to show right now</p>
+                  <p className="text-sm text-slate-500 mb-4">New roles are posted daily — check back soon, or browse the full list.</p>
+                  <Link href="/jobs/staff">
+                    <Button size="sm">Browse all jobs</Button>
+                  </Link>
+                </CardContent>
+              </Card>
             ) : (
               <div className="space-y-3">
                 {jobs.map((job) => (

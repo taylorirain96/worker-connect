@@ -42,52 +42,6 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   disputed: { label: 'Disputed', color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' },
 }
 
-const MOCK_JOBS: PostedJob[] = [
-  {
-    id: 'demo-1',
-    title: 'Fix leaking bathroom tap',
-    description: 'The cold tap in the main bathroom has been dripping for a week.',
-    status: 'open',
-    budget: 0,
-    budgetType: 'fixed',
-    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    quoteCount: 2,
-  },
-  {
-    id: 'demo-2',
-    title: 'Paint the living room',
-    description: 'Need the living room repainted in a light grey colour.',
-    status: 'in_progress',
-    budget: 800,
-    budgetType: 'fixed',
-    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    quoteCount: 0,
-  },
-]
-
-const MOCK_QUOTES: SimpleQuote[] = [
-  {
-    id: 'q1',
-    jobId: 'demo-1',
-    workerName: 'Mike T.',
-    workerRating: 4.8,
-    amount: 120,
-    message: "Happy to help — I can come out tomorrow morning and get it sorted in under an hour.",
-    status: 'pending',
-    createdAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 'q2',
-    jobId: 'demo-1',
-    workerName: 'Sarah P.',
-    workerRating: 4.9,
-    amount: 95,
-    message: "I'm a licensed plumber with 10 years experience. Can do Thursday or Friday.",
-    status: 'pending',
-    createdAt: new Date(Date.now() - 90 * 60 * 1000).toISOString(),
-  },
-]
-
 function docToJob(id: string, data: DocumentData): PostedJob {
   const toISO = (v: unknown) =>
     v && typeof v === 'object' && 'toDate' in v
@@ -118,6 +72,7 @@ export default function HomeownerDashboardPage() {
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null)
   const [acceptingQuote, setAcceptingQuote] = useState<string | null>(null)
   const [acceptedQuote, setAcceptedQuote] = useState<SimpleQuote | null>(null)
+  const [loadError, setLoadError] = useState(false)
 
   useEffect(() => {
     if (!loading && !user) {
@@ -127,18 +82,19 @@ export default function HomeownerDashboardPage() {
 
   useEffect(() => {
     if (!user?.uid || !db) {
-      setJobs(MOCK_JOBS)
-      setQuotes(MOCK_QUOTES)
+      setJobs([])
+      setQuotes([])
       setLoadingJobs(false)
       return
     }
     async function fetchData() {
       try {
+        setLoadError(false)
         const jobsRef = collection(db!, 'jobs')
         const q = query(jobsRef, where('employerId', '==', user!.uid), orderBy('createdAt', 'desc'))
         const snapshot = await getDocs(q)
         const fetched = snapshot.docs.map((d) => docToJob(d.id, d.data()))
-        setJobs(fetched.length > 0 ? fetched : MOCK_JOBS)
+        setJobs(fetched)
 
         // Fetch quotes for these jobs
         if (fetched.length > 0) {
@@ -164,13 +120,14 @@ export default function HomeownerDashboardPage() {
               createdAt: toISO(data.createdAt),
             }
           })
-          setQuotes(fetchedQuotes.length > 0 ? fetchedQuotes : MOCK_QUOTES)
+          setQuotes(fetchedQuotes)
         } else {
-          setQuotes(MOCK_QUOTES)
+          setQuotes([])
         }
       } catch {
-        setJobs(MOCK_JOBS)
-        setQuotes(MOCK_QUOTES)
+        setJobs([])
+        setQuotes([])
+        setLoadError(true)
       } finally {
         setLoadingJobs(false)
       }
@@ -412,14 +369,20 @@ export default function HomeownerDashboardPage() {
             </div>
           ) : filteredJobs.length === 0 ? (
             <div className="text-center py-16">
-              <div className="text-4xl mb-4">📋</div>
+              <div className="text-4xl mb-4">{loadError ? '⚠️' : '📋'}</div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                {propertyIdFilter ? 'No jobs for this property yet' : 'No jobs yet'}
+                {loadError
+                  ? "We couldn't load your jobs"
+                  : propertyIdFilter
+                    ? 'No jobs for this property yet'
+                    : 'No jobs yet'}
               </h3>
               <p className="text-gray-500 mb-6">
-                {propertyIdFilter
-                  ? 'Post the first job for this property to start receiving quotes.'
-                  : 'Post your first job and get quotes from local tradies'}
+                {loadError
+                  ? 'Please refresh the page or try again in a moment.'
+                  : propertyIdFilter
+                    ? 'Post the first job for this property to start receiving quotes.'
+                    : 'Post your first job and get quotes from local tradies'}
               </p>
               <Link
                 href={propertyIdFilter ? `/post/homeowner?propertyId=${encodeURIComponent(propertyIdFilter)}&address=${encodeURIComponent(propertyLabel)}` : '/post/homeowner'}

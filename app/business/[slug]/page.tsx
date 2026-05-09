@@ -17,10 +17,9 @@ import {
   MessageSquare,
   Building2,
   ExternalLink,
-  Linkedin,
-  Facebook,
   BarChart2,
 } from 'lucide-react'
+import SocialMark from '@/components/ui/SocialMark'
 import type { BusinessProfile, BusinessReview } from '@/types'
 import { TrustBadgeList, TrustScoreBar } from '@/components/business/TrustBadge'
 
@@ -300,7 +299,7 @@ export default async function BusinessProfilePage(props: { params: Promise<{ slu
                     rel="noopener noreferrer"
                     className="p-2 rounded-lg text-gray-500 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
                   >
-                    <Linkedin className="h-5 w-5" />
+                    <SocialMark platform="linkedin" className="h-5 w-5" />
                   </a>
                 )}
                 {biz.facebook && (
@@ -310,7 +309,7 @@ export default async function BusinessProfilePage(props: { params: Promise<{ slu
                     rel="noopener noreferrer"
                     className="p-2 rounded-lg text-gray-500 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
                   >
-                    <Facebook className="h-5 w-5" />
+                    <SocialMark platform="facebook" className="h-5 w-5" />
                   </a>
                 )}
                 <Link

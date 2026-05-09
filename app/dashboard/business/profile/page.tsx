@@ -12,13 +12,12 @@ import {
   ExternalLink,
   CheckCircle,
   Globe,
-  Linkedin,
-  Facebook,
   MapPin,
   Plus,
   X,
   ChevronLeft,
 } from 'lucide-react'
+import SocialMark from '@/components/ui/SocialMark'
 import toast from 'react-hot-toast'
 import { slugify } from '@/lib/utils'
 import { useAuth } from '@/components/providers/AuthProvider'
@@ -438,7 +437,7 @@ export default function EditBusinessProfilePage() {
                     />
                   </div>
                   <div className="flex items-center gap-2">
-                    <Linkedin className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                    <SocialMark platform="linkedin" className="h-4 w-4 text-gray-400 flex-shrink-0" />
                     <Input
                       placeholder="LinkedIn company page URL"
                       value={form.linkedIn}
@@ -446,7 +445,7 @@ export default function EditBusinessProfilePage() {
                     />
                   </div>
                   <div className="flex items-center gap-2">
-                    <Facebook className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                    <SocialMark platform="facebook" className="h-4 w-4 text-gray-400 flex-shrink-0" />
                     <Input
                       placeholder="Facebook page URL"
                       value={form.facebook}
