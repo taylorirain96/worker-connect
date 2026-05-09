@@ -266,7 +266,7 @@ export default function EmployerDashboardPage() {
                   ) : filteredJobs.length === 0 ? (
                     <div className="text-center py-8">
                       <Camera className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                      {photoFilter === 'all' ? (
+                      {photoFilter === 'all' && postedJobs.length === 0 ? (
                         <>
                           <p className="text-gray-500 mb-3">No jobs posted yet.</p>
                           <Link href="/jobs/create" className="text-sm text-primary-600 hover:underline font-medium">

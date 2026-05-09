@@ -162,7 +162,7 @@ export default function JobseekerDashboardPage() {
 
   const appStats = {
     sent: applications.length,
-    views: 14,
+    views: 0,
     responseRate: applications.length > 0
       ? Math.round((applications.filter((a) => a.status !== 'applied').length / applications.length) * 100)
       : 0,
