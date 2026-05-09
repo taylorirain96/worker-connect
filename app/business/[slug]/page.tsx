@@ -2,6 +2,7 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
+import SocialMark from '@/components/ui/SocialMark'
 import Link from 'next/link'
 import {
   Shield,
@@ -299,9 +300,7 @@ export default async function BusinessProfilePage(props: { params: Promise<{ slu
                     aria-label={`${biz.companyName} on LinkedIn`}
                     className="p-2 rounded-lg text-gray-500 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
                   >
-                    <span className="flex h-5 w-5 items-center justify-center text-xs font-semibold uppercase">
-                      in
-                    </span>
+                    <SocialMark text="in" className="h-5 w-5 text-xs" screenReaderText="LinkedIn" />
                   </a>
                 )}
                 {biz.facebook && (
@@ -312,9 +311,7 @@ export default async function BusinessProfilePage(props: { params: Promise<{ slu
                     aria-label={`${biz.companyName} on Facebook`}
                     className="p-2 rounded-lg text-gray-500 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
                   >
-                    <span className="flex h-5 w-5 items-center justify-center text-xs font-semibold uppercase">
-                      f
-                    </span>
+                    <SocialMark text="f" className="h-5 w-5 text-xs" screenReaderText="Facebook" />
                   </a>
                 )}
                 <Link

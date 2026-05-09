@@ -5,6 +5,7 @@ import Footer from '@/components/layout/Footer'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
+import SocialMark from '@/components/ui/SocialMark'
 import Link from 'next/link'
 import {
   Building2,
@@ -436,9 +437,7 @@ export default function EditBusinessProfilePage() {
                     />
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center text-[10px] font-semibold uppercase text-gray-400">
-                      in
-                    </span>
+                    <SocialMark text="in" className="h-4 w-4 flex-shrink-0 text-[10px] text-gray-400" />
                     <Input
                       placeholder="LinkedIn company page URL"
                       value={form.linkedIn}
@@ -446,9 +445,7 @@ export default function EditBusinessProfilePage() {
                     />
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center text-[10px] font-semibold uppercase text-gray-400">
-                      f
-                    </span>
+                    <SocialMark text="f" className="h-4 w-4 flex-shrink-0 text-[10px] text-gray-400" />
                     <Input
                       placeholder="Facebook page URL"
                       value={form.facebook}

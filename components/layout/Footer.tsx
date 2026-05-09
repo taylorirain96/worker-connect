@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Wrench } from 'lucide-react'
+import SocialMark from '@/components/ui/SocialMark'
 
 export default function Footer() {
   return (
@@ -23,27 +24,21 @@ export default function Footer() {
                 aria-label="Follow QuickTrade on X"
                 className="text-gray-400 hover:text-primary-600 transition-colors"
               >
-                <span className="flex h-5 w-5 items-center justify-center text-xs font-semibold uppercase">
-                  X
-                </span>
+                <SocialMark text="X" className="h-5 w-5 text-xs" screenReaderText="X" />
               </a>
               <a
                 href="#"
                 aria-label="Follow QuickTrade on LinkedIn"
                 className="text-gray-400 hover:text-primary-600 transition-colors"
               >
-                <span className="flex h-5 w-5 items-center justify-center text-xs font-semibold uppercase">
-                  in
-                </span>
+                <SocialMark text="in" className="h-5 w-5 text-xs" screenReaderText="LinkedIn" />
               </a>
               <a
                 href="#"
                 aria-label="Follow QuickTrade on Facebook"
                 className="text-gray-400 hover:text-primary-600 transition-colors"
               >
-                <span className="flex h-5 w-5 items-center justify-center text-xs font-semibold uppercase">
-                  f
-                </span>
+                <SocialMark text="f" className="h-5 w-5 text-xs" screenReaderText="Facebook" />
               </a>
             </div>
           </div>
