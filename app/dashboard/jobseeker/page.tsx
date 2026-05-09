@@ -163,7 +163,8 @@ export default function JobseekerDashboardPage() {
 
   const appStats = {
     sent: applications.length,
-    views: '—' as number | string,
+    // Profile views tracking not yet implemented; show 0 until wired up.
+    views: 0,
     responseRate: applications.length > 0
       ? Math.round((applications.filter((a) => a.status !== 'applied').length / applications.length) * 100)
       : 0,
