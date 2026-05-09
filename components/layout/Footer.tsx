@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import { Wrench, Twitter, Linkedin, Facebook } from 'lucide-react'
+import { Wrench } from 'lucide-react'
+import SocialMark from '@/components/ui/SocialMark'
 
 export default function Footer() {
   return (
@@ -18,14 +19,26 @@ export default function Footer() {
               carpenters, HVAC technicians, and more.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-gray-400 hover:text-primary-600 transition-colors">
-                <Twitter className="h-5 w-5" />
+              <a
+                href="#"
+                aria-label="Follow QuickTrade on X"
+                className="text-gray-400 hover:text-primary-600 transition-colors"
+              >
+                <SocialMark platformToken="X" className="h-5 w-5 text-xs" />
               </a>
-              <a href="#" className="text-gray-400 hover:text-primary-600 transition-colors">
-                <Linkedin className="h-5 w-5" />
+              <a
+                href="#"
+                aria-label="Follow QuickTrade on LinkedIn"
+                className="text-gray-400 hover:text-primary-600 transition-colors"
+              >
+                <SocialMark platformToken="in" className="h-5 w-5 text-xs" />
               </a>
-              <a href="#" className="text-gray-400 hover:text-primary-600 transition-colors">
-                <Facebook className="h-5 w-5" />
+              <a
+                href="#"
+                aria-label="Follow QuickTrade on Facebook"
+                className="text-gray-400 hover:text-primary-600 transition-colors"
+              >
+                <SocialMark platformToken="f" className="h-5 w-5 text-xs" />
               </a>
             </div>
           </div>
