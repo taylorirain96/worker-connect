@@ -1,6 +1,15 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { STRIPE_CONNECT_CONFIG } from '@/lib/stripe/stripeConnect'
+import { adminDb } from '@/lib/firebase-admin'
+import { FieldValue, Timestamp } from 'firebase-admin/firestore'
+import { getStripe } from '@/lib/stripe'
+
+function toIso(value: unknown): string {
+  if (value instanceof Timestamp) return value.toDate().toISOString()
+  if (typeof value === 'string') return value
+  return new Date().toISOString()
+}
 
 /**
  * GET  /api/payouts?workerId=xxx  — list payouts for a worker
@@ -15,39 +24,26 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Missing workerId' }, { status: 400 })
     }
 
-    // In production, fetch from Firestore via paymentService.getWorkerPayouts(workerId)
-    // Mock response for development
-    const mockPayouts = [
-      {
-        id: 'po_mock_1',
-        workerId,
-        amount: 250,
-        currency: 'usd',
-        method: 'bank_account',
-        status: 'paid',
-        bankAccountLast4: '4242',
-        bankName: 'Chase',
-        estimatedArrival: new Date(Date.now() - 3 * 86400000).toISOString(),
-        createdAt: new Date(Date.now() - 5 * 86400000).toISOString(),
-        updatedAt: new Date(Date.now() - 3 * 86400000).toISOString(),
-        paidAt: new Date(Date.now() - 3 * 86400000).toISOString(),
-      },
-      {
-        id: 'po_mock_2',
-        workerId,
-        amount: 180,
-        currency: 'usd',
-        method: 'bank_account',
-        status: 'in_transit',
-        bankAccountLast4: '4242',
-        bankName: 'Chase',
-        estimatedArrival: new Date(Date.now() + 2 * 86400000).toISOString(),
-        createdAt: new Date(Date.now() - 86400000).toISOString(),
-        updatedAt: new Date(Date.now() - 86400000).toISOString(),
-      },
-    ]
+    const snap = await adminDb
+      .collection('payouts')
+      .where('workerId', '==', workerId)
+      .orderBy('createdAt', 'desc')
+      .limit(100)
+      .get()
 
-    return NextResponse.json({ payouts: mockPayouts })
+    const payouts = snap.docs.map((doc) => {
+      const data = doc.data() as Record<string, unknown>
+      return {
+        id: doc.id,
+        ...data,
+        createdAt: toIso(data.createdAt),
+        updatedAt: toIso(data.updatedAt),
+        paidAt: data.paidAt ? toIso(data.paidAt) : undefined,
+        estimatedArrival: data.estimatedArrival ? toIso(data.estimatedArrival) : undefined,
+      }
+    })
+
+    return NextResponse.json({ payouts })
   } catch (error) {
     console.error('List payouts error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -56,9 +52,8 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const stripeSecretKey = process.env.STRIPE_SECRET_KEY
-    if (!stripeSecretKey) {
-      return NextResponse.json({ error: 'Stripe not configured' }, { status: 500 })
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return NextResponse.json({ error: 'Stripe not configured' }, { status: 503 })
     }
 
     const body = await req.json() as {
@@ -77,22 +72,36 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Minimum payout amount is $${STRIPE_CONNECT_CONFIG.minPayoutAmount}.00` }, { status: 400 })
     }
 
-    // In production:
-    // const stripe = new Stripe(stripeSecretKey)
-    // const payout = await stripe.payouts.create(
-    //   { amount: Math.round(amount * 100), currency },
-    //   { stripeAccount: stripeConnectAccountId }
-    // )
-    // Also create record in Firestore via paymentService.createPayout(...)
-    // return NextResponse.json({ payoutId: payout.id, status: payout.status })
+    const stripe = getStripe()
+    const payout = await stripe.payouts.create(
+      { amount: Math.round(amount * 100), currency },
+      { stripeAccount: stripeConnectAccountId }
+    )
 
-    // Mock response
-    return NextResponse.json({
-      payoutId: `po_mock_${Date.now()}`,
-      status: 'pending',
+    const now = FieldValue.serverTimestamp()
+    await adminDb.collection('payouts').add({
+      workerId,
       amount,
       currency,
-      estimatedArrival: new Date(Date.now() + 3 * 86400000).toISOString(),
+      method: 'bank_account',
+      status: payout.status,
+      stripePayoutId: payout.id,
+      stripeConnectAccountId,
+      estimatedArrival: payout.arrival_date
+        ? new Date(payout.arrival_date * 1000).toISOString()
+        : null,
+      createdAt: now,
+      updatedAt: now,
+    })
+
+    return NextResponse.json({
+      payoutId: payout.id,
+      status: payout.status,
+      amount,
+      currency,
+      estimatedArrival: payout.arrival_date
+        ? new Date(payout.arrival_date * 1000).toISOString()
+        : null,
     })
   } catch (error) {
     console.error('Create payout error:', error)
