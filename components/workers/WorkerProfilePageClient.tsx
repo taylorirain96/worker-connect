@@ -281,6 +281,11 @@ export default function WorkerProfilePageClient({
                         {worker.availability === 'available' ? '✓ Available Now' : 'Currently Busy'}
                       </Badge>
                       {worker.verified && <Badge variant="info">Verified Pro</Badge>}
+                      {worker.moverMode && (
+                        <Badge variant="default" className="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-700">
+                          🚚 Mover Ready
+                        </Badge>
+                      )}
                       {portfolio.length > 0 && (
                         <Badge variant="default">
                           <Camera className="h-3 w-3" />

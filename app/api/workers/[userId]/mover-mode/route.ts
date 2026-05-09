@@ -2,8 +2,32 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
 import { FieldValue } from 'firebase-admin/firestore'
+import type { MoverSettings } from '@/types/reputation'
 
 export const dynamic = 'force-dynamic'
+
+export async function GET(
+  _request: NextRequest,
+  context: { params: Promise<{ userId: string }> }
+) {
+  const params = await context.params
+  try {
+    const { userId } = params
+    if (!userId) {
+      return NextResponse.json({ error: 'Missing userId' }, { status: 400 })
+    }
+
+    const settingsSnap = await adminDb.collection('moverSettings').doc(userId).get()
+    const settings: MoverSettings | null = settingsSnap.exists
+      ? (settingsSnap.data() as MoverSettings)
+      : null
+
+    return NextResponse.json({ settings })
+  } catch (error) {
+    console.error('Get mover settings error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
 
 export async function PUT(
   _request: NextRequest,

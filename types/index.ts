@@ -83,6 +83,8 @@ export interface UserProfile {
   }
   /** NZD balance available for withdrawal (maintained by escrow release transactions) */
   availableBalance?: number
+  /** Whether this worker has Mover Mode enabled (targets relocation jobs) */
+  moverMode?: boolean
 }
 
 // ─── Worker Trade Licences ────────────────────────────────────────────────────

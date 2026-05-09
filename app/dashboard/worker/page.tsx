@@ -24,6 +24,7 @@ import toast from 'react-hot-toast'
 import QuoteStats from '@/components/quotes/QuoteStats'
 import JobsForYouFeed from '@/components/jobs/JobsForYouFeed'
 import AvailabilityToggle from '@/components/workers/AvailabilityToggle'
+import WorkerOnboardingChecklist from '@/components/workers/WorkerOnboardingChecklist'
 
 const MAX_DISPLAYED_REVIEWS = 10
 const MS_PER_DAY = 86_400_000
@@ -420,6 +421,9 @@ export default function WorkerDashboardPage() {
               </Link>
             </div>
           )}
+
+          {/* Onboarding checklist for new workers */}
+          {profile && <WorkerOnboardingChecklist profile={profile} />}
 
           {/* Stats */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
