@@ -2,12 +2,40 @@ import { NextResponse } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
 import { sendEmail } from '@/lib/email/sendEmail'
 import { createUnsubscribeToken } from '@/lib/email/unsubscribeToken'
+import type { QueryDocumentSnapshot } from 'firebase-admin/firestore'
 
 export const dynamic = 'force-dynamic'
 
 const INACTIVE_DAYS = 14
 // Keep a separate cooldown constant for clarity in case policy diverges later.
 const EMAIL_COOLDOWN_DAYS = 14
+const USER_PAGE_SIZE = 250
+
+async function fetchUsersByRole(role: 'worker' | 'employer') {
+  const docs: QueryDocumentSnapshot[] = []
+  let lastDoc: QueryDocumentSnapshot | null = null
+
+  while (true) {
+    let query = adminDb
+      .collection('users')
+      .where('role', '==', role)
+      .orderBy('__name__')
+      .limit(USER_PAGE_SIZE)
+
+    if (lastDoc) {
+      query = query.startAfter(lastDoc)
+    }
+
+    const snap = await query.get()
+    if (snap.empty) break
+
+    docs.push(...snap.docs)
+    lastDoc = snap.docs[snap.docs.length - 1] ?? null
+    if (snap.docs.length < USER_PAGE_SIZE) break
+  }
+
+  return docs
+}
 
 function parseTimestampMs(value: unknown): number {
   if (!value) return 0
@@ -64,9 +92,9 @@ export async function GET(request: Request) {
     const inactiveCutoffMs = nowMs - INACTIVE_DAYS * 24 * 60 * 60 * 1000
     const cooldownCutoffMs = nowMs - EMAIL_COOLDOWN_DAYS * 24 * 60 * 60 * 1000
 
-    const [workersSnap, employersSnap] = await Promise.all([
-      adminDb.collection('users').where('role', '==', 'worker').limit(250).get(),
-      adminDb.collection('users').where('role', '==', 'employer').limit(250).get(),
+    const [workerDocs, employerDocs] = await Promise.all([
+      fetchUsersByRole('worker'),
+      fetchUsersByRole('employer'),
     ])
 
     let sent = 0
@@ -74,8 +102,8 @@ export async function GET(request: Request) {
     let failed = 0
 
     const candidates = [
-      ...workersSnap.docs.map((doc) => ({ doc, role: 'worker' as const })),
-      ...employersSnap.docs.map((doc) => ({ doc, role: 'employer' as const })),
+      ...workerDocs.map((doc) => ({ doc, role: 'worker' as const })),
+      ...employerDocs.map((doc) => ({ doc, role: 'employer' as const })),
     ]
 
     for (const candidate of candidates) {

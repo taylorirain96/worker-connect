@@ -64,6 +64,8 @@ const TABS: Array<{ key: TabKey; label: string }> = [
   { key: 'earnings', label: 'Earnings' },
 ]
 
+const DEFAULT_API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL?.trim() || 'https://quicktrade.co.nz'
+
 function formatNZD(value: number | undefined): string {
   return new Intl.NumberFormat('en-NZ', {
     style: 'currency',
@@ -77,7 +79,7 @@ export default function App() {
   const [selectedTab, setSelectedTab] = useState<TabKey>('jobs')
   const [loading, setLoading] = useState(false)
 
-  const [apiBaseUrl, setApiBaseUrl] = useState('https://quicktrade.co.nz')
+  const [apiBaseUrl, setApiBaseUrl] = useState(DEFAULT_API_BASE_URL)
   const [workerId, setWorkerId] = useState('')
   const [workerName, setWorkerName] = useState('')
 

@@ -14,6 +14,12 @@ interface MbieVerificationResult {
   referenceId?: string
 }
 
+interface MbieProviderResponse {
+  verified?: boolean
+  status?: string
+  referenceId?: string
+}
+
 async function verifyWithMbieProvider(input: {
   uid: string
   licenceId: string
@@ -41,17 +47,9 @@ async function verifyWithMbieProvider(input: {
       cache: 'no-store',
     })
 
-    let raw: {
-      verified?: boolean
-      status?: string
-      referenceId?: string
-    }
+    let raw: MbieProviderResponse
     try {
-      raw = await response.json() as {
-        verified?: boolean
-        status?: string
-        referenceId?: string
-      }
+      raw = await response.json() as MbieProviderResponse
     } catch {
       throw new Error('MBIE provider returned invalid JSON')
     }
@@ -142,8 +140,16 @@ export async function POST(request: NextRequest) {
           })
         } catch (providerError) {
           console.error('MBIE verification provider error:', providerError)
+          const details =
+            providerError instanceof Error
+              ? providerError.name === 'AbortError'
+                ? 'timeout'
+                : providerError.message.includes('invalid JSON')
+                  ? 'invalid_response'
+                  : 'request_failed'
+              : 'request_failed'
           return NextResponse.json(
-            { error: 'MBIE verification provider unavailable. Please try again later.' },
+            { error: 'MBIE verification provider unavailable. Please try again later.', details },
             { status: 503 }
           )
         }
