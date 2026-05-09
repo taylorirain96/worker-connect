@@ -70,13 +70,13 @@ npm run build
 An initial Expo React Native app scaffold is available at:
 
 ```bash
-/home/runner/work/worker-connect/worker-connect/mobile
+./mobile
 ```
 
 To run it locally:
 
 ```bash
-cd /home/runner/work/worker-connect/worker-connect/mobile
+cd mobile
 npm install
 npm run web
 ```

@@ -3,7 +3,7 @@ name: Security Audit
 on:
   pull_request:
   schedule:
-    - cron: '0 21 * * 0' # Monday 09:00 NZST/NZDT approximation
+    - cron: '0 21 * * 1' # Monday 09:00 NZST/NZDT approximation
   workflow_dispatch:
 
 jobs:
