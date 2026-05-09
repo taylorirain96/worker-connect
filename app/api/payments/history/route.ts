@@ -40,12 +40,7 @@ export async function GET(req: NextRequest) {
       .limit(limitParam + offset)
 
     if (status) {
-      q = adminDb
-        .collection('payments')
-        .where(field, '==', userId)
-        .where('status', '==', status)
-        .orderBy('createdAt', 'desc')
-        .limit(limitParam + offset)
+      q = q.where('status', '==', status)
     }
 
     const snap = await q.get()

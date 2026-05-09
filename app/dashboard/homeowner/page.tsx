@@ -191,7 +191,7 @@ export default function HomeownerDashboardPage() {
           employerId: user.uid,
           workerId: quote.workerId,
           amount: quote.amount,
-          completedJobs: 0,
+          completedJobs: profile?.completedJobs ?? 0,
         }),
       })
       if (!res.ok) {

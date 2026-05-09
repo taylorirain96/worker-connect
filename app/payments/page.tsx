@@ -25,7 +25,7 @@ export default function PaymentsPage() {
       setLoading(false)
       return
     }
-    const role = (['worker', 'tradie'].includes((user as { role?: string }).role ?? '')) ? 'worker' : 'worker'
+    const role = (['employer', 'property_manager', 'homeowner'].includes((user as { role?: string }).role ?? '')) ? 'employer' : 'worker'
     fetch(`/api/payments?userId=${encodeURIComponent(user.uid)}&role=${role}`)
       .then((r) => r.json())
       .then((data: { payments?: Payment[] }) => {

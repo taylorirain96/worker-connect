@@ -68,6 +68,8 @@ export default function EarningsPage() {
   }, [user])
 
   const multiplierCtx = useMemo(() => ({
+    // Treat any positive weekly points as a top-3 rank approximation; exact rank
+    // requires a server-side leaderboard query which can be added as a future improvement.
     leaderboardRank: (profile?.weeklyPoints ?? 0) > 0 ? (1 as const) : undefined,
     recentReferral: false,
     loyaltyUnlocked: (profile?.completedJobs ?? 0) >= 10,
