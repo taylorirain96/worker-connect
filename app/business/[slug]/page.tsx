@@ -2,6 +2,7 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
+import SocialMark from '@/components/ui/SocialMark'
 import Link from 'next/link'
 import {
   Shield,
@@ -19,7 +20,6 @@ import {
   ExternalLink,
   BarChart2,
 } from 'lucide-react'
-import SocialMark from '@/components/ui/SocialMark'
 import type { BusinessProfile, BusinessReview } from '@/types'
 import { TrustBadgeList, TrustScoreBar } from '@/components/business/TrustBadge'
 
@@ -300,7 +300,7 @@ export default async function BusinessProfilePage(props: { params: Promise<{ slu
                     aria-label={`${biz.companyName} on LinkedIn`}
                     className="p-2 rounded-lg text-gray-500 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
                   >
-                    <SocialMark platform="linkedin" className="h-5 w-5" />
+                    <SocialMark platformToken="in" className="h-5 w-5 text-xs" />
                   </a>
                 )}
                 {biz.facebook && (
@@ -311,7 +311,7 @@ export default async function BusinessProfilePage(props: { params: Promise<{ slu
                     aria-label={`${biz.companyName} on Facebook`}
                     className="p-2 rounded-lg text-gray-500 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
                   >
-                    <SocialMark platform="facebook" className="h-5 w-5" />
+                    <SocialMark platformToken="f" className="h-5 w-5 text-xs" />
                   </a>
                 )}
                 <Link

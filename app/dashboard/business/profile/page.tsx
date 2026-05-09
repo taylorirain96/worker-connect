@@ -5,6 +5,7 @@ import Footer from '@/components/layout/Footer'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
+import SocialMark from '@/components/ui/SocialMark'
 import Link from 'next/link'
 import {
   Building2,
@@ -17,7 +18,6 @@ import {
   X,
   ChevronLeft,
 } from 'lucide-react'
-import SocialMark from '@/components/ui/SocialMark'
 import toast from 'react-hot-toast'
 import { slugify } from '@/lib/utils'
 import { useAuth } from '@/components/providers/AuthProvider'
@@ -437,7 +437,7 @@ export default function EditBusinessProfilePage() {
                     />
                   </div>
                   <div className="flex items-center gap-2">
-                    <SocialMark platform="linkedin" className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                    <SocialMark platformToken="in" className="h-4 w-4 flex-shrink-0 text-[10px] text-gray-400" />
                     <Input
                       placeholder="LinkedIn company page URL"
                       value={form.linkedIn}
@@ -445,7 +445,7 @@ export default function EditBusinessProfilePage() {
                     />
                   </div>
                   <div className="flex items-center gap-2">
-                    <SocialMark platform="facebook" className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                    <SocialMark platformToken="f" className="h-4 w-4 flex-shrink-0 text-[10px] text-gray-400" />
                     <Input
                       placeholder="Facebook page URL"
                       value={form.facebook}
