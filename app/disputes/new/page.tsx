@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
@@ -12,28 +12,60 @@ import { AlertTriangle, ArrowLeft, Send } from 'lucide-react'
 
 const DISPUTE_FILING_WINDOW_DAYS = 7
 
-// Mock completed jobs the user can file a dispute for.
-// In production, replace with a Firestore query for the user's completed jobs.
-const MOCK_COMPLETED_JOBS = [
-  { id: 'job_1', title: 'Plumbing Repair — Kitchen Sink', workerId: 'worker_1', workerName: 'Alex Rivera', completedAt: new Date(Date.now() - 3 * 86400000).toISOString() },
-  { id: 'job_2', title: 'Electrical Panel Upgrade', workerId: 'worker_2', workerName: 'Sam Torres', completedAt: new Date(Date.now() - 5 * 86400000).toISOString() },
-  { id: 'job_3', title: 'Old Job (outside window)', workerId: 'worker_3', workerName: 'Jordan Kim', completedAt: new Date(Date.now() - 10 * 86400000).toISOString() },
-]
+interface CompletedJob {
+  id: string
+  title: string
+  workerId: string
+  workerName: string
+  completedAt: string
+}
 
 export default function NewDisputePage() {
   const router = useRouter()
   const { user } = useAuth()
 
+  const [completedJobs, setCompletedJobs] = useState<CompletedJob[]>([])
+  const [jobsLoading, setJobsLoading] = useState(true)
   const [selectedJobId, setSelectedJobId] = useState('')
   const [reason, setReason] = useState<DisputeResolutionReason>('quality_issues')
   const [description, setDescription] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const now = Date.now()
-  const eligibleJobs = MOCK_COMPLETED_JOBS.filter(
-    (j) => now - new Date(j.completedAt).getTime() <= DISPUTE_FILING_WINDOW_DAYS * 86400000
-  )
+  useEffect(() => {
+    if (!user) return
+    async function loadJobs() {
+      try {
+        const res = await fetch(`/api/jobs?status=completed`, {
+          headers: { 'x-user-id': user!.uid },
+        })
+        if (res.ok) {
+          const data = await res.json() as { jobs?: { id: string; title: string; acceptedWorkerId?: string; workerName?: string; completedAt?: string }[] }
+          const now = Date.now()
+          const jobs = (data.jobs ?? [])
+            .filter((j) => {
+              if (!j.completedAt) return false
+              return now - new Date(j.completedAt).getTime() <= DISPUTE_FILING_WINDOW_DAYS * 86400000
+            })
+            .map((j) => ({
+              id: j.id,
+              title: j.title,
+              workerId: j.acceptedWorkerId ?? '',
+              workerName: j.workerName ?? '',
+              completedAt: j.completedAt ?? '',
+            }))
+          setCompletedJobs(jobs)
+        }
+      } catch {
+        setCompletedJobs([])
+      } finally {
+        setJobsLoading(false)
+      }
+    }
+    loadJobs()
+  }, [user])
+
+  const eligibleJobs = completedJobs
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -41,7 +73,7 @@ export default function NewDisputePage() {
     if (!selectedJobId) { setError('Please select a job.'); return }
     if (!description.trim()) { setError('Please describe the issue.'); return }
 
-    const job = MOCK_COMPLETED_JOBS.find((j) => j.id === selectedJobId)
+    const job = completedJobs.find((j) => j.id === selectedJobId)
     if (!job) { setError('Job not found.'); return }
 
     setSubmitting(true)
@@ -110,17 +142,21 @@ export default function NewDisputePage() {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Select Job *
                   </label>
-                  <select
-                    value={selectedJobId}
-                    onChange={(e) => setSelectedJobId(e.target.value)}
-                    required
-                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  >
-                    <option value="">Choose a completed job…</option>
-                    {eligibleJobs.map((j) => (
-                      <option key={j.id} value={j.id}>{j.title}</option>
-                    ))}
-                  </select>
+                  {jobsLoading ? (
+                    <p className="text-sm text-gray-400">Loading jobs…</p>
+                  ) : (
+                    <select
+                      value={selectedJobId}
+                      onChange={(e) => setSelectedJobId(e.target.value)}
+                      required
+                      className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    >
+                      <option value="">Choose a completed job…</option>
+                      {eligibleJobs.map((j) => (
+                        <option key={j.id} value={j.id}>{j.title}</option>
+                      ))}
+                    </select>
+                  )}
                 </div>
 
                 {/* Reason selector */}
@@ -170,7 +206,7 @@ export default function NewDisputePage() {
                   </Link>
                   <button
                     type="submit"
-                    disabled={submitting || eligibleJobs.length === 0}
+                    disabled={submitting || jobsLoading || eligibleJobs.length === 0}
                     className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
                   >
                     <Send className="h-4 w-4" />

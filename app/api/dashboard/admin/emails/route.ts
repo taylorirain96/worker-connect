@@ -3,45 +3,6 @@ import { adminDb } from '@/lib/firebase-admin'
 
 export const dynamic = 'force-dynamic'
 
-// Deterministic pseudo-random generator for consistent mock data across renders.
-// Uses a simple sine-based hash — NOT for security use.
-// Spread across 5–10 minutes per email (300_000–600_000 ms offsets).
-function seeded(seed: number, scale: number): number {
-  return Math.abs(Math.sin(seed * 9301 + 49297) * scale)
-}
-
-const EMAIL_TYPES = [
-  'job_accepted', 'payment_released', 'quote_received', 'message_received',
-  'application_update', 'review_received', 'job_matches', 'welcome',
-]
-const SUBJECTS: Record<string, string> = {
-  job_accepted: 'Your job has been accepted',
-  payment_released: 'Payment released to your account',
-  quote_received: 'You received a new quote',
-  message_received: 'You have a new message',
-  application_update: 'Update on your application',
-  review_received: 'You received a new review',
-  job_matches: 'New jobs matching your skills',
-  welcome: 'Welcome to WorkerConnect',
-}
-const RECIPIENTS = ['alex@example.com', 'jordan@example.com', 'sam@example.com',
-  'casey@example.com', 'taylor@example.com']
-
-function buildMockLogs(count: number) {
-  return Array.from({ length: count }, (_, i) => {
-    const type = EMAIL_TYPES[i % EMAIL_TYPES.length]
-    return {
-      id: `email-${i + 1}`,
-      recipient: RECIPIENTS[i % RECIPIENTS.length],
-      type,
-      subject: SUBJECTS[type],
-      status: i % 12 === 0 ? 'failed' : 'sent',
-      // Spread timestamps across 5–10 minutes per entry using a fixed scale for consistent intervals
-      sentAt: new Date(Date.now() - (Math.round(seeded(i, 600_000)) + 300_000)).toISOString(),
-    }
-  })
-}
-
 /** GET /api/dashboard/admin/emails */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -49,28 +10,22 @@ export async function GET(request: NextRequest) {
   const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') ?? '20', 10)))
 
   try {
-    let logs: ReturnType<typeof buildMockLogs> = []
+    const snap = await adminDb.collection('emailLogs')
+      .orderBy('sentAt', 'desc')
+      .limit(200)
+      .get()
 
-    try {
-      const snap = await adminDb.collection('emailLogs')
-        .orderBy('sentAt', 'desc')
-        .limit(200)
-        .get()
-
-      logs = snap.docs.map((doc) => {
-        const d = doc.data()
-        return {
-          id: doc.id,
-          recipient: d.recipient ?? '',
-          type: d.type ?? 'unknown',
-          subject: d.subject ?? '(no subject)',
-          status: d.status ?? 'sent',
-          sentAt: d.sentAt ?? new Date().toISOString(),
-        }
-      })
-    } catch {
-      logs = buildMockLogs(80)
-    }
+    const logs = snap.docs.map((doc) => {
+      const d = doc.data()
+      return {
+        id: doc.id,
+        recipient: (d.recipient ?? '') as string,
+        type: (d.type ?? 'unknown') as string,
+        subject: (d.subject ?? '(no subject)') as string,
+        status: (d.status ?? 'sent') as string,
+        sentAt: d.sentAt?.toDate?.()?.toISOString?.() ?? (d.sentAt as string | undefined) ?? new Date().toISOString(),
+      }
+    })
 
     const total = logs.length
     const paginated = logs.slice((page - 1) * limit, page * limit)
@@ -78,7 +33,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ logs: paginated, total, page, limit })
   } catch (error) {
     console.error('GET /api/dashboard/admin/emails error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ logs: [], total: 0, page, limit })
   }
 }
 

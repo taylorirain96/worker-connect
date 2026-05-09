@@ -9,9 +9,6 @@
  *   Established (6–20 jobs):   15%
  *   Pro Worker (21–50 jobs):   12%
  *   Elite Worker (51+ jobs):   10%
- *
- * TODO: Replace STRIPE_SECRET_KEY with your live key when going live.
- * TODO: In production, use Stripe Connect Transfer to pay the worker directly.
  */
 import { NextResponse } from 'next/server'
 import { getWorkerTier } from '@/types'
@@ -105,7 +102,6 @@ export async function POST(request: Request) {
       })
 
       // Transfer worker's share to their Connect account if available
-      // TODO: Set up Stripe Connect for workers to receive payouts
       if (workerStripeAccountId) {
         await stripe.transfers.create({
           amount: workerReceivesCents,

@@ -19,54 +19,6 @@ import {
 } from 'lucide-react'
 import type { AdminNotificationRequest, NotificationType, NotificationChannel } from '@/types'
 
-const MOCK_ADMIN_NOTIFICATIONS: AdminNotificationRequest[] = [
-  {
-    id: '1',
-    title: 'Platform Maintenance',
-    message: 'Scheduled maintenance on Sunday 2am–4am EST. The platform will be unavailable during this time.',
-    type: 'maintenance',
-    targetSegment: 'all',
-    channels: ['email', 'in_app'],
-    status: 'sent',
-    sentCount: 1248,
-    deliveredCount: 1230,
-    failedCount: 18,
-    createdBy: 'admin',
-    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    sentAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: '2',
-    title: 'New Feature: Photo Reviews',
-    message: 'You can now upload before/after photos to showcase your work quality. Try it on your next job!',
-    type: 'account_update',
-    targetSegment: 'workers',
-    channels: ['push', 'email', 'in_app'],
-    status: 'sent',
-    sentCount: 643,
-    deliveredCount: 628,
-    failedCount: 15,
-    createdBy: 'admin',
-    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    sentAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: '3',
-    title: 'Weekend Promo — 0% Fees',
-    message: 'This weekend only: 0% platform fee on all completed jobs. Post a job or apply now!',
-    type: 'account_update',
-    targetSegment: 'all',
-    channels: ['push', 'email', 'in_app'],
-    status: 'scheduled',
-    sentCount: 0,
-    deliveredCount: 0,
-    failedCount: 0,
-    createdBy: 'admin',
-    createdAt: new Date().toISOString(),
-    scheduledAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-  },
-]
-
 const TARGET_SEGMENTS = [
   { value: 'all', label: 'All users' },
   { value: 'workers', label: 'Workers only' },
@@ -119,7 +71,6 @@ export default function AdminNotificationsPage() {
   const [loading, setLoading] = useState(true)
   const [showCompose, setShowCompose] = useState(false)
   const [sending, setSending] = useState(false)
-  const [useMock, setUseMock] = useState(false)
 
   const [composed, setComposed] = useState<ComposedNotification>({
     title: '',
@@ -138,15 +89,9 @@ export default function AdminNotificationsPage() {
     try {
       setLoading(true)
       const data = await getAdminNotifications()
-      if (data.length === 0) {
-        setUseMock(true)
-        setNotifications(MOCK_ADMIN_NOTIFICATIONS)
-      } else {
-        setNotifications(data)
-      }
+      setNotifications(data)
     } catch {
-      setUseMock(true)
-      setNotifications(MOCK_ADMIN_NOTIFICATIONS)
+      setNotifications([])
     } finally {
       setLoading(false)
     }
@@ -176,12 +121,9 @@ export default function AdminNotificationsPage() {
         createdBy: profile?.uid ?? 'admin',
       }
 
-      if (!useMock) {
+      if (true) {
         await createAdminNotification(req)
         await load()
-      } else {
-        const newNotif: AdminNotificationRequest = { id: Date.now().toString(), ...req, createdAt: new Date().toISOString() }
-        setNotifications((p) => [newNotif, ...p])
       }
 
       toast.success(schedule ? 'Notification scheduled!' : 'Notification sent!')
@@ -195,7 +137,7 @@ export default function AdminNotificationsPage() {
   }
 
   const handleCancel = async (id: string) => {
-    if (!useMock) await updateAdminNotification(id, { status: 'cancelled' })
+    await updateAdminNotification(id, { status: 'cancelled' })
     setNotifications((p) => p.map((n) => n.id === id ? { ...n, status: 'cancelled' } : n))
     toast.success('Notification cancelled')
   }
@@ -449,7 +391,7 @@ export default function AdminNotificationsPage() {
           </CardContent>
         </Card>
 
-        {useMock && (
+        {false && (
           <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-4">
             Showing demo data — connect Firebase to manage real notifications
           </p>

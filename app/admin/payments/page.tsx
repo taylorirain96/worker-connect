@@ -32,35 +32,11 @@ const STATUS_COLORS: Record<string, 'success' | 'danger' | 'warning' | 'info'> =
   refunded: 'info',
 }
 
-// ─── Mock payment data ────────────────────────────────────────────────────────
+// ─── Revenue chart data ────────────────────────────────────────────────────────
 
-// Simple deterministic pseudo-random based on seed (not for security use)
 function seededVal(seed: number, scale: number): number {
   return Math.abs(Math.sin(seed * 9301 + 49297) * scale)
 }
-
-function generateMockPayments(count: number): AdminPaymentRow[] {
-  const statuses: AdminPaymentRow['status'][] = ['succeeded', 'succeeded', 'succeeded', 'failed', 'pending', 'refunded']
-  const types: AdminPaymentRow['type'][] = ['payment', 'payment', 'payment', 'refund', 'payout']
-  const names = ['John Smith', 'Alice Johnson', 'Bob Martinez', 'Carol White', 'David Chen',
-    'Elena Rodriguez', 'Frank Wilson', 'Grace Kim', 'Henry Lee', 'Irene Park']
-  return Array.from({ length: count }, (_, i) => ({
-    id: `pay-${(i + 1).toString().padStart(6, '0')}`,
-    userId: `user-${(i % 20) + 1}`,
-    userName: names[i % 10],
-    amount: Math.round(50 + seededVal(i, 2000)),
-    status: statuses[i % 6],
-    type: types[i % 5],
-    method: PAYMENT_METHODS[i % 4],
-    date: new Date(Date.now() - i * 3 * 3600000).toISOString(),
-    jobId: `job-${(i % 50) + 1}`,
-    jobTitle: `Job ${(i % 50) + 1}`,
-  }))
-}
-
-const MOCK_PAYMENTS = generateMockPayments(250)
-
-// ─── Revenue chart data ────────────────────────────────────────────────────────
 
 function generateRevenueChart(days: number) {
   return Array.from({ length: days }, (_, i) => {
@@ -109,6 +85,7 @@ export default function AdminPaymentsPage() {
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  const [allPayments, setAllPayments] = useState<AdminPaymentRow[]>([])
 
   const [chartData, setChartData] = useState(() => generateRevenueChart(30))
 
@@ -116,14 +93,22 @@ export default function AdminPaymentsPage() {
     if (!authLoading && profile?.role !== 'admin') router.push('/dashboard')
   }, [profile, authLoading, router])
 
-  const refresh = useCallback(() => {
+  const refresh = useCallback(async () => {
     setLoading(true)
     const days = DAYS_MAP[dateRange]
-    setTimeout(() => {
-      setChartData(generateRevenueChart(days))
+    setChartData(generateRevenueChart(days))
+    try {
+      const res = await fetch(`/api/admin/payments?limit=100`)
+      if (res.ok) {
+        const data = await res.json() as { items: AdminPaymentRow[] }
+        setAllPayments(data.items ?? [])
+      }
+    } catch {
+      // leave previous data
+    } finally {
       setLoading(false)
       setRefreshing(false)
-    }, 400)
+    }
   }, [dateRange])
 
   useEffect(() => {
@@ -135,7 +120,7 @@ export default function AdminPaymentsPage() {
   }, [dateRange])
 
   // Filter & sort payments
-  const filtered = MOCK_PAYMENTS.filter((p) => {
+  const filtered = allPayments.filter((p) => {
     if (statusFilter !== 'all' && p.status !== statusFilter) return false
     if (methodFilter !== 'all' && p.method !== methodFilter) return false
     if (searchQuery) {
@@ -155,13 +140,13 @@ export default function AdminPaymentsPage() {
     return sortOrder === 'asc' ? a.status.localeCompare(b.status) : b.status.localeCompare(a.status)
   })
 
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   const totalRevenue = chartData.reduce((s, d) => s + d.revenue, 0)
   const totalTransactions = chartData.reduce((s, d) => s + d.transactions, 0)
-  const succeeded = MOCK_PAYMENTS.filter((p) => p.status === 'succeeded').length
-  const failed = MOCK_PAYMENTS.filter((p) => p.status === 'failed').length
+  const succeeded = allPayments.filter((p) => p.status === 'succeeded').length
+  const failed = allPayments.filter((p) => p.status === 'failed').length
 
   const methodPie = PAYMENT_METHODS.map((m, i) => ({
     name: m.replace('_', ' '),

@@ -13,53 +13,7 @@ import {
 import toast from 'react-hot-toast'
 import { useAuth } from '@/components/providers/AuthProvider'
 
-// Mock data for when Firebase is not configured
-const MOCK_FLAGGED: DetailedReview[] = [
-  {
-    id: 'r1',
-    jobId: 'j1',
-    jobTitle: 'Plumbing Repair',
-    reviewType: 'worker_review',
-    reviewerId: 'u2',
-    reviewerName: 'Alex Chen',
-    reviewerRole: 'employer',
-    revieweeId: 'w1',
-    revieweeName: 'Marcus Johnson',
-    rating: 1,
-    categories: { communication: 1, quality: 1, timeliness: 2, professionalism: 1 },
-    comment: 'Terrible work, did not fix anything. Complete waste of money and time!!!',
-    photos: [],
-    photoStoragePaths: [],
-    isAnonymous: false,
-    moderationStatus: 'flagged',
-    helpfulCount: 2,
-    unhelpfulCount: 5,
-    createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 'r2',
-    jobId: 'j2',
-    jobTitle: 'Electrical Panel Upgrade',
-    reviewType: 'enterprise_review',
-    reviewerId: 'w3',
-    reviewerName: 'Sarah Williams',
-    reviewerRole: 'worker',
-    revieweeId: 'e1',
-    revieweeName: 'BuildCorp Inc',
-    rating: 2,
-    categories: { communication: 2, quality: 3, timeliness: 1, professionalism: 2 },
-    comment: 'This company is a scam! They never paid on time and the manager was rude.',
-    photos: [],
-    photoStoragePaths: [],
-    isAnonymous: false,
-    moderationStatus: 'flagged',
-    helpfulCount: 0,
-    unhelpfulCount: 1,
-    createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
-  },
-]
+// Mock data removed — reviews now load exclusively from Firestore via getFlaggedReviews()
 
 const STATUS_BADGE: Record<ReviewModerationStatus, string> = {
   pending: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
@@ -79,9 +33,9 @@ export default function AdminReviewsPage() {
     setLoading(true)
     try {
       const data = await getFlaggedReviews()
-      setReviews(data.length > 0 ? data : MOCK_FLAGGED)
+      setReviews(data)
     } catch {
-      setReviews(MOCK_FLAGGED)
+      setReviews([])
     } finally {
       setLoading(false)
     }

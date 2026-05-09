@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import OnboardingStep from '@/components/onboarding/OnboardingStep'
@@ -12,10 +12,8 @@ import ProfilePhotoUpload from '@/components/onboarding/ProfilePhotoUpload'
 import Button from '@/components/ui/Button'
 import { CheckCircle, Sparkles } from 'lucide-react'
 import type { OnboardingChecklistItem } from '@/types'
-
-// ─── Mock worker for demo / when auth not configured ─────────────────────────
-const MOCK_WORKER_ID = 'worker1'
-const MOCK_EMAIL = 'demo@example.com'
+import { useAuth } from '@/components/providers/AuthProvider'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 
 // ─── Step definitions ────────────────────────────────────────────────────────
 const STEPS = [
@@ -44,7 +42,17 @@ interface FormData {
 // ─── Inner component (uses useSearchParams) ──────────────────────────────────
 function OnboardingContent() {
   const searchParams = useSearchParams()
-  const workerId = searchParams.get('workerId') ?? MOCK_WORKER_ID
+  const router = useRouter()
+  const { user, loading: authLoading } = useAuth()
+
+  // Use authenticated user UID, falling back to query param only for admin pre-fills
+  const workerId = user?.uid ?? searchParams.get('workerId')
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.replace('/login?redirect=/workers/onboarding')
+    }
+  }, [authLoading, user, router])
 
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
   const [loading, setLoading] = useState(false)
@@ -88,6 +96,18 @@ function OnboardingContent() {
     }
     loadProgress()
   }, [workerId])
+
+  // Show loading spinner while auth is resolving
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    )
+  }
+
+  // Redirect handled via useEffect above; return null while redirecting
+  if (!user || !workerId) return null
 
   async function saveStep(stepId: StepId, data: Record<string, unknown>) {
     try {
@@ -215,8 +235,8 @@ function OnboardingContent() {
               processing and protects your financial information.
             </p>
             <StripeConnectButton
-              workerId={workerId}
-              email={MOCK_EMAIL}
+              workerId={workerId!}
+              email={user?.email ?? ''}
               onSuccess={() => setCurrentStepIndex((i) => i + 1)}
             />
           </div>
