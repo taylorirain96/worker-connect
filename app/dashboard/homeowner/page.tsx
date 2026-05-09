@@ -42,9 +42,6 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   disputed: { label: 'Disputed', color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' },
 }
 
-
-
-
 function docToJob(id: string, data: DocumentData): PostedJob {
   const toISO = (v: unknown) =>
     v && typeof v === 'object' && 'toDate' in v
@@ -75,6 +72,7 @@ export default function HomeownerDashboardPage() {
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null)
   const [acceptingQuote, setAcceptingQuote] = useState<string | null>(null)
   const [acceptedQuote, setAcceptedQuote] = useState<SimpleQuote | null>(null)
+  const [loadError, setLoadError] = useState(false)
 
   useEffect(() => {
     if (!loading && !user) {
@@ -84,11 +82,14 @@ export default function HomeownerDashboardPage() {
 
   useEffect(() => {
     if (!user?.uid || !db) {
+      setJobs([])
+      setQuotes([])
       setLoadingJobs(false)
       return
     }
     async function fetchData() {
       try {
+        setLoadError(false)
         const jobsRef = collection(db!, 'jobs')
         const q = query(jobsRef, where('employerId', '==', user!.uid), orderBy('createdAt', 'desc'))
         const snapshot = await getDocs(q)
@@ -120,9 +121,13 @@ export default function HomeownerDashboardPage() {
             }
           })
           setQuotes(fetchedQuotes)
+        } else {
+          setQuotes([])
         }
       } catch {
-        // leave jobs/quotes as empty arrays
+        setJobs([])
+        setQuotes([])
+        setLoadError(true)
       } finally {
         setLoadingJobs(false)
       }
@@ -282,6 +287,34 @@ export default function HomeownerDashboardPage() {
             </div>
           )}
 
+          {/* Welcome banner for brand-new homeowners with no jobs */}
+          {!loadingJobs && jobs.length === 0 && !loadError && !propertyIdFilter && (
+            <div className="mb-6 bg-gradient-to-br from-indigo-50 to-violet-50 dark:from-indigo-900/20 dark:to-violet-900/20 border border-indigo-200 dark:border-indigo-700 rounded-2xl p-6">
+              <div className="text-3xl mb-3">👋</div>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+                Welcome to QuickTrade, {profile?.displayName?.trim().split(/\s+/)[0] || 'there'}!
+              </h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Post a job in under 2 minutes and receive quotes from verified local tradies — completely free.
+              </p>
+              <ul className="space-y-1.5 mb-5">
+                {[
+                  '✅ Get up to 5 quotes within hours',
+                  "🔒 Payment held in escrow — only released when you're happy",
+                  '⭐ All tradies are reviewed by real homeowners',
+                ].map((point) => (
+                  <li key={point} className="text-sm text-gray-700 dark:text-gray-300">{point}</li>
+                ))}
+              </ul>
+              <Link
+                href="/post/homeowner"
+                className="inline-flex items-center gap-2 py-3 px-6 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-colors"
+              >
+                Post Your First Job — Free
+              </Link>
+            </div>
+          )}
+
           {/* Disputed jobs banner */}
           {!loadingJobs && jobs.filter((j) => j.status === 'disputed').length > 0 && (
             <div className="mb-6 space-y-3">
@@ -364,14 +397,20 @@ export default function HomeownerDashboardPage() {
             </div>
           ) : filteredJobs.length === 0 ? (
             <div className="text-center py-16">
-              <div className="text-4xl mb-4">📋</div>
+              <div className="text-4xl mb-4">{loadError ? '⚠️' : '📋'}</div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                {propertyIdFilter ? 'No jobs for this property yet' : 'No jobs yet'}
+                {loadError
+                  ? "We couldn't load your jobs"
+                  : propertyIdFilter
+                    ? 'No jobs for this property yet'
+                    : 'No jobs yet'}
               </h3>
               <p className="text-gray-500 mb-6">
-                {propertyIdFilter
-                  ? 'Post the first job for this property to start receiving quotes.'
-                  : 'Post your first job and get quotes from local tradies'}
+                {loadError
+                  ? 'Please refresh the page or try again in a moment.'
+                  : propertyIdFilter
+                    ? 'Post the first job for this property to start receiving quotes.'
+                    : 'Post your first job and get quotes from local tradies'}
               </p>
               <Link
                 href={propertyIdFilter ? `/post/homeowner?propertyId=${encodeURIComponent(propertyIdFilter)}&address=${encodeURIComponent(propertyLabel)}` : '/post/homeowner'}

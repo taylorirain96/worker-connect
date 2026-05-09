@@ -35,9 +35,6 @@ interface PostedJob {
   assignedWorkerId?: string
 }
 
-
-
-
 function docToPostedJob(id: string, data: DocumentData): PostedJob {
   const toISO = (v: unknown) =>
     v && typeof v === 'object' && 'toDate' in v
@@ -77,6 +74,7 @@ export default function EmployerDashboardPage() {
 
   useEffect(() => {
     if (!user?.uid || !db) {
+      setPostedJobs([])
       setLoadingJobs(false)
       return
     }
@@ -88,7 +86,7 @@ export default function EmployerDashboardPage() {
         const jobs = snapshot.docs.map((d) => docToPostedJob(d.id, d.data()))
         setPostedJobs(jobs)
       } catch {
-        // leave as empty array
+        setPostedJobs([])
       } finally {
         setLoadingJobs(false)
       }
@@ -266,9 +264,9 @@ export default function EmployerDashboardPage() {
                   ) : filteredJobs.length === 0 ? (
                     <div className="text-center py-8">
                       <Camera className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                      {photoFilter === 'all' && postedJobs.length === 0 ? (
+                      {postedJobs.length === 0 ? (
                         <>
-                          <p className="text-gray-500 mb-3">No jobs posted yet.</p>
+                          <p className="text-gray-500 mb-3">No jobs posted yet</p>
                           <Link href="/jobs/create" className="text-sm text-primary-600 hover:underline font-medium">
                             Post your first job →
                           </Link>

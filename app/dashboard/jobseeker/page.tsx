@@ -45,7 +45,6 @@ const APPLICATION_STATUS: Record<string, { label: string; color: string }> = {
   hired:       { label: 'Hired 🎉',    color: 'bg-green-500/20 text-green-300 border border-green-500/30' },
 }
 
-
 function formatSalary(job: StaffJob) {
   if (!job.salaryMin) return 'Salary negotiable'
   if (job.workType === 'part-time') return `$${job.salaryMin}–$${job.salaryMax}/hr`
@@ -85,7 +84,7 @@ export default function JobseekerDashboardPage() {
     if (!user) return
     const fetchJobs = async () => {
       try {
-        if (!db) { setLoadingJobs(false); return }
+        if (!db) { setJobs([]); setLoadingJobs(false); return }
         const q = query(
           collection(db, 'jobs'),
           where('jobType', '==', 'employment'),
@@ -93,6 +92,7 @@ export default function JobseekerDashboardPage() {
           limit(6),
         )
         const snap = await getDocs(q)
+        if (snap.empty) { setJobs([]); return }
         const fetched: StaffJob[] = snap.docs.map((d) => {
           const data = d.data() as DocumentData
           return {
@@ -121,7 +121,7 @@ export default function JobseekerDashboardPage() {
     if (!user) return
     const fetchApps = async () => {
       try {
-        if (!db) { setLoadingApps(false); return }
+        if (!db) { setApplications([]); setLoadingApps(false); return }
         const q = query(
           collection(db, 'jobApplications'),
           where('applicantId', '==', user.uid),
@@ -129,6 +129,7 @@ export default function JobseekerDashboardPage() {
           limit(10),
         )
         const snap = await getDocs(q)
+        if (snap.empty) { setApplications([]); return }
         const fetched: MyApplication[] = snap.docs.map((d) => {
           const data = d.data() as DocumentData
           return {
@@ -162,6 +163,7 @@ export default function JobseekerDashboardPage() {
 
   const appStats = {
     sent: applications.length,
+    // Profile views tracking not yet implemented; show 0 until wired up.
     views: 0,
     responseRate: applications.length > 0
       ? Math.round((applications.filter((a) => a.status !== 'applied').length / applications.length) * 100)
@@ -266,14 +268,16 @@ export default function JobseekerDashboardPage() {
             {loadingJobs ? (
               <div className="flex justify-center py-8"><LoadingSpinner /></div>
             ) : jobs.length === 0 ? (
-              <div className="text-center py-10 text-slate-400">
-                <Briefcase className="h-10 w-10 mx-auto mb-3 opacity-30" />
-                <p className="text-sm font-medium">No employment roles listed yet.</p>
-                <p className="text-xs mt-1 text-slate-500">Check back soon — new roles are added daily.</p>
-                <Link href="/jobs/staff" className="inline-block mt-4 text-sm text-indigo-400 hover:text-indigo-300 underline">
-                  Browse all jobs →
-                </Link>
-              </div>
+              <Card className="border-slate-700/60 bg-slate-800/40">
+                <CardContent className="p-8 text-center">
+                  <Briefcase className="h-10 w-10 text-slate-500 mx-auto mb-3" />
+                  <p className="text-slate-300 font-medium mb-1">No jobs to show right now</p>
+                  <p className="text-sm text-slate-500 mb-4">New roles are posted daily — check back soon, or browse the full list.</p>
+                  <Link href="/jobs/staff">
+                    <Button size="sm">Browse all jobs</Button>
+                  </Link>
+                </CardContent>
+              </Card>
             ) : (
               <div className="space-y-3">
                 {jobs.map((job) => (
