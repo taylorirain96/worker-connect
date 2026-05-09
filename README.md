@@ -51,6 +51,10 @@ Optional but commonly used:
 - `RESEND_API_KEY`
 - `RESEND_FROM_EMAIL`
 - `OPENAI_API_KEY`
+- `BUSINESS_VERIFICATION_API_KEY` — optional bearer token for external verification providers
+- `BUSINESS_VERIFICATION_LICENSE_URL` — license verification provider endpoint
+- `BUSINESS_VERIFICATION_INSURANCE_URL` — insurance verification provider endpoint
+- `BUSINESS_VERIFICATION_BACKGROUND_URL` — background-check provider endpoint
 
 ## Validation
 
@@ -59,6 +63,22 @@ Run the repo checks before opening or updating a PR:
 ```bash
 npm run lint
 npm run build
+```
+
+## Mobile app (Expo)
+
+An initial Expo React Native app scaffold is available at:
+
+```bash
+/home/runner/work/worker-connect/worker-connect/mobile
+```
+
+To run it locally:
+
+```bash
+cd /home/runner/work/worker-connect/worker-connect/mobile
+npm install
+npm run web
 ```
 
 ## SEO and public URL notes

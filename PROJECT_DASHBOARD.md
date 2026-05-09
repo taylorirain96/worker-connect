@@ -435,7 +435,7 @@ UNSUBSCRIBE_SECRET=
 - [x] Homeowner Search Alerts management page ✅
 - [x] Worker Subscription / Pro Tier management ✅
 - [x] Worker Quote Templates (save + load in quote form) ✅
-- [ ] Mobile app (React Native / Expo)
+- [x] Mobile app (React Native / Expo) ✅ Initial Expo TypeScript scaffold at `/mobile`
 
 ---
 

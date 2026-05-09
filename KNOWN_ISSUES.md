@@ -1,6 +1,6 @@
 # Known Issues (Baseline Validation)
 
-Last validated: 2026-05-07
+Last validated: 2026-05-09
 
 ## Lint / Build warnings
 
@@ -16,10 +16,11 @@ _None_ — lint and build both pass cleanly on Next.js 15.5.18.
   - `undici` / `firebase` transitive vulnerabilities require downgrading `firebase` to v12.13.0 (breaking change); deferred.
   - `postcss` bundled inside `next/node_modules/postcss` — advisory may be stale; Next.js 15.5.18 is fully patched per the advisory database.
   - Dependabot is configured (`.github/dependabot.yml`) and will automatically open PRs for these.
+  - CI now runs `npm audit --omit=dev --audit-level=high` via `.github/workflows/security-audit.yml` to fail fast on new high/critical vulnerabilities.
 
 ## Notes
 
 - `npm run lint` and `npm run build` both pass.
 - NZ Licence Verification currently uses pattern-matching only (not a live MBIE API call). Real MBIE integration can replace `app/api/worker-trade-licences/verify/route.ts` when the public register API becomes available.
-- Business verification stubs (`/api/business/verify/*`) use simulated responses — real integrations (Checkr, insurance providers, state licensing DB) are deferred.
-- `/services/[service]` and city/region pages use mock `aggregateRating` data — can be replaced with real per-service review aggregation once volume exists.
+- Business verification routes now call configurable provider endpoints (`BUSINESS_VERIFICATION_*_URL`) and fail closed with `503` when provider integrations are unavailable.
+- Service and city/region pages now use `lib/seo/serviceRatings.ts` Firestore-backed aggregate review data (no hardcoded mock aggregateRating payloads).
