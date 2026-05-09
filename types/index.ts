@@ -131,7 +131,7 @@ export interface WorkerTradeLicence {
   /** ISO timestamp of when government verification was confirmed */
   governmentVerifiedAt?: string
   /** Which government register was used for verification */
-  verificationSource?: 'lbp_register' | 'electrical_register' | 'plumbing_register' | 'manual'
+  verificationSource?: 'mbie_api' | 'lbp_register' | 'electrical_register' | 'plumbing_register' | 'manual'
   createdAt: string
   updatedAt: string
 }

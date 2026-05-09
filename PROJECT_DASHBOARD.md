@@ -10,7 +10,7 @@
 | **Product** | QuickTrade |
 | **Tagline** | New Zealand's premium trade & labour marketplace |
 | **Repo** | https://github.com/taylorirain96/worker-connect |
-| **Live URL** | https://quicktrade-pi.vercel.app |
+| **Live URL** | https://quicktrade.co.nz |
 | **Stack** | Next.js 15.5.18 · TypeScript · Firebase · Stripe · Tailwind CSS · Vercel |
 | **Target Market** | New Zealand — tradies, homeowners, job seekers, employers |
 | **Design System** | Dark luxury — indigo→violet gradients, platinum accents, Lucide icons |
@@ -204,7 +204,7 @@ app/
 
 | Element | Detail |
 |---------|--------|
-| **Canonical domain** | https://quicktrade-pi.vercel.app |
+| **Canonical domain** | https://quicktrade.co.nz |
 | **Sitemap** | /sitemap.xml (dynamic — services, cities, regions, blog) |
 | **Service pages** | 17 NZ trades × 10 cities = 170 service×city pages |
 | **Region pages** | /services/[service]/nz/[region] |

@@ -45,7 +45,7 @@ export const metadata: Metadata = {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const GA_ID = process.env.NEXT_PUBLIC_GA_ID ?? 'G-VNY47FMBTR'
+  const GA_ID = process.env.NEXT_PUBLIC_GA_ID
   return (
     <html lang="en-NZ" suppressHydrationWarning>
       <head>
@@ -119,7 +119,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </AuthProvider>
         </ThemeProvider>
       </body>
-      <GoogleAnalytics gaId={GA_ID} />
+      {GA_ID ? <GoogleAnalytics gaId={GA_ID} /> : null}
     </html>
   )
 }

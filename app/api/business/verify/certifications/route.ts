@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
 import { FieldValue } from 'firebase-admin/firestore'
 import type { CertificationRecord } from '@/types'
+import { callVerificationProvider } from '@/lib/business-verification/providerClient'
 
 export async function POST(request: NextRequest) {
   const uid = request.headers.get('x-user-id')
@@ -17,26 +18,47 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Certification name is required' }, { status: 400 })
   }
 
-  const result: CertificationRecord = {
-    id: `cert_${Date.now()}`,
-    name,
-    issuingOrganization: issuingOrganization ?? null,
-    certificateNumber: certificateNumber ?? null,
-    issueDate: issueDate ?? null,
-    expirationDate: expirationDate ?? null,
-    verified: false,
-    createdAt: new Date().toISOString(),
+  try {
+    const providerResult = await callVerificationProvider({
+      endpoint: process.env.BUSINESS_VERIFICATION_CERTIFICATIONS_URL,
+      payload: {
+        userId: uid,
+        name,
+        issuingOrganization: issuingOrganization ?? null,
+        certificateNumber: certificateNumber ?? null,
+        issueDate: issueDate ?? null,
+        expirationDate: expirationDate ?? null,
+      },
+      defaultProvider: 'Certification Verification API',
+    })
+
+    const result: CertificationRecord = {
+      id: `cert_${Date.now()}`,
+      name,
+      issuingOrganization: issuingOrganization ?? null,
+      certificateNumber: certificateNumber ?? null,
+      issueDate: issueDate ?? null,
+      expirationDate: expirationDate ?? null,
+      verified: providerResult.verified,
+      createdAt: new Date().toISOString(),
+    }
+
+    await adminDb.collection('businessVerifications').doc(uid).set(
+      {
+        certifications: FieldValue.arrayUnion(result),
+        updatedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    )
+
+    return NextResponse.json(result, { status: 201 })
+  } catch (error) {
+    console.error('Certification verification provider error:', error)
+    return NextResponse.json(
+      { error: 'Certification verification provider unavailable. Please try again later.' },
+      { status: 503 }
+    )
   }
-
-  await adminDb.collection('businessVerifications').doc(uid).set(
-    {
-      certifications: FieldValue.arrayUnion(result),
-      updatedAt: FieldValue.serverTimestamp(),
-    },
-    { merge: true }
-  )
-
-  return NextResponse.json(result, { status: 201 })
 }
 
 export async function DELETE(request: NextRequest) {
