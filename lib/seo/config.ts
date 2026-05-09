@@ -1,4 +1,4 @@
-const DEFAULT_SITE_URL = 'https://quicktrade-pi.vercel.app'
+const DEFAULT_SITE_URL = 'https://quicktrade.co.nz'
 
 function normalizeUrl(url?: string | null) {
   if (!url) return DEFAULT_SITE_URL

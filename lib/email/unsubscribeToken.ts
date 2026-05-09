@@ -42,6 +42,7 @@ export type EmailNotificationType =
   | 'applicationReceived'
   | 'welcomeHomeowner'
   | 'welcomeWorker'
+  | 'reengagement'
   | 'all'
 
 export interface UnsubscribePayload {

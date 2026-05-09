@@ -21,6 +21,6 @@ _None_ — lint and build both pass cleanly on Next.js 15.5.18.
 ## Notes
 
 - `npm run lint` and `npm run build` both pass.
-- NZ Licence Verification currently uses pattern-matching only (not a live MBIE API call). Real MBIE integration can replace `app/api/worker-trade-licences/verify/route.ts` when the public register API becomes available.
+- NZ Licence Verification uses live MBIE/provider verification when `MBIE_LICENCE_VERIFICATION_URL` is configured; otherwise it falls back to legacy pattern checks in `app/api/worker-trade-licences/verify/route.ts`.
 - Business verification routes now call configurable provider endpoints (`BUSINESS_VERIFICATION_*_URL`) and fail closed with `503` when provider integrations are unavailable.
 - Service and city/region pages now use `lib/seo/serviceRatings.ts` Firestore-backed aggregate review data (no hardcoded mock aggregateRating payloads).
