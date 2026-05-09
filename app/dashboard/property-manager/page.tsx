@@ -159,24 +159,33 @@ export default function PropertyManagerDashboard() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3 text-xs text-slate-400">
-                      <span className="flex items-center gap-1">
-                        <Briefcase className="h-3.5 w-3.5" />
-                        {prop.activeJobCount} active job{prop.activeJobCount !== 1 ? 's' : ''}
-                      </span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 text-xs text-slate-400">
+                        <span className="flex items-center gap-1">
+                          <Briefcase className="h-3.5 w-3.5" />
+                          {prop.activeJobCount} active job{prop.activeJobCount !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/dashboard/homeowner?propertyId=${encodeURIComponent(prop.id)}&propertyLabel=${encodeURIComponent(prop.address)}`}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-600/80 text-slate-200 text-xs font-semibold transition-colors hover:bg-slate-800"
+                        >
+                          <Briefcase className="h-3.5 w-3.5" />
+                          View Jobs
+                        </Link>
+                        <Link
+                          href={`/post/homeowner?propertyId=${encodeURIComponent(prop.id)}&address=${encodeURIComponent(prop.address + ', ' + prop.city)}`}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600/80 hover:bg-indigo-600 text-white text-xs font-semibold transition-colors"
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                          Post Job
+                        </Link>
+                      </div>
                     </div>
-                    <Link
-                      href={`/post/homeowner?address=${encodeURIComponent(prop.address + ', ' + prop.city)}`}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600/80 hover:bg-indigo-600 text-white text-xs font-semibold transition-colors"
-                    >
-                      <Plus className="h-3.5 w-3.5" />
-                      Post Job
-                    </Link>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
           )}
         </div>
       </main>

@@ -11,7 +11,7 @@
 | **Tagline** | New Zealand's premium trade & labour marketplace |
 | **Repo** | https://github.com/taylorirain96/worker-connect |
 | **Live URL** | https://quicktrade-pi.vercel.app |
-| **Stack** | Next.js 14 · TypeScript · Firebase · Stripe · Tailwind CSS · Vercel |
+| **Stack** | Next.js 15.5.18 · TypeScript · Firebase · Stripe · Tailwind CSS · Vercel |
 | **Target Market** | New Zealand — tradies, homeowners, job seekers, employers |
 | **Design System** | Dark luxury — indigo→violet gradients, platinum accents, Lucide icons |
 | **Locale** | NZ-first (NZD, en-NZ, 15% GST) |
@@ -221,7 +221,7 @@ app/
 
 | Layer | Technology |
 |-------|-----------|
-| Framework | Next.js 14 (App Router, RSC) |
+| Framework | Next.js 15.5.18 (App Router, RSC) |
 | Language | TypeScript (strict) |
 | Styling | Tailwind CSS v3 |
 | UI Components | shadcn/ui + Lucide React icons |

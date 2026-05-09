@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useMemo, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
@@ -18,6 +18,7 @@ interface PostedJob {
   budgetType: 'fixed' | 'hourly'
   createdAt: string
   quoteCount: number
+  propertyId?: string
 }
 
 interface SimpleQuote {
@@ -99,12 +100,16 @@ function docToJob(id: string, data: DocumentData): PostedJob {
     budgetType: data.budgetType ?? 'fixed',
     createdAt: toISO(data.createdAt),
     quoteCount: data.applicantsCount ?? 0,
+    propertyId: typeof data.propertyId === 'string' ? data.propertyId : undefined,
   }
 }
 
 export default function HomeownerDashboardPage() {
   const { user, profile, loading } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const propertyIdFilter = searchParams.get('propertyId') ?? ''
+  const propertyLabel = searchParams.get('propertyLabel') ?? 'Selected property'
   const [jobs, setJobs] = useState<PostedJob[]>([])
   const [loadingJobs, setLoadingJobs] = useState(true)
   const [quotes, setQuotes] = useState<SimpleQuote[]>([])
@@ -178,8 +183,12 @@ export default function HomeownerDashboardPage() {
     setAcceptedQuote(quote)
   }
 
-  const totalNewQuotes = jobs.reduce((sum, j) => sum + (j.quoteCount || 0), 0)
-  const inProgressJobs = useMemo(() => jobs.filter((j) => j.status === 'in_progress'), [jobs])
+  const filteredJobs = useMemo(
+    () => (propertyIdFilter ? jobs.filter((job) => job.propertyId === propertyIdFilter) : jobs),
+    [jobs, propertyIdFilter]
+  )
+  const totalNewQuotes = filteredJobs.reduce((sum, j) => sum + (j.quoteCount || 0), 0)
+  const inProgressJobs = useMemo(() => filteredJobs.filter((j) => j.status === 'in_progress'), [filteredJobs])
 
   if (loading || !user) {
     return (
@@ -230,7 +239,7 @@ export default function HomeownerDashboardPage() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                My Jobs
+                {propertyIdFilter ? `${propertyLabel} Jobs` : 'My Jobs'}
               </h1>
               <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
                 Hi {profile?.displayName?.split(' ')[0] || 'there'} 👋
@@ -281,13 +290,22 @@ export default function HomeownerDashboardPage() {
                 <span className="hidden sm:inline">Recurring Services</span>
               </Link>
               <Link
-                href="/post/homeowner"
+                href={propertyIdFilter ? `/post/homeowner?propertyId=${encodeURIComponent(propertyIdFilter)}&address=${encodeURIComponent(propertyLabel)}` : '/post/homeowner'}
                 className="py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-colors"
               >
                 + Post a Job
               </Link>
             </div>
           </div>
+
+          {propertyIdFilter && (
+            <div className="mb-4 flex items-center justify-between rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-800 dark:border-indigo-800 dark:bg-indigo-900/20 dark:text-indigo-300">
+              <span>Showing jobs linked to {propertyLabel}.</span>
+              <Link href="/dashboard/homeowner" className="font-semibold hover:underline">
+                Clear filter
+              </Link>
+            </div>
+          )}
 
           {/* Disputed jobs banner */}
           {!loadingJobs && jobs.filter((j) => j.status === 'disputed').length > 0 && (
@@ -369,13 +387,19 @@ export default function HomeownerDashboardPage() {
                 </div>
               ))}
             </div>
-          ) : jobs.length === 0 ? (
+          ) : filteredJobs.length === 0 ? (
             <div className="text-center py-16">
               <div className="text-4xl mb-4">📋</div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No jobs yet</h3>
-              <p className="text-gray-500 mb-6">Post your first job and get quotes from local tradies</p>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                {propertyIdFilter ? 'No jobs for this property yet' : 'No jobs yet'}
+              </h3>
+              <p className="text-gray-500 mb-6">
+                {propertyIdFilter
+                  ? 'Post the first job for this property to start receiving quotes.'
+                  : 'Post your first job and get quotes from local tradies'}
+              </p>
               <Link
-                href="/post/homeowner"
+                href={propertyIdFilter ? `/post/homeowner?propertyId=${encodeURIComponent(propertyIdFilter)}&address=${encodeURIComponent(propertyLabel)}` : '/post/homeowner'}
                 className="py-3 px-6 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors"
               >
                 Post a Job — Free
@@ -383,7 +407,7 @@ export default function HomeownerDashboardPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {jobs.map((job) => {
+              {filteredJobs.map((job) => {
                 const jobQuotes = quotes.filter((q) => q.jobId === job.id && q.status === 'pending')
                 const isExpanded = expandedJobId === job.id
                 const statusConf = STATUS_CONFIG[job.status] || STATUS_CONFIG.open
@@ -503,10 +527,10 @@ export default function HomeownerDashboardPage() {
           )}
 
           {/* Footer CTA */}
-          {jobs.length > 0 && (
+          {filteredJobs.length > 0 && (
             <div className="mt-8 text-center">
               <Link
-                href="/post/homeowner"
+                href={propertyIdFilter ? `/post/homeowner?propertyId=${encodeURIComponent(propertyIdFilter)}&address=${encodeURIComponent(propertyLabel)}` : '/post/homeowner'}
                 className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
               >
                 + Post another job

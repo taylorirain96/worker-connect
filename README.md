@@ -4,7 +4,7 @@ QuickTrade is a Next.js marketplace for connecting homeowners and businesses wit
 
 ## Tech stack
 
-- Next.js 14 App Router
+- Next.js 15.5.18 App Router
 - React 18
 - TypeScript
 - Tailwind CSS

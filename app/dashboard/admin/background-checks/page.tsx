@@ -1,11 +1,9 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import { ShieldCheck, CheckCircle, XCircle, Clock, RefreshCw, User, Calendar } from 'lucide-react'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { collection, getDocs, orderBy, query } from 'firebase/firestore'
-import { db } from '@/lib/firebase'
 import toast from 'react-hot-toast'
 
 interface BackgroundCheckRecord {
@@ -38,23 +36,31 @@ export default function AdminBackgroundChecksPage() {
   const [processing, setProcessing] = useState<string | null>(null)
   const [notes, setNotes] = useState<Record<string, string>>({})
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true)
     try {
-      if (!db) return
-      const snap = await getDocs(
-        query(collection(db, 'backgroundChecks'), orderBy('submittedAt', 'desc')),
-      )
-      setRecords(snap.docs.map((d) => ({ id: d.id, ...d.data() } as BackgroundCheckRecord)))
+      if (!user) return
+      const res = await fetch('/api/background-checks?scope=all', {
+        headers: { 'x-user-id': user.uid },
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        toast.error(data.error || 'Failed to load background checks')
+        return
+      }
+      setRecords((data.checks ?? []) as BackgroundCheckRecord[])
     } catch (err) {
       console.error(err)
       toast.error('Failed to load background checks')
     } finally {
       setLoading(false)
     }
-  }
+  }, [user])
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    if (!user) return
+    load()
+  }, [user, load])
 
   async function review(record: BackgroundCheckRecord, decision: 'approved' | 'rejected') {
     if (!user) return

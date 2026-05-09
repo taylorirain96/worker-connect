@@ -36,13 +36,12 @@ export async function POST(request: NextRequest) {
       notes: notes ?? null,
     })
 
-    // If approved, update the user's profile with backgroundCheckStatus
-    if (decision === 'approved') {
-      await adminDb.collection('users').doc(targetUid).update({
-        backgroundCheckStatus: 'approved',
-        backgroundCheckApprovedAt: now,
-      })
-    }
+    await adminDb.collection('users').doc(targetUid).update({
+      backgroundCheckStatus: decision,
+      ...(decision === 'approved'
+        ? { backgroundCheckApprovedAt: now }
+        : { backgroundCheckApprovedAt: null }),
+    })
 
     return NextResponse.json({ success: true, decision })
   } catch (err) {

@@ -206,6 +206,8 @@ export interface Job {
   nextRecurrenceAt?: string
   /** ID of the parent (original) recurring job */
   parentJobId?: string
+  /** Optional property linkage for property-manager posted jobs */
+  propertyId?: string
 }
 
 export type JobCategory =
@@ -1235,6 +1237,8 @@ export interface JobApplication {
   workerPhotoURL?: string
   workerRating?: number
   workerVerified?: boolean
+  workerBackgroundCheckStatus?: UserProfile['backgroundCheckStatus']
+  workerWorksafeComplete?: boolean
   coverLetter?: string
   status: 'pending' | 'accepted' | 'rejected' | 'withdrawn'
   appliedAt: string
