@@ -12,8 +12,6 @@ import {
   ExternalLink,
   CheckCircle,
   Globe,
-  Linkedin,
-  Facebook,
   MapPin,
   Plus,
   X,
@@ -438,7 +436,9 @@ export default function EditBusinessProfilePage() {
                     />
                   </div>
                   <div className="flex items-center gap-2">
-                    <Linkedin className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                    <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center text-[10px] font-semibold uppercase text-gray-400">
+                      in
+                    </span>
                     <Input
                       placeholder="LinkedIn company page URL"
                       value={form.linkedIn}
@@ -446,7 +446,9 @@ export default function EditBusinessProfilePage() {
                     />
                   </div>
                   <div className="flex items-center gap-2">
-                    <Facebook className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                    <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center text-[10px] font-semibold uppercase text-gray-400">
+                      f
+                    </span>
                     <Input
                       placeholder="Facebook page URL"
                       value={form.facebook}

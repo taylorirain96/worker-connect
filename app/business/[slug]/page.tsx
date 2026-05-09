@@ -17,8 +17,6 @@ import {
   MessageSquare,
   Building2,
   ExternalLink,
-  Linkedin,
-  Facebook,
   BarChart2,
 } from 'lucide-react'
 import type { BusinessProfile, BusinessReview } from '@/types'
@@ -300,7 +298,9 @@ export default async function BusinessProfilePage(props: { params: Promise<{ slu
                     rel="noopener noreferrer"
                     className="p-2 rounded-lg text-gray-500 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
                   >
-                    <Linkedin className="h-5 w-5" />
+                    <span className="flex h-5 w-5 items-center justify-center text-xs font-semibold uppercase">
+                      in
+                    </span>
                   </a>
                 )}
                 {biz.facebook && (
@@ -310,7 +310,9 @@ export default async function BusinessProfilePage(props: { params: Promise<{ slu
                     rel="noopener noreferrer"
                     className="p-2 rounded-lg text-gray-500 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
                   >
-                    <Facebook className="h-5 w-5" />
+                    <span className="flex h-5 w-5 items-center justify-center text-xs font-semibold uppercase">
+                      f
+                    </span>
                   </a>
                 )}
                 <Link

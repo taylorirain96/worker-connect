@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Wrench, Twitter, Linkedin, Facebook } from 'lucide-react'
+import { Wrench } from 'lucide-react'
 
 export default function Footer() {
   return (
@@ -19,13 +19,19 @@ export default function Footer() {
             </p>
             <div className="flex space-x-4">
               <a href="#" className="text-gray-400 hover:text-primary-600 transition-colors">
-                <Twitter className="h-5 w-5" />
+                <span className="flex h-5 w-5 items-center justify-center text-xs font-semibold uppercase">
+                  X
+                </span>
               </a>
               <a href="#" className="text-gray-400 hover:text-primary-600 transition-colors">
-                <Linkedin className="h-5 w-5" />
+                <span className="flex h-5 w-5 items-center justify-center text-xs font-semibold uppercase">
+                  in
+                </span>
               </a>
               <a href="#" className="text-gray-400 hover:text-primary-600 transition-colors">
-                <Facebook className="h-5 w-5" />
+                <span className="flex h-5 w-5 items-center justify-center text-xs font-semibold uppercase">
+                  f
+                </span>
               </a>
             </div>
           </div>
