@@ -15,7 +15,7 @@ import {
 import NotificationItem from '@/components/NotificationItem'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import Button from '@/components/ui/Button'
-import { Bell, CheckCheck, Trash2, Settings, Filter } from 'lucide-react'
+import { Bell, CheckCheck, Trash2, Settings } from 'lucide-react'
 import Link from 'next/link'
 import type { Notification, NotificationCategory } from '@/types'
 import type { QueryDocumentSnapshot } from 'firebase/firestore'
@@ -31,17 +31,6 @@ const CATEGORIES: { id: 'all' | NotificationCategory; label: string; icon: strin
   { id: 'system', label: 'System', icon: '⚙️' },
 ]
 
-const MOCK_NOTIFICATIONS: Notification[] = [
-  { id: '1', userId: 'demo', type: 'new_job', category: 'jobs', title: 'New Job Available', message: 'A new plumbing job in your area was posted: "Emergency pipe repair needed"', read: false, actionUrl: '/jobs/1', jobId: '1', createdAt: new Date(Date.now() - 5 * 60 * 1000).toISOString() },
-  { id: '2', userId: 'demo', type: 'payment_received', category: 'payments', title: 'Payment Received', message: 'You received $450.00 for "Kitchen renovation - electrical work"', read: false, actionUrl: '/payments', createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() },
-  { id: '3', userId: 'demo', type: 'review_received', category: 'reviews', title: 'New Review', message: 'John Smith left you a 5-star review for your recent work!', read: true, actionUrl: '/profile', createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString() },
-  { id: '4', userId: 'demo', type: 'badge_unlocked', category: 'gamification', title: 'Badge Unlocked! 🏆', message: 'You unlocked the "Top Rated" badge for maintaining a 4.8+ rating!', read: true, actionUrl: '/profile', createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() },
-  { id: '5', userId: 'demo', type: 'verification_approved', category: 'verification', title: 'Verification Approved', message: 'Your license verification has been approved. Your profile now shows a verified badge!', read: true, actionUrl: '/profile', createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() },
-  { id: '6', userId: 'demo', type: 'new_message', category: 'messages', title: 'New Message', message: 'Sarah Johnson: Hi, I saw your profile and would like to discuss a project...', read: false, actionUrl: '/messages', createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString() },
-  { id: '7', userId: 'demo', type: 'milestone_reached', category: 'gamification', title: 'Milestone Reached! 🎉', message: 'Congratulations! You completed your 50th job on QuickTrade!', read: true, actionUrl: '/earnings', createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() },
-  { id: '8', userId: 'demo', type: 'security_alert', category: 'system', title: 'Security Alert', message: 'A new device signed in to your account. If this was you, you can ignore this.', read: true, actionUrl: '/settings', createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString() },
-]
-
 export default function NotificationsPage() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
@@ -51,7 +40,7 @@ export default function NotificationsPage() {
   const [selectedCategory, setSelectedCategory] = useState<'all' | NotificationCategory>('all')
   const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot | null>(null)
   const [hasMore, setHasMore] = useState(true)
-  const [useMock, setUseMock] = useState(false)
+  const [fetchError, setFetchError] = useState(false)
 
   useEffect(() => {
     if (!authLoading && !user) router.push('/auth/login')
@@ -60,8 +49,12 @@ export default function NotificationsPage() {
   const loadNotifications = useCallback(async (category: 'all' | NotificationCategory, reset = true) => {
     if (!user) return
     try {
-      if (reset) setLoading(true)
-      else setLoadingMore(true)
+      if (reset) {
+        setLoading(true)
+        setFetchError(false)
+      } else {
+        setLoadingMore(true)
+      }
 
       let result: Notification[]
       let nextDoc: QueryDocumentSnapshot | null = null
@@ -74,18 +67,13 @@ export default function NotificationsPage() {
         result = await getNotificationsByCategory(user.uid, category)
       }
 
-      if (result.length === 0 && reset) {
-        setUseMock(true)
-        result = MOCK_NOTIFICATIONS.filter(n => category === 'all' || n.category === category)
-      }
-
       if (reset) setNotifications(result)
       else setNotifications((prev) => [...prev, ...result])
       setLastDoc(nextDoc)
       setHasMore(nextDoc !== null && result.length === 20)
     } catch {
-      setUseMock(true)
-      setNotifications(MOCK_NOTIFICATIONS.filter(n => category === 'all' || n.category === category))
+      setFetchError(true)
+      if (reset) setNotifications([])
     } finally {
       setLoading(false)
       setLoadingMore(false)
@@ -97,22 +85,22 @@ export default function NotificationsPage() {
   }, [user, selectedCategory]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleMarkRead = async (id: string) => {
-    if (!useMock && user) await markNotificationRead(id)
+    if (user) await markNotificationRead(id)
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)))
   }
 
   const handleMarkAllRead = async () => {
-    if (!useMock && user) await markAllNotificationsRead(user.uid)
+    if (user) await markAllNotificationsRead(user.uid)
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
   }
 
   const handleDelete = async (id: string) => {
-    if (!useMock && user) await deleteNotification(id)
+    if (user) await deleteNotification(id)
     setNotifications((prev) => prev.filter((n) => n.id !== id))
   }
 
   const handleClearAll = async () => {
-    if (!useMock && user) await clearAllNotifications(user.uid)
+    if (user) await clearAllNotifications(user.uid)
     setNotifications([])
   }
 
@@ -192,6 +180,20 @@ export default function NotificationsPage() {
             <div className="py-16 flex items-center justify-center">
               <LoadingSpinner size="md" />
             </div>
+          ) : fetchError ? (
+            <div className="py-16 text-center">
+              <Bell className="h-12 w-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
+              <p className="text-gray-500 dark:text-gray-400 font-medium">Could not load notifications</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Please check your connection and try again.</p>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="mt-4"
+                onClick={() => loadNotifications(selectedCategory, true)}
+              >
+                Retry
+              </Button>
+            </div>
           ) : notifications.length === 0 ? (
             <div className="py-16 text-center">
               <Bell className="h-12 w-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
@@ -215,7 +217,7 @@ export default function NotificationsPage() {
         </div>
 
         {/* Load more */}
-        {hasMore && !loading && (
+        {hasMore && !loading && !fetchError && (
           <div className="mt-4 text-center">
             <Button
               variant="secondary"
@@ -225,13 +227,6 @@ export default function NotificationsPage() {
               {loadingMore ? <LoadingSpinner size="sm" /> : 'Load more'}
             </Button>
           </div>
-        )}
-
-        {useMock && (
-          <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-4">
-            <Filter className="h-3 w-3 inline mr-1" />
-            Showing demo notifications — connect Firebase to see real data
-          </p>
         )}
       </main>
       <Footer />

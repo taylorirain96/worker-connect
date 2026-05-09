@@ -287,6 +287,34 @@ export default function HomeownerDashboardPage() {
             </div>
           )}
 
+          {/* Welcome banner for brand-new homeowners with no jobs */}
+          {!loadingJobs && jobs.length === 0 && !loadError && !propertyIdFilter && (
+            <div className="mb-6 bg-gradient-to-br from-indigo-50 to-violet-50 dark:from-indigo-900/20 dark:to-violet-900/20 border border-indigo-200 dark:border-indigo-700 rounded-2xl p-6">
+              <div className="text-3xl mb-3">👋</div>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+                Welcome to QuickTrade, {profile?.displayName?.split(' ')[0] || 'there'}!
+              </h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Post a job in under 2 minutes and receive quotes from verified local tradies — completely free.
+              </p>
+              <ul className="space-y-1.5 mb-5">
+                {[
+                  '✅ Get up to 5 quotes within hours',
+                  '🔒 Payment held in escrow — only released when you\'re happy',
+                  '⭐ All tradies are reviewed by real homeowners',
+                ].map((point) => (
+                  <li key={point} className="text-sm text-gray-700 dark:text-gray-300">{point}</li>
+                ))}
+              </ul>
+              <Link
+                href="/post/homeowner"
+                className="inline-flex items-center gap-2 py-3 px-6 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-colors"
+              >
+                Post Your First Job — Free
+              </Link>
+            </div>
+          )}
+
           {/* Disputed jobs banner */}
           {!loadingJobs && jobs.filter((j) => j.status === 'disputed').length > 0 && (
             <div className="mb-6 space-y-3">
