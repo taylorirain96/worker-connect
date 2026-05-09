@@ -16,16 +16,36 @@ export async function GET(request: Request) {
     const eightDaysAgo = new Date(now)
     eightDaysAgo.setDate(eightDaysAgo.getDate() - 8)
 
-    const snap = await adminDb.collection('jobs')
-      .where('status', '==', 'completed')
-      .where('completedAt', '>=', eightDaysAgo.toISOString())
-      .where('completedAt', '<', sevenDaysAgo.toISOString())
-      .limit(100)
-      .get()
+    const startIso = eightDaysAgo.toISOString()
+    const endIso = sevenDaysAgo.toISOString()
+
+    const [completedAtSnap, updatedAtSnap] = await Promise.all([
+      adminDb.collection('jobs')
+        .where('status', '==', 'completed')
+        .where('completedAt', '>=', startIso)
+        .where('completedAt', '<', endIso)
+        .limit(100)
+        .get(),
+      adminDb.collection('jobs')
+        .where('status', '==', 'completed')
+        .where('updatedAt', '>=', startIso)
+        .where('updatedAt', '<', endIso)
+        .limit(100)
+        .get(),
+    ])
+
+    const candidateDocs = new Map(completedAtSnap.docs.map((doc) => [doc.id, doc]))
+    for (const doc of updatedAtSnap.docs) {
+      if (candidateDocs.has(doc.id)) continue
+      const data = doc.data()
+      if (!data?.completedAt) {
+        candidateDocs.set(doc.id, doc)
+      }
+    }
 
     let triggered = 0
 
-    for (const doc of snap.docs) {
+    for (const doc of candidateDocs.values()) {
       const job = doc.data() as {
         employerId?: string
         assignedWorkerId?: string
@@ -39,20 +59,24 @@ export async function GET(request: Request) {
       if (job.assignedWorkerId) userIds.push(job.assignedWorkerId)
 
       for (const userId of userIds) {
-        const existing = await adminDb.collection('npsSurveys')
-          .where('jobId', '==', jobId)
-          .where('userId', '==', userId)
-          .limit(1)
-          .get()
+        const [existingSurvey, existingNotification] = await Promise.all([
+          adminDb.collection('npsSurveys')
+            .where('jobId', '==', jobId)
+            .where('userId', '==', userId)
+            .limit(1)
+            .get(),
+          adminDb.collection('notifications').doc(`nps_${jobId}_${userId}`).get(),
+        ])
 
-        if (!existing.empty) continue
+        if (!existingSurvey.empty || existingNotification.exists) continue
 
-        await adminDb.collection('notifications').add({
+        await adminDb.collection('notifications').doc(`nps_${jobId}_${userId}`).set({
           userId,
-          type: 'general',
+          type: 'nps_survey',
           title: 'How did it go?',
           message: 'Rate your experience — it only takes 10 seconds',
           actionUrl: `/nps?jobId=${jobId}`,
+          relatedJobId: jobId,
           read: false,
           createdAt: nowIso,
         })

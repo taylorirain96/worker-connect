@@ -6,6 +6,7 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { SERVICES, LOCATIONS, getServiceBySlug, getServiceDetails } from '@/lib/seo/servicesData'
 import { SITE_URL } from '@/lib/seo/config'
+import { getServiceAggregateRating } from '@/lib/seo/serviceRatings'
 
 interface Props {
   params: Promise<{ service: string }>
@@ -50,6 +51,7 @@ export default async function ServicePage({ params }: Props) {
   const details = getServiceDetails(serviceSlug)
   const canonical = `${SITE_URL}/services/${service.slug}`
   const isHeatPumps = service.slug === 'heat-pumps-air-conditioning'
+  const aggregateRating = await getServiceAggregateRating(service.slug)
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -93,19 +95,17 @@ export default async function ServicePage({ params }: Props) {
     ],
   }
 
-  // TODO: Replace mock aggregateRating with real platform-level data once reviews per service are implemented
-  const aggregateRatingJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Service',
-    name: service.name,
-    aggregateRating: {
-      '@type': 'AggregateRating',
-      ratingValue: 4.8,
-      reviewCount: 127,
-      bestRating: 5,
-      worstRating: 1,
-    },
-  }
+  const aggregateRatingJsonLd = aggregateRating
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'Service',
+        name: service.name,
+        aggregateRating: {
+          '@type': 'AggregateRating',
+          ...aggregateRating,
+        },
+      }
+    : null
 
   return (
     <div className="flex flex-col min-h-screen luxury-bg">
@@ -119,11 +119,13 @@ export default async function ServicePage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
-      <Script
-        id="jsonld-aggregate-rating"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(aggregateRatingJsonLd) }}
-      />
+      {aggregateRatingJsonLd && (
+        <Script
+          id="jsonld-aggregate-rating"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(aggregateRatingJsonLd) }}
+        />
+      )}
       {faqJsonLd && (
         <Script
           id="jsonld-faq"
@@ -306,4 +308,3 @@ export default async function ServicePage({ params }: Props) {
     </div>
   )
 }
-

@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { useAuth } from '@/components/providers/AuthProvider'
@@ -25,10 +25,13 @@ const TIMING_OPTIONS = [
 export default function HomeownerJobFormPage() {
   const { user } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const propertyId = searchParams.get('propertyId')?.trim() || undefined
+  const propertyAddress = searchParams.get('address')?.trim() || ''
 
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState('')
-  const [location, setLocation] = useState('')
+  const [location, setLocation] = useState(propertyAddress)
   const [timing, setTiming] = useState('')
   const [budget, setBudget] = useState('')
   const [notSureBudget, setNotSureBudget] = useState(false)
@@ -102,7 +105,7 @@ export default function HomeownerJobFormPage() {
 
       // Post the job
       const { saveJob } = await import('@/lib/services/jobService')
-      const _jobId = await saveJob({
+      const jobId = await saveJob({
         title: description.trim().slice(0, 80) || 'Home job',
         description: description.trim(),
         category: category as import('@/types').JobCategory,
@@ -114,10 +117,24 @@ export default function HomeownerJobFormPage() {
         employerId: uid,
         employerName: displayName,
         status: 'open',
+        propertyId,
       })
 
+      if (propertyId) {
+        const { db } = await import('@/lib/firebase')
+        const { doc, updateDoc, increment, serverTimestamp } = await import('firebase/firestore')
+        if (db) {
+          await updateDoc(doc(db, 'properties', propertyId), {
+            activeJobCount: increment(1),
+            totalJobsPosted: increment(1),
+            updatedAt: serverTimestamp(),
+            lastJobId: jobId,
+          })
+        }
+      }
+
       toast.success("Your job is posted! You'll get notified when tradies send you quotes.")
-      router.push('/dashboard/homeowner')
+      router.push(propertyId ? `/dashboard/homeowner?propertyId=${encodeURIComponent(propertyId)}` : '/dashboard/homeowner')
     } catch {
       toast.error('Something went wrong. Please try again.')
     } finally {

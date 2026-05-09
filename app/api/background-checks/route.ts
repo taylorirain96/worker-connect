@@ -7,6 +7,25 @@ export async function GET(request: NextRequest) {
   if (!uid) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
 
   try {
+    const scope = request.nextUrl.searchParams.get('scope')
+
+    if (scope === 'all') {
+      const userSnap = await adminDb.collection('users').doc(uid).get()
+      if (userSnap.data()?.role !== 'admin') {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
+
+      const snap = await adminDb
+        .collection('backgroundChecks')
+        .orderBy('submittedAt', 'desc')
+        .limit(200)
+        .get()
+
+      return NextResponse.json({
+        checks: snap.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
+      })
+    }
+
     const docSnap = await adminDb.collection('backgroundChecks').doc(uid).get()
     if (!docSnap.exists) {
       return NextResponse.json({ check: null })
