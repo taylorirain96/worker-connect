@@ -300,7 +300,7 @@ export default async function BusinessProfilePage(props: { params: Promise<{ slu
                     aria-label={`${biz.companyName} on LinkedIn`}
                     className="p-2 rounded-lg text-gray-500 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
                   >
-                    <SocialMark text="in" className="h-5 w-5 text-xs" screenReaderText="LinkedIn" />
+                    <SocialMark text="in" className="h-5 w-5 text-xs" />
                   </a>
                 )}
                 {biz.facebook && (
@@ -311,7 +311,7 @@ export default async function BusinessProfilePage(props: { params: Promise<{ slu
                     aria-label={`${biz.companyName} on Facebook`}
                     className="p-2 rounded-lg text-gray-500 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
                   >
-                    <SocialMark text="f" className="h-5 w-5 text-xs" screenReaderText="Facebook" />
+                    <SocialMark text="f" className="h-5 w-5 text-xs" />
                   </a>
                 )}
                 <Link
