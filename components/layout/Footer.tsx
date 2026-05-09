@@ -18,17 +18,29 @@ export default function Footer() {
               carpenters, HVAC technicians, and more.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-gray-400 hover:text-primary-600 transition-colors">
+              <a
+                href="#"
+                aria-label="Follow QuickTrade on X"
+                className="text-gray-400 hover:text-primary-600 transition-colors"
+              >
                 <span className="flex h-5 w-5 items-center justify-center text-xs font-semibold uppercase">
                   X
                 </span>
               </a>
-              <a href="#" className="text-gray-400 hover:text-primary-600 transition-colors">
+              <a
+                href="#"
+                aria-label="Follow QuickTrade on LinkedIn"
+                className="text-gray-400 hover:text-primary-600 transition-colors"
+              >
                 <span className="flex h-5 w-5 items-center justify-center text-xs font-semibold uppercase">
                   in
                 </span>
               </a>
-              <a href="#" className="text-gray-400 hover:text-primary-600 transition-colors">
+              <a
+                href="#"
+                aria-label="Follow QuickTrade on Facebook"
+                className="text-gray-400 hover:text-primary-600 transition-colors"
+              >
                 <span className="flex h-5 w-5 items-center justify-center text-xs font-semibold uppercase">
                   f
                 </span>

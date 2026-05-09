@@ -296,6 +296,7 @@ export default async function BusinessProfilePage(props: { params: Promise<{ slu
                     href={biz.linkedIn}
                     target="_blank"
                     rel="noopener noreferrer"
+                    aria-label={`${biz.companyName} on LinkedIn`}
                     className="p-2 rounded-lg text-gray-500 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
                   >
                     <span className="flex h-5 w-5 items-center justify-center text-xs font-semibold uppercase">
@@ -308,6 +309,7 @@ export default async function BusinessProfilePage(props: { params: Promise<{ slu
                     href={biz.facebook}
                     target="_blank"
                     rel="noopener noreferrer"
+                    aria-label={`${biz.companyName} on Facebook`}
                     className="p-2 rounded-lg text-gray-500 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
                   >
                     <span className="flex h-5 w-5 items-center justify-center text-xs font-semibold uppercase">
