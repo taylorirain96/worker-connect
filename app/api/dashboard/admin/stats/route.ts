@@ -1,102 +1,151 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
+import { Timestamp } from 'firebase-admin/firestore'
 
 export const dynamic = 'force-dynamic'
 
-// Simple deterministic helper (no Math.random in production code paths)
-function seeded(seed: number, scale: number): number {
-  return Math.abs(Math.sin(seed * 9301 + 49297) * scale)
+function toDate(value: unknown): Date {
+  if (value instanceof Timestamp) return value.toDate()
+  if (typeof value === 'string') return new Date(value)
+  if (value instanceof Date) return value
+  return new Date(0)
+}
+
+function iso(value: unknown): string {
+  return toDate(value).toISOString()
+}
+
+function shortDate(input: Date): string {
+  return input.toLocaleDateString('en-NZ', { month: 'short', day: 'numeric' })
+}
+
+function safeString(value: unknown, fallback: string): string {
+  return typeof value === 'string' && value.trim() ? value : fallback
 }
 
 /** GET /api/dashboard/admin/stats */
 export async function GET(_req: NextRequest) {
   try {
-    // Attempt to fetch real counts from Firestore; fall back to mock data
-    let totalUsers = 0
-    let totalJobs = 0
-    let roleCounts: Record<string, number> = {}
+    const now = new Date()
+    const windowStart = new Date(now)
+    windowStart.setDate(windowStart.getDate() - 29)
 
-    try {
-      const usersSnap = await adminDb.collection('users').get()
-      totalUsers = usersSnap.size
-      usersSnap.forEach((doc) => {
-        const role = doc.data().role as string
-        if (role) roleCounts[role] = (roleCounts[role] ?? 0) + 1
-      })
+    const [usersSnap, jobsSnap, paymentsSnap, disputesSnap] = await Promise.all([
+      adminDb.collection('users').get(),
+      adminDb.collection('jobs').get(),
+      adminDb.collection('payments').orderBy('createdAt', 'desc').limit(250).get(),
+      adminDb
+        .collection('disputes')
+        .where('status', 'in', ['open', 'under_review'])
+        .limit(200)
+        .get(),
+    ])
 
-      const jobsSnap = await adminDb.collection('jobs').get()
-      totalJobs = jobsSnap.size
-    } catch {
-      // Firestore not configured — use deterministic mock values
-      totalUsers = 1284
-      totalJobs = 847
-      roleCounts = { worker: 521, tradie: 198, homeowner: 312, jobseeker: 183, employer: 70 }
+    const totalUsers = usersSnap.size
+    const totalJobs = jobsSnap.size
+    const roleCounts: Record<string, number> = {}
+    const dailySignupMap = new Map<string, number>()
+    for (let i = 0; i < 30; i += 1) {
+      const day = new Date(windowStart)
+      day.setDate(windowStart.getDate() + i)
+      dailySignupMap.set(day.toISOString().slice(0, 10), 0)
     }
 
-    // Build last-30-days daily signups (deterministic mock)
-    const dailySignups = Array.from({ length: 30 }, (_, i) => {
-      const d = new Date()
-      d.setDate(d.getDate() - (29 - i))
-      return {
-        date: d.toLocaleDateString('en-NZ', { month: 'short', day: 'numeric' }),
-        signups: Math.round(3 + seeded(i + 1, 18)),
+    usersSnap.forEach((doc) => {
+      const data = doc.data()
+      const role = safeString(data.role, 'unknown')
+      roleCounts[role] = (roleCounts[role] ?? 0) + 1
+
+      const createdAt = toDate(data.createdAt)
+      if (createdAt >= windowStart) {
+        const key = createdAt.toISOString().slice(0, 10)
+        dailySignupMap.set(key, (dailySignupMap.get(key) ?? 0) + 1)
       }
     })
 
-    // Build last-30-days commission (deterministic mock)
-    const dailyCommission = Array.from({ length: 30 }, (_, i) => {
-      const d = new Date()
-      d.setDate(d.getDate() - (29 - i))
-      return {
-        date: d.toLocaleDateString('en-NZ', { month: 'short', day: 'numeric' }),
-        commission: Math.round(800 + seeded(i + 50, 1200)),
-      }
+    let activeJobs = 0
+    let completedJobs = 0
+    const recentJobs = jobsSnap.docs
+      .map((doc) => ({ id: doc.id, ...(doc.data() as Record<string, unknown>) }))
+      .sort((a, b) => toDate(b.createdAt).getTime() - toDate(a.createdAt).getTime())
+      .slice(0, 10)
+      .map((job) => ({
+        id: job.id,
+        title: safeString(job.title, 'Untitled job'),
+        status: safeString(job.status, 'open'),
+        budget: typeof job.budget === 'number' ? job.budget : 0,
+        createdAt: iso(job.createdAt),
+      }))
+
+    jobsSnap.forEach((doc) => {
+      const status = doc.data().status
+      if (status === 'completed') completedJobs += 1
+      if (status === 'open' || status === 'in_progress') activeJobs += 1
     })
 
-    const signupsToday = dailySignups[dailySignups.length - 1].signups
+    const dailyCommissionMap = new Map<string, number>()
+    for (let i = 0; i < 30; i += 1) {
+      const day = new Date(windowStart)
+      day.setDate(windowStart.getDate() + i)
+      dailyCommissionMap.set(day.toISOString().slice(0, 10), 0)
+    }
+
+    const recentPayments = paymentsSnap.docs
+      .map((doc) => ({ id: doc.id, ...(doc.data() as Record<string, unknown>) }))
+      .slice(0, 10)
+      .map((payment) => ({
+        id: payment.id,
+        amount: typeof payment.amount === 'number' ? payment.amount : 0,
+        status: safeString(payment.status, 'pending'),
+        workerName: safeString(payment.workerName ?? payment.workerId, 'Unknown worker'),
+        createdAt: iso(payment.createdAt),
+      }))
+
+    paymentsSnap.forEach((doc) => {
+      const data = doc.data()
+      const createdAt = toDate(data.createdAt)
+      if (createdAt < windowStart) return
+      const key = createdAt.toISOString().slice(0, 10)
+      const amount = typeof data.amount === 'number' ? data.amount : 0
+      const commission = Math.round(amount * 0.05)
+      dailyCommissionMap.set(key, (dailyCommissionMap.get(key) ?? 0) + commission)
+    })
+
+    const recentSignups = usersSnap.docs
+      .map((doc) => ({ id: doc.id, ...(doc.data() as Record<string, unknown>) }))
+      .sort((a, b) => toDate(b.createdAt).getTime() - toDate(a.createdAt).getTime())
+      .slice(0, 10)
+      .map((user) => ({
+        id: user.id,
+        name: safeString(user.displayName ?? user.name, 'New user'),
+        role: safeString(user.role, 'unknown'),
+        createdAt: iso(user.createdAt),
+      }))
+
+    const dailySignups = Array.from(dailySignupMap.entries()).map(([day, signups]) => ({
+      date: shortDate(new Date(day)),
+      signups,
+    }))
+    const dailyCommission = Array.from(dailyCommissionMap.entries()).map(([day, commission]) => ({
+      date: shortDate(new Date(day)),
+      commission,
+    }))
+
+    const signupsToday = dailySignups[dailySignups.length - 1]?.signups ?? 0
     const signupsThisWeek = dailySignups.slice(-7).reduce((s, d) => s + d.signups, 0)
     const totalRevenue = dailyCommission.reduce((s, d) => s + d.commission, 0)
-
-    // Recent activity (mock — replace with real Firestore queries when ready)
-    const names = ['Alex Turner', 'Jordan Blake', 'Sam Rivera', 'Casey Morgan', 'Taylor Quinn',
-      'Drew Bailey', 'Riley Foster', 'Morgan Hayes', 'Avery Collins', 'Jamie Stone']
-    const roles = ['worker', 'homeowner', 'tradie', 'jobseeker', 'employer']
-    const recentSignups = Array.from({ length: 10 }, (_, i) => ({
-      id: `user-${i + 1}`,
-      name: names[i],
-      role: roles[i % 5],
-      createdAt: new Date(Date.now() - i * 3 * 3600000).toISOString(),
-    }))
-
-    const jobTitles = ['Bathroom renovation', 'Lawn mowing', 'Electrical rewire', 'Plumbing fix',
-      'Painting exterior', 'Deck build', 'Fence repair', 'Kitchen fit-out', 'Roofing repair', 'Gutter clean']
-    const recentJobs = Array.from({ length: 10 }, (_, i) => ({
-      id: `job-${i + 1}`,
-      title: jobTitles[i],
-      status: ['open', 'in_progress', 'completed'][i % 3],
-      budget: Math.round(150 + seeded(i + 10, 2000)),
-      createdAt: new Date(Date.now() - i * 4 * 3600000).toISOString(),
-    }))
-
-    const recentPayments = Array.from({ length: 10 }, (_, i) => ({
-      id: `pay-${i + 1}`,
-      amount: Math.round(200 + seeded(i + 20, 1800)),
-      status: ['succeeded', 'pending', 'refunded'][i % 3],
-      workerName: names[i],
-      createdAt: new Date(Date.now() - i * 5 * 3600000).toISOString(),
-    }))
 
     return NextResponse.json({
       totals: {
         users: totalUsers,
         jobs: totalJobs,
-        activeJobs: Math.round(totalJobs * 0.3),
-        completedJobs: Math.round(totalJobs * 0.55),
+        activeJobs,
+        completedJobs,
         revenue: totalRevenue,
         payoutsToWorkers: Math.round(totalRevenue * 0.78),
-        emailsSentThisWeek: 342,
-        referrals: 89,
-        openDisputes: 7,
+        emailsSentThisWeek: 0,
+        referrals: 0,
+        openDisputes: disputesSnap.size,
       },
       roleCounts,
       signupsToday,
@@ -111,6 +160,6 @@ export async function GET(_req: NextRequest) {
     })
   } catch (error) {
     console.error('GET /api/dashboard/admin/stats error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: 'Unable to load admin stats from data sources' }, { status: 503 })
   }
 }

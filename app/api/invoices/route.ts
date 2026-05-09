@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
-import { FieldValue } from 'firebase-admin/firestore'
+import { FieldValue, Timestamp } from 'firebase-admin/firestore'
 
 export const dynamic = 'force-dynamic'
+
+function toIso(value: unknown): string {
+  if (value instanceof Timestamp) return value.toDate().toISOString()
+  if (typeof value === 'string') return value
+  return new Date().toISOString()
+}
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -42,68 +48,34 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Missing workerId' }, { status: 400 })
     }
 
-    try {
-      let q = adminDb
+    let q = adminDb
+      .collection('invoices')
+      .where('workerId', '==', workerId)
+      .orderBy('createdAt', 'desc')
+      .limit(pageSize)
+
+    if (status) {
+      q = adminDb
         .collection('invoices')
         .where('workerId', '==', workerId)
+        .where('status', '==', status)
         .orderBy('createdAt', 'desc')
         .limit(pageSize)
-
-      if (status) {
-        q = adminDb
-          .collection('invoices')
-          .where('workerId', '==', workerId)
-          .where('status', '==', status)
-          .orderBy('createdAt', 'desc')
-          .limit(pageSize)
-      }
-
-      const snap = await q.get()
-      const invoices = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
-      return NextResponse.json({ invoices, total: invoices.length })
-    } catch {
-      // Mock fallback
-      const mockInvoices = [
-        {
-          id: 'inv_mock_001',
-          invoiceNumber: 'INV-20260408-0001',
-          jobId: 'job_1',
-          jobTitle: 'Plumbing Repair — Kitchen Sink',
-          employerId: 'emp_1',
-          workerId,
-          workerName: 'Alex Johnson',
-          amount: 320,
-          items: [{ description: 'Labor', quantity: 4, unitPrice: 80 }],
-          subtotal: 320,
-          tax: 25.6,
-          total: 345.6,
-          status: 'paid',
-          dueDate: new Date(Date.now() - 10 * 86400000).toISOString(),
-          createdAt: new Date(Date.now() - 15 * 86400000).toISOString(),
-          updatedAt: new Date(Date.now() - 8 * 86400000).toISOString(),
-          paidAt: new Date(Date.now() - 8 * 86400000).toISOString(),
-        },
-        {
-          id: 'inv_mock_002',
-          invoiceNumber: 'INV-20260408-0002',
-          jobId: 'job_2',
-          jobTitle: 'Electrical Panel Upgrade',
-          employerId: 'emp_2',
-          workerId,
-          workerName: 'Alex Johnson',
-          amount: 850,
-          items: [{ description: 'Parts & Labor', quantity: 1, unitPrice: 850 }],
-          subtotal: 850,
-          tax: 68,
-          total: 918,
-          status: 'sent',
-          dueDate: new Date(Date.now() + 5 * 86400000).toISOString(),
-          createdAt: new Date(Date.now() - 2 * 86400000).toISOString(),
-          updatedAt: new Date(Date.now() - 2 * 86400000).toISOString(),
-        },
-      ]
-      return NextResponse.json({ invoices: mockInvoices, total: mockInvoices.length })
     }
+
+    const snap = await q.get()
+    const invoices = snap.docs.map((d) => {
+      const data = d.data() as Record<string, unknown>
+      return {
+        id: d.id,
+        ...data,
+        createdAt: toIso(data.createdAt),
+        updatedAt: data.updatedAt ? toIso(data.updatedAt) : undefined,
+        paidAt: data.paidAt ? toIso(data.paidAt) : undefined,
+      }
+    })
+
+    return NextResponse.json({ invoices, total: invoices.length })
   } catch (error) {
     console.error('GET /api/invoices error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -170,15 +142,9 @@ export async function POST(req: NextRequest) {
       updatedAt: FieldValue.serverTimestamp(),
     }
 
-    let invoiceId: string
-    try {
-      const ref = await adminDb.collection('invoices').add(invoiceData)
-      invoiceId = ref.id
-      console.log(`Invoice created: ${invoiceId} (${invoiceNumber})`)
-    } catch {
-      invoiceId = `inv_${Date.now()}`
-      console.warn('Firestore unavailable — returning mock invoice id')
-    }
+    const ref = await adminDb.collection('invoices').add(invoiceData)
+    const invoiceId = ref.id
+    console.log(`Invoice created: ${invoiceId} (${invoiceNumber})`)
 
     return NextResponse.json(
       {
@@ -206,4 +172,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
-
