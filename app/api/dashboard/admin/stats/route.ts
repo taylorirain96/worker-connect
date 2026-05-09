@@ -23,6 +23,8 @@ function safeString(value: unknown, fallback: string): string {
   return typeof value === 'string' && value.trim() ? value : fallback
 }
 
+type RawAdminDoc = Record<string, unknown> & { id: string }
+
 /** GET /api/dashboard/admin/stats */
 export async function GET(_req: NextRequest) {
   try {
@@ -66,7 +68,7 @@ export async function GET(_req: NextRequest) {
     let activeJobs = 0
     let completedJobs = 0
     const recentJobs = jobsSnap.docs
-      .map((doc) => ({ id: doc.id, ...(doc.data() as Record<string, unknown>) }))
+      .map((doc) => ({ id: doc.id, ...(doc.data() as Record<string, unknown>) }) as RawAdminDoc)
       .sort((a, b) => toDate(b.createdAt).getTime() - toDate(a.createdAt).getTime())
       .slice(0, 10)
       .map((job) => ({
@@ -91,7 +93,7 @@ export async function GET(_req: NextRequest) {
     }
 
     const recentPayments = paymentsSnap.docs
-      .map((doc) => ({ id: doc.id, ...(doc.data() as Record<string, unknown>) }))
+      .map((doc) => ({ id: doc.id, ...(doc.data() as Record<string, unknown>) }) as RawAdminDoc)
       .slice(0, 10)
       .map((payment) => ({
         id: payment.id,
@@ -112,7 +114,7 @@ export async function GET(_req: NextRequest) {
     })
 
     const recentSignups = usersSnap.docs
-      .map((doc) => ({ id: doc.id, ...(doc.data() as Record<string, unknown>) }))
+      .map((doc) => ({ id: doc.id, ...(doc.data() as Record<string, unknown>) }) as RawAdminDoc)
       .sort((a, b) => toDate(b.createdAt).getTime() - toDate(a.createdAt).getTime())
       .slice(0, 10)
       .map((user) => ({
