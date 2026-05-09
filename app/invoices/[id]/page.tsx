@@ -77,7 +77,8 @@ export default function InvoiceDetailPage({ params }: PageProps) {
   const handleDownload = () => {
     if (!invoice) return
     const invoiceNumber = `INV-${invoice.id.slice(-6).toUpperCase()}`
-    const taxRatePct = invoice.amount > 0 ? Math.round((invoice.tax / invoice.amount) * 1000) / 10 : 0
+    const tRate = invoice.amount > 0 ? Math.round((invoice.tax / invoice.amount) * 1000) / 10 : 0
+    const tLabel = tRate > 0 ? `Tax (${tRate}%)` : 'Tax'
     const lines = [
       '═══════════════════════════════════════',
       `         INVOICE ${invoiceNumber}`,
@@ -90,7 +91,7 @@ export default function InvoiceDetailPage({ params }: PageProps) {
       '',
       '───────────────────────────────────────',
       `Services                   $${invoice.amount.toFixed(2)}`,
-      `Tax (${taxRatePct > 0 ? taxRatePct + '%' : ''})          $${invoice.tax.toFixed(2)}`,
+      `${tLabel}          $${invoice.tax.toFixed(2)}`,
       '───────────────────────────────────────',
       `TOTAL                      $${invoice.total.toFixed(2)}`,
       '═══════════════════════════════════════',
@@ -147,7 +148,6 @@ export default function InvoiceDetailPage({ params }: PageProps) {
 
   const statusCfg = STATUS_CONFIG[invoice.status]
   const invoiceNumber = `INV-${invoice.id.slice(-6).toUpperCase()}`
-
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
