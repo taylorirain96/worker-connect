@@ -6,6 +6,7 @@ import { createUnsubscribeToken } from '@/lib/email/unsubscribeToken'
 export const dynamic = 'force-dynamic'
 
 const INACTIVE_DAYS = 14
+// Keep a separate cooldown constant for clarity in case policy diverges later.
 const EMAIL_COOLDOWN_DAYS = 14
 
 function parseTimestampMs(value: unknown): number {

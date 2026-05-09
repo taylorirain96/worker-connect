@@ -77,7 +77,7 @@ export default function App() {
   const [selectedTab, setSelectedTab] = useState<TabKey>('jobs')
   const [loading, setLoading] = useState(false)
 
-  const [apiBaseUrl, setApiBaseUrl] = useState('http://localhost:3000')
+  const [apiBaseUrl, setApiBaseUrl] = useState('https://quicktrade.co.nz')
   const [workerId, setWorkerId] = useState('')
   const [workerName, setWorkerName] = useState('')
 

@@ -41,10 +41,19 @@ async function verifyWithMbieProvider(input: {
       cache: 'no-store',
     })
 
-    const raw = await response.json().catch(() => ({})) as {
+    let raw: {
       verified?: boolean
       status?: string
       referenceId?: string
+    }
+    try {
+      raw = await response.json() as {
+        verified?: boolean
+        status?: string
+        referenceId?: string
+      }
+    } catch {
+      throw new Error('MBIE provider returned invalid JSON')
     }
     if (!response.ok) {
       throw new Error(`MBIE provider request failed (${response.status})`)
