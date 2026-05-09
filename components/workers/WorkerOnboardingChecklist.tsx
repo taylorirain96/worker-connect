@@ -22,7 +22,7 @@ function buildChecklist(profile: UserProfile): ChecklistItem[] {
     {
       id: 'photo',
       label: 'Add a profile photo',
-      description: 'Workers with photos get 5× more views',
+      description: 'Workers with photos get 5x more views',
       href: '/settings/profile',
       done: Boolean(profile.photoURL),
     },
@@ -100,17 +100,11 @@ export default function WorkerOnboardingChecklist({ profile }: Props) {
       </div>
 
       <ul className="space-y-2">
-        {checklist.map((item) => (
-          <li key={item.id}>
-            <Link
-              href={item.done ? '#' : item.href}
-              onClick={(e) => item.done && e.preventDefault()}
-              className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
-                item.done
-                  ? 'opacity-60 cursor-default'
-                  : 'hover:bg-indigo-50 dark:hover:bg-indigo-900/20 cursor-pointer'
-              }`}
-            >
+        {checklist.map((item) => {
+          const completedClass = 'flex items-center gap-3 p-3 rounded-lg opacity-60'
+          const activeClass = 'flex items-center gap-3 p-3 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 cursor-pointer transition-colors'
+          const inner = (
+            <>
               {item.done ? (
                 <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
               ) : (
@@ -125,9 +119,18 @@ export default function WorkerOnboardingChecklist({ profile }: Props) {
                 )}
               </div>
               {!item.done && <ChevronRight className="h-4 w-4 text-gray-400 flex-shrink-0" />}
-            </Link>
-          </li>
-        ))}
+            </>
+          )
+          return (
+            <li key={item.id}>
+              {item.done ? (
+                <div className={completedClass}>{inner}</div>
+              ) : (
+                <Link href={item.href} className={activeClass}>{inner}</Link>
+              )}
+            </li>
+          )
+        })}
       </ul>
     </div>
   )

@@ -183,8 +183,8 @@ export default function NotificationsPage() {
           ) : fetchError ? (
             <div className="py-16 text-center">
               <Bell className="h-12 w-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-              <p className="text-gray-500 dark:text-gray-400 font-medium">Could not load notifications</p>
-              <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Please check your connection and try again.</p>
+              <p className="text-gray-500 dark:text-gray-400 font-medium">Failed to load notifications</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Please try again.</p>
               <Button
                 variant="secondary"
                 size="sm"

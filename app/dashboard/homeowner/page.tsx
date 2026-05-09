@@ -292,7 +292,7 @@ export default function HomeownerDashboardPage() {
             <div className="mb-6 bg-gradient-to-br from-indigo-50 to-violet-50 dark:from-indigo-900/20 dark:to-violet-900/20 border border-indigo-200 dark:border-indigo-700 rounded-2xl p-6">
               <div className="text-3xl mb-3">👋</div>
               <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
-                Welcome to QuickTrade, {profile?.displayName?.split(' ')[0] || 'there'}!
+                Welcome to QuickTrade, {profile?.displayName?.trim().split(/\s+/)[0] || 'there'}!
               </h2>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                 Post a job in under 2 minutes and receive quotes from verified local tradies — completely free.
@@ -300,7 +300,7 @@ export default function HomeownerDashboardPage() {
               <ul className="space-y-1.5 mb-5">
                 {[
                   '✅ Get up to 5 quotes within hours',
-                  '🔒 Payment held in escrow — only released when you\'re happy',
+                  "🔒 Payment held in escrow — only released when you're happy",
                   '⭐ All tradies are reviewed by real homeowners',
                 ].map((point) => (
                   <li key={point} className="text-sm text-gray-700 dark:text-gray-300">{point}</li>
