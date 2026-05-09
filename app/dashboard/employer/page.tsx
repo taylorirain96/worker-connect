@@ -267,7 +267,7 @@ export default function EmployerDashboardPage() {
                       {postedJobs.length === 0 ? (
                         <>
                           <p className="text-gray-500 mb-3">No jobs posted yet</p>
-                          <Link href="/jobs/create" className="text-sm text-primary-600 hover:underline">
+                          <Link href="/jobs/create" className="text-sm text-primary-600 hover:underline font-medium">
                             Post your first job →
                           </Link>
                         </>

@@ -84,10 +84,10 @@ export default function JobseekerDashboardPage() {
     if (!user) return
     const fetchJobs = async () => {
       try {
-        if (!db) { setJobs([]); return }
+        if (!db) { setJobs([]); setLoadingJobs(false); return }
         const q = query(
           collection(db, 'jobs'),
-          where('jobType', '==', 'staff'),
+          where('jobType', '==', 'employment'),
           orderBy('createdAt', 'desc'),
           limit(6),
         )
@@ -121,7 +121,7 @@ export default function JobseekerDashboardPage() {
     if (!user) return
     const fetchApps = async () => {
       try {
-        if (!db) { setApplications([]); return }
+        if (!db) { setApplications([]); setLoadingApps(false); return }
         const q = query(
           collection(db, 'jobApplications'),
           where('applicantId', '==', user.uid),

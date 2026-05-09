@@ -55,6 +55,26 @@ export interface MoverSettings {
   relocationSuccessRate: number
   repeatClientRate: number
   hasRelocationBadge: boolean
+  /** Whether the worker is open to relocating for work */
+  willingToRelocate: boolean
+  /** Whether the worker is available for FIFO (fly-in fly-out) rosters */
+  fifoAvailable: boolean
+  /** Countries the worker holds work rights in */
+  targetCountries: ('NZ' | 'AU')[]
+  /** Worker holds valid NZ work rights */
+  workRightsNZ: boolean
+  /** Worker holds valid AU work rights */
+  workRightsAU: boolean
+  /** Brief description of visa / work-rights status (e.g. "Citizen", "Work Visa", "457") */
+  visaType?: string
+  /** Whether the worker needs employer-provided accommodation */
+  accommodationRequired: boolean
+  /** Whether the worker needs travel assistance (flights, transport) */
+  travelAssistanceRequired: boolean
+  /** Preferred roster / work arrangement */
+  rosterPreference?: 'fly_in_fly_out' | 'drive_in_drive_out' | 'residential'
+  /** Whether the move would be temporary, permanent, or either */
+  relocationPreference: 'temporary' | 'permanent' | 'either'
 }
 
 export interface MoverLeaderboardEntry {
