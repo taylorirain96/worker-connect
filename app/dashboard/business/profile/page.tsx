@@ -437,7 +437,7 @@ export default function EditBusinessProfilePage() {
                     />
                   </div>
                   <div className="flex items-center gap-2">
-                    <SocialMark text="in" className="h-4 w-4 flex-shrink-0 text-[10px] text-gray-400" />
+                    <SocialMark platformToken="in" className="h-4 w-4 flex-shrink-0 text-[10px] text-gray-400" />
                     <Input
                       placeholder="LinkedIn company page URL"
                       value={form.linkedIn}
@@ -445,7 +445,7 @@ export default function EditBusinessProfilePage() {
                     />
                   </div>
                   <div className="flex items-center gap-2">
-                    <SocialMark text="f" className="h-4 w-4 flex-shrink-0 text-[10px] text-gray-400" />
+                    <SocialMark platformToken="f" className="h-4 w-4 flex-shrink-0 text-[10px] text-gray-400" />
                     <Input
                       placeholder="Facebook page URL"
                       value={form.facebook}

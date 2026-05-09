@@ -1,15 +1,14 @@
+import { cn } from '@/lib/utils'
+
 interface SocialMarkProps {
-  text: string
+  platformToken: string
   className?: string
 }
 
-export default function SocialMark({ text, className = '' }: SocialMarkProps) {
+export default function SocialMark({ platformToken, className }: SocialMarkProps) {
   return (
-    <span
-      aria-hidden="true"
-      className={`flex items-center justify-center font-semibold uppercase ${className}`.trim()}
-    >
-      {text}
+    <span aria-hidden="true" className={cn('flex items-center justify-center font-semibold uppercase', className)}>
+      {platformToken}
     </span>
   )
 }

@@ -24,21 +24,21 @@ export default function Footer() {
                 aria-label="Follow QuickTrade on X"
                 className="text-gray-400 hover:text-primary-600 transition-colors"
               >
-                <SocialMark text="X" className="h-5 w-5 text-xs" />
+                <SocialMark platformToken="X" className="h-5 w-5 text-xs" />
               </a>
               <a
                 href="#"
                 aria-label="Follow QuickTrade on LinkedIn"
                 className="text-gray-400 hover:text-primary-600 transition-colors"
               >
-                <SocialMark text="in" className="h-5 w-5 text-xs" />
+                <SocialMark platformToken="in" className="h-5 w-5 text-xs" />
               </a>
               <a
                 href="#"
                 aria-label="Follow QuickTrade on Facebook"
                 className="text-gray-400 hover:text-primary-600 transition-colors"
               >
-                <SocialMark text="f" className="h-5 w-5 text-xs" />
+                <SocialMark platformToken="f" className="h-5 w-5 text-xs" />
               </a>
             </div>
           </div>
