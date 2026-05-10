@@ -5,6 +5,8 @@ export interface BlogPost {
   date: string
   readTime: string
   category: string
+  /** Service slug from lib/seo/servicesData — used for internal linking and FAQ schema */
+  relatedServiceSlug?: string
 }
 
 const posts: BlogPost[] = [
@@ -15,6 +17,7 @@ const posts: BlogPost[] = [
     date: '2025-04-01',
     readTime: '5 min read',
     category: 'Cost Guides',
+    relatedServiceSlug: 'plumbing',
   },
   {
     slug: 'best-electricians-auckland',
@@ -23,6 +26,7 @@ const posts: BlogPost[] = [
     date: '2025-04-05',
     readTime: '4 min read',
     category: 'Hiring Guides',
+    relatedServiceSlug: 'electrical',
   },
   {
     slug: 'how-to-hire-a-builder-new-zealand',
@@ -31,6 +35,7 @@ const posts: BlogPost[] = [
     date: '2025-04-08',
     readTime: '6 min read',
     category: 'Hiring Guides',
+    relatedServiceSlug: 'builder',
   },
   {
     slug: 'heat-pump-installation-cost-nz',
@@ -39,6 +44,7 @@ const posts: BlogPost[] = [
     date: '2025-04-10',
     readTime: '5 min read',
     category: 'Cost Guides',
+    relatedServiceSlug: 'heat-pumps-air-conditioning',
   },
   {
     slug: 'house-cleaning-cost-nz',
@@ -47,6 +53,7 @@ const posts: BlogPost[] = [
     date: '2025-04-11',
     readTime: '4 min read',
     category: 'Cost Guides',
+    relatedServiceSlug: 'cleaning',
   },
   {
     slug: 'roof-repair-cost-nz',
@@ -55,6 +62,7 @@ const posts: BlogPost[] = [
     date: '2025-04-12',
     readTime: '5 min read',
     category: 'Cost Guides',
+    relatedServiceSlug: 'roofing',
   },
   {
     slug: 'painters-wellington',
@@ -63,6 +71,7 @@ const posts: BlogPost[] = [
     date: '2025-04-12',
     readTime: '4 min read',
     category: 'Local Guides',
+    relatedServiceSlug: 'painting',
   },
   {
     slug: 'plumbers-christchurch',
@@ -71,6 +80,7 @@ const posts: BlogPost[] = [
     date: '2025-04-13',
     readTime: '4 min read',
     category: 'Local Guides',
+    relatedServiceSlug: 'plumbing',
   },
   {
     slug: 'landscaping-cost-nz',
@@ -79,6 +89,7 @@ const posts: BlogPost[] = [
     date: '2025-04-13',
     readTime: '5 min read',
     category: 'Cost Guides',
+    relatedServiceSlug: 'landscaping-gardening',
   },
   {
     slug: 'electricians-hamilton',
@@ -87,6 +98,7 @@ const posts: BlogPost[] = [
     date: '2025-04-13',
     readTime: '4 min read',
     category: 'Local Guides',
+    relatedServiceSlug: 'electrical',
   },
   {
     slug: 'handyman-services-auckland',
@@ -95,6 +107,7 @@ const posts: BlogPost[] = [
     date: '2025-04-13',
     readTime: '4 min read',
     category: 'Local Guides',
+    relatedServiceSlug: 'handyman',
   },
   {
     slug: 'how-to-hire-a-plasterer-nz',
@@ -103,6 +116,7 @@ const posts: BlogPost[] = [
     date: '2025-04-13',
     readTime: '4 min read',
     category: 'Hiring Guides',
+    relatedServiceSlug: 'plasterer',
   },
   {
     slug: 'moving-house-nz-checklist',
@@ -111,6 +125,7 @@ const posts: BlogPost[] = [
     date: '2025-04-13',
     readTime: '6 min read',
     category: 'Hiring Guides',
+    relatedServiceSlug: 'moving-removalists',
   },
   {
     slug: 'how-much-does-a-heat-pump-cost-nz',
@@ -119,6 +134,7 @@ const posts: BlogPost[] = [
     date: '2025-04-10',
     readTime: '5 min read',
     category: 'Cost Guides',
+    relatedServiceSlug: 'heat-pumps-air-conditioning',
   },
   {
     slug: 'find-licensed-plumber-new-zealand',
@@ -127,6 +143,7 @@ const posts: BlogPost[] = [
     date: '2025-04-12',
     readTime: '4 min read',
     category: 'Hiring Guides',
+    relatedServiceSlug: 'plumbing',
   },
   {
     slug: 'best-handyman-services-nz',
@@ -135,6 +152,7 @@ const posts: BlogPost[] = [
     date: '2025-04-16',
     readTime: '4 min read',
     category: 'Hiring Guides',
+    relatedServiceSlug: 'handyman',
   },
   {
     slug: 'end-of-tenancy-cleaning-nz',
@@ -143,6 +161,7 @@ const posts: BlogPost[] = [
     date: '2025-04-18',
     readTime: '5 min read',
     category: 'Cost Guides',
+    relatedServiceSlug: 'cleaning',
   },
   {
     slug: 'deck-building-cost-nz',
@@ -159,6 +178,7 @@ const posts: BlogPost[] = [
     date: '2025-04-22',
     readTime: '4 min read',
     category: 'Hiring Guides',
+    relatedServiceSlug: 'painting',
   },
   {
     slug: 'lawn-mowing-service-nz',
@@ -167,6 +187,7 @@ const posts: BlogPost[] = [
     date: '2025-04-24',
     readTime: '3 min read',
     category: 'Cost Guides',
+    relatedServiceSlug: 'landscaping-gardening',
   },
   {
     slug: 'electrician-call-out-fee-nz',
@@ -175,6 +196,7 @@ const posts: BlogPost[] = [
     date: '2025-04-26',
     readTime: '3 min read',
     category: 'Cost Guides',
+    relatedServiceSlug: 'electrical',
   },
   {
     slug: 'home-renovation-cost-nz',
@@ -191,6 +213,7 @@ const posts: BlogPost[] = [
     date: '2026-04-01',
     readTime: '5 min read',
     category: 'Hiring Guides',
+    relatedServiceSlug: 'electrical',
   },
   {
     slug: 'nz-building-consent-guide-2026',
@@ -199,6 +222,7 @@ const posts: BlogPost[] = [
     date: '2026-04-05',
     readTime: '6 min read',
     category: 'Hiring Guides',
+    relatedServiceSlug: 'builder',
   },
   {
     slug: 'best-time-to-renovate-your-nz-home',
@@ -247,6 +271,7 @@ const posts: BlogPost[] = [
     date: '2026-04-20',
     readTime: '7 min read',
     category: 'Cost Guides',
+    relatedServiceSlug: 'solar-installation',
   },
   {
     slug: 'landlord-maintenance-obligations-nz',
@@ -263,6 +288,7 @@ const posts: BlogPost[] = [
     date: '2026-05-01',
     readTime: '5 min read',
     category: 'Local Guides',
+    relatedServiceSlug: 'plumbing',
   },
   {
     slug: 'find-tradies-rotorua',
@@ -279,6 +305,7 @@ const posts: BlogPost[] = [
     date: '2026-05-01',
     readTime: '5 min read',
     category: 'Hiring Guides',
+    relatedServiceSlug: 'pest-control',
   },
   {
     slug: 'home-insulation-nz-guide',
@@ -287,6 +314,7 @@ const posts: BlogPost[] = [
     date: '2026-05-01',
     readTime: '6 min read',
     category: 'Cost Guides',
+    relatedServiceSlug: 'insulation',
   },
   {
     slug: 'how-to-get-multiple-quotes-nz',
@@ -303,6 +331,50 @@ const posts: BlogPost[] = [
     date: '2026-05-01',
     readTime: '4 min read',
     category: 'Hiring Guides',
+    relatedServiceSlug: 'cleaning',
+  },
+  // ── New posts ─────────────────────────────────────────────────────────────
+  {
+    slug: 'airtasker-alternative-nz',
+    title: 'Best Airtasker Alternative in New Zealand: Why Kiwis Are Switching to QuickTrade',
+    description: 'Looking for a better Airtasker alternative in NZ? See how QuickTrade compares — verified workers, transparent pricing, and built for New Zealand tradespeople.',
+    date: '2026-05-10',
+    readTime: '5 min read',
+    category: 'Comparison',
+  },
+  {
+    slug: 'spring-home-maintenance-checklist-nz',
+    title: 'Spring Home Maintenance Checklist NZ: 12 Jobs to Book Now',
+    description: 'Get your home ready for spring with our NZ home maintenance checklist — roof checks, heat pump servicing, gutter cleaning, and more. Book local tradies today.',
+    date: '2026-05-10',
+    readTime: '5 min read',
+    category: 'Hiring Guides',
+  },
+  {
+    slug: 'hire-construction-workers-nz',
+    title: 'How to Hire Construction Workers in NZ: A Complete Employer Guide',
+    description: 'Hiring construction staff in New Zealand? Everything employers need to know — where to find workers, employment law basics, and how to post jobs on QuickTrade.',
+    date: '2026-05-10',
+    readTime: '6 min read',
+    category: 'Hiring Guides',
+  },
+  {
+    slug: 'fence-installation-cost-nz',
+    title: 'Fence Installation Cost NZ: 2026 Price Guide (Timber, Colorbond & More)',
+    description: 'How much does fencing cost in New Zealand? Full price guide covering timber, Colorbond, and post-and-rail fences — per metre rates and what affects the price.',
+    date: '2026-05-10',
+    readTime: '5 min read',
+    category: 'Cost Guides',
+    relatedServiceSlug: 'fencing',
+  },
+  {
+    slug: 'concrete-driveway-cost-nz',
+    title: 'Concrete Driveway Cost NZ: What to Budget in 2026',
+    description: 'How much does a concrete driveway cost in New Zealand? Average prices per m², what affects the cost, and tips for getting competitive quotes from local concreters.',
+    date: '2026-05-10',
+    readTime: '5 min read',
+    category: 'Cost Guides',
+    relatedServiceSlug: 'concreting',
   },
 ]
 

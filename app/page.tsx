@@ -1,6 +1,3 @@
-'use client'
-
-import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Script from 'next/script'
 import Navbar from '@/components/layout/Navbar'
@@ -13,65 +10,31 @@ import HowItWorksTabs from '@/components/home/HowItWorksTabs'
 import FoundersDealBanner from '@/components/home/FoundersDealBanner'
 import SocialProofTicker from '@/components/home/SocialProofTicker'
 import WorkerOfMonth from '@/components/home/WorkerOfMonth'
+import HeroPathTiles from '@/components/home/HeroPathTiles'
 import { getAllPosts } from '@/lib/blog/posts'
 import { JOB_CATEGORIES, CATEGORY_ICONS, CATEGORY_GRADIENTS, type CategoryId } from '@/lib/utils'
 import { SITE_URL } from '@/lib/seo/config'
-import { trackEvent } from '@/lib/analytics'
 import {
   MapPin,
   Shield,
   Clock,
   Star,
-  TrendingUp,
-  Users,
-  CheckCircle,
   ArrowRight,
   Crown,
-  HardHat,
-  ClipboardList,
   Hammer,
   Briefcase,
   Wrench,
   Building2,
-  ChevronDown,
 } from 'lucide-react'
 
 const STATS = [
-  { label: 'Active Workers', value: '12,000+', icon: Users },
-  { label: 'Jobs Completed', value: '45,000+', icon: CheckCircle },
+  { label: 'Active Workers', value: '12,000+', icon: MapPin },
+  { label: 'Jobs Completed', value: '45,000+', icon: Shield },
   { label: 'Avg Rating', value: '4.8★', icon: Star },
   { label: 'Regions Covered', value: 'NZ Wide', icon: MapPin },
 ]
 
-const WORK_SUBTILES = [
-  {
-    icon: Hammer,
-    title: "I'm a Tradie",
-    description: 'Trade & skilled work',
-    href: '/jobs?path=tradie',
-  },
-  {
-    icon: Briefcase,
-    title: 'Looking for work',
-    description: 'Jobs, contracts & roles',
-    href: '/jobs?path=jobseeker',
-  },
-]
-
-const HIRE_SUBTILES = [
-  {
-    icon: Wrench,
-    title: 'Get a job done',
-    description: 'One-off, any size',
-    href: '/jobs/create?path=client',
-  },
-  {
-    icon: Building2,
-    title: "I'm a Business",
-    description: 'I hire regularly',
-    href: '/jobs/create?path=employer',
-  },
-]
+const PREMIUM_CATEGORIES: CategoryId[] = ['plumbing', 'electrical', 'hvac']
 
 const FEATURED_WORKERS = [
   { name: 'James Tahu', skill: 'Master Plumber', rating: 4.9, jobs: 87, location: 'Blenheim, Marlborough', initials: 'JT', isPremium: true },
@@ -80,37 +43,40 @@ const FEATURED_WORKERS = [
   { name: 'Emily Fraser', skill: 'Landscape Gardener', rating: 4.7, jobs: 203, location: 'Christchurch, Canterbury', initials: 'EF', isPremium: false },
 ]
 
-const PREMIUM_CATEGORIES: CategoryId[] = ['plumbing', 'electrical', 'hvac']
-
 export default function HomePage() {
-  const [expanded, setExpanded] = useState<'work' | 'hire' | null>(null)
-  const [heroVariant, setHeroVariant] = useState<'A' | 'B'>('A')
-
-  // Assign A/B variant once on mount, persisted in localStorage
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem('hero_variant') as 'A' | 'B' | null
-      if (stored === 'A' || stored === 'B') {
-        setHeroVariant(stored)
-        trackEvent('hero_variant_assigned', { variant: stored })
-      } else {
-        const assigned: 'A' | 'B' = Math.random() < 0.5 ? 'A' : 'B'
-        localStorage.setItem('hero_variant', assigned)
-        setHeroVariant(assigned)
-        trackEvent('hero_variant_assigned', { variant: assigned })
-      }
-    } catch {
-      // localStorage unavailable — stay on default variant A
-    }
-  }, [])
-
-  function toggle(key: 'work' | 'hire') {
-    trackEvent('hero_cta_click', { variant: heroVariant, cta: key })
-    setExpanded((prev) => (prev === key ? null : key))
-  }
+  const latestPosts = getAllPosts().slice(0, 6)
 
   return (
     <div className="flex flex-col min-h-screen luxury-bg">
+      <Script
+        id="jsonld-organization"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'Organization',
+            name: 'QuickTrade',
+            url: SITE_URL,
+            logo: `${SITE_URL}/icons/icon-192.png`,
+            description: "New Zealand's trusted marketplace for local tradespeople. Hire verified plumbers, electricians, builders, cleaners and more — fast, safe, and affordable.",
+            contactPoint: {
+              '@type': 'ContactPoint',
+              contactType: 'customer support',
+              email: 'support@quicktrade.co.nz',
+              availableLanguage: 'English',
+            },
+            areaServed: [
+              { '@type': 'Country', name: 'New Zealand' },
+              { '@type': 'Country', name: 'Australia' },
+            ],
+            sameAs: [
+              'https://www.facebook.com/QuickTradeNZ',
+              'https://www.instagram.com/quicktrade.nz',
+              'https://twitter.com/QuickTradeNZ',
+            ],
+          }),
+        }}
+      />
       <Script
         id="jsonld-breadcrumb"
         type="application/ld+json"
@@ -137,114 +103,8 @@ export default function HomePage() {
           style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(99,102,241,0.18) 0%, transparent 70%)' }}
         />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28">
-          <div className="text-center max-w-4xl mx-auto">
-            {/* Premium badge */}
-            <div className="inline-flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/30 rounded-full px-4 py-1.5 text-sm mb-6">
-              <TrendingUp className="h-4 w-4 text-indigo-400" />
-              <span className="text-indigo-300">Trusted by 12,000+ tradies and workers</span>
-            </div>
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight text-white">
-              {heroVariant === 'B' ? (
-                <>
-                  Find Trusted Tradies in{' '}
-                  <span className="platinum-shimmer">New Zealand — Fast</span>
-                </>
-              ) : (
-                <>
-                  New Zealand&apos;s Home for{' '}
-                  <span className="platinum-shimmer">Trade Work & Employment</span>
-                </>
-              )}
-            </h1>
-            <p className="text-xl text-slate-400 mb-10 max-w-2xl mx-auto">
-              Whether you need a tradie or you are one — QuickTrade connects the right people across New Zealand.
-            </p>
-
-            {/* 2-Step Path Tiles */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8 max-w-2xl mx-auto">
-              {/* I want work */}
-              <div className="flex flex-col gap-3">
-                <button
-                  onClick={() => toggle('work')}
-                  aria-expanded={expanded === 'work'}
-                  className="bg-slate-900/70 rounded-2xl p-6 border border-indigo-500/30 hover:border-indigo-500/60 text-left transition-all hover:shadow-[0_0_30px_rgba(99,102,241,0.2)] group w-full"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-indigo-500/10 mb-4">
-                      <HardHat className="h-6 w-6 text-indigo-400" />
-                    </div>
-                    <ChevronDown
-                      className={`h-5 w-5 text-indigo-400 mt-1 transition-transform duration-300 ${expanded === 'work' ? 'rotate-180' : ''}`}
-                    />
-                  </div>
-                  <h2 className="text-base font-bold text-white mb-1">I want work</h2>
-                  <p className="text-sm text-slate-400">Tradies & job seekers</p>
-                </button>
-                <div
-                  aria-hidden={expanded !== 'work'}
-                  className={`grid grid-cols-2 gap-3 overflow-hidden transition-all duration-300 ${expanded === 'work' ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
-                >
-                  {WORK_SUBTILES.map(({ icon: Icon, title, description, href }) => (
-                    <Link
-                      key={href}
-                      href={href}
-                      className="bg-slate-800/60 rounded-xl p-4 border border-indigo-500/20 hover:border-indigo-500/50 text-left transition-all group"
-                    >
-                      <div className="inline-flex items-center justify-center h-9 w-9 rounded-lg bg-indigo-500/10 mb-3">
-                        <Icon className="h-4 w-4 text-indigo-400" />
-                      </div>
-                      <h3 className="text-sm font-semibold text-white mb-1">{title}</h3>
-                      <p className="text-xs text-slate-400 mb-2">{description}</p>
-                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-400 group-hover:text-indigo-300 transition-colors">
-                        Go <ArrowRight className="h-3 w-3" />
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-
-              {/* I need work done */}
-              <div className="flex flex-col gap-3">
-                <button
-                  onClick={() => toggle('hire')}
-                  aria-expanded={expanded === 'hire'}
-                  className="bg-slate-900/70 rounded-2xl p-6 border border-indigo-500/30 hover:border-indigo-500/60 text-left transition-all hover:shadow-[0_0_30px_rgba(99,102,241,0.2)] group w-full"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-indigo-500/10 mb-4">
-                      <ClipboardList className="h-6 w-6 text-indigo-400" />
-                    </div>
-                    <ChevronDown
-                      className={`h-5 w-5 text-indigo-400 mt-1 transition-transform duration-300 ${expanded === 'hire' ? 'rotate-180' : ''}`}
-                    />
-                  </div>
-                  <h2 className="text-base font-bold text-white mb-1">I need work done</h2>
-                  <p className="text-sm text-slate-400">One-off or hire someone</p>
-                </button>
-                <div
-                  aria-hidden={expanded !== 'hire'}
-                  className={`grid grid-cols-2 gap-3 overflow-hidden transition-all duration-300 ${expanded === 'hire' ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
-                >
-                  {HIRE_SUBTILES.map(({ icon: Icon, title, description, href }) => (
-                    <Link
-                      key={href}
-                      href={href}
-                      className="bg-slate-800/60 rounded-xl p-4 border border-indigo-500/20 hover:border-indigo-500/50 text-left transition-all group"
-                    >
-                      <div className="inline-flex items-center justify-center h-9 w-9 rounded-lg bg-indigo-500/10 mb-3">
-                        <Icon className="h-4 w-4 text-indigo-400" />
-                      </div>
-                      <h3 className="text-sm font-semibold text-white mb-1">{title}</h3>
-                      <p className="text-xs text-slate-400 mb-2">{description}</p>
-                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-400 group-hover:text-indigo-300 transition-colors">
-                        Go <ArrowRight className="h-3 w-3" />
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
+          {/* Interactive accordion path-tiles + A/B heading — client island */}
+          <HeroPathTiles />
         </div>
       </section>
 
@@ -313,22 +173,22 @@ export default function HomePage() {
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {[
-              { label: 'Electricians', href: '/workers?category=Electrical' },
-              { label: 'Plumbers', href: '/workers?category=Plumbing' },
-              { label: 'Builders', href: '/workers?category=Carpentry+%26+Joinery' },
-              { label: 'Painters', href: '/workers?category=Painting+%26+Decorating' },
-              { label: 'Landscapers', href: '/workers?category=Landscaping+%26+Gardening' },
-              { label: 'Roofers', href: '/workers?category=Roofing' },
-              { label: 'Tilers', href: '/workers?category=Tiling+%26+Flooring' },
-              { label: 'Labourers', href: '/workers?category=General+Labourer' },
+              { label: 'Electricians', href: '/services/electrical' },
+              { label: 'Plumbers', href: '/services/plumbing' },
+              { label: 'Builders', href: '/services/builder' },
+              { label: 'Painters', href: '/services/painting' },
+              { label: 'Landscapers', href: '/services/landscaping-gardening' },
+              { label: 'Roofers', href: '/services/roofing' },
+              { label: 'Tilers', href: '/services/tiling' },
+              { label: 'Cleaners', href: '/services/cleaning' },
             ].map(({ label, href }) => (
-              <a
+              <Link
                 key={label}
                 href={href}
                 className="bg-gray-900 border border-gray-800 hover:border-indigo-500/50 rounded-xl p-4 text-center text-gray-300 hover:text-white font-medium transition-all text-sm"
               >
                 {label} →
-              </a>
+              </Link>
             ))}
           </div>
         </div>
@@ -344,7 +204,7 @@ export default function HomePage() {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {[
-            { label: 'Plumbing', slug: 'plumbing', icon: '🔧' },
+            { label: 'Plumbing', slug: 'plumbing', icon: '��' },
             { label: 'Electrical', slug: 'electrical', icon: '⚡' },
             { label: 'Building', slug: 'builder', icon: '🏗️' },
             { label: 'Heat Pumps & Air Con', slug: 'heat-pumps-air-conditioning', icon: '❄️' },
@@ -375,7 +235,7 @@ export default function HomePage() {
           </p>
         </div>
         <div className="grid md:grid-cols-3 gap-6">
-          {getAllPosts().map((post) => (
+          {latestPosts.map((post) => (
             <Link
               key={post.slug}
               href={`/blog/${post.slug}`}
