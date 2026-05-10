@@ -25,11 +25,13 @@ import {
   Briefcase,
   Wrench,
   Building2,
+  Users,
+  CheckCircle,
 } from 'lucide-react'
 
 const STATS = [
-  { label: 'Active Workers', value: '12,000+', icon: MapPin },
-  { label: 'Jobs Completed', value: '45,000+', icon: Shield },
+  { label: 'Active Workers', value: '12,000+', icon: Users },
+  { label: 'Jobs Completed', value: '45,000+', icon: CheckCircle },
   { label: 'Avg Rating', value: '4.8★', icon: Star },
   { label: 'Regions Covered', value: 'NZ Wide', icon: MapPin },
 ]
