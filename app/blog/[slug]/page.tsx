@@ -5,6 +5,7 @@ import Script from 'next/script'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { getAllPosts, getPostBySlug } from '@/lib/blog/posts'
+import { getServiceBySlug, getServiceDetails } from '@/lib/seo/servicesData'
 import { SITE_URL } from '@/lib/seo/config'
 
 interface Props {
@@ -86,6 +87,16 @@ const mdxModules: Record<string, () => Promise<{ default: React.ComponentType }>
     import('@/content/blog/how-to-get-multiple-quotes-nz.mdx'),
   'hiring-a-cleaner-nz': () =>
     import('@/content/blog/hiring-a-cleaner-nz.mdx'),
+  'airtasker-alternative-nz': () =>
+    import('@/content/blog/airtasker-alternative-nz.mdx'),
+  'spring-home-maintenance-checklist-nz': () =>
+    import('@/content/blog/spring-home-maintenance-checklist-nz.mdx'),
+  'hire-construction-workers-nz': () =>
+    import('@/content/blog/hire-construction-workers-nz.mdx'),
+  'fence-installation-cost-nz': () =>
+    import('@/content/blog/fence-installation-cost-nz.mdx'),
+  'concrete-driveway-cost-nz': () =>
+    import('@/content/blog/concrete-driveway-cost-nz.mdx'),
 }
 
 export function generateStaticParams() {
@@ -120,6 +131,9 @@ export default async function BlogPostPage(props: Props) {
 
   const { default: MDXContent } = await loader()
 
+  const relatedService = post.relatedServiceSlug ? getServiceBySlug(post.relatedServiceSlug) : null
+  const relatedServiceDetails = post.relatedServiceSlug ? getServiceDetails(post.relatedServiceSlug) : null
+
   const articleJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Article',
@@ -149,6 +163,18 @@ export default async function BlogPostPage(props: Props) {
     ],
   }
 
+  const faqJsonLd = relatedServiceDetails?.faqs.length
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: relatedServiceDetails.faqs.map((faq) => ({
+          '@type': 'Question',
+          name: faq.question,
+          acceptedAnswer: { '@type': 'Answer', text: faq.answer },
+        })),
+      }
+    : null
+
   return (
     <div className="flex flex-col min-h-screen luxury-bg">
       <Script
@@ -161,6 +187,13 @@ export default async function BlogPostPage(props: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
+      {faqJsonLd && (
+        <Script
+          id="jsonld-post-faq"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+        />
+      )}
 
       <Navbar />
 
@@ -205,6 +238,29 @@ export default async function BlogPostPage(props: Props) {
           <MDXContent />
         </article>
       </section>
+
+      {/* Related Service — internal link for SEO */}
+      {relatedService && (
+        <section className="py-10 px-4 sm:px-6 border-t border-slate-800">
+          <div className="max-w-3xl mx-auto">
+            <p className="text-slate-500 text-xs uppercase tracking-wider font-semibold mb-3">Related Service</p>
+            <Link
+              href={`/services/${relatedService.slug}`}
+              className="group flex items-center justify-between gap-4 bg-slate-900 border border-slate-700/50 hover:border-indigo-500/40 rounded-xl px-6 py-4 transition-all"
+            >
+              <div>
+                <p className="text-white font-semibold group-hover:text-indigo-300 transition-colors">
+                  {relatedService.name} Services in New Zealand
+                </p>
+                <p className="text-slate-400 text-sm mt-0.5">{relatedService.description}</p>
+              </div>
+              <span className="text-indigo-400 text-sm font-medium whitespace-nowrap group-hover:text-indigo-300 transition-colors">
+                View service →
+              </span>
+            </Link>
+          </div>
+        </section>
+      )}
 
       {/* CTA */}
       <section
