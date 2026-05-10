@@ -204,7 +204,7 @@ export default function HomePage() {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {[
-            { label: 'Plumbing', slug: 'plumbing', icon: '��' },
+            { label: 'Plumbing', slug: 'plumbing', icon: '🔧' },
             { label: 'Electrical', slug: 'electrical', icon: '⚡' },
             { label: 'Building', slug: 'builder', icon: '🏗️' },
             { label: 'Heat Pumps & Air Con', slug: 'heat-pumps-air-conditioning', icon: '❄️' },

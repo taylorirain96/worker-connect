@@ -349,6 +349,7 @@ const posts: BlogPost[] = [
     date: '2026-05-10',
     readTime: '5 min read',
     category: 'Hiring Guides',
+    relatedServiceSlug: 'handyman',
   },
   {
     slug: 'hire-construction-workers-nz',
@@ -357,6 +358,7 @@ const posts: BlogPost[] = [
     date: '2026-05-10',
     readTime: '6 min read',
     category: 'Hiring Guides',
+    relatedServiceSlug: 'builder',
   },
   {
     slug: 'fence-installation-cost-nz',
