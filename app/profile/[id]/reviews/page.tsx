@@ -13,23 +13,6 @@ import { formatRating, getRatingLabel, getRatingColor } from '@/lib/reviews/serv
 import { ArrowLeft, Star, MessageSquare, TrendingUp } from 'lucide-react'
 import type { ReviewAggregates } from '@/types'
 
-const MOCK_AGGREGATES: ReviewAggregates = {
-  id: 'mock',
-  entityId: 'mock',
-  entityType: 'worker',
-  totalReviews: 24,
-  averageRating: 4.7,
-  ratingDistribution: { '5': 16, '4': 5, '3': 2, '2': 1, '1': 0 },
-  categoryAverages: {
-    communication: 4.8,
-    quality: 4.6,
-    timeliness: 4.7,
-    professionalism: 4.9,
-  },
-  responseRate: 83,
-  updatedAt: new Date().toISOString(),
-}
-
 export default function ProfileReviewsPage() {
   const params = useParams()
   const entityId = Array.isArray(params.id) ? params.id[0] : (params.id as string)
@@ -41,9 +24,9 @@ export default function ProfileReviewsPage() {
     async function load() {
       try {
         const data = await getReviewAggregates(entityId)
-        setAggregates(data ?? MOCK_AGGREGATES)
+        setAggregates(data ?? null)
       } catch {
-        setAggregates(MOCK_AGGREGATES)
+        setAggregates(null)
       } finally {
         setLoading(false)
       }
@@ -51,8 +34,9 @@ export default function ProfileReviewsPage() {
     load()
   }, [entityId])
 
-  const agg = aggregates ?? MOCK_AGGREGATES
-  const maxCount = Math.max(...Object.values(agg.ratingDistribution))
+  const maxCount = aggregates
+    ? Math.max(...Object.values(aggregates.ratingDistribution))
+    : 0
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -74,24 +58,29 @@ export default function ProfileReviewsPage() {
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 mb-8">
             {loading ? (
               <div className="h-40 animate-pulse bg-gray-100 dark:bg-gray-700 rounded-lg" />
+            ) : !aggregates ? (
+              <div className="py-8 text-center">
+                <Star className="h-10 w-10 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                <p className="text-gray-500 dark:text-gray-400">No reviews yet.</p>
+              </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Overall rating */}
                 <div className="flex flex-col items-center justify-center gap-2">
-                  <p className={`text-6xl font-extrabold ${getRatingColor(agg.averageRating)}`}>
-                    {formatRating(agg.averageRating)}
+                  <p className={`text-6xl font-extrabold ${getRatingColor(aggregates.averageRating)}`}>
+                    {formatRating(aggregates.averageRating)}
                   </p>
-                  <RatingStars rating={agg.averageRating} size="lg" />
+                  <RatingStars rating={aggregates.averageRating} size="lg" />
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                    {getRatingLabel(agg.averageRating)}
+                    {getRatingLabel(aggregates.averageRating)}
                   </p>
-                  <p className="text-sm text-gray-500">{agg.totalReviews} review{agg.totalReviews !== 1 ? 's' : ''}</p>
+                  <p className="text-sm text-gray-500">{aggregates.totalReviews} review{aggregates.totalReviews !== 1 ? 's' : ''}</p>
                 </div>
 
                 {/* Star distribution */}
                 <div className="space-y-1.5">
                   {[5, 4, 3, 2, 1].map((star) => {
-                    const count = agg.ratingDistribution[String(star)] ?? 0
+                    const count = aggregates.ratingDistribution[String(star)] ?? 0
                     const pct = maxCount > 0 ? (count / maxCount) * 100 : 0
                     return (
                       <div key={star} className="flex items-center gap-2">
@@ -114,19 +103,19 @@ export default function ProfileReviewsPage() {
             )}
 
             {/* Category averages + response rate */}
-            {!loading && (
+            {!loading && aggregates && (
               <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-700 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
                     <TrendingUp className="h-4 w-4 text-primary-500" />
                     Category Scores
                   </h3>
-                  <CategoryRating values={agg.categoryAverages} compact />
+                  <CategoryRating values={aggregates.categoryAverages} compact />
                 </div>
                 <div className="flex flex-col justify-center items-center gap-1 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-4 border border-emerald-200 dark:border-emerald-800">
                   <MessageSquare className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
                   <p className="text-3xl font-extrabold text-emerald-700 dark:text-emerald-400">
-                    {agg.responseRate}%
+                    {aggregates.responseRate}%
                   </p>
                   <p className="text-sm text-emerald-600 dark:text-emerald-500">Response Rate</p>
                 </div>

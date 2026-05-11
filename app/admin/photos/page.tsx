@@ -16,45 +16,6 @@ import toast from 'react-hot-toast'
 import { formatRelativeDate } from '@/lib/utils'
 import Link from 'next/link'
 
-const MOCK_PHOTOS: JobPhoto[] = [
-  {
-    id: 'p1',
-    jobId: '1',
-    workerId: 'w1',
-    workerName: 'Marcus Johnson',
-    url: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400',
-    storagePath: 'job-photos/1/w1/before.jpg',
-    type: 'before',
-    caption: 'Leaking pipe under sink before repair',
-    approvalStatus: 'pending',
-    uploadedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 'p2',
-    jobId: '1',
-    workerId: 'w1',
-    workerName: 'Marcus Johnson',
-    url: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400',
-    storagePath: 'job-photos/1/w1/after.jpg',
-    type: 'after',
-    caption: 'Pipe fully replaced and sealed',
-    approvalStatus: 'pending',
-    uploadedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 'p3',
-    jobId: '2',
-    workerId: 'w2',
-    workerName: 'Sarah Williams',
-    url: 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=400',
-    storagePath: 'job-photos/2/w2/general.jpg',
-    type: 'other',
-    caption: 'Electrical panel upgrade in progress',
-    approvalStatus: 'pending',
-    uploadedAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-  },
-]
-
 const STATUS_COLOR: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
   approved: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
@@ -73,9 +34,9 @@ export default function AdminPhotosPage() {
     setLoading(true)
     try {
       const live = await getPendingPhotos(50)
-      setPhotos(live.length > 0 ? live : MOCK_PHOTOS)
+      setPhotos(live)
     } catch {
-      setPhotos(MOCK_PHOTOS)
+      setPhotos([])
     }
     setLoading(false)
   }

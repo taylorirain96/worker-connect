@@ -21,11 +21,7 @@ function timeAgo(isoDate: string): string {
   return `${Math.floor(diffHr / 24)}d ago`
 }
 
-const MOCK_ACTIVITIES = [
-  { type: 'job_posted' as const, label: '🔨 A homeowner just posted a plumbing job', location: 'Auckland', timeAgo: '2 min ago' },
-  { type: 'booking_made' as const, label: '⚡ Electrical work booked in Wellington', location: 'Wellington', timeAgo: '5 min ago' },
-  { type: 'review_left' as const, label: '⭐ A 5-star review was left for a tradie', location: 'Christchurch', timeAgo: '12 min ago' },
-]
+const MOCK_ACTIVITIES: ActivityItem[] = []
 
 export async function GET() {
   try {
@@ -81,7 +77,7 @@ export async function GET() {
       .map(({ _ts: _ignored, ...rest }) => rest)
 
     return NextResponse.json(
-      { activities: sorted.length > 0 ? sorted : MOCK_ACTIVITIES },
+      { activities: sorted },
       { headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60' } }
     )
   } catch {

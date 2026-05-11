@@ -18,6 +18,7 @@ import Link from 'next/link'
 import { applyToJob, getApplicationId, withdrawApplication, getJobApplications } from '@/lib/applications'
 import { hasReviewed } from '@/lib/reviews/index'
 import { db } from '@/lib/firebase'
+import { getDoc, doc, getDocs, collection, query, where } from 'firebase/firestore'
 import { hasWorkerAI } from '@/lib/subscriptions'
 import AIWorkerMatches from '@/components/ai/AIWorkerMatches'
 import QuoteList from '@/components/quotes/QuoteList'
@@ -27,64 +28,15 @@ import { trackEvent } from '@/lib/analytics'
 /** 7 days in milliseconds — used for the auto-completion banner threshold */
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000
 
-const MOCK_JOBS: Record<string, Job & { employerRating?: number; employerJobs?: number }> = {
-  '1': {
-    id: '1',
-    title: 'Fix Leaking Bathroom Pipe',
-    description: `I have a leaking pipe under the bathroom sink. Water is dripping consistently and needs to be fixed ASAP. The pipe appears to be cracked near the joint.
-
-**What needs to be done:**
-- Inspect the pipe and identify the issue
-- Replace the damaged section
-- Ensure no other leaks exist
-- Clean up after the work is done
-
-**Access:** Easy access under the sink cabinet. No need to break any walls.
-
-**Timeline:** Needs to be done within 48 hours ideally.`,
-    category: 'plumbing',
-    employerId: 'emp1',
-    employerName: 'John Smith',
-    location: 'New York, NY',
-    budget: 150,
-    budgetType: 'fixed',
-    urgency: 'high',
-    status: 'completed',
-    skills: ['Plumbing', 'Pipe Repair', 'Fixture Installation'],
-    applicantsCount: 4,
-    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date().toISOString(),
-    employerRating: 4.7,
-    employerJobs: 12,
-  },
+/** Convert a Firestore Timestamp or ISO string to an ISO string, or return undefined */
+function tsToIso(val: unknown): string | undefined {
+  if (!val) return undefined
+  if (typeof val === 'object' && val !== null && typeof (val as { toDate?: unknown }).toDate === 'function') {
+    return (val as { toDate: () => Date }).toDate().toISOString()
+  }
+  if (typeof val === 'string') return val
+  return undefined
 }
-
-const MOCK_JOB_PHOTOS: JobPhoto[] = [
-  {
-    id: 'p1',
-    jobId: '1',
-    workerId: 'w1',
-    workerName: 'Marcus Johnson',
-    url: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600',
-    storagePath: '',
-    type: 'before',
-    caption: 'Leaking pipe under sink — before repair',
-    approvalStatus: 'approved',
-    uploadedAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 'p2',
-    jobId: '1',
-    workerId: 'w1',
-    workerName: 'Marcus Johnson',
-    url: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600',
-    storagePath: '',
-    type: 'after',
-    caption: 'New pipe installed and fully sealed',
-    approvalStatus: 'approved',
-    uploadedAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-  },
-]
 
 function JobDetailInner() {
   const params = useParams()
@@ -99,6 +51,12 @@ function JobDetailInner() {
   const [withdrawing, setWithdrawing] = useState(false)
   const [appliedAppId, setAppliedAppId] = useState<string | null>(null)
   const [applicantsCount, setApplicantsCount] = useState<number | null>(null)
+
+  // Job fetch state
+  const [job, setJob] = useState<(Job & { employerRating?: number; employerJobs?: number }) | null>(null)
+  const [jobPhotos, setJobPhotos] = useState<JobPhoto[]>([])
+  const [jobLoading, setJobLoading] = useState(true)
+  const [jobNotFound, setJobNotFound] = useState(false)
 
   // Review state
   const [alreadyReviewed, setAlreadyReviewed] = useState(false)
@@ -120,15 +78,89 @@ function JobDetailInner() {
   const [requestingCompletion, setRequestingCompletion] = useState(false)
   const [completionRequested, setCompletionRequested] = useState(false)
 
-  const job = MOCK_JOBS[params.id as string] || MOCK_JOBS['1']
-  const jobPhotos = MOCK_JOB_PHOTOS.filter((p) => p.jobId === (params.id as string) || p.jobId === '1')
-  const category = JOB_CATEGORIES.find((c) => c.id === job.category)
-  const urgency = URGENCY_LABELS[job.urgency]
-  const isEmployer = user?.uid === job.employerId
+  // Fetch job and photos from Firestore
+  useEffect(() => {
+    const jobId = params.id as string
+    if (!db || !jobId) {
+      setJobNotFound(true)
+      setJobLoading(false)
+      return
+    }
+    setJobLoading(true)
+    Promise.all([
+      getDoc(doc(db, 'jobs', jobId)),
+      getDocs(query(collection(db, 'jobPhotos'), where('jobId', '==', jobId))),
+    ])
+      .then(([jobSnap, photosSnap]) => {
+        if (!jobSnap.exists()) {
+          setJobNotFound(true)
+          return
+        }
+        const d = jobSnap.data()
+        setJob({
+          id: jobSnap.id,
+          title: d.title ?? '',
+          description: d.description ?? '',
+          category: d.category ?? 'general',
+          employerId: d.employerId ?? '',
+          employerName: d.employerName ?? '',
+          employerAvatar: d.employerAvatar,
+          location: d.location ?? '',
+          budget: d.budget ?? 0,
+          budgetType: d.budgetType ?? 'fixed',
+          urgency: d.urgency ?? 'medium',
+          status: d.status ?? 'open',
+          skills: d.skills ?? [],
+          applicantsCount: d.applicantsCount ?? 0,
+          createdAt: tsToIso(d.createdAt) ?? '',
+          updatedAt: tsToIso(d.updatedAt) ?? '',
+          deadline: tsToIso(d.deadline),
+          assignedWorkerId: d.assignedWorkerId,
+          escrowId: d.escrowId,
+          escrowStatus: d.escrowStatus,
+          completedAt: tsToIso(d.completedAt),
+          workerDisputeDeadline: tsToIso(d.workerDisputeDeadline),
+          country: d.country,
+          recurring: d.recurring,
+          recurrenceInterval: d.recurrenceInterval,
+          nextRecurrenceAt: d.nextRecurrenceAt,
+          parentJobId: d.parentJobId,
+          propertyId: d.propertyId,
+          employerRating: d.employerRating,
+          employerJobs: d.employerJobs,
+        })
+        const photos: JobPhoto[] = photosSnap.docs.map((p) => {
+          const pd = p.data()
+          return {
+            id: p.id,
+            jobId: pd.jobId ?? jobId,
+            workerId: pd.workerId ?? '',
+            workerName: pd.workerName ?? '',
+            url: pd.url ?? '',
+            storagePath: pd.storagePath ?? '',
+            type: pd.type ?? 'other',
+            caption: pd.caption,
+            approvalStatus: pd.approvalStatus ?? 'pending',
+            uploadedAt: tsToIso(pd.uploadedAt) ?? '',
+            moderatorNote: pd.moderatorNote,
+            qualityScore: pd.qualityScore,
+          }
+        })
+        setJobPhotos(photos)
+      })
+      .catch(() => {
+        setJobNotFound(true)
+      })
+      .finally(() => {
+        setJobLoading(false)
+      })
+  }, [params.id])
+
+  const isEmployer = user?.uid === job?.employerId
 
   // Effective job status — updated optimistically after Mark as Complete
-  const effectiveStatus = localStatus ?? job.status
-  const effectiveCompletedAt = localCompletedAt ?? job.completedAt
+  const effectiveStatus = localStatus ?? job?.status
+  const effectiveCompletedAt = localCompletedAt ?? job?.completedAt
 
   // Show "Thanks for your review!" toast when returning from the dedicated review page
   useEffect(() => {
@@ -143,12 +175,12 @@ function JobDetailInner() {
   }, [])
 
   useEffect(() => {
-    if (!isEmployer) return
+    if (!isEmployer || !job) return
     const jobId = params.id as string
     getJobApplications(jobId)
       .then((apps) => setApplicantsCount(apps.length))
       .catch(() => setApplicantsCount(job.applicantsCount ?? 0))
-  }, [isEmployer, params.id, job.applicantsCount])
+  }, [isEmployer, params.id, job])
 
   // Check if the worker has already applied
   useEffect(() => {
@@ -174,14 +206,14 @@ function JobDetailInner() {
 
   // Fetch quotes for employer comparison view
   useEffect(() => {
-    if (!isEmployer || quotesLoaded) return
+    if (!isEmployer || quotesLoaded || !job) return
     const jobId = params.id as string
     fetch(`/api/quotes/job/${jobId}`, { headers: { 'x-user-id': user?.uid ?? 'employer' } })
       .then((r) => r.json())
       .then((data) => setJobQuotes(data.quotes ?? []))
       .catch(() => {})
       .finally(() => setQuotesLoaded(true))
-  }, [isEmployer, params.id, user?.uid, quotesLoaded])
+  }, [isEmployer, params.id, user?.uid, quotesLoaded, job])
 
   const handleAcceptQuote = async (quoteId: string) => {
     const acceptedQuote = jobQuotes.find((q) => q.id === quoteId)
@@ -215,7 +247,7 @@ function JobDetailInner() {
       toast.error('Only workers can apply to jobs')
       return
     }
-    if (!db) {
+    if (!db || !job) {
       toast.error('Feature not available')
       return
     }
@@ -381,14 +413,14 @@ function JobDetailInner() {
   const sevenDayBannerVisible =
     effectiveStatus === 'in_progress' &&
     isEmployer &&
-    job.deadline != null &&
+    job?.deadline != null &&
     Date.now() - new Date(job.deadline).getTime() > SEVEN_DAYS_MS
 
   // Worker dispute window — derived once for use in the sidebar
-  const workerDisputeDeadlineStr = (job as { workerDisputeDeadline?: string }).workerDisputeDeadline
+  const workerDisputeDeadlineStr = (job as { workerDisputeDeadline?: string } | null)?.workerDisputeDeadline
   const withinWorkerDisputeWindow =
     profile?.role === 'worker' &&
-    user?.uid === job.assignedWorkerId &&
+    user?.uid === job?.assignedWorkerId &&
     effectiveStatus === 'completed' &&
     workerDisputeDeadlineStr != null &&
     Date.now() < new Date(workerDisputeDeadlineStr).getTime()
@@ -401,6 +433,50 @@ function JobDetailInner() {
         minute: '2-digit',
       })
     : null
+
+  // Loading state
+  if (jobLoading) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="text-center space-y-3">
+            <div className="h-10 w-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-gray-500 dark:text-gray-400">Loading job…</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    )
+  }
+
+  // Not found / error state
+  if (jobNotFound || !job) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center px-4">
+          <div className="text-center space-y-4 max-w-md">
+            <AlertCircle className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto" />
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Job not found</h2>
+            <p className="text-gray-500 dark:text-gray-400">
+              This job may have been removed or the link may be incorrect.
+            </p>
+            <Link href="/jobs">
+              <Button>
+                <ArrowLeft className="h-4 w-4" />
+                Browse Jobs
+              </Button>
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    )
+  }
+
+  const category = JOB_CATEGORIES.find((c) => c.id === job.category)
+  const urgency = URGENCY_LABELS[job.urgency]
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -636,7 +712,7 @@ function JobDetailInner() {
               )}
 
               {/* Photo Gallery — shown when job is completed */}
-              {job.status === 'completed' && (
+              {effectiveStatus === 'completed' && (
                 <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
@@ -968,9 +1044,9 @@ function JobDetailInner() {
                     <p className="font-medium text-gray-900 dark:text-white text-sm">{job.employerName}</p>
                     <div className="flex items-center gap-1 text-xs text-gray-500">
                       <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                      <span>{(job as { employerRating?: number }).employerRating || 'New'}</span>
-                      {(job as { employerJobs?: number }).employerJobs && (
-                        <span>· {(job as { employerJobs?: number }).employerJobs} jobs posted</span>
+                    <span>{job.employerRating || 'New'}</span>
+                      {job.employerJobs && (
+                        <span>· {job.employerJobs} jobs posted</span>
                       )}
                     </div>
                   </div>

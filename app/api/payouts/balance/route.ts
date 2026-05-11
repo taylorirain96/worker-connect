@@ -29,13 +29,10 @@ export async function GET(request: NextRequest) {
 
     const stripeKey = process.env.STRIPE_SECRET_KEY
     if (!stripeKey) {
-      // Return mock data when Stripe is not configured
-      return NextResponse.json({
-        available: 0,
-        pending: 0,
-        currency: 'usd',
-        stripeAccountId,
-      })
+      return NextResponse.json(
+        { error: 'Payment provider not configured', noStripe: true },
+        { status: 503 }
+      )
     }
 
     const Stripe = (await import('stripe')).default
