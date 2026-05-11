@@ -7,10 +7,12 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import MoverModeSettings from '@/components/mover/MoverModeSettings'
 import MoverLeaderboard from '@/components/mover/MoverLeaderboard'
+import { useAuth } from '@/components/providers/AuthProvider'
 import type { MoverSettings, MoverLeaderboardEntry, MoverOpportunity } from '@/types/reputation'
 
 export default function MoverModePage(props: { params: Promise<{ id: string }> }) {
   const params = use(props.params);
+  const { user } = useAuth()
   const [settings, setSettings] = useState<MoverSettings | null>(null)
   const [leaderboard, setLeaderboard] = useState<MoverLeaderboardEntry[]>([])
   const [opportunities, setOpportunities] = useState<MoverOpportunity[]>([])
@@ -77,7 +79,10 @@ export default function MoverModePage(props: { params: Promise<{ id: string }> }
     try {
       const res = await fetch(`/api/workers/${params.id}/mover-mode`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(user?.uid ? { 'x-user-id': user.uid } : {}),
+        },
         body: JSON.stringify(updatedSettings),
       })
       if (res.ok) {
