@@ -1,6 +1,6 @@
 # Known Issues (Baseline Validation)
 
-Last validated: 2026-05-09
+Last validated: 2026-05-11
 
 ## Lint / Build warnings
 

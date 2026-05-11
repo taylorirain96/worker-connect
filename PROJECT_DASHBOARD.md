@@ -1,5 +1,5 @@
 # 🚀 QuickTrade — Project Dashboard
-> Last updated: April 2026 | Single source of truth for the QuickTrade platform
+> Last updated: May 2026 | Single source of truth for the QuickTrade platform
 
 ---
 
