@@ -28,6 +28,16 @@ import { trackEvent } from '@/lib/analytics'
 /** 7 days in milliseconds — used for the auto-completion banner threshold */
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000
 
+/** Convert a Firestore Timestamp or ISO string to an ISO string, or return undefined */
+function tsToIso(val: unknown): string | undefined {
+  if (!val) return undefined
+  if (typeof val === 'object' && val !== null && typeof (val as { toDate?: unknown }).toDate === 'function') {
+    return (val as { toDate: () => Date }).toDate().toISOString()
+  }
+  if (typeof val === 'string') return val
+  return undefined
+}
+
 function JobDetailInner() {
   const params = useParams()
   const router = useRouter()
@@ -102,14 +112,14 @@ function JobDetailInner() {
           status: d.status ?? 'open',
           skills: d.skills ?? [],
           applicantsCount: d.applicantsCount ?? 0,
-          createdAt: d.createdAt?.toDate?.()?.toISOString?.() ?? d.createdAt ?? new Date().toISOString(),
-          updatedAt: d.updatedAt?.toDate?.()?.toISOString?.() ?? d.updatedAt ?? new Date().toISOString(),
-          deadline: d.deadline?.toDate?.()?.toISOString?.() ?? d.deadline,
+          createdAt: tsToIso(d.createdAt) ?? new Date().toISOString(),
+          updatedAt: tsToIso(d.updatedAt) ?? new Date().toISOString(),
+          deadline: tsToIso(d.deadline),
           assignedWorkerId: d.assignedWorkerId,
           escrowId: d.escrowId,
           escrowStatus: d.escrowStatus,
-          completedAt: d.completedAt?.toDate?.()?.toISOString?.() ?? d.completedAt,
-          workerDisputeDeadline: d.workerDisputeDeadline?.toDate?.()?.toISOString?.() ?? d.workerDisputeDeadline,
+          completedAt: tsToIso(d.completedAt),
+          workerDisputeDeadline: tsToIso(d.workerDisputeDeadline),
           country: d.country,
           recurring: d.recurring,
           recurrenceInterval: d.recurrenceInterval,
@@ -131,7 +141,7 @@ function JobDetailInner() {
             type: pd.type ?? 'other',
             caption: pd.caption,
             approvalStatus: pd.approvalStatus ?? 'pending',
-            uploadedAt: pd.uploadedAt?.toDate?.()?.toISOString?.() ?? pd.uploadedAt ?? new Date().toISOString(),
+            uploadedAt: tsToIso(pd.uploadedAt) ?? new Date().toISOString(),
             moderatorNote: pd.moderatorNote,
             qualityScore: pd.qualityScore,
           }
