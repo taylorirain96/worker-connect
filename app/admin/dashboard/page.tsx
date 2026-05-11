@@ -268,8 +268,6 @@ export default function AdminDashboardPage() {
                 icon={<Server className="h-5 w-5" />}
                 iconBg="bg-cyan-100 dark:bg-cyan-900/30"
                 iconColor="text-cyan-600"
-                trend={0.8}
-                trendLabel="vs last month"
               />
             </div>
 
