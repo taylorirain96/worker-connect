@@ -1044,9 +1044,9 @@ function JobDetailInner() {
                     <p className="font-medium text-gray-900 dark:text-white text-sm">{job.employerName}</p>
                     <div className="flex items-center gap-1 text-xs text-gray-500">
                       <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                    <span>{(job as { employerRating?: number }).employerRating || 'New'}</span>
-                      {(job as { employerJobs?: number }).employerJobs && (
-                        <span>· {(job as { employerJobs?: number }).employerJobs} jobs posted</span>
+                    <span>{job.employerRating || 'New'}</span>
+                      {job.employerJobs && (
+                        <span>· {job.employerJobs} jobs posted</span>
                       )}
                     </div>
                   </div>

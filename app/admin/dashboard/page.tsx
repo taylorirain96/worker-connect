@@ -17,7 +17,7 @@ import { formatCurrency } from '@/lib/utils'
 import {
   LayoutDashboard, DollarSign, AlertTriangle, Users, Briefcase,
   Activity, Settings, Download, RefreshCw, TrendingUp,
-  CheckCircle, Shield, BarChart2, Menu, X, Server, FileText, BookOpen, Globe,
+  CheckCircle, Shield, BarChart2, Menu, X, FileText, BookOpen, Globe,
 } from 'lucide-react'
 
 // ─── Sidebar navigation ───────────────────────────────────────────────────────
@@ -265,7 +265,7 @@ export default function AdminDashboardPage() {
                 label="Completion Rate"
                 value={`${analytics.jobCompletionRate}%`}
                 subtitle="Jobs completed"
-                icon={<Server className="h-5 w-5" />}
+                icon={<CheckCircle className="h-5 w-5" />}
                 iconBg="bg-cyan-100 dark:bg-cyan-900/30"
                 iconColor="text-cyan-600"
               />
