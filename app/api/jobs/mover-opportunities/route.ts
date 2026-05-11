@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getMoverOpportunities } from '@/lib/services/moverService'
-import { matchJobsForWorker, MOCK_JOBS } from '@/lib/services/jobMatchingService'
+import { matchJobsForWorker } from '@/lib/services/jobMatchingService'
+import { adminDb } from '@/lib/firebase-admin'
 import type { MatchedJob } from '@/types'
 
 export const dynamic = 'force-dynamic'
@@ -68,19 +69,49 @@ export async function GET(request: NextRequest) {
     // Fallback: legacy endpoint behaviour using moverService
     const legacyOpportunities = await getMoverOpportunities(targetCity)
 
-    // Also produce scored jobs from mock data for the target city
-    const cityJobs = MOCK_JOBS.filter(
-      (j) =>
-        j.remote ||
-        (targetCity && (j.location ?? '').toLowerCase().includes(targetCity.toLowerCase()))
-    )
-
-    const scoredCityJobs: MatchedJob[] = cityJobs.map((j) => ({
-      ...j,
-      matchScore: 70 + (j.urgency === 'high' ? 5 : 0),
-      matchReasons: [`Mover Mode: Jobs in ${targetCity}`],
-      isRemote: j.remote ?? false,
-    }))
+    // Fetch live jobs from Firestore filtered by target city
+    let scoredCityJobs: MatchedJob[] = []
+    try {
+      const snap = await adminDb
+        .collection('jobs')
+        .where('status', '==', 'open')
+        .orderBy('createdAt', 'desc')
+        .limit(50)
+        .get()
+      const cityLower = targetCity.toLowerCase()
+      scoredCityJobs = snap.docs
+        .map((d) => {
+          const j = d.data()
+          return {
+            id: d.id,
+            title: j.title ?? '',
+            description: j.description ?? '',
+            category: j.category ?? 'general',
+            employerId: j.employerId ?? '',
+            employerName: j.employerName ?? '',
+            location: j.location ?? '',
+            budget: j.budget ?? 0,
+            budgetType: j.budgetType ?? 'fixed',
+            urgency: j.urgency ?? 'medium',
+            status: j.status ?? 'open',
+            skills: j.skills ?? [],
+            applicantsCount: j.applicantsCount ?? 0,
+            createdAt: j.createdAt ?? new Date().toISOString(),
+            updatedAt: j.updatedAt ?? new Date().toISOString(),
+            matchScore: 70 + (j.urgency === 'high' || j.urgency === 'emergency' ? 5 : 0),
+            matchReasons: [`Mover Mode: Jobs in ${targetCity}`],
+            isRemote: j.remote ?? false,
+          } as MatchedJob
+        })
+        .filter(
+          (j) =>
+            j.isRemote ||
+            (cityLower && j.location.toLowerCase().includes(cityLower))
+        )
+    } catch {
+      // Firestore unavailable — return empty list
+      scoredCityJobs = []
+    }
 
     return NextResponse.json({
       opportunities: legacyOpportunities,

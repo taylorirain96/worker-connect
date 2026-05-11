@@ -3,39 +3,6 @@ import { adminDb } from '@/lib/firebase-admin'
 
 export const dynamic = 'force-dynamic'
 
-// Simple deterministic helper (no Math.random in production code paths)
-// Deterministic pseudo-random generator for consistent mock data across renders.
-// Uses a simple sine-based hash — NOT for security use.
-function seeded(seed: number, scale: number): number {
-  return Math.abs(Math.sin(seed * 9301 + 49297) * scale)
-}
-
-const MOCK_NAMES = ['Alex Turner', 'Jordan Blake', 'Sam Rivera', 'Casey Morgan', 'Taylor Quinn',
-  'Drew Bailey', 'Riley Foster', 'Morgan Hayes', 'Avery Collins', 'Jamie Stone',
-  'Pat Lee', 'Dana White', 'Chris Brown', 'Skyler Adams', 'Reese Hall',
-  'Quinn Murphy', 'Harley Brooks', 'Reagan Price', 'Phoenix Green', 'Sage Carter']
-const MOCK_ROLES = ['worker', 'tradie', 'homeowner', 'jobseeker', 'employer']
-const MOCK_EMAILS = (name: string) => `${name.toLowerCase().replace(' ', '.')}@example.com`
-
-function buildMockUsers(count: number) {
-  return Array.from({ length: count }, (_, i) => {
-    const name = MOCK_NAMES[i % MOCK_NAMES.length]
-    return {
-      uid: `user-${i + 1}`,
-      displayName: name,
-      email: MOCK_EMAILS(name),
-      role: MOCK_ROLES[i % 5],
-      createdAt: new Date(Date.now() - i * 2 * 86400000).toISOString(),
-      verified: i % 4 !== 0,
-      suspended: i % 15 === 0,
-      banned: i % 30 === 0,
-      jobsCount: Math.round(seeded(i, 25)),
-      totalEarned: Math.round(seeded(i + 5, 12000)),
-      totalSpent: Math.round(seeded(i + 10, 8000)),
-    }
-  })
-}
-
 /** GET /api/dashboard/admin/users */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -46,7 +13,19 @@ export async function GET(request: NextRequest) {
   const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') ?? '20', 10)))
 
   try {
-    let users: ReturnType<typeof buildMockUsers> = []
+    let users: {
+      uid: string
+      displayName: string
+      email: string
+      role: string
+      createdAt: string
+      verified: boolean
+      suspended: boolean
+      banned: boolean
+      jobsCount: number
+      totalEarned: number
+      totalSpent: number
+    }[]
 
     try {
       // Attempt real Firestore query
@@ -68,7 +47,7 @@ export async function GET(request: NextRequest) {
         }
       })
     } catch {
-      users = buildMockUsers(120)
+      return NextResponse.json({ error: 'Database unavailable' }, { status: 503 })
     }
 
     // Apply filters

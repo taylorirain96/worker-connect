@@ -34,87 +34,6 @@ interface StaffJob {
 
 type WorkTypeFilter = 'all' | 'full-time' | 'part-time' | 'contract' | 'casual'
 
-const MOCK_JOBS: StaffJob[] = [
-  {
-    id: 'j1',
-    title: 'Senior Electrician',
-    companyName: 'PowerGrid NZ',
-    location: 'Auckland, NZ',
-    salaryMin: 75000,
-    salaryMax: 95000,
-    workType: 'full-time',
-    category: 'electrical',
-    description: 'We are looking for a qualified and experienced Senior Electrician to join our growing team. You will be responsible for installations, maintenance, and fault-finding across commercial and residential sites.',
-    postedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    employerId: 'emp1',
-  },
-  {
-    id: 'j2',
-    title: 'Plumber — Part Time',
-    companyName: 'FlowRight Plumbing',
-    location: 'Wellington, NZ',
-    salaryMin: 30,
-    salaryMax: 45,
-    workType: 'part-time',
-    category: 'plumbing',
-    description: 'Looking for a licensed plumber available 20 hrs/week. Residential maintenance and repairs. Flexible scheduling.',
-    postedAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-    employerId: 'emp2',
-  },
-  {
-    id: 'j3',
-    title: 'Carpenter / Joiner',
-    companyName: 'Timber & Co',
-    location: 'Christchurch, NZ',
-    salaryMin: 55000,
-    salaryMax: 72000,
-    workType: 'full-time',
-    category: 'carpentry',
-    description: 'Experienced carpenter required for a busy joinery shop. Must be able to read plans and work independently. Trade certificate preferred.',
-    postedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-    employerId: 'emp3',
-  },
-  {
-    id: 'j4',
-    title: 'Building Maintenance Technician',
-    companyName: 'NZ Properties Group',
-    location: 'Hamilton, NZ',
-    salaryMin: 50000,
-    salaryMax: 65000,
-    workType: 'contract',
-    category: 'general',
-    description: '6-month contract maintaining a portfolio of commercial buildings. Multi-trade experience an advantage.',
-    postedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    employerId: 'emp4',
-  },
-  {
-    id: 'j5',
-    title: 'HVAC Technician',
-    companyName: 'ClimateControl Ltd',
-    location: 'Auckland, NZ',
-    salaryMin: 65000,
-    salaryMax: 85000,
-    workType: 'full-time',
-    category: 'hvac',
-    description: 'Seeking a qualified HVAC technician for installation and servicing of commercial air conditioning systems across the Auckland region.',
-    postedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-    employerId: 'emp5',
-  },
-  {
-    id: 'j6',
-    title: 'Landscaper — Casual',
-    companyName: 'GreenScape NZ',
-    location: 'Tauranga, NZ',
-    salaryMin: 22,
-    salaryMax: 28,
-    workType: 'casual',
-    category: 'landscaping',
-    description: 'Casual landscaping work available now. Experience with mowing, edging, garden maintenance. Own transport required.',
-    postedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
-    employerId: 'emp6',
-  },
-]
-
 const CATEGORIES = [
   'all', 'electrical', 'plumbing', 'carpentry', 'hvac',
   'roofing', 'landscaping', 'painting', 'flooring', 'general',
@@ -153,14 +72,13 @@ function StaffJobsContent() {
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        if (!db) { setJobs(MOCK_JOBS); return }
+        if (!db) { setJobs([]); setLoading(false); return }
         const q = query(
           collection(db, 'jobs'),
           where('jobType', '==', 'employment'),
           orderBy('createdAt', 'desc'),
         )
         const snap = await getDocs(q)
-        if (snap.empty) { setJobs(MOCK_JOBS); return }
         const fetched: StaffJob[] = snap.docs.map((d) => {
           const data = d.data() as DocumentData
           return {
@@ -180,7 +98,7 @@ function StaffJobsContent() {
         })
         setJobs(fetched)
       } catch {
-        setJobs(MOCK_JOBS)
+        setJobs([])
       } finally {
         setLoading(false)
       }
