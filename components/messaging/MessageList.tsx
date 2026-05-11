@@ -9,7 +9,7 @@ interface MessageListProps {
   typingNames?: string[]
   className?: string
   /** Ref to attach to the sentinel at the bottom (for auto-scroll) */
-  endRef?: React.RefObject<HTMLDivElement>
+  endRef?: React.RefObject<HTMLDivElement | null>
 }
 
 /**
