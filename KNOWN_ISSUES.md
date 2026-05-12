@@ -1,6 +1,6 @@
 # Known Issues (Baseline Validation)
 
-Last validated: 2026-05-11
+Last validated: 2026-05-12
 
 ## Lint / Build warnings
 
@@ -9,14 +9,12 @@ _None_ — lint and build both pass cleanly on Next.js 15.5.18.
 ## Dependency / maintenance concerns
 
 - `npm ci` reports deprecated transitive packages (`eslint@8`, `glob@7`, `rimraf@3`, others).
-- 21 vulnerabilities remain in the dependency tree (`8 low`, `12 moderate`, `1 high`).
-  - The 1 **critical** `protobufjs` vulnerability was resolved via `npm audit fix`.
-  - `next` was upgraded all the way to **15.5.18** — all Next.js CVEs are now patched (DoS, SSRF, cache poisoning, image injection, HTTP smuggling, deserialization).
-  - `@tootallnate/once` / `firebase-admin` transitive vulnerability requires downgrading `firebase-admin` to v10 (breaking change); deferred.
-  - `undici` / `firebase` transitive vulnerabilities require downgrading `firebase` to v12.13.0 (breaking change); deferred.
-  - `postcss` bundled inside `next/node_modules/postcss` — advisory may be stale; Next.js 15.5.18 is fully patched per the advisory database.
+- 10 vulnerabilities remain in the dependency tree (`8 low`, `2 moderate`).
+  - `next` is on **15.5.18** — all Next.js CVEs are patched (DoS, SSRF, cache poisoning, image injection, HTTP smuggling, deserialization).
+  - `firebase` is on **^12.13.0** and `firebase-admin` is on **^13.9.0** — the previously-deferred breaking upgrades that closed the `@tootallnate/once` and `undici` advisories are now done.
+  - Remaining 2 moderate findings are transitive (`postcss` inside `next/node_modules/postcss`, plus `google-gax` / `retry-request` chain inside `firebase-admin`). The only `npm audit fix --force` path downgrades `next` to v9 (breaking) and is **not** safe.
   - Dependabot is configured (`.github/dependabot.yml`) and will automatically open PRs for these.
-  - CI now runs `npm audit --omit=dev --audit-level=high` via `.github/workflows/security-audit.yml` to fail fast on new high/critical vulnerabilities.
+  - CI runs `npm audit --omit=dev --audit-level=high` via `.github/workflows/security-audit.yml` to fail fast on new high/critical vulnerabilities.
 
 ## Notes
 

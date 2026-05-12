@@ -210,6 +210,8 @@ export interface Job {
   nextRecurrenceAt?: string
   /** ID of the parent (original) recurring job */
   parentJobId?: string
+  /** Worker UIDs who have opted out of being auto-assigned to future occurrences */
+  recurringOptOutWorkerIds?: string[]
   /** Optional property linkage for property-manager posted jobs */
   propertyId?: string
 }

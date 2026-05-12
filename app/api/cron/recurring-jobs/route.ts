@@ -27,6 +27,8 @@ export async function GET(request: Request) {
         employerId: string
         recurrenceInterval?: 'weekly' | 'fortnightly' | 'monthly'
         nextRecurrenceAt?: string
+        assignedWorkerId?: string
+        recurringOptOutWorkerIds?: string[]
         [key: string]: unknown
       }
 
@@ -35,13 +37,22 @@ export async function GET(request: Request) {
 
       // Destructure out the id so it's not written to the new document
       const { id: _jobId, ...jobWithoutId } = job
-      const cloned = {
+      const cloned: Record<string, unknown> = {
         ...jobWithoutId,
         status: 'open',
         applicantsCount: 0,
         createdAt: nowIso,
         updatedAt: nowIso,
         parentJobId: job.id,
+      }
+
+      // If the previously-assigned worker has opted out of future occurrences,
+      // drop the assignment so the new occurrence returns to the open marketplace.
+      const optedOut = job.assignedWorkerId
+        && Array.isArray(job.recurringOptOutWorkerIds)
+        && job.recurringOptOutWorkerIds.includes(job.assignedWorkerId)
+      if (optedOut) {
+        delete cloned.assignedWorkerId
       }
 
       await newRef.set(cloned)
