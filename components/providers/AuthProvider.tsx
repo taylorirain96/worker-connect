@@ -21,12 +21,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
 
-  const syncAuthCookie = async (uid: string | null) => {
+  const syncAuthCookie = async (firebaseUser: User | null) => {
     try {
+      if (!firebaseUser) {
+        await fetch('/api/auth/session', { method: 'DELETE' })
+        return
+      }
+      const idToken = await firebaseUser.getIdToken()
       await fetch('/api/auth/session', {
-        method: uid ? 'POST' : 'DELETE',
-        headers: uid ? { 'Content-Type': 'application/json' } : undefined,
-        body: uid ? JSON.stringify({ uid }) : undefined,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken }),
       })
     } catch (error) {
       console.error('Error syncing auth cookie:', error)
@@ -57,7 +62,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         unsubscribe = onAuthStateChanged(firebaseAuth, async (firebaseUser) => {
           setUser(firebaseUser)
-          void syncAuthCookie(firebaseUser?.uid ?? null)
+          void syncAuthCookie(firebaseUser)
           if (firebaseUser && firebaseDb) {
             try {
               const docRef = doc(firebaseDb, 'users', firebaseUser.uid)

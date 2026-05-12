@@ -4,32 +4,43 @@ import { NextRequest, NextResponse } from 'next/server'
  * Route protection middleware.
  *
  * Protected prefixes:
- *  - /dashboard/* — requires an authenticated session (x-user-id cookie)
- *  - /admin/*     — requires an authenticated session (redirects to /dashboard/admin for proper checks)
+ *  - /dashboard/* — requires an authenticated session (`x-user-id` cookie)
+ *  - /admin/*     — requires an authenticated session AND `x-user-role === 'admin'`
  *
- * Authentication is handled client-side via Firebase Auth. The middleware provides
- * a lightweight server-side guard using the `x-user-id` cookie that is set by the
- * AuthProvider once the user is verified. Unauthenticated users are redirected to
- * /auth/login with the original path preserved as the `redirect` query param.
+ * Both cookies are HttpOnly and are set by `POST /api/auth/session` only after the
+ * server verifies a Firebase ID token via firebase-admin. Unauthenticated users are
+ * redirected to /auth/login with the original path preserved as the `redirect` query
+ * param. Authenticated non-admin users hitting /admin are redirected to /dashboard.
  */
 
-const PROTECTED_PREFIXES = ['/dashboard', '/admin']
 const LOGIN_PATH = '/auth/login'
+const DASHBOARD_PATH = '/dashboard'
+const ADMIN_PREFIX = '/admin'
+const DASHBOARD_PREFIX = '/dashboard'
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
-  const isProtected = PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix))
-  if (!isProtected) return NextResponse.next()
+  const isAdmin = pathname.startsWith(ADMIN_PREFIX)
+  const isDashboard = pathname.startsWith(DASHBOARD_PREFIX)
+  if (!isAdmin && !isDashboard) return NextResponse.next()
 
-  // The AuthProvider sets this cookie after successful Firebase sign-in verification.
   const userId = req.cookies.get('x-user-id')?.value
-
   if (!userId) {
     const loginUrl = req.nextUrl.clone()
     loginUrl.pathname = LOGIN_PATH
     loginUrl.searchParams.set('redirect', pathname)
     return NextResponse.redirect(loginUrl)
+  }
+
+  if (isAdmin) {
+    const role = req.cookies.get('x-user-role')?.value
+    if (role !== 'admin') {
+      const dashUrl = req.nextUrl.clone()
+      dashUrl.pathname = DASHBOARD_PATH
+      dashUrl.search = ''
+      return NextResponse.redirect(dashUrl)
+    }
   }
 
   return NextResponse.next()
