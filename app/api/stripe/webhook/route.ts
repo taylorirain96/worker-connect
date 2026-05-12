@@ -217,7 +217,7 @@ export async function POST(req: NextRequest) {
                 await sendNotification({
                   userId: booking.workerId,
                   type: 'new_job',
-                  title: 'New Instant Booking — 24h to respond',
+                  title: 'New Instant Booking — 24 hours to respond',
                   message: `A homeowner paid the deposit for "${booking.packageTitle ?? 'your package'}". Accept or decline within 24 hours.`,
                   metadata: { bookingId: bookingDoc.id, stripePaymentIntentId: pi.id },
                 })

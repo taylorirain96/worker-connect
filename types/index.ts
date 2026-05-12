@@ -2373,6 +2373,12 @@ export interface InstantBooking {
   refundId?: string
   /** ISO timestamp the deposit was refunded. */
   refundedAt?: string
+  /** Number of failed refund attempts by the timeout cron. */
+  refundAttempts?: number
+  /** Last refund error message, if any. Set by the timeout cron. */
+  lastRefundError?: string
+  /** True if the timeout cron gave up after repeated refund failures. */
+  refundFailed?: boolean
   createdAt: string
   updatedAt: string
 }

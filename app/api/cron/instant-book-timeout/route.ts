@@ -38,6 +38,7 @@ export async function GET(request: Request) {
         homeownerId?: string
         workerName?: string
         packageTitle?: string
+        refundAttempts?: number
       }
 
       let refundId: string | undefined
@@ -50,6 +51,16 @@ export async function GET(request: Request) {
           refundId = refund.id
         } catch (err) {
           console.error(`Instant book timeout refund failed for ${doc.id}:`, err)
+          const attempts = (typeof booking.refundAttempts === 'number' ? booking.refundAttempts : 0) + 1
+          // After 3 failed refund attempts give up so we don't retry forever
+          // every hour. Operator can inspect via Firestore and refund manually.
+          const giveUp = attempts >= 3
+          await doc.ref.update({
+            refundAttempts: attempts,
+            lastRefundError: err instanceof Error ? err.message : String(err),
+            ...(giveUp ? { status: 'expired', refundFailed: true } : {}),
+            updatedAt: nowIso,
+          })
           failed++
           continue
         }
