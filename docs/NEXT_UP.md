@@ -10,6 +10,13 @@ Last updated: 2026-05-12
 
 ## ✅ Recently shipped (context for what's next)
 
+- **Instant Booking — worker accept/decline window** with 24h auto-refund.
+  Stripe webhook now promotes deposit-paid bookings to
+  `awaiting_worker_response`; new `POST /api/instant-book/[id]/respond` lets
+  the worker accept (status `confirmed`) or decline (Stripe refund + status
+  `declined`); new hourly cron `/api/cron/instant-book-timeout` refunds and
+  expires bookings the worker doesn't answer in time. Worker dashboard surfaces
+  pending instant bookings at `/dashboard/worker/instant-bookings`.
 - **Recurring jobs — worker-side view** (`/dashboard/worker/recurring`).
   Workers see their recurring assignments grouped by parent job and can opt
   out of being auto-assigned to future occurrences. Cron now drops
@@ -28,29 +35,9 @@ Last updated: 2026-05-12
 
 ## 🟢 Ready-to-start tasks
 
-### 1. Instant Booking — worker accept/decline window
-**Goal:** After a homeowner pays the deposit via Instant Book, the worker has
-24h to confirm. If they decline or time out, the deposit is auto-refunded.
-
-**Pointers**
-- Endpoint: `app/api/instant-book/route.ts`
-- Firestore collection: `instantBookings`
-- Stripe refund pattern: search for `stripe.refunds.create` in
-  `app/api/payments/`
-- ⚠️ There is currently **no Stripe webhook** that promotes a booking from
-  `deposit_pending` → confirmed once the PaymentIntent succeeds. This needs
-  to be designed first (either add a webhook handler or have the worker
-  endpoint check PaymentIntent status before confirming).
-
-**Acceptance**
-- New `POST /api/instant-book/[id]/respond` (worker-only) accepts
-  `{action: 'accept' | 'decline'}`.
-- Decline triggers Stripe refund + status `declined`.
-- New cron `app/api/cron/instant-book-timeout/route.ts` (hourly via
-  `vercel.json`) refunds bookings older than 24h with status `pending`.
-- Worker dashboard surfaces pending instant bookings.
-
----
+### 1. ~~Instant Booking — worker accept/decline window~~ ✅ Shipped
+See "Recently shipped" above. The endpoint, Stripe webhook handling, hourly
+timeout cron, and worker dashboard surface are all live.
 
 ### 2. Mobile app — homeowner parity
 **Goal:** Bring homeowner flows into the Expo app (currently worker-only).
