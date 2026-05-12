@@ -4,44 +4,31 @@
 > pointers needed to start, and a clear acceptance criterion so any contributor
 > (human or agent) can pick one up cold.
 
-Last updated: 2026-05-11
+Last updated: 2026-05-12
 
 ---
 
 ## ✅ Recently shipped (context for what's next)
 
+- **Recurring jobs — worker-side view** (`/dashboard/worker/recurring`).
+  Workers see their recurring assignments grouped by parent job and can opt
+  out of being auto-assigned to future occurrences. Cron now drops
+  `assignedWorkerId` from cloned occurrences for opted-out workers.
 - Mover Mode `PUT /api/workers/[userId]/mover-mode` now persists full
   `MoverSettings` to the `moverSettings` Firestore collection (was previously
   just toggling a boolean and discarding the body).
 - Worker dashboard exposes a **Mover Mode (Relocation / FIFO)** quick link.
 - Admin dashboard has a new **NPS Insights** page at `/dashboard/admin/nps`
   surfacing promoters/passives/detractors and recent responses.
+- `firebase` and `firebase-admin` major upgrades (previously listed as
+  deferred in `KNOWN_ISSUES.md`) are now done. Outstanding `npm audit`
+  findings are all transitive and can't be fixed without downgrading `next`.
 
 ---
 
 ## 🟢 Ready-to-start tasks
 
-### 1. Recurring jobs — worker-side view
-**Goal:** Workers assigned to a recurring job should see all upcoming
-occurrences and be able to opt out of future ones.
-
-**Pointers**
-- Existing homeowner view: `app/dashboard/homeowner/recurring/page.tsx`
-- Cron generator: `app/api/cron/recurring-jobs/route.ts`
-- Job fields: `recurring`, `recurrenceInterval`, `nextRecurrenceAt`,
-  `parentJobId` in `types/index.ts`
-
-**Acceptance**
-- New page `app/dashboard/worker/recurring/page.tsx` lists jobs where
-  `assignedWorkerId == user.uid && recurring == true`, grouped by
-  `parentJobId`.
-- Worker can request to opt out of future occurrences (write to a new
-  `recurringOptOuts` subcollection or Job field; cron must respect it).
-- Quick link added to worker dashboard.
-
----
-
-### 2. Instant Booking — worker accept/decline window
+### 1. Instant Booking — worker accept/decline window
 **Goal:** After a homeowner pays the deposit via Instant Book, the worker has
 24h to confirm. If they decline or time out, the deposit is auto-refunded.
 
@@ -50,6 +37,10 @@ occurrences and be able to opt out of future ones.
 - Firestore collection: `instantBookings`
 - Stripe refund pattern: search for `stripe.refunds.create` in
   `app/api/payments/`
+- ⚠️ There is currently **no Stripe webhook** that promotes a booking from
+  `deposit_pending` → confirmed once the PaymentIntent succeeds. This needs
+  to be designed first (either add a webhook handler or have the worker
+  endpoint check PaymentIntent status before confirming).
 
 **Acceptance**
 - New `POST /api/instant-book/[id]/respond` (worker-only) accepts
@@ -61,7 +52,7 @@ occurrences and be able to opt out of future ones.
 
 ---
 
-### 3. Mobile app — homeowner parity
+### 2. Mobile app — homeowner parity
 **Goal:** Bring homeowner flows into the Expo app (currently worker-only).
 
 **Pointers**
@@ -76,7 +67,7 @@ occurrences and be able to opt out of future ones.
 
 ---
 
-### 4. Sentry / error monitoring
+### 3. Sentry / error monitoring
 **Goal:** Capture client + server errors with stack traces and release tags.
 
 **Pointers**
@@ -91,6 +82,30 @@ occurrences and be able to opt out of future ones.
 - Errors thrown in API routes and React components reach Sentry in dev.
 - Source maps uploaded on Vercel build.
 - PII scrubbing enabled (`beforeSend` strips `email`, `name`, headers).
+
+---
+
+### 4. Auth middleware hardening
+**Goal:** Stop trusting a self-asserted `x-user-id` cookie. Today
+`POST /api/auth/session` accepts any UID-shaped string and writes the cookie
+that `middleware.ts` checks — anyone can curl this endpoint and bypass the
+`/dashboard` and `/admin` redirect guard.
+
+**Pointers**
+- `middleware.ts` — currently only checks cookie presence.
+- `app/api/auth/session/route.ts` — accepts `{uid}` with no proof.
+- `components/providers/AuthProvider.tsx` — sends `uid` after sign-in.
+- Edge middleware can't use `firebase-admin`; pick one of:
+  - **A. Firebase session cookies** (`adminAuth.createSessionCookie` +
+    `verifySessionCookie`) — switch middleware to the Node runtime.
+  - **B. HMAC-signed cookie** like `lib/email/unsubscribeToken.ts` — server
+    verifies the Firebase ID token via `adminAuth.verifyIdToken`, then
+    signs `{uid, exp}`. Middleware verifies HMAC via Web Crypto.
+
+**Acceptance**
+- POSTing arbitrary JSON to `/api/auth/session` no longer grants a session.
+- Middleware rejects tampered/expired cookies.
+- Existing sign-in / sign-out flows still work end-to-end.
 
 ---
 
@@ -126,25 +141,7 @@ sign-in, sign-out, and role switch.
 
 ---
 
-### 7. Resolve deferred dependency vulnerabilities
-**Goal:** Clear the `firebase-admin` v10 / `firebase` v12.13.0 transitive
-issues called out in `KNOWN_ISSUES.md`.
-
-**Pointers**
-- `KNOWN_ISSUES.md` lines 11–18
-- `package.json` — current versions
-- Dependabot already opens PRs (`.github/dependabot.yml`)
-
-**Acceptance**
-- Either: upgrade forward to a release where `@tootallnate/once` and
-  `undici` advisories are resolved, **or** migrate the small surface that
-  uses the broken APIs and downgrade safely.
-- `npm audit --omit=dev --audit-level=high` exits clean (matches the gate
-  in `.github/workflows/security-audit.yml`).
-
----
-
-### 8. Lighthouse audit pass on SEO landing pages
+### 7. Lighthouse audit pass on SEO landing pages
 **Goal:** Hit ≥90 Performance and ≥95 SEO on the highest-traffic
 service×city pages.
 
