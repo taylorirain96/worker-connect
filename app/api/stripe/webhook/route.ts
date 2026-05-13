@@ -194,6 +194,38 @@ export async function POST(req: NextRequest) {
           }
         }
 
+        // ── Instant Book deposit succeeded ────────────────────────────────
+        if (type === 'instant_book_deposit') {
+          const snapshot = await adminDb
+            .collection('instantBookings')
+            .where('stripePaymentIntentId', '==', pi.id)
+            .limit(1)
+            .get()
+
+          if (!snapshot.empty) {
+            const bookingDoc = snapshot.docs[0]
+            const booking = bookingDoc.data() as { status?: string; workerId?: string; packageTitle?: string }
+            if (booking.status === 'deposit_pending') {
+              const nowIso = new Date().toISOString()
+              const deadline = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+              await bookingDoc.ref.update({
+                status: 'awaiting_worker_response',
+                respondDeadlineAt: deadline,
+                updatedAt: nowIso,
+              })
+              if (booking.workerId) {
+                await sendNotification({
+                  userId: booking.workerId,
+                  type: 'new_job',
+                  title: 'New Instant Booking — 24 hours to respond',
+                  message: `A homeowner paid the deposit for "${booking.packageTitle ?? 'your package'}". Accept or decline within 24 hours.`,
+                  metadata: { bookingId: bookingDoc.id, stripePaymentIntentId: pi.id },
+                })
+              }
+            }
+          }
+        }
+
         // Send invoice receipt email (non-blocking) if we have the user's email in metadata
         const userEmail = pi.metadata?.userEmail
         if (userEmail) {
@@ -267,6 +299,20 @@ export async function POST(req: NextRequest) {
           if (escrow && adminDb) {
             await adminDb.collection('escrowPayments').doc(escrow.id).update({
               paymentError: pi.last_payment_error?.message ?? 'Payment failed',
+              updatedAt: new Date().toISOString(),
+            })
+          }
+        }
+
+        if (type === 'instant_book_deposit') {
+          const snapshot = await adminDb
+            .collection('instantBookings')
+            .where('stripePaymentIntentId', '==', pi.id)
+            .limit(1)
+            .get()
+          if (!snapshot.empty) {
+            await snapshot.docs[0].ref.update({
+              status: 'cancelled',
               updatedAt: new Date().toISOString(),
             })
           }
