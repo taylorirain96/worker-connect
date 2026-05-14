@@ -27,6 +27,12 @@ Last updated: 2026-05-12
 - Worker dashboard exposes a **Mover Mode (Relocation / FIFO)** quick link.
 - Admin dashboard has a new **NPS Insights** page at `/dashboard/admin/nps`
   surfacing promoters/passives/detractors and recent responses.
+- **Auth middleware hardening** — middleware no longer trusts a bare
+  `x-user-id` cookie. `POST /api/auth/session` now issues a single
+  HMAC-signed `auth-session` cookie (`{uid, role, exp}`) using
+  `AUTH_SESSION_SECRET`, and `middleware.ts` verifies the signature and
+  expiry via Web Crypto on the Edge runtime before allowing access to
+  `/dashboard` and `/admin`.
 - `firebase` and `firebase-admin` major upgrades (previously listed as
   deferred in `KNOWN_ISSUES.md`) are now done. Outstanding `npm audit`
   findings are all transitive and can't be fixed without downgrading `next`.
@@ -72,27 +78,12 @@ timeout cron, and worker dashboard surface are all live.
 
 ---
 
-### 4. Auth middleware hardening
-**Goal:** Stop trusting a self-asserted `x-user-id` cookie. Today
-`POST /api/auth/session` accepts any UID-shaped string and writes the cookie
-that `middleware.ts` checks — anyone can curl this endpoint and bypass the
-`/dashboard` and `/admin` redirect guard.
-
-**Pointers**
-- `middleware.ts` — currently only checks cookie presence.
-- `app/api/auth/session/route.ts` — accepts `{uid}` with no proof.
-- `components/providers/AuthProvider.tsx` — sends `uid` after sign-in.
-- Edge middleware can't use `firebase-admin`; pick one of:
-  - **A. Firebase session cookies** (`adminAuth.createSessionCookie` +
-    `verifySessionCookie`) — switch middleware to the Node runtime.
-  - **B. HMAC-signed cookie** like `lib/email/unsubscribeToken.ts` — server
-    verifies the Firebase ID token via `adminAuth.verifyIdToken`, then
-    signs `{uid, exp}`. Middleware verifies HMAC via Web Crypto.
-
-**Acceptance**
-- POSTing arbitrary JSON to `/api/auth/session` no longer grants a session.
-- Middleware rejects tampered/expired cookies.
-- Existing sign-in / sign-out flows still work end-to-end.
+### 4. ~~Auth middleware hardening~~ ✅ Shipped
+See "Recently shipped" above. `POST /api/auth/session` already verified the
+Firebase ID token, but the middleware previously only checked cookie
+*presence*. It now verifies an HMAC-signed `auth-session` cookie containing
+`{uid, role, exp}`, signed with `AUTH_SESSION_SECRET`, so a tampered or
+forged cookie no longer satisfies the `/dashboard` and `/admin` guards.
 
 ---
 
