@@ -11,7 +11,7 @@
  * `crypto` module so it can be imported from `middleware.ts`, which runs on
  * the Vercel Edge runtime.
  */
-import type { AllowedRole } from './roles'
+import { isAllowedRole, type AllowedRole } from './roles'
 
 const DEFAULT_TTL_SECONDS = 60 * 60 * 24 * 5 // 5 days
 
@@ -22,10 +22,7 @@ export interface SessionPayload {
 }
 
 function getSecret(): string {
-  const secret =
-    process.env.AUTH_SESSION_SECRET ??
-    process.env.NEXTAUTH_SECRET ??
-    process.env.UNSUBSCRIBE_SECRET
+  const secret = process.env.AUTH_SESSION_SECRET
   if (!secret) {
     if (process.env.NODE_ENV === 'production') {
       throw new Error(
@@ -153,8 +150,17 @@ export async function verifySessionToken(token: string | undefined | null): Prom
   if (typeof exp !== 'number' || !Number.isFinite(exp)) return null
   if (exp * 1000 < Date.now()) return null
 
-  const safeRole: AllowedRole | null =
-    role === null || role === undefined ? null : (role as AllowedRole)
+  // Reject any role value that isn't on the explicit allow-list. A tampered
+  // (but correctly-signed-by-a-leaked-secret) token must not be able to
+  // smuggle in a value like 'superadmin' that downstream callers might trust.
+  let safeRole: AllowedRole | null
+  if (role === null || role === undefined) {
+    safeRole = null
+  } else if (isAllowedRole(role)) {
+    safeRole = role
+  } else {
+    return null
+  }
 
   return { uid, role: safeRole, exp }
 }
