@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server'
 import { adminAuth, adminDb } from '@/lib/firebase-admin'
+import { isAllowedRole, type AllowedRole } from '@/lib/auth/roles'
+import { createSessionToken } from '@/lib/auth/sessionToken'
 
 export const runtime = 'nodejs'
 
-const UID_COOKIE = 'x-user-id'
-const ROLE_COOKIE = 'x-user-role'
+const SESSION_COOKIE = 'auth-session'
 const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 5 // 5 days — matches typical Firebase session length
 const FIREBASE_UID_PATTERN = /^[A-Za-z0-9_-]{6,128}$/
 
@@ -15,28 +16,9 @@ const baseCookieOptions = {
   path: '/',
 }
 
-type AllowedRole =
-  | 'worker'
-  | 'employer'
-  | 'admin'
-  | 'homeowner'
-  | 'tradie'
-  | 'jobseeker'
-  | 'property_manager'
-
-const ALLOWED_ROLES: AllowedRole[] = [
-  'worker',
-  'employer',
-  'admin',
-  'homeowner',
-  'tradie',
-  'jobseeker',
-  'property_manager',
-]
-
-function isAllowedRole(value: unknown): value is AllowedRole {
-  return typeof value === 'string' && (ALLOWED_ROLES as string[]).includes(value)
-}
+// Legacy cookie names — cleared on sign-in/out so older clients can't keep
+// using an unsigned uid cookie to satisfy the middleware guard.
+const LEGACY_COOKIES = ['x-user-id', 'x-user-role'] as const
 
 async function lookupRole(uid: string): Promise<AllowedRole | null> {
   try {
@@ -78,25 +60,31 @@ export async function POST(request: Request) {
 
   const role = await lookupRole(uid)
 
+  let token: string
+  try {
+    token = await createSessionToken(uid, role, COOKIE_MAX_AGE_SECONDS)
+  } catch (error) {
+    console.error('Auth session token signing failed:', error)
+    return NextResponse.json({ error: 'Server misconfiguration' }, { status: 500 })
+  }
+
   const response = NextResponse.json({ success: true, role })
-  response.cookies.set(UID_COOKIE, uid, {
+  response.cookies.set(SESSION_COOKIE, token, {
     ...baseCookieOptions,
     maxAge: COOKIE_MAX_AGE_SECONDS,
   })
-  if (role) {
-    response.cookies.set(ROLE_COOKIE, role, {
-      ...baseCookieOptions,
-      maxAge: COOKIE_MAX_AGE_SECONDS,
-    })
-  } else {
-    response.cookies.delete(ROLE_COOKIE)
+  // Best-effort cleanup of the previous unsigned cookies.
+  for (const name of LEGACY_COOKIES) {
+    response.cookies.set(name, '', { ...baseCookieOptions, maxAge: 0 })
   }
   return response
 }
 
 export async function DELETE() {
   const response = NextResponse.json({ success: true })
-  response.cookies.set(UID_COOKIE, '', { ...baseCookieOptions, maxAge: 0 })
-  response.cookies.set(ROLE_COOKIE, '', { ...baseCookieOptions, maxAge: 0 })
+  response.cookies.set(SESSION_COOKIE, '', { ...baseCookieOptions, maxAge: 0 })
+  for (const name of LEGACY_COOKIES) {
+    response.cookies.set(name, '', { ...baseCookieOptions, maxAge: 0 })
+  }
   return response
 }
