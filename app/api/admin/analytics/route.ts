@@ -96,22 +96,26 @@ function last12Months(): string[] {
   return Array.from({ length: 12 }, (_, i) => MONTHS[(idx - 11 + i + 12) % 12])
 }
 
+function monthName(date: Date): string {
+  return MONTHS[date.getMonth()] ?? MONTHS[0]
+}
+
 function monthLabel(value: unknown): string | null {
   if (typeof value === 'string') {
     const parsed = new Date(value)
     if (!Number.isNaN(parsed.getTime())) {
-      return parsed.toLocaleDateString('en-NZ', { month: 'short' })
+      return monthName(parsed)
     }
   }
   if (value instanceof Date && !Number.isNaN(value.getTime())) {
-    return value.toLocaleDateString('en-NZ', { month: 'short' })
+    return monthName(value)
   }
   if (typeof value === 'object' && value !== null) {
     const maybeToDate = (value as { toDate?: () => Date }).toDate
     if (typeof maybeToDate === 'function') {
       const parsed = maybeToDate()
       if (!Number.isNaN(parsed.getTime())) {
-        return parsed.toLocaleDateString('en-NZ', { month: 'short' })
+        return monthName(parsed)
       }
     }
   }
@@ -139,9 +143,11 @@ async function buildDashboardData(): Promise<DashboardResult> {
   let avgJobValue = 0
   let avgTimeToHire = 0
   let totalRevenue = 0
+  let totalJobs = 0
   let completedJobs = 0
   let disputeCount = 0
   let resolvedDisputeCount = 0
+  let hasLiveAdminAnalytics = false
 
   const dailySignups: { date: string; homeowners: number; workers: number }[] = []
   const dailyJobs: { date: string; jobs: number }[] = []
@@ -179,6 +185,7 @@ async function buildDashboardData(): Promise<DashboardResult> {
     })
 
     const jobsSnap = await adminDb.collection('jobs').get()
+    totalJobs = jobsSnap.size
 
     let totalBudget = 0
     let hireTimeTotal = 0
@@ -294,6 +301,7 @@ async function buildDashboardData(): Promise<DashboardResult> {
         category: Array.isArray(d.skills) && d.skills.length > 0 ? String(d.skills[0]) : 'General',
       })
     })
+    hasLiveAdminAnalytics = true
 
     // Recent activity
     const recentJobs = await adminDb.collection('jobs').orderBy('createdAt', 'desc').limit(10).get()
@@ -434,8 +442,8 @@ async function buildDashboardData(): Promise<DashboardResult> {
     revenue: dailyRevenue[index]?.revenue ?? 0,
     newUsers: (dailySignups[index]?.homeowners ?? 0) + (dailySignups[index]?.workers ?? 0),
   }))
-  const jobCompletionRate = totalJobsThisMonth + totalJobsLastMonth > 0
-    ? parseFloat(((completedJobs / Math.max(totalJobsThisMonth + totalJobsLastMonth, 1)) * 100).toFixed(1))
+  const jobCompletionRate = totalJobs > 0
+    ? parseFloat(((completedJobs / totalJobs) * 100).toFixed(1))
     : 0
   const disputeResolutionRate = disputeCount > 0
     ? parseFloat(((resolvedDisputeCount / disputeCount) * 100).toFixed(1))
@@ -461,7 +469,7 @@ async function buildDashboardData(): Promise<DashboardResult> {
     recentActivity,
     topWorkers,
     topCities,
-    adminAnalytics: adminTopWorkers.length > 0 || monthlyRevenueChart.some((entry) => entry.revenue > 0 || entry.jobs > 0)
+    adminAnalytics: hasLiveAdminAnalytics
       ? {
           totalRevenue,
           monthlyRevenue: revenueThisMonth,
@@ -469,7 +477,7 @@ async function buildDashboardData(): Promise<DashboardResult> {
           totalUsers,
           newUsersThisMonth,
           userGrowthRate: userGrowthPct,
-          totalJobs: totalJobsThisMonth + totalJobsLastMonth,
+          totalJobs,
           completedJobs,
           activeJobs,
           jobCompletionRate,
