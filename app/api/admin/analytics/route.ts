@@ -53,6 +53,73 @@ interface DashboardResult {
   recentActivity: { id: string; type: string; userName: string; description: string; createdAt: string }[]
   topWorkers: { rank: number; name: string; jobsCompleted: number; earnings: number; rating: number }[]
   topCities: { rank: number; city: string; jobsPosted: number }[]
+  adminAnalytics?: {
+    totalRevenue: number
+    monthlyRevenue: number
+    revenueGrowth: number
+    totalUsers: number
+    newUsersThisMonth: number
+    userGrowthRate: number
+    totalJobs: number
+    completedJobs: number
+    activeJobs: number
+    jobCompletionRate: number
+    disputeCount: number
+    disputeResolutionRate: number
+    topWorkers: {
+      rank: number
+      workerId: string
+      name: string
+      avatar?: string
+      jobsCompleted: number
+      totalEarnings: number
+      rating: number
+      category: string
+    }[]
+    monthlyRevenueChart: { month: string; revenue: number; jobs: number }[]
+    categoryStats: { category: string; count: number; revenue: number; color: string }[]
+    dailyStats: { date: string; jobs: number; revenue: number; newUsers: number }[]
+  }
+}
+
+type AdminAnalyticsTopWorker = NonNullable<DashboardResult['adminAnalytics']>['topWorkers'][number]
+
+const CATEGORY_COLORS = [
+  '#6366f1', '#22d3ee', '#f59e0b', '#10b981', '#ef4444',
+  '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#3b82f6', '#84cc16',
+]
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+function last12Months(): string[] {
+  const idx = new Date().getMonth()
+  return Array.from({ length: 12 }, (_, i) => MONTHS[(idx - 11 + i + 12) % 12])
+}
+
+function monthName(date: Date): string {
+  return MONTHS[date.getMonth()] ?? MONTHS[0]
+}
+
+function monthLabel(value: unknown): string | null {
+  if (typeof value === 'string') {
+    const parsed = new Date(value)
+    if (!Number.isNaN(parsed.getTime())) {
+      return monthName(parsed)
+    }
+  }
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return monthName(value)
+  }
+  if (typeof value === 'object' && value !== null) {
+    const maybeToDate = (value as { toDate?: () => Date }).toDate
+    if (typeof maybeToDate === 'function') {
+      const parsed = maybeToDate()
+      if (!Number.isNaN(parsed.getTime())) {
+        return monthName(parsed)
+      }
+    }
+  }
+  return null
 }
 
 async function buildDashboardData(): Promise<DashboardResult> {
@@ -75,6 +142,12 @@ async function buildDashboardData(): Promise<DashboardResult> {
   let activeJobs = 0
   let avgJobValue = 0
   let avgTimeToHire = 0
+  let totalRevenue = 0
+  let totalJobs = 0
+  let completedJobs = 0
+  let disputeCount = 0
+  let resolvedDisputeCount = 0
+  let hasLiveAdminAnalytics = false
 
   const dailySignups: { date: string; homeowners: number; workers: number }[] = []
   const dailyJobs: { date: string; jobs: number }[] = []
@@ -88,6 +161,11 @@ async function buildDashboardData(): Promise<DashboardResult> {
     rank: number; name: string; jobsCompleted: number; earnings: number; rating: number
   }[] = []
   const topCities: { rank: number; city: string; jobsPosted: number }[] = []
+  const adminTopWorkers: AdminAnalyticsTopWorker[] = []
+  const monthlyRevenueMap = new Map<string, { revenue: number; jobs: number }>()
+  const categoryRevenue: Record<string, number> = {}
+  const categoryCounts: Record<string, number> = {}
+  const cityCounts: Record<string, number> = {}
 
   try {
     // Real Firestore aggregation
@@ -107,9 +185,8 @@ async function buildDashboardData(): Promise<DashboardResult> {
     })
 
     const jobsSnap = await adminDb.collection('jobs').get()
+    totalJobs = jobsSnap.size
 
-    const cityCounts: Record<string, number> = {}
-    const categoryCounts: Record<string, number> = {}
     let totalBudget = 0
     let hireTimeTotal = 0
     let hireTimeCount = 0
@@ -119,11 +196,19 @@ async function buildDashboardData(): Promise<DashboardResult> {
       if (d.createdAt >= monthStart) totalJobsThisMonth++
       else if (d.createdAt >= lastMonthStart && d.createdAt < monthStart) totalJobsLastMonth++
       if (d.status === 'open' || d.status === 'in_progress') activeJobs++
+      if (d.status === 'completed') completedJobs++
       if (d.budget) totalBudget += d.budget
       if (d.category) categoryCounts[d.category] = (categoryCounts[d.category] ?? 0) + 1
+      if (d.category) categoryRevenue[d.category] = (categoryRevenue[d.category] ?? 0) + (d.budget ?? 0)
       if (d.location) {
         const city = (d.location as string).split(',')[0].trim()
         cityCounts[city] = (cityCounts[city] ?? 0) + 1
+      }
+      const jobMonth = monthLabel(d.createdAt)
+      if (jobMonth) {
+        const current = monthlyRevenueMap.get(jobMonth) ?? { revenue: 0, jobs: 0 }
+        current.jobs += 1
+        monthlyRevenueMap.set(jobMonth, current)
       }
       if (d.assignedAt && d.createdAt) {
         const diff = (new Date(d.assignedAt).getTime() - new Date(d.createdAt).getTime()) / 3600000
@@ -140,10 +225,28 @@ async function buildDashboardData(): Promise<DashboardResult> {
       paymentsSnap.forEach((doc) => {
         const d = doc.data()
         const amt = (d.commission ?? d.platformFee ?? 0) as number
+        totalRevenue += amt
         if (d.createdAt >= monthStart) revenueThisMonth += amt
         else if (d.createdAt >= lastMonthStart && d.createdAt < monthStart) revenueLastMonth += amt
+        const paymentMonth = monthLabel(d.createdAt)
+        if (paymentMonth) {
+          const current = monthlyRevenueMap.get(paymentMonth) ?? { revenue: 0, jobs: 0 }
+          current.revenue += amt
+          monthlyRevenueMap.set(paymentMonth, current)
+        }
       })
     } catch { /* payments not available */ }
+
+    try {
+      const disputesSnap = await adminDb.collection('disputes').get()
+      disputeCount = disputesSnap.size
+      disputesSnap.forEach((doc) => {
+        const status = String(doc.data().status ?? '')
+        if (status === 'resolved' || status === 'closed') {
+          resolvedDisputeCount++
+        }
+      })
+    } catch { /* disputes not available */ }
 
     jobsByCategory.push(
       ...Object.entries(categoryCounts)
@@ -187,7 +290,18 @@ async function buildDashboardData(): Promise<DashboardResult> {
         earnings: d.totalEarnings ?? 0,
         rating: d.rating ?? 0,
       })
+      adminTopWorkers.push({
+        rank: i + 1,
+        workerId: doc.id,
+        name: d.displayName ?? 'Worker',
+        avatar: d.photoURL,
+        jobsCompleted: d.completedJobs ?? 0,
+        totalEarnings: d.totalEarnings ?? 0,
+        rating: d.rating ?? 0,
+        category: Array.isArray(d.skills) && d.skills.length > 0 ? String(d.skills[0]) : 'General',
+      })
     })
+    hasLiveAdminAnalytics = true
 
     // Recent activity
     const recentJobs = await adminDb.collection('jobs').orderBy('createdAt', 'desc').limit(10).get()
@@ -309,6 +423,31 @@ async function buildDashboardData(): Promise<DashboardResult> {
   const revenueGrowthPct = revenueLastMonth > 0
     ? parseFloat((((revenueThisMonth - revenueLastMonth) / revenueLastMonth) * 100).toFixed(1))
     : 0
+  const monthlyRevenueChart = last12Months().map((month) => {
+    const value = monthlyRevenueMap.get(month) ?? { revenue: 0, jobs: 0 }
+    return { month, revenue: value.revenue, jobs: value.jobs }
+  })
+  const categoryStats = Object.entries(categoryCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([category, count], index) => ({
+      category: category.charAt(0).toUpperCase() + category.slice(1),
+      count,
+      revenue: categoryRevenue[category] ?? 0,
+      color: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
+    }))
+  const dailyStats = dailyJobs.map((entry, index) => ({
+    date: entry.date,
+    jobs: entry.jobs,
+    revenue: dailyRevenue[index]?.revenue ?? 0,
+    newUsers: (dailySignups[index]?.homeowners ?? 0) + (dailySignups[index]?.workers ?? 0),
+  }))
+  const jobCompletionRate = totalJobs > 0
+    ? parseFloat(((completedJobs / totalJobs) * 100).toFixed(1))
+    : 0
+  const disputeResolutionRate = disputeCount > 0
+    ? parseFloat(((resolvedDisputeCount / disputeCount) * 100).toFixed(1))
+    : 0
 
   const result = {
     metrics: {
@@ -330,6 +469,26 @@ async function buildDashboardData(): Promise<DashboardResult> {
     recentActivity,
     topWorkers,
     topCities,
+    adminAnalytics: hasLiveAdminAnalytics
+      ? {
+          totalRevenue,
+          monthlyRevenue: revenueThisMonth,
+          revenueGrowth: revenueGrowthPct,
+          totalUsers,
+          newUsersThisMonth,
+          userGrowthRate: userGrowthPct,
+          totalJobs,
+          completedJobs,
+          activeJobs,
+          jobCompletionRate,
+          disputeCount,
+          disputeResolutionRate,
+          topWorkers: adminTopWorkers,
+          monthlyRevenueChart,
+          categoryStats,
+          dailyStats,
+        }
+      : undefined,
   }
 
   setCached('dashboard', result)
