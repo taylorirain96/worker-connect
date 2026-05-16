@@ -2355,8 +2355,22 @@ export interface InstantBooking {
   requestedDate: string
   requestedTime: string
   notes?: string
-  status: 'deposit_pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled'
+  status:
+    | 'deposit_pending'
+    | 'awaiting_worker_response'
+    | 'confirmed'
+    | 'declined'
+    | 'refunded'
+    | 'in_progress'
+    | 'completed'
+    | 'cancelled'
   stripePaymentIntentId?: string
+  /** ISO timestamp by which the worker must accept/decline. Set when the deposit succeeds. */
+  respondDeadlineAt?: string
+  /** ISO timestamp the worker accepted/declined (or the timeout cron fired). */
+  decisionAt?: string
+  /** Stripe refund id, set when the deposit is refunded (decline or timeout). */
+  refundId?: string
   createdAt: string
   updatedAt: string
 }

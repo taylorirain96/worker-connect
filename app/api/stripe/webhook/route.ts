@@ -194,6 +194,46 @@ export async function POST(req: NextRequest) {
           }
         }
 
+        // ── Instant Book deposit succeeded → start worker accept/decline window ─
+        if (type === 'instant_book_deposit') {
+          const snap = await adminDb
+            .collection('instantBookings')
+            .where('stripePaymentIntentId', '==', pi.id)
+            .limit(1)
+            .get()
+
+          if (!snap.empty) {
+            const bookingDoc = snap.docs[0]
+            const booking = bookingDoc.data() as {
+              status?: string
+              workerId?: string
+              packageTitle?: string
+            }
+
+            // Only promote from deposit_pending — avoid replays.
+            if (booking.status === 'deposit_pending') {
+              const nowIso = new Date().toISOString()
+              const deadline = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+              await bookingDoc.ref.update({
+                status: 'awaiting_worker_response',
+                respondDeadlineAt: deadline,
+                updatedAt: nowIso,
+              })
+
+              if (booking.workerId) {
+                await sendNotification({
+                  userId: booking.workerId,
+                  type: 'new_job',
+                  title: 'New instant booking — respond within 24h',
+                  message: `A homeowner paid a deposit for "${booking.packageTitle ?? 'your service'}". Accept or decline within 24 hours or the deposit will be refunded.`,
+                  actionUrl: '/dashboard/worker/instant-bookings',
+                  metadata: { bookingId: bookingDoc.id, stripePaymentIntentId: pi.id },
+                })
+              }
+            }
+          }
+        }
+
         // Send invoice receipt email (non-blocking) if we have the user's email in metadata
         const userEmail = pi.metadata?.userEmail
         if (userEmail) {

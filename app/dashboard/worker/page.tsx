@@ -12,7 +12,7 @@ import Link from 'next/link'
 import {
   Briefcase, DollarSign, Star, Clock, TrendingUp, BarChart2,
   CheckCircle, AlertCircle, Search, Settings, FileText, MessageSquare, Send, Sparkles, ShieldCheck,
-  Video, HardHat, Shield, Package, Award, Calendar, CalendarCheck, Plane, RefreshCw,
+  Video, HardHat, Shield, Package, Award, Calendar, CalendarCheck, Plane, RefreshCw, Zap,
 } from 'lucide-react'
 import { formatCurrency, STATUS_LABELS, formatRelativeDate } from '@/lib/utils'
 import { collection, query, where, orderBy, getDocs, type DocumentData } from 'firebase/firestore'
@@ -794,6 +794,17 @@ export default function WorkerDashboardPage() {
                   <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                     <CalendarCheck className="h-4 w-4 text-indigo-500" />
                     Booking Requests
+                  </div>
+                  <span className="text-xs text-primary-600">→</span>
+                </div>
+              </Link>
+
+              {/* Instant Bookings link */}
+              <Link href="/dashboard/worker/instant-bookings">
+                <div className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
+                  <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <Zap className="h-4 w-4 text-amber-500" />
+                    Instant Bookings
                   </div>
                   <span className="text-xs text-primary-600">→</span>
                 </div>

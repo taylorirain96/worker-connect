@@ -4,12 +4,19 @@
 > pointers needed to start, and a clear acceptance criterion so any contributor
 > (human or agent) can pick one up cold.
 
-Last updated: 2026-05-12
+Last updated: 2026-05-16
 
 ---
 
 ## ✅ Recently shipped (context for what's next)
 
+- **Instant Booking — worker accept/decline window**. Stripe webhook now
+  promotes `deposit_pending` → `awaiting_worker_response` with a 24h
+  `respondDeadlineAt`. `POST /api/instant-book/[id]/respond` lets the assigned
+  worker accept (→ `confirmed`) or decline (→ `declined`, deposit refunded).
+  Hourly cron `/api/cron/instant-book-timeout` refunds expired bookings.
+  Worker dashboard surfaces pending bookings at
+  `/dashboard/worker/instant-bookings`.
 - **Recurring jobs — worker-side view** (`/dashboard/worker/recurring`).
   Workers see their recurring assignments grouped by parent job and can opt
   out of being auto-assigned to future occurrences. Cron now drops
@@ -28,31 +35,7 @@ Last updated: 2026-05-12
 
 ## 🟢 Ready-to-start tasks
 
-### 1. Instant Booking — worker accept/decline window
-**Goal:** After a homeowner pays the deposit via Instant Book, the worker has
-24h to confirm. If they decline or time out, the deposit is auto-refunded.
-
-**Pointers**
-- Endpoint: `app/api/instant-book/route.ts`
-- Firestore collection: `instantBookings`
-- Stripe refund pattern: search for `stripe.refunds.create` in
-  `app/api/payments/`
-- ⚠️ There is currently **no Stripe webhook** that promotes a booking from
-  `deposit_pending` → confirmed once the PaymentIntent succeeds. This needs
-  to be designed first (either add a webhook handler or have the worker
-  endpoint check PaymentIntent status before confirming).
-
-**Acceptance**
-- New `POST /api/instant-book/[id]/respond` (worker-only) accepts
-  `{action: 'accept' | 'decline'}`.
-- Decline triggers Stripe refund + status `declined`.
-- New cron `app/api/cron/instant-book-timeout/route.ts` (hourly via
-  `vercel.json`) refunds bookings older than 24h with status `pending`.
-- Worker dashboard surfaces pending instant bookings.
-
----
-
-### 2. Mobile app — homeowner parity
+### 1. Mobile app — homeowner parity
 **Goal:** Bring homeowner flows into the Expo app (currently worker-only).
 
 **Pointers**
@@ -67,7 +50,7 @@ Last updated: 2026-05-12
 
 ---
 
-### 3. Sentry / error monitoring
+### 2. Sentry / error monitoring
 **Goal:** Capture client + server errors with stack traces and release tags.
 
 **Pointers**
@@ -85,7 +68,7 @@ Last updated: 2026-05-12
 
 ---
 
-### 4. Auth middleware hardening
+### 3. Auth middleware hardening
 **Goal:** Stop trusting a self-asserted `x-user-id` cookie. Today
 `POST /api/auth/session` accepts any UID-shaped string and writes the cookie
 that `middleware.ts` checks — anyone can curl this endpoint and bypass the
@@ -109,7 +92,7 @@ that `middleware.ts` checks — anyone can curl this endpoint and bypass the
 
 ---
 
-### 5. Playwright E2E for the highest-revenue path
+### 4. Playwright E2E for the highest-revenue path
 **Goal:** Lock in the post-job → quote → accept → escrow → release → review
 flow with an automated end-to-end test.
 
@@ -125,7 +108,7 @@ flow with an automated end-to-end test.
 
 ---
 
-### 6. Auth middleware E2E coverage
+### 5. Auth middleware E2E coverage
 **Goal:** Prove the `x-user-id` cookie sync round-trip is correct on
 sign-in, sign-out, and role switch.
 
@@ -141,7 +124,7 @@ sign-in, sign-out, and role switch.
 
 ---
 
-### 7. Lighthouse audit pass on SEO landing pages
+### 6. Lighthouse audit pass on SEO landing pages
 **Goal:** Hit ≥90 Performance and ≥95 SEO on the highest-traffic
 service×city pages.
 
