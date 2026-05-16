@@ -82,6 +82,7 @@ export async function GET(request: Request) {
             type: 'general',
             title: 'Instant booking expired',
             message: `You did not respond to a booking for "${booking.packageTitle ?? 'a service'}" within 24h. The homeowner has been refunded.`,
+            actionUrl: '/dashboard/worker/instant-bookings',
             metadata: { bookingId: doc.id },
           })
         }

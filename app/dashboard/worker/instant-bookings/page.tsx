@@ -50,7 +50,7 @@ export default function WorkerInstantBookingsPage() {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      router.replace('/auth/signin')
+      router.replace('/auth/login')
     }
   }, [authLoading, user, router])
 
