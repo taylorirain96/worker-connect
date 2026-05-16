@@ -799,23 +799,23 @@ export default function WorkerDashboardPage() {
                 </div>
               </Link>
 
-              {/* Instant Bookings link */}
-              <Link href="/dashboard/worker/instant-bookings">
-                <div className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
-                  <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                    <Zap className="h-4 w-4 text-amber-500" />
-                    Instant Bookings
-                  </div>
-                  <span className="text-xs text-primary-600">→</span>
-                </div>
-              </Link>
-
               {/* Recurring work link */}
               <Link href="/dashboard/worker/recurring">
                 <div className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
                   <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                     <RefreshCw className="h-4 w-4 text-indigo-500" />
                     My Recurring Work
+                  </div>
+                  <span className="text-xs text-primary-600">→</span>
+                </div>
+              </Link>
+
+              {/* Instant Bookings link */}
+              <Link href="/dashboard/worker/instant-bookings">
+                <div className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
+                  <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <Zap className="h-4 w-4 text-amber-500" />
+                    Instant Bookings
                   </div>
                   <span className="text-xs text-primary-600">→</span>
                 </div>

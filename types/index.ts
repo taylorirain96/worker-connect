@@ -2360,17 +2360,25 @@ export interface InstantBooking {
     | 'awaiting_worker_response'
     | 'confirmed'
     | 'declined'
-    | 'refunded'
+    | 'expired'
     | 'in_progress'
     | 'completed'
     | 'cancelled'
   stripePaymentIntentId?: string
-  /** ISO timestamp by which the worker must accept/decline. Set when the deposit succeeds. */
+  /** ISO timestamp by which the worker must accept/decline before auto-refund. */
   respondDeadlineAt?: string
-  /** ISO timestamp the worker accepted/declined (or the timeout cron fired). */
-  decisionAt?: string
-  /** Stripe refund id, set when the deposit is refunded (decline or timeout). */
+  /** ISO timestamp the worker accepted or declined. */
+  respondedAt?: string
+  /** Stripe refund id if the deposit was refunded (decline or timeout). */
   refundId?: string
+  /** ISO timestamp the deposit was refunded. */
+  refundedAt?: string
+  /** Number of failed refund attempts by the timeout cron. */
+  refundAttempts?: number
+  /** Last refund error message, if any. Set by the timeout cron. */
+  lastRefundError?: string
+  /** True if the timeout cron gave up after repeated refund failures. */
+  refundFailed?: boolean
   createdAt: string
   updatedAt: string
 }

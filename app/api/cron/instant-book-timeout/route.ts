@@ -1,15 +1,16 @@
 import { NextResponse } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
+import { getStripe } from '@/lib/stripe'
 import { sendNotification } from '@/lib/notificationService'
 
 export const dynamic = 'force-dynamic'
 
 /**
- * Hourly cron: refund instant bookings whose worker accept/decline window
- * (`respondDeadlineAt`) has passed without a response.
+ * GET /api/cron/instant-book-timeout
  *
- * Scheduled in `vercel.json`. Authenticated with `CRON_SECRET` like the other
- * cron routes in this repo.
+ * Hourly cron (see vercel.json) that auto-refunds Instant Bookings whose
+ * 24-hour worker response window has elapsed without an accept/decline.
+ * Bookings move to status `expired` and the homeowner is notified.
  */
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization')
@@ -24,78 +25,67 @@ export async function GET(request: Request) {
       .collection('instantBookings')
       .where('status', '==', 'awaiting_worker_response')
       .where('respondDeadlineAt', '<=', nowIso)
-      .limit(100)
+      .limit(50)
       .get()
 
-    if (snap.empty) {
-      return NextResponse.json({ refunded: 0 })
-    }
-
-    const Stripe = (await import('stripe')).default
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-06-20' })
-
     let refunded = 0
-    const errors: Array<{ id: string; error: string }> = []
+    let failed = 0
+    const stripe = getStripe()
 
     for (const doc of snap.docs) {
       const booking = doc.data() as {
-        homeownerId?: string
-        workerId?: string
-        packageTitle?: string
         stripePaymentIntentId?: string
+        homeownerId?: string
+        workerName?: string
+        packageTitle?: string
+        refundAttempts?: number
       }
 
-      if (!booking.stripePaymentIntentId) {
-        await doc.ref.update({
-          status: 'refunded',
-          decisionAt: nowIso,
-          updatedAt: nowIso,
-        })
-        continue
-      }
-
-      try {
-        const refund = await stripe.refunds.create({
-          payment_intent: booking.stripePaymentIntentId,
-        })
-
-        await doc.ref.update({
-          status: 'refunded',
-          decisionAt: nowIso,
-          refundId: refund.id,
-          updatedAt: nowIso,
-        })
-
-        if (booking.homeownerId) {
-          await sendNotification({
-            userId: booking.homeownerId,
-            type: 'application_rejected',
-            title: 'Instant booking expired',
-            message: `The worker did not respond in time for "${booking.packageTitle ?? 'your booking'}". Your deposit has been refunded.`,
-            actionUrl: '/dashboard/homeowner',
-            metadata: { bookingId: doc.id, refundId: refund.id },
+      let refundId: string | undefined
+      if (booking.stripePaymentIntentId) {
+        try {
+          const refund = await stripe.refunds.create({
+            payment_intent: booking.stripePaymentIntentId,
+            metadata: { type: 'instant_book_timeout', bookingId: doc.id },
           })
-        }
-        if (booking.workerId) {
-          await sendNotification({
-            userId: booking.workerId,
-            type: 'general',
-            title: 'Instant booking expired',
-            message: `You did not respond to a booking for "${booking.packageTitle ?? 'a service'}" within 24h. The homeowner has been refunded.`,
-            actionUrl: '/dashboard/worker/instant-bookings',
-            metadata: { bookingId: doc.id },
+          refundId = refund.id
+        } catch (err) {
+          console.error(`Instant book timeout refund failed for ${doc.id}:`, err)
+          const attempts = (typeof booking.refundAttempts === 'number' ? booking.refundAttempts : 0) + 1
+          // After 3 failed refund attempts give up so we don't retry forever
+          // every hour. Operator can inspect via Firestore and refund manually.
+          const giveUp = attempts >= 3
+          await doc.ref.update({
+            refundAttempts: attempts,
+            lastRefundError: err instanceof Error ? err.message : String(err),
+            ...(giveUp ? { status: 'expired', refundFailed: true } : {}),
+            updatedAt: nowIso,
           })
+          failed++
+          continue
         }
-
-        refunded++
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Unknown error'
-        console.error(`Instant book timeout refund failed for ${doc.id}:`, message)
-        errors.push({ id: doc.id, error: message })
       }
+
+      await doc.ref.update({
+        status: 'expired',
+        ...(refundId ? { refundId, refundedAt: nowIso } : {}),
+        updatedAt: nowIso,
+      })
+
+      if (booking.homeownerId) {
+        await sendNotification({
+          userId: booking.homeownerId,
+          type: 'application_rejected',
+          title: 'Instant Booking Expired',
+          message: `${booking.workerName ?? 'The worker'} didn't respond in time to your booking for "${booking.packageTitle ?? 'your package'}". Your deposit has been refunded.`,
+          metadata: { bookingId: doc.id },
+        })
+      }
+
+      refunded++
     }
 
-    return NextResponse.json({ refunded, errors })
+    return NextResponse.json({ processed: snap.size, refunded, failed })
   } catch (error) {
     console.error('Instant book timeout cron error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

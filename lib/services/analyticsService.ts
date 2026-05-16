@@ -386,11 +386,32 @@ const ADMIN_CATEGORIES: JobCategoryBreakdown[] = [
   { category: 'General',      count: 7420,  revenue: 1340000, color: CATEGORY_COLORS[7] },
 ]
 
+interface AdminAnalyticsApiResponse {
+  data?: {
+    adminAnalytics?: AdminAnalytics
+  }
+}
+
 /**
  * Fetch platform-wide analytics for admins.
- * TODO: Replace with Firestore aggregation queries.
  */
 export async function getAdminAnalytics(): Promise<AdminAnalytics> {
+  try {
+    const response = await fetch('/api/admin/analytics?metric=dashboard', {
+      headers: {
+        Accept: 'application/json',
+      },
+    })
+    if (response.ok) {
+      const payload = await response.json() as AdminAnalyticsApiResponse
+      if (payload.data?.adminAnalytics) {
+        return payload.data.adminAnalytics
+      }
+    }
+  } catch {
+    // Fall through to the legacy mock payload when the API is unavailable locally.
+  }
+
   await new Promise((r) => setTimeout(r, 400))
 
   const lastMonthRevenue = ADMIN_MONTHLY_REVENUE[ADMIN_MONTHLY_REVENUE.length - 1].revenue

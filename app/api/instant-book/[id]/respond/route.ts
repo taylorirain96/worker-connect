@@ -1,28 +1,26 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
-import { rateLimit } from '@/lib/rateLimit'
+import { getStripe } from '@/lib/stripe'
 import { sendNotification } from '@/lib/notificationService'
+import { rateLimit } from '@/lib/rateLimit'
+import type { InstantBooking } from '@/types'
 
 export const dynamic = 'force-dynamic'
 
 /**
- * Worker accept/decline for an instant booking that is awaiting their response.
+ * POST /api/instant-book/[id]/respond
  *
- * Accept:  marks the booking `confirmed` and notifies the homeowner.
- * Decline: refunds the homeowner's deposit via Stripe, marks the booking
- *          `declined`, records the refund id, and notifies both parties.
- *
- * Only the assigned worker can respond, and only while the booking is in
- * `awaiting_worker_response` status (set by the Stripe webhook after the
- * deposit PaymentIntent succeeds). Responses past `respondDeadlineAt` are
- * rejected — the hourly `instant-book-timeout` cron handles those instead.
+ * Worker accept/decline endpoint for an Instant Booking that's currently in
+ * `awaiting_worker_response`. Decline issues a Stripe refund of the deposit.
+ * Headers: x-user-id (must match the booking's workerId).
+ * Body: { action: 'accept' | 'decline' }
  */
 export async function POST(
   request: NextRequest,
   context: { params: Promise<{ id: string }> },
 ) {
-  if (rateLimit(request, { max: 10, windowMs: 60_000 })) {
+  if (rateLimit(request, { max: 20, windowMs: 60_000 })) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
   }
 
@@ -31,56 +29,35 @@ export async function POST(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { id } = await context.params
-  if (!id) {
-    return NextResponse.json({ error: 'Missing booking id' }, { status: 400 })
+  const { id: bookingId } = await context.params
+
+  let body: { action?: string }
+  try {
+    body = (await request.json()) as { action?: string }
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
 
-  let body: { action?: unknown }
-  try {
-    body = (await request.json()) as { action?: unknown }
-  } catch {
-    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
-  }
   const action = body.action
   if (action !== 'accept' && action !== 'decline') {
-    return NextResponse.json(
-      { error: "action must be 'accept' or 'decline'" },
-      { status: 400 },
-    )
+    return NextResponse.json({ error: 'action must be "accept" or "decline"' }, { status: 400 })
   }
 
   try {
-    const bookingRef = adminDb.collection('instantBookings').doc(id)
-    const snap = await bookingRef.get()
+    const ref = adminDb.collection('instantBookings').doc(bookingId)
+    const snap = await ref.get()
     if (!snap.exists) {
       return NextResponse.json({ error: 'Booking not found' }, { status: 404 })
     }
-    const booking = snap.data() as {
-      workerId?: string
-      homeownerId?: string
-      packageTitle?: string
-      depositAmount?: number
-      status?: string
-      stripePaymentIntentId?: string
-      respondDeadlineAt?: string
-    }
+    const booking = { id: snap.id, ...(snap.data() as Omit<InstantBooking, 'id'>) } as InstantBooking
 
     if (booking.workerId !== userId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
+
     if (booking.status !== 'awaiting_worker_response') {
       return NextResponse.json(
-        { error: `Booking is not awaiting a response (status: ${booking.status})` },
-        { status: 409 },
-      )
-    }
-    if (
-      booking.respondDeadlineAt &&
-      new Date(booking.respondDeadlineAt).getTime() < Date.now()
-    ) {
-      return NextResponse.json(
-        { error: 'Response window has expired' },
+        { error: `Booking cannot be responded to in status "${booking.status}"` },
         { status: 409 },
       )
     }
@@ -88,60 +65,58 @@ export async function POST(
     const nowIso = new Date().toISOString()
 
     if (action === 'accept') {
-      await bookingRef.update({
+      await ref.update({
         status: 'confirmed',
-        decisionAt: nowIso,
+        respondedAt: nowIso,
         updatedAt: nowIso,
       })
 
-      if (booking.homeownerId) {
-        await sendNotification({
-          userId: booking.homeownerId,
-          type: 'application_accepted',
-          title: 'Instant booking confirmed',
-          message: `Your booking for "${booking.packageTitle ?? 'your service'}" was confirmed.`,
-          actionUrl: '/dashboard/homeowner',
-          metadata: { bookingId: id },
+      await sendNotification({
+        userId: booking.homeownerId,
+        type: 'application_accepted',
+        title: 'Instant Booking Confirmed',
+        message: `${booking.workerName} accepted your booking for "${booking.packageTitle}".`,
+        metadata: { bookingId: booking.id },
+      })
+
+      return NextResponse.json({ status: 'confirmed', bookingId: booking.id })
+    }
+
+    // Decline → refund the deposit
+    let refundId: string | undefined
+    if (booking.stripePaymentIntentId) {
+      try {
+        const stripe = getStripe()
+        const refund = await stripe.refunds.create({
+          payment_intent: booking.stripePaymentIntentId,
+          metadata: { type: 'instant_book_decline', bookingId: booking.id },
         })
+        refundId = refund.id
+      } catch (err) {
+        console.error('Instant book decline refund failed:', err)
+        return NextResponse.json(
+          { error: 'Failed to refund deposit. Please try again.' },
+          { status: 502 },
+        )
       }
-
-      return NextResponse.json({ success: true, status: 'confirmed' })
     }
 
-    // Decline → refund deposit
-    if (!booking.stripePaymentIntentId) {
-      return NextResponse.json(
-        { error: 'Cannot refund — booking has no Stripe PaymentIntent' },
-        { status: 500 },
-      )
-    }
-
-    const Stripe = (await import('stripe')).default
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-06-20' })
-
-    const refund = await stripe.refunds.create({
-      payment_intent: booking.stripePaymentIntentId,
-    })
-
-    await bookingRef.update({
+    await ref.update({
       status: 'declined',
-      decisionAt: nowIso,
-      refundId: refund.id,
+      respondedAt: nowIso,
+      ...(refundId ? { refundId, refundedAt: nowIso } : {}),
       updatedAt: nowIso,
     })
 
-    if (booking.homeownerId) {
-      await sendNotification({
-        userId: booking.homeownerId,
-        type: 'application_rejected',
-        title: 'Instant booking declined',
-        message: `The worker declined your booking for "${booking.packageTitle ?? 'your service'}". Your deposit has been refunded.`,
-        actionUrl: '/dashboard/homeowner',
-        metadata: { bookingId: id, refundId: refund.id },
-      })
-    }
+    await sendNotification({
+      userId: booking.homeownerId,
+      type: 'application_rejected',
+      title: 'Instant Booking Declined',
+      message: `${booking.workerName} couldn't take your booking for "${booking.packageTitle}". Your deposit has been refunded.`,
+      metadata: { bookingId: booking.id },
+    })
 
-    return NextResponse.json({ success: true, status: 'declined', refundId: refund.id })
+    return NextResponse.json({ status: 'declined', bookingId: booking.id, refundId })
   } catch (error) {
     console.error('Instant book respond error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

@@ -4,19 +4,19 @@
 > pointers needed to start, and a clear acceptance criterion so any contributor
 > (human or agent) can pick one up cold.
 
-Last updated: 2026-05-16
+Last updated: 2026-05-12
 
 ---
 
 ## ✅ Recently shipped (context for what's next)
 
-- **Instant Booking — worker accept/decline window**. Stripe webhook now
-  promotes `deposit_pending` → `awaiting_worker_response` with a 24h
-  `respondDeadlineAt`. `POST /api/instant-book/[id]/respond` lets the assigned
-  worker accept (→ `confirmed`) or decline (→ `declined`, deposit refunded).
-  Hourly cron `/api/cron/instant-book-timeout` refunds expired bookings.
-  Worker dashboard surfaces pending bookings at
-  `/dashboard/worker/instant-bookings`.
+- **Instant Booking — worker accept/decline window** with 24h auto-refund.
+  Stripe webhook now promotes deposit-paid bookings to
+  `awaiting_worker_response`; new `POST /api/instant-book/[id]/respond` lets
+  the worker accept (status `confirmed`) or decline (Stripe refund + status
+  `declined`); new hourly cron `/api/cron/instant-book-timeout` refunds and
+  expires bookings the worker doesn't answer in time. Worker dashboard surfaces
+  pending instant bookings at `/dashboard/worker/instant-bookings`.
 - **Recurring jobs — worker-side view** (`/dashboard/worker/recurring`).
   Workers see their recurring assignments grouped by parent job and can opt
   out of being auto-assigned to future occurrences. Cron now drops
@@ -27,6 +27,12 @@ Last updated: 2026-05-16
 - Worker dashboard exposes a **Mover Mode (Relocation / FIFO)** quick link.
 - Admin dashboard has a new **NPS Insights** page at `/dashboard/admin/nps`
   surfacing promoters/passives/detractors and recent responses.
+- **Auth middleware hardening** — middleware no longer trusts a bare
+  `x-user-id` cookie. `POST /api/auth/session` now issues a single
+  HMAC-signed `auth-session` cookie (`{uid, role, exp}`) using
+  `AUTH_SESSION_SECRET`, and `middleware.ts` verifies the signature and
+  expiry via Web Crypto on the Edge runtime before allowing access to
+  `/dashboard` and `/admin`.
 - `firebase` and `firebase-admin` major upgrades (previously listed as
   deferred in `KNOWN_ISSUES.md`) are now done. Outstanding `npm audit`
   findings are all transitive and can't be fixed without downgrading `next`.
@@ -35,7 +41,11 @@ Last updated: 2026-05-16
 
 ## 🟢 Ready-to-start tasks
 
-### 1. Mobile app — homeowner parity
+### 1. ~~Instant Booking — worker accept/decline window~~ ✅ Shipped
+See "Recently shipped" above. The endpoint, Stripe webhook handling, hourly
+timeout cron, and worker dashboard surface are all live.
+
+### 2. Mobile app — homeowner parity
 **Goal:** Bring homeowner flows into the Expo app (currently worker-only).
 
 **Pointers**
@@ -50,7 +60,7 @@ Last updated: 2026-05-16
 
 ---
 
-### 2. Sentry / error monitoring
+### 3. Sentry / error monitoring
 **Goal:** Capture client + server errors with stack traces and release tags.
 
 **Pointers**
@@ -68,31 +78,16 @@ Last updated: 2026-05-16
 
 ---
 
-### 3. Auth middleware hardening
-**Goal:** Stop trusting a self-asserted `x-user-id` cookie. Today
-`POST /api/auth/session` accepts any UID-shaped string and writes the cookie
-that `middleware.ts` checks — anyone can curl this endpoint and bypass the
-`/dashboard` and `/admin` redirect guard.
-
-**Pointers**
-- `middleware.ts` — currently only checks cookie presence.
-- `app/api/auth/session/route.ts` — accepts `{uid}` with no proof.
-- `components/providers/AuthProvider.tsx` — sends `uid` after sign-in.
-- Edge middleware can't use `firebase-admin`; pick one of:
-  - **A. Firebase session cookies** (`adminAuth.createSessionCookie` +
-    `verifySessionCookie`) — switch middleware to the Node runtime.
-  - **B. HMAC-signed cookie** like `lib/email/unsubscribeToken.ts` — server
-    verifies the Firebase ID token via `adminAuth.verifyIdToken`, then
-    signs `{uid, exp}`. Middleware verifies HMAC via Web Crypto.
-
-**Acceptance**
-- POSTing arbitrary JSON to `/api/auth/session` no longer grants a session.
-- Middleware rejects tampered/expired cookies.
-- Existing sign-in / sign-out flows still work end-to-end.
+### 4. ~~Auth middleware hardening~~ ✅ Shipped
+See "Recently shipped" above. `POST /api/auth/session` already verified the
+Firebase ID token, but the middleware previously only checked cookie
+*presence*. It now verifies an HMAC-signed `auth-session` cookie containing
+`{uid, role, exp}`, signed with `AUTH_SESSION_SECRET`, so a tampered or
+forged cookie no longer satisfies the `/dashboard` and `/admin` guards.
 
 ---
 
-### 4. Playwright E2E for the highest-revenue path
+### 5. Playwright E2E for the highest-revenue path
 **Goal:** Lock in the post-job → quote → accept → escrow → release → review
 flow with an automated end-to-end test.
 
@@ -108,7 +103,7 @@ flow with an automated end-to-end test.
 
 ---
 
-### 5. Auth middleware E2E coverage
+### 6. Auth middleware E2E coverage
 **Goal:** Prove the `x-user-id` cookie sync round-trip is correct on
 sign-in, sign-out, and role switch.
 
@@ -124,7 +119,7 @@ sign-in, sign-out, and role switch.
 
 ---
 
-### 6. Lighthouse audit pass on SEO landing pages
+### 7. Lighthouse audit pass on SEO landing pages
 **Goal:** Hit ≥90 Performance and ≥95 SEO on the highest-traffic
 service×city pages.
 
