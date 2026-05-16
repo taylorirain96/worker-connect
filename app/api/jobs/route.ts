@@ -12,17 +12,58 @@ export async function GET(request: NextRequest) {
     const location = searchParams.get('location')
     const status = searchParams.get('status') || 'open'
     const urgency = searchParams.get('urgency')
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '20')
+    const employerIdParam = searchParams.get('employerId')
+    const employerIdHeader = request.headers.get('x-user-id')
+    const employerId = employerIdParam ?? employerIdHeader ?? null
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20')))
 
-    // In production, query Firestore with these filters
-    // For now return empty array since Firestore requires server setup
+    if (!adminDb) {
+      return NextResponse.json({
+        jobs: [],
+        total: 0,
+        page,
+        limit,
+        filters: { category, location, status, urgency, employerId },
+      })
+    }
+
+    // Build base query. When employerId is provided we scope to that user's jobs
+    // (used by the mobile homeowner "My Jobs" tab); otherwise we list public open jobs.
+    const jobsCollection = adminDb.collection('jobs')
+    const q: FirebaseFirestore.Query = employerId
+      ? jobsCollection.where('employerId', '==', employerId).orderBy('createdAt', 'desc')
+      : status
+        ? jobsCollection.where('status', '==', status).orderBy('createdAt', 'desc')
+        : jobsCollection.orderBy('createdAt', 'desc')
+
+    // Over-fetch then slice for simple offset pagination (matches /api/workers convention)
+    const snapshot = await q.limit(limit * page).get()
+    let jobs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() })) as Array<Record<string, unknown>>
+
+    // In-memory filters for fields that can't be combined with the existing orderBy
+    if (category) {
+      const cat = category.toLowerCase()
+      jobs = jobs.filter((j) => String(j.category ?? '').toLowerCase() === cat)
+    }
+    if (location) {
+      const loc = location.toLowerCase()
+      jobs = jobs.filter((j) => String(j.location ?? '').toLowerCase().includes(loc))
+    }
+    if (urgency) {
+      jobs = jobs.filter((j) => String(j.urgency ?? '') === urgency)
+    }
+
+    const total = jobs.length
+    const start = (page - 1) * limit
+    const paginated = jobs.slice(start, start + limit)
+
     return NextResponse.json({
-      jobs: [],
-      total: 0,
+      jobs: paginated,
+      total,
       page,
       limit,
-      filters: { category, location, status, urgency },
+      filters: { category, location, status, urgency, employerId },
     })
   } catch (error) {
     console.error('Get jobs error:', error)
@@ -33,6 +74,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
+    const headerUserId = request.headers.get('x-user-id')
     const {
       title,
       description,
@@ -43,17 +85,16 @@ export async function POST(request: NextRequest) {
       urgency,
       skills,
       deadline,
-      employerId,
       employerName,
     } = body
+    const employerId: string | undefined = body.employerId ?? headerUserId ?? undefined
 
     if (!title || !description || !category || !location || !budget || !employerId) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    // In production, save to Firestore
-    const job = {
-      id: `job_${Date.now()}`,
+    const now = new Date().toISOString()
+    const jobData = {
       title,
       description,
       category,
@@ -61,25 +102,34 @@ export async function POST(request: NextRequest) {
       budget: parseFloat(budget),
       budgetType: budgetType || 'fixed',
       urgency: urgency || 'medium',
-      status: 'open',
-      skills: skills || [],
+      status: 'open' as const,
+      skills: Array.isArray(skills) ? skills : [],
       deadline: deadline || null,
       employerId,
-      employerName,
+      employerName: employerName ?? 'Homeowner',
       applicantsCount: 0,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: now,
+      updatedAt: now,
     }
 
-    const jobId = job.id
+    let jobId: string
+    if (adminDb) {
+      const ref = await adminDb.collection('jobs').add(jobData)
+      jobId = ref.id
+    } else {
+      // Fallback if firebase-admin is not configured (e.g. local dev without service account)
+      jobId = `job_${Date.now()}`
+    }
+    const job = { id: jobId, ...jobData }
 
     // Auto-categorise in the background (non-blocking).
-    // In production when this route saves to Firestore, uncomment the adminDb update below.
     categoriseJob(title, description).then(async (aiCategory) => {
-      // Update the job document with the AI-assigned category:
-      // const { adminDb } = await import('@/lib/firebase-admin')
-      // await adminDb.collection('jobs').doc(jobId).update({ category: aiCategory, categorisedAt: new Date().toISOString() })
-      console.log(`Job ${jobId} auto-categorised as: ${aiCategory}`)
+      if (adminDb && aiCategory) {
+        await adminDb.collection('jobs').doc(jobId).update({
+          category: aiCategory,
+          categorisedAt: new Date().toISOString(),
+        })
+      }
     }).catch(() => {}) // silently ignore
 
     // Notify matching workers by email — non-blocking, fire and forget

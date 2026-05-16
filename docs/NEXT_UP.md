@@ -10,6 +10,12 @@ Last updated: 2026-05-12
 
 ## ✅ Recently shipped (context for what's next)
 
+- **Mobile app — homeowner parity** (`mobile/App.tsx`). Expo app now has a
+  Worker/Homeowner role toggle. Homeowner tabs (My Jobs, Post Job, Browse
+  Workers, Bookings, Chat) reuse `/api/jobs`, `/api/workers`, `/api/bookings`
+  and `/api/messages/list` with the `x-user-id` header (same pattern as web).
+  `/api/jobs` GET now filters by `employerId` and reads Firestore; POST
+  persists to the `jobs` collection (was previously stubbed).
 - **Instant Booking — worker accept/decline window** with 24h auto-refund.
   Stripe webhook now promotes deposit-paid bookings to
   `awaiting_worker_response`; new `POST /api/instant-book/[id]/respond` lets
@@ -45,18 +51,11 @@ Last updated: 2026-05-12
 See "Recently shipped" above. The endpoint, Stripe webhook handling, hourly
 timeout cron, and worker dashboard surface are all live.
 
-### 2. Mobile app — homeowner parity
-**Goal:** Bring homeowner flows into the Expo app (currently worker-only).
-
-**Pointers**
-- Worker tabs: `mobile/App.tsx` (jobs, bookings, chat, earnings)
-- Web homeowner dashboard: `app/dashboard/homeowner/page.tsx`
-- Web post-job flow: `app/post/homeowner/`
-
-**Acceptance**
-- New homeowner tab set: My Jobs, Post Job, Browse Workers, Bookings, Chat.
-- Reuses existing `/api/jobs`, `/api/workers`, `/api/bookings` endpoints
-  with `x-user-id` header (matches web pattern).
+### 2. ~~Mobile app — homeowner parity~~ ✅ Shipped
+See "Recently shipped" above. Expo app gained a Worker/Homeowner role toggle
+and the full homeowner tab set (My Jobs, Post Job, Browse Workers, Bookings,
+Chat), all reusing existing REST endpoints with the `x-user-id` header.
+`/api/jobs` was upgraded to read/write Firestore so the new tabs work.
 
 ---
 
