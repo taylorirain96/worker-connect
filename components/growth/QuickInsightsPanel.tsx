@@ -1,4 +1,3 @@
-// @ts-nocheck
 'use client'
 
 import Link from 'next/link'
@@ -17,7 +16,7 @@ export default function QuickInsightsPanel({
   churnRisk,
   lifecycleStage,
 }: QuickInsightsPanelProps) {
-  const STAGE_LABELS = {
+  const STAGE_LABELS: Record<QuickInsightsPanelProps['lifecycleStage'], string> = {
     new: 'New Worker',
     active: 'Active',
     pro: 'Professional',
@@ -25,7 +24,7 @@ export default function QuickInsightsPanel({
     'at-risk': 'At Risk',
   }
 
-  const STAGE_COLORS = {
+  const STAGE_COLORS: Record<QuickInsightsPanelProps['lifecycleStage'], string> = {
     new: 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800',
     active: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800',
     pro: 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800',

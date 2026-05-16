@@ -35,12 +35,6 @@ interface PostedJob {
   assignedWorkerId?: string
 }
 
-const MOCK_POSTED_JOBS: PostedJob[] = [
-  { id: '1', title: 'Fix Leaking Bathroom Pipe', status: 'completed', budget: 150, budgetType: 'fixed', applicants: 4, createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), hasPhotos: true, photoCount: 2 },
-  { id: '2', title: 'Paint Living Room', status: 'in_progress', budget: 800, budgetType: 'fixed', applicants: 9, createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), hasPhotos: false, photoCount: 0 },
-  { id: '3', title: 'Landscaping & Yard Cleanup', status: 'completed', budget: 350, budgetType: 'fixed', applicants: 6, createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(), hasPhotos: false, photoCount: 0 },
-]
-
 function docToPostedJob(id: string, data: DocumentData): PostedJob {
   const toISO = (v: unknown) =>
     v && typeof v === 'object' && 'toDate' in v
@@ -80,7 +74,7 @@ export default function EmployerDashboardPage() {
 
   useEffect(() => {
     if (!user?.uid || !db) {
-      setPostedJobs(MOCK_POSTED_JOBS)
+      setPostedJobs([])
       setLoadingJobs(false)
       return
     }
@@ -90,9 +84,9 @@ export default function EmployerDashboardPage() {
         const q = query(jobsRef, where('employerId', '==', user!.uid), orderBy('createdAt', 'desc'))
         const snapshot = await getDocs(q)
         const jobs = snapshot.docs.map((d) => docToPostedJob(d.id, d.data()))
-        setPostedJobs(jobs.length > 0 ? jobs : MOCK_POSTED_JOBS)
+        setPostedJobs(jobs)
       } catch {
-        setPostedJobs(MOCK_POSTED_JOBS)
+        setPostedJobs([])
       } finally {
         setLoadingJobs(false)
       }
@@ -119,9 +113,10 @@ export default function EmployerDashboardPage() {
       setLoadingApplications(false)
       return
     }
+    const userId = user.uid
     async function fetchApplications() {
       try {
-        const apps = await getEmployerApplications(user.uid)
+        const apps = await getEmployerApplications(userId)
         setPendingApplications(apps.filter((a) => a.status === 'pending'))
       } catch {
         setPendingApplications([])
@@ -202,6 +197,12 @@ export default function EmployerDashboardPage() {
                 Edit Profile
               </Button>
             </Link>
+            <Link href="/dashboard/employer/business-profile">
+              <Button variant="outline" className="flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
+                Business Profile
+              </Button>
+            </Link>
           </div>
 
           {/* Stats */}
@@ -263,10 +264,21 @@ export default function EmployerDashboardPage() {
                   ) : filteredJobs.length === 0 ? (
                     <div className="text-center py-8">
                       <Camera className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                      <p className="text-gray-500 mb-1">No jobs match this filter</p>
-                      <button onClick={() => setPhotoFilter('all')} className="text-sm text-primary-600 hover:underline">
-                        Clear filter
-                      </button>
+                      {postedJobs.length === 0 ? (
+                        <>
+                          <p className="text-gray-500 mb-3">No jobs posted yet</p>
+                          <Link href="/jobs/create" className="text-sm text-primary-600 hover:underline font-medium">
+                            Post your first job →
+                          </Link>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-gray-500 mb-1">No jobs match this filter</p>
+                          <button onClick={() => setPhotoFilter('all')} className="text-sm text-primary-600 hover:underline">
+                            Clear filter
+                          </button>
+                        </>
+                      )}
                     </div>
                   ) : (
                     <div className="space-y-3">
@@ -573,4 +585,3 @@ export default function EmployerDashboardPage() {
     </div>
   )
 }
-

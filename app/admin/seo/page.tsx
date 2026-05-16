@@ -26,6 +26,13 @@ const SERVICES = [
   { slug: 'car-detailing', name: 'Car Detailing' },
   { slug: 'plasterer', name: 'Plastering' },
   { slug: 'builder', name: 'Building' },
+  { slug: 'solar-installation', name: 'Solar Installation' },
+  { slug: 'fencing', name: 'Fencing' },
+  { slug: 'waterproofing', name: 'Waterproofing' },
+  { slug: 'tiling', name: 'Tiling' },
+  { slug: 'concreting', name: 'Concreting' },
+  { slug: 'insulation', name: 'Insulation' },
+  { slug: 'asbestos-removal', name: 'Asbestos Removal' },
 ]
 
 const LOCATIONS = [
@@ -39,6 +46,15 @@ const LOCATIONS = [
   { cityName: 'Dunedin', regionName: 'Otago', regionSlug: 'otago', citySlug: 'dunedin' },
   { cityName: 'Queenstown', regionName: 'Otago', regionSlug: 'otago', citySlug: 'queenstown' },
   { cityName: 'Palmerston North', regionName: 'Manawatū-Whanganui', regionSlug: 'manawatu-whanganui', citySlug: 'palmerston-north' },
+  { cityName: 'Napier', regionName: "Hawke's Bay", regionSlug: 'hawkes-bay', citySlug: 'napier' },
+  { cityName: 'Hastings', regionName: "Hawke's Bay", regionSlug: 'hawkes-bay', citySlug: 'hastings' },
+  { cityName: 'Rotorua', regionName: 'Bay of Plenty', regionSlug: 'bay-of-plenty', citySlug: 'rotorua' },
+  { cityName: 'New Plymouth', regionName: 'Taranaki', regionSlug: 'taranaki', citySlug: 'new-plymouth' },
+  { cityName: 'Whangārei', regionName: 'Northland', regionSlug: 'northland', citySlug: 'whangarei' },
+  { cityName: 'Invercargill', regionName: 'Southland', regionSlug: 'southland', citySlug: 'invercargill' },
+  { cityName: 'Lower Hutt', regionName: 'Wellington', regionSlug: 'wellington', citySlug: 'lower-hutt' },
+  { cityName: 'Gisborne', regionName: 'Gisborne', regionSlug: 'gisborne', citySlug: 'gisborne' },
+  { cityName: 'Timaru', regionName: 'Canterbury', regionSlug: 'canterbury', citySlug: 'timaru' },
 ]
 
 const NEARBY_MESH: Record<string, string[]> = {
@@ -160,7 +176,7 @@ export default function AdminSEOOperationsPage() {
                 <CardTitle className="flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-blue-600" />
                   Locations Coverage
-                  <span className="text-sm font-normal text-gray-500 ml-1">10 cities × 17 services = 170 pages</span>
+                  <span className="text-sm font-normal text-gray-500 ml-1">19 cities × 24 services = 456 pages</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -169,7 +185,7 @@ export default function AdminSEOOperationsPage() {
                     <div key={loc.citySlug} className="flex items-center justify-between p-2.5 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                       <div>
                         <p className="text-sm font-medium text-gray-900 dark:text-white">{loc.cityName}</p>
-                        <p className="text-xs text-gray-400">{loc.regionName} · 17 service pages</p>
+                        <p className="text-xs text-gray-400">{loc.regionName} · 24 service pages</p>
                       </div>
                       <a
                         href={`https://quicktrade.co.nz/services/plumbing/nz/${loc.regionSlug}/${loc.citySlug}`}

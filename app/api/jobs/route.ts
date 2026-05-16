@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { categoriseJob } from '@/lib/ai/categorise-job'
+import { adminDb } from '@/lib/firebase-admin'
+import { sendJobMatchesEmail } from '@/lib/email/transactional'
+import { sendAdminNotification } from '@/lib/notifications/admin'
 
 export async function GET(request: NextRequest) {
   try {
@@ -78,6 +81,72 @@ export async function POST(request: NextRequest) {
       // await adminDb.collection('jobs').doc(jobId).update({ category: aiCategory, categorisedAt: new Date().toISOString() })
       console.log(`Job ${jobId} auto-categorised as: ${aiCategory}`)
     }).catch(() => {}) // silently ignore
+
+    // Notify matching workers by email — non-blocking, fire and forget
+    if (adminDb) {
+      ;(async () => {
+        try {
+          // Find workers whose skills include the job category and whose location matches
+          // We match on either skills array contains the category, or the worker's location matches
+          const workersSnap = await adminDb
+            .collection('users')
+            .where('role', '==', 'worker')
+            .limit(50)
+            .get()
+
+          const notificationTasks: Promise<void | null>[] = []
+          for (const workerDoc of workersSnap.docs) {
+            const workerData = workerDoc.data()
+            // Skip workers with no email
+            const workerEmail = workerData?.email as string | undefined
+            if (!workerEmail) continue
+
+            // Match by skills (array contains category) or location
+            const workerSkills: string[] = workerData?.skills ?? []
+            const workerLocation: string = workerData?.location ?? ''
+            const categoryMatch = workerSkills.some(
+              (s: string) => s.toLowerCase() === category.toLowerCase()
+            )
+            const jobLocationPrefix = location.trim().split(',')[0].trim().toLowerCase()
+            const locationMatch =
+              workerLocation.length > 0 &&
+              jobLocationPrefix.length > 0 &&
+              workerLocation.toLowerCase().includes(jobLocationPrefix)
+
+            if (categoryMatch || locationMatch) {
+              const workerName = (workerData?.displayName ?? workerData?.name ?? 'there') as string
+              const workerId = workerDoc.id
+              notificationTasks.push(
+                sendJobMatchesEmail({
+                  workerEmail,
+                  workerName,
+                  jobTitle: title,
+                  location,
+                  budget: parseFloat(budget),
+                  jobId,
+                })
+              )
+              // Push notification to matching worker
+              notificationTasks.push(
+                sendAdminNotification({
+                  userId: workerId,
+                  title: '🔔 New job matching your skills',
+                  body: `"${title}" in ${location} — NZ$${parseFloat(budget).toFixed(0)} budget.`,
+                  type: 'new_job',
+                  link: `/jobs/${jobId}`,
+                })
+              )
+            }
+          }
+
+          if (notificationTasks.length > 0) {
+            await Promise.allSettled(notificationTasks)
+          }
+        } catch (matchErr) {
+          console.error('Failed to send job-match emails:', matchErr)
+        }
+      })().catch(() => {})
+    }
 
     return NextResponse.json(job, { status: 201 })
   } catch (error) {

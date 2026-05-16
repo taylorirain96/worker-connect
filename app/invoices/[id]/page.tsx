@@ -1,5 +1,5 @@
 'use client'
-import { use } from 'react'
+import { use, useState, useEffect } from 'react'
 import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
@@ -8,53 +8,7 @@ import Button from '@/components/ui/Button'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import type { Invoice } from '@/types'
 import { ArrowLeft, Download, FileText, CheckCircle, Clock, AlertCircle } from 'lucide-react'
-
-// ─── Mock invoice lookup (replace with Firestore call) ────────────────────────
-const MOCK_INVOICES: Record<string, Invoice> = {
-  'inv_mock_001': {
-    id: 'inv_mock_001',
-    jobId: 'job_1',
-    jobTitle: 'Plumbing Repair — Kitchen Sink',
-    employerId: 'emp_1',
-    workerId: 'worker_1',
-    workerName: 'Alex Johnson',
-    amount: 320,
-    tax: 25.60,
-    total: 345.60,
-    status: 'paid',
-    dueDate: new Date(Date.now() - 10 * 86400000).toISOString(),
-    createdAt: new Date(Date.now() - 15 * 86400000).toISOString(),
-    paidAt: new Date(Date.now() - 8 * 86400000).toISOString(),
-  },
-  'inv_mock_002': {
-    id: 'inv_mock_002',
-    jobId: 'job_2',
-    jobTitle: 'Electrical Panel Upgrade',
-    employerId: 'emp_2',
-    workerId: 'worker_1',
-    workerName: 'Alex Johnson',
-    amount: 850,
-    tax: 68,
-    total: 918,
-    status: 'sent',
-    dueDate: new Date(Date.now() + 5 * 86400000).toISOString(),
-    createdAt: new Date(Date.now() - 2 * 86400000).toISOString(),
-  },
-  'inv_mock_003': {
-    id: 'inv_mock_003',
-    jobId: 'job_3',
-    jobTitle: 'HVAC Maintenance Service',
-    employerId: 'emp_1',
-    workerId: 'worker_1',
-    workerName: 'Alex Johnson',
-    amount: 200,
-    tax: 16,
-    total: 216,
-    status: 'overdue',
-    dueDate: new Date(Date.now() - 5 * 86400000).toISOString(),
-    createdAt: new Date(Date.now() - 20 * 86400000).toISOString(),
-  },
-}
+import { useAuth } from '@/components/providers/AuthProvider'
 
 const STATUS_CONFIG: Record<Invoice['status'], { label: string; icon: React.ReactNode; className: string }> = {
   draft: {
@@ -95,11 +49,36 @@ interface PageProps {
 
 export default function InvoiceDetailPage({ params }: PageProps) {
   const { id } = use(params)
-  const invoice = MOCK_INVOICES[id]
+  const { user } = useAuth()
+  const [invoice, setInvoice] = useState<Invoice | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [notFound, setNotFound] = useState(false)
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const headers: Record<string, string> = {}
+        if (user?.uid) headers['x-user-id'] = user.uid
+        const res = await fetch(`/api/invoices/${id}`, { headers })
+        if (res.status === 404) { setNotFound(true); return }
+        if (!res.ok) { setNotFound(true); return }
+        const data = await res.json() as { invoice?: Invoice }
+        if (data.invoice) setInvoice(data.invoice)
+        else setNotFound(true)
+      } catch {
+        setNotFound(true)
+      } finally {
+        setLoading(false)
+      }
+    }
+    load()
+  }, [id, user])
 
   const handleDownload = () => {
     if (!invoice) return
     const invoiceNumber = `INV-${invoice.id.slice(-6).toUpperCase()}`
+    const tRate = invoice.amount > 0 ? Math.round((invoice.tax / invoice.amount) * 1000) / 10 : 0
+    const tLabel = tRate > 0 ? `Tax (${tRate}%)` : 'Tax'
     const lines = [
       '═══════════════════════════════════════',
       `         INVOICE ${invoiceNumber}`,
@@ -112,7 +91,7 @@ export default function InvoiceDetailPage({ params }: PageProps) {
       '',
       '───────────────────────────────────────',
       `Services                   $${invoice.amount.toFixed(2)}`,
-      `Tax (${taxRatePct > 0 ? taxRatePct + '%' : ''})          $${invoice.tax.toFixed(2)}`,
+      `${tLabel}          $${invoice.tax.toFixed(2)}`,
       '───────────────────────────────────────',
       `TOTAL                      $${invoice.total.toFixed(2)}`,
       '═══════════════════════════════════════',
@@ -132,7 +111,19 @@ export default function InvoiceDetailPage({ params }: PageProps) {
     URL.revokeObjectURL(url)
   }
 
-  if (!invoice) {
+  if (loading) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Navbar />
+        <main className="flex-1 bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+          <p className="text-gray-500">Loading invoice…</p>
+        </main>
+        <Footer />
+      </div>
+    )
+  }
+
+  if (notFound || !invoice) {
     return (
       <div className="flex flex-col min-h-screen">
         <Navbar />
@@ -150,7 +141,6 @@ export default function InvoiceDetailPage({ params }: PageProps) {
     )
   }
 
-  // Compute tax rate dynamically from the invoice amounts
   const taxRatePct = invoice.amount > 0
     ? Math.round((invoice.tax / invoice.amount) * 1000) / 10
     : 0
@@ -158,7 +148,6 @@ export default function InvoiceDetailPage({ params }: PageProps) {
 
   const statusCfg = STATUS_CONFIG[invoice.status]
   const invoiceNumber = `INV-${invoice.id.slice(-6).toUpperCase()}`
-
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />

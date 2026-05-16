@@ -17,7 +17,7 @@ import { formatCurrency } from '@/lib/utils'
 import {
   LayoutDashboard, DollarSign, AlertTriangle, Users, Briefcase,
   Activity, Settings, Download, RefreshCw, TrendingUp,
-  CheckCircle, Shield, BarChart2, Menu, X, Server, FileText, BookOpen, Globe,
+  CheckCircle, Shield, BarChart2, Menu, X, FileText, BookOpen, Globe,
 } from 'lucide-react'
 
 // ─── Sidebar navigation ───────────────────────────────────────────────────────
@@ -43,8 +43,6 @@ const DATE_RANGE_LABELS: Record<DateRange, string> = {
   '30d': 'Last 30 days',
   '90d': 'Last 90 days',
 }
-
-const MOCK_UPTIME = 99.94
 
 function AdminSidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
   const pathname = usePathname()
@@ -264,14 +262,12 @@ export default function AdminDashboardPage() {
                 trendLabel="vs last period"
               />
               <MetricCard
-                label="System Uptime"
-                value={`${MOCK_UPTIME}%`}
-                subtitle="Last 30 days"
-                icon={<Server className="h-5 w-5" />}
+                label="Completion Rate"
+                value={`${analytics.jobCompletionRate}%`}
+                subtitle="Jobs completed"
+                icon={<CheckCircle className="h-5 w-5" />}
                 iconBg="bg-cyan-100 dark:bg-cyan-900/30"
                 iconColor="text-cyan-600"
-                trend={0.02}
-                trendLabel="vs last month"
               />
             </div>
 

@@ -1,9 +1,11 @@
+export type Country = 'NZ' | 'AU'
+
 export interface UserProfile {
   uid: string
   email: string | null
   displayName: string | null
   photoURL: string | null
-  role: 'worker' | 'employer' | 'admin'
+  role: 'worker' | 'employer' | 'admin' | 'homeowner' | 'tradie' | 'jobseeker' | 'property_manager'
   createdAt: string
   updatedAt?: string
   profileComplete: boolean
@@ -14,6 +16,7 @@ export interface UserProfile {
   skills?: string[]
   hourlyRate?: number
   availability?: 'available' | 'busy' | 'unavailable'
+  availabilityUpdatedAt?: string
   rating?: number
   reviewCount?: number
   completedJobs?: number
@@ -24,6 +27,8 @@ export interface UserProfile {
   badges?: string[]
   level?: 'bronze' | 'silver' | 'gold' | 'platinum'
   verified?: boolean
+  verificationStatus?: 'pending' | 'approved' | 'rejected'
+  verificationRejectionReason?: string
   verifiedDetails?: {
     id: boolean
     responded: boolean
@@ -35,6 +40,120 @@ export interface UserProfile {
   companyName?: string
   workerSubscriptionTier?: 'free' | 'pro' | 'elite'
   employerSubscriptionTier?: 'free' | 'pro' | 'business' | 'enterprise'
+  /** Array of worker UIDs this homeowner has favourited */
+  favourites?: string[]
+  /** YouTube or Vimeo URL for the worker's intro/profile video */
+  videoUrl?: string
+  /** ABN for Australian employers (11 digits) */
+  abn?: string
+
+  /** Referral code unique to this user, stored in Firestore */
+  referralCode?: string
+  /** UID of the user who referred this user */
+  referredBy?: string
+  /** Referral code used when this user signed up */
+  referredByCode?: string
+  /** NZD credit balance available to spend at checkout */
+  credit?: number
+  /** Legacy referral credits field (kept for backwards compatibility) */
+  referralCredits?: number
+  /** Total NZD affiliate earnings accumulated (from referrals that converted to paid jobs) */
+  affiliateBalance?: number
+  /** Total NZD paid out to this affiliate via Stripe Transfer */
+  affiliatePaidOut?: number
+  /** Country the user operates in */
+  country?: Country
+  /** Australian Business Number (AU users only) */
+  abnNumber?: string
+  /** URL of the worker's video profile stored in Firebase Storage */
+  videoProfileUrl?: string
+  /** NZ Police vetting / background check status */
+  backgroundCheckStatus?: 'notStarted' | 'pending' | 'approved' | 'rejected'
+  /** ISO date string when the background check was approved */
+  backgroundCheckApprovedAt?: string
+  /** ISO date string when the background check certificate expires */
+  backgroundCheckExpiry?: string
+  /** WorkSafe NZ compliance checklist */
+  worksafeCompliance?: {
+    inductionComplete: boolean
+    ppeConfirmed: boolean
+    hazardRegisterViewed: boolean
+    safetyPlanUploaded: boolean
+    completedAt?: string
+  }
+  /** NZD balance available for withdrawal (maintained by escrow release transactions) */
+  availableBalance?: number
+  /** Whether this worker has Mover Mode enabled (targets relocation jobs) */
+  moverMode?: boolean
+}
+
+// ─── Worker Trade Licences ────────────────────────────────────────────────────
+
+export type TradeLicenceType =
+  | 'lbp'
+  | 'electrical'
+  | 'plumbing'
+  | 'gasfitting'
+  | 'drainlaying'
+  | 'hvac'
+  | 'scaffolding'
+  | 'site_safe'
+  | 'first_aid'
+  | 'asbestos'
+  | 'forklift'
+  | 'other'
+
+export const TRADE_LICENCE_LABELS: Record<TradeLicenceType, string> = {
+  lbp: 'LBP — Licensed Building Practitioner',
+  electrical: 'Registered Electrician',
+  plumbing: 'Registered Plumber',
+  gasfitting: 'Gasfitter Licence',
+  drainlaying: 'Drainlayer Licence',
+  hvac: 'HVAC / Refrigeration Certificate',
+  scaffolding: 'Scaffolding Certificate',
+  site_safe: 'Site Safe Certificate',
+  first_aid: 'First Aid Certificate',
+  asbestos: 'Asbestos Removal Licence',
+  forklift: 'Forklift Licence',
+  other: 'Other Certification',
+}
+
+export interface WorkerTradeLicence {
+  id: string
+  uid: string
+  licenceType: TradeLicenceType
+  licenceNumber?: string
+  issuingBody?: string
+  issueDate?: string
+  expiryDate?: string
+  /** Firebase Storage download URL of the uploaded certificate document */
+  documentUrl?: string
+  /** Worker-provided notes */
+  notes?: string
+  /** Whether this licence has been verified against the government register */
+  governmentVerified?: boolean
+  /** ISO timestamp of when government verification was confirmed */
+  governmentVerifiedAt?: string
+  /** Which government register was used for verification */
+  verificationSource?: 'mbie_api' | 'lbp_register' | 'electrical_register' | 'plumbing_register' | 'manual'
+  createdAt: string
+  updatedAt: string
+}
+
+export interface DirectRequest {
+  id: string
+  homeownerId: string
+  homeownerName: string
+  homeownerEmail: string
+  workerId: string
+  workerName: string
+  workerEmail: string
+  description: string
+  date: string
+  address: string
+  status: 'pending' | 'accepted' | 'declined'
+  createdAt: string
+  updatedAt: string
 }
 
 export interface Job {
@@ -49,7 +168,7 @@ export interface Job {
   budget: number
   budgetType: 'fixed' | 'hourly'
   urgency: 'low' | 'medium' | 'high' | 'emergency'
-  status: 'open' | 'in_progress' | 'completed' | 'cancelled'
+  status: 'open' | 'in_progress' | 'completed' | 'cancelled' | 'disputed'
   skills: string[]
   applicantsCount: number
   completionCount?: number
@@ -63,6 +182,8 @@ export interface Job {
   images?: string[]
   /** Whether the job posting fee has been paid (draft = unpaid, active = live, expired = listing period ended) */
   paymentStatus?: 'draft' | 'active' | 'expired'
+  /** Type of job — 'employment' = staff role posted by employer, 'gig' = one-off task posted by homeowner */
+  jobType?: 'employment' | 'gig'
   /** Reference to the job posting payment record */
   postingPaymentId?: string
   /** Whether the job has a featured listing upsell */
@@ -75,6 +196,24 @@ export interface Job {
   escrowId?: string
   /** Current escrow status */
   escrowStatus?: 'pending' | 'held' | 'released' | 'disputed' | 'refunded'
+  /** ISO timestamp when the job was marked as completed */
+  completedAt?: string
+  /** ISO deadline (completedAt + 24h) within which the worker may dispute completion */
+  workerDisputeDeadline?: string
+  /** Country the job is located in */
+  country?: Country
+  /** Whether this job recurs automatically */
+  recurring?: boolean
+  /** How often to re-create this job */
+  recurrenceInterval?: 'weekly' | 'fortnightly' | 'monthly'
+  /** ISO date of the next scheduled recurrence */
+  nextRecurrenceAt?: string
+  /** ID of the parent (original) recurring job */
+  parentJobId?: string
+  /** Worker UIDs who have opted out of being auto-assigned to future occurrences */
+  recurringOptOutWorkerIds?: string[]
+  /** Optional property linkage for property-manager posted jobs */
+  propertyId?: string
 }
 
 export type JobCategory =
@@ -89,6 +228,8 @@ export type JobCategory =
   | 'cleaning'
   | 'moving'
   | 'general'
+  | 'apprenticeship'
+  | 'training'
 
 export interface Application {
   id: string
@@ -113,6 +254,7 @@ export interface Message {
   senderAvatar?: string
   content: string
   type: 'text' | 'image' | 'file'
+  imageUrls?: string[]
   read: boolean
   createdAt: string
 }
@@ -321,6 +463,9 @@ export interface BusinessProfile {
   licenseVerified: boolean
   hasGeneralLiability: boolean
   hasWorkersComp: boolean
+  hasPublicLiability?: boolean
+  hasACCEmployerLevy?: boolean
+  isRatedTrader?: boolean
   backgroundCheckStatus: 'clear' | 'pending' | 'not_completed'
   bbbRating?: string
   googleRating?: number
@@ -649,6 +794,8 @@ export interface Referral {
   referredName?: string
   referredEmail?: string
   jobsCompleted?: number
+  /** Set to true once referral credit has been awarded to both parties */
+  creditAwarded?: boolean
 }
 
 export interface ReferralStats {
@@ -712,6 +859,47 @@ export interface BankAccount {
   stripeExternalAccountId?: string
   verified: boolean
   createdAt: string
+}
+
+// ─── Worker Availability & Booking Types ─────────────────────────────────────
+
+export interface DayAvailability {
+  available: boolean
+  start: string  // e.g. '08:00'
+  end: string    // e.g. '17:00'
+}
+
+export interface WorkerAvailability {
+  monday: DayAvailability
+  tuesday: DayAvailability
+  wednesday: DayAvailability
+  thursday: DayAvailability
+  friday: DayAvailability
+  saturday: DayAvailability
+  sunday: DayAvailability
+  blockedDates: string[]  // ISO date strings e.g. '2026-06-01'
+  minNoticeHours: number
+}
+
+export type BookingStatus = 'pending' | 'confirmed' | 'declined'
+
+export interface BookingRequest {
+  id: string
+  workerId: string
+  workerName: string
+  workerEmail: string
+  homeownerId: string
+  homeownerName: string
+  homeownerEmail: string
+  requestedDate: string   // ISO date e.g. '2026-06-15'
+  requestedTime: string   // e.g. '09:00'
+  duration: number        // hours
+  description: string
+  address: string
+  status: BookingStatus
+  workerMessage?: string
+  createdAt: string
+  updatedAt?: string
 }
 
 export interface EarningsSummary {
@@ -1054,6 +1242,9 @@ export interface JobApplication {
   workerName?: string
   workerPhotoURL?: string
   workerRating?: number
+  workerVerified?: boolean
+  workerBackgroundCheckStatus?: UserProfile['backgroundCheckStatus']
+  workerWorksafeComplete?: boolean
   coverLetter?: string
   status: 'pending' | 'accepted' | 'rejected' | 'withdrawn'
   appliedAt: string
@@ -1305,6 +1496,7 @@ export interface Quote {
   workerId: string
   workerName: string
   workerAvatar?: string
+  workerVerified?: boolean
   basePrice: number
   laborHours?: number
   laborRate?: number
@@ -1316,11 +1508,17 @@ export interface Quote {
   timeline?: string
   availability?: string
   conditions?: string
-  status: 'pending' | 'accepted' | 'rejected' | 'expired'
+  status: 'pending' | 'accepted' | 'rejected' | 'expired' | 'countered'
   expiresAt: string
   createdAt: string
   updatedAt: string
   acceptedAt?: string
+  attachments?: { url: string; name: string; type: 'image' | 'document' }[]
+  counterOfferPrice?: number
+  counterOfferNote?: string
+  counterOfferAt?: string
+  /** Up to 3 portfolio photos attached as "examples of my work" */
+  portfolioPhotos?: { id: string; url: string; title: string }[]
 }
 
 export interface QuoteRequest {
@@ -1748,10 +1946,10 @@ export interface CommissionTierConfig {
 }
 
 export const COMMISSION_TIERS: CommissionTierConfig[] = [
-  { tier: 'new',         label: 'New Worker',   minJobs: 0,  maxJobs: 5,  rate: 0.10, nextTier: 'established' },
-  { tier: 'established', label: 'Established',  minJobs: 6,  maxJobs: 20, rate: 0.08, nextTier: 'pro'         },
-  { tier: 'pro',         label: 'Pro Worker',   minJobs: 21, maxJobs: 50, rate: 0.06, nextTier: 'elite'       },
-  { tier: 'elite',       label: 'Elite Worker', minJobs: 51, maxJobs: null, rate: 0.05 },
+  { tier: 'new',         label: 'New Worker',   minJobs: 0,  maxJobs: 5,  rate: 0.18, nextTier: 'established' },
+  { tier: 'established', label: 'Established',  minJobs: 6,  maxJobs: 20, rate: 0.15, nextTier: 'pro'         },
+  { tier: 'pro',         label: 'Pro Worker',   minJobs: 21, maxJobs: 50, rate: 0.12, nextTier: 'elite'       },
+  { tier: 'elite',       label: 'Elite Worker', minJobs: 51, maxJobs: null, rate: 0.10 },
 ]
 
 /** An escrow record stored in Firestore */
@@ -1844,10 +2042,10 @@ export interface WorkerTierInfo {
 }
 
 export const WORKER_TIERS: WorkerTierInfo[] = [
-  { tier: 'new',         label: 'New Worker',    minJobs: 0,  maxJobs: 5,  commissionRate: 0.10, description: '0–5 jobs completed' },
-  { tier: 'established', label: 'Established',   minJobs: 6,  maxJobs: 20, commissionRate: 0.08, description: '6–20 jobs completed' },
-  { tier: 'pro',         label: 'Pro Worker',    minJobs: 21, maxJobs: 50, commissionRate: 0.06, description: '21–50 jobs completed' },
-  { tier: 'elite',       label: 'Elite Worker',  minJobs: 51, maxJobs: null, commissionRate: 0.05, description: '50+ jobs completed' },
+  { tier: 'new',         label: 'New Worker',    minJobs: 0,  maxJobs: 5,  commissionRate: 0.18, description: '0–5 jobs completed' },
+  { tier: 'established', label: 'Established',   minJobs: 6,  maxJobs: 20, commissionRate: 0.15, description: '6–20 jobs completed' },
+  { tier: 'pro',         label: 'Pro Worker',    minJobs: 21, maxJobs: 50, commissionRate: 0.12, description: '21–50 jobs completed' },
+  { tier: 'elite',       label: 'Elite Worker',  minJobs: 51, maxJobs: null, commissionRate: 0.10, description: '51+ jobs completed' },
 ]
 
 export function getWorkerTier(completedJobs: number): WorkerTierInfo {
@@ -1918,3 +2116,316 @@ export interface EscrowRecord {
   autoReleaseAt?: string
 }
 
+// ─── Worker Portfolio Photo Types ─────────────────────────────────────────────
+
+/** A single photo in a worker's portfolio (stored at portfolio/{uid}/photos/{photoId}) */
+export interface PortfolioPhoto {
+  id: string
+  uid: string
+  url: string
+  thumbnailUrl?: string
+  title: string
+  category: string
+  description?: string
+  order: number
+  createdAt: string
+}
+
+// ─── Promo Code Types ─────────────────────────────────────────────────────────
+
+export type PromoDiscountType = 'percent' | 'fixed'
+export type PromoApplicableTo = 'first_job' | 'all_jobs' | string
+
+export interface PromoCode {
+  code: string
+  discountType: PromoDiscountType
+  discountAmount: number
+  maxUses: number
+  usedCount: number
+  expiresAt: string | null
+  createdBy: string
+  active: boolean
+  applicableTo: PromoApplicableTo
+  createdAt: string
+  updatedAt?: string
+}
+
+// ─── Job Milestone & Progress Tracking Types ──────────────────────────────────
+
+/** Status lifecycle: pending → in_progress → submitted → approved | rejected */
+export type MilestoneStatus = 'pending' | 'in_progress' | 'submitted' | 'approved' | 'rejected'
+
+/**
+ * A billing milestone on a job.
+ * Stored at: jobs/{jobId}/milestones/{milestoneId}
+ */
+export interface JobMilestone {
+  id: string
+  jobId: string
+  /** Human-readable title, e.g. "Frame & rough-in" */
+  title: string
+  description?: string
+  /** Amount to release to the worker on approval (NZD) */
+  amount: number
+  /** 0-100 — what percentage of total job value this milestone represents */
+  percentage: number
+  status: MilestoneStatus
+  /** Expected completion date */
+  dueDate?: string
+  /** ISO timestamp when the worker submitted the milestone for approval */
+  submittedAt?: string
+  /** ISO timestamp when the employer approved the milestone */
+  approvedAt?: string
+  /** Stripe Transfer ID created when this milestone was paid out */
+  stripeTransferId?: string
+  /** Message left by the worker when submitting */
+  submissionNote?: string
+  /** Message left by the employer when approving or rejecting */
+  reviewNote?: string
+  /** URLs of photos attached to the submission */
+  submissionPhotos?: string[]
+  /** Order index for display */
+  order: number
+  createdAt: string
+  updatedAt: string
+}
+
+/**
+ * A progress update posted by the worker during an active job.
+ * Stored at: jobs/{jobId}/progressUpdates/{updateId}
+ */
+export interface JobProgressUpdate {
+  id: string
+  jobId: string
+  workerId: string
+  workerName: string
+  workerAvatar?: string
+  message: string
+  /** Optional photos attached to this update */
+  photos?: string[]
+  /** Linked milestone ID (if this update relates to a specific milestone) */
+  milestoneId?: string
+  createdAt: string
+}
+
+// ─── Credit Transaction Types ─────────────────────────────────────────────────
+
+export type CreditTransactionType = 'referral_reward' | 'credit_applied' | 'manual_adjustment' | 'referral_signup'
+
+export interface CreditTransaction {
+  id: string
+  userId: string
+  amount: number
+  type: CreditTransactionType
+  description: string
+  jobId?: string
+  referralId?: string
+  promoCode?: string
+  createdAt: string
+}
+
+// ─── Service Package Types ────────────────────────────────────────────────────
+
+/**
+ * A fixed-price service package created by a worker (e.g. "1BR clean – $80").
+ * Homeowners can browse and instantly book a package without quoting.
+ * Firestore: servicePackages/{packageId}
+ */
+export interface ServicePackage {
+  id: string
+  workerId: string
+  workerName: string
+  workerPhotoURL?: string | null
+  workerRating?: number
+  workerReviewCount?: number
+  workerCompletedJobs?: number
+  /** Short title shown on the card */
+  title: string
+  /** Longer description of what is included */
+  description: string
+  /** Fixed price in NZD */
+  price: number
+  /** Job category matching JOB_CATEGORIES ids */
+  category: string
+  /** NZ region where the service is available */
+  region: string
+  /** Bullet-point inclusions shown on the card (max 8) */
+  inclusions: string[]
+  /** Estimated hours to complete the job */
+  estimatedDurationHours: number
+  /** Whether the package is publicly visible */
+  active: boolean
+  /** Whether this package supports instant booking (skip quote, pay deposit) */
+  instantBook?: boolean
+  /** Deposit percentage (0-100) required to instant-book; defaults to 20 */
+  instantBookDepositPercent?: number
+  createdAt: string
+  updatedAt: string
+}
+
+/** Status of an instant-book service package order */
+export type ServicePackageBookingStatus =
+  | 'pending'
+  | 'confirmed'
+  | 'in_progress'
+  | 'completed'
+  | 'cancelled'
+
+/**
+ * A booking created when a homeowner clicks "Book Now" on a ServicePackage.
+ * Firestore: servicePackageBookings/{bookingId}
+ */
+export interface ServicePackageBooking {
+  id: string
+  packageId: string
+  packageTitle: string
+  workerId: string
+  workerName: string
+  workerEmail: string
+  homeownerId: string
+  homeownerName: string
+  homeownerEmail: string
+  price: number
+  category: string
+  region: string
+  /** Preferred date (ISO date string, e.g. '2026-07-01') */
+  preferredDate: string
+  /** Preferred time slot, e.g. '09:00' */
+  preferredTime: string
+  /** Homeowner's service address */
+  address: string
+  /** Optional extra notes from the homeowner */
+  notes?: string
+  status: ServicePackageBookingStatus
+  /** ID of the job document created from this booking */
+  jobId?: string
+  createdAt: string
+  updatedAt: string
+}
+
+
+export interface QuoteTemplate {
+  id: string
+  workerId: string
+  name: string
+  basePrice: number
+  laborHours: number
+  laborRate: number
+  materials: { description: string; cost: number }[]
+  travelCost: number
+  description: string
+  timeline: string
+  conditions: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface JobTemplate {
+  id: string
+  /** Human-friendly name for this template, e.g. "Monthly lawn mow" */
+  name: string
+  title: string
+  description: string
+  category: string
+  location: string
+  budgetMin: number
+  budgetMax: number
+  budgetType: 'fixed' | 'hourly'
+  urgency: 'low' | 'medium' | 'high' | 'emergency'
+  skills: string
+  createdAt: string
+  updatedAt: string
+}
+
+// ─── Instant Booking ─────────────────────────────────────────────────────────
+
+export interface InstantBooking {
+  id: string
+  packageId: string
+  packageTitle: string
+  workerId: string
+  workerName: string
+  homeownerId: string
+  homeownerName: string
+  homeownerEmail: string
+  totalPrice: number
+  depositAmount: number
+  depositPercent: number
+  address: string
+  requestedDate: string
+  requestedTime: string
+  notes?: string
+  status:
+    | 'deposit_pending'
+    | 'awaiting_worker_response'
+    | 'confirmed'
+    | 'declined'
+    | 'expired'
+    | 'in_progress'
+    | 'completed'
+    | 'cancelled'
+  stripePaymentIntentId?: string
+  /** ISO timestamp by which the worker must accept/decline before auto-refund. */
+  respondDeadlineAt?: string
+  /** ISO timestamp the worker accepted or declined. */
+  respondedAt?: string
+  /** Stripe refund id if the deposit was refunded (decline or timeout). */
+  refundId?: string
+  /** ISO timestamp the deposit was refunded. */
+  refundedAt?: string
+  /** Number of failed refund attempts by the timeout cron. */
+  refundAttempts?: number
+  /** Last refund error message, if any. Set by the timeout cron. */
+  lastRefundError?: string
+  /** True if the timeout cron gave up after repeated refund failures. */
+  refundFailed?: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+// ─── Recurring Jobs ───────────────────────────────────────────────────────────
+
+export interface RecurringJobSchedule {
+  jobId: string
+  employerId: string
+  interval: 'weekly' | 'fortnightly' | 'monthly'
+  nextRunAt: string
+  lastRunAt?: string
+  active: boolean
+  totalRuns: number
+  createdAt: string
+  updatedAt: string
+}
+
+// ─── NPS Survey ───────────────────────────────────────────────────────────────
+
+export interface NPSSurvey {
+  id: string
+  userId: string
+  jobId: string
+  role: 'worker' | 'homeowner' | 'employer'
+  score: number
+  comment?: string
+  triggeredAt: string
+  submittedAt?: string
+  createdAt: string
+}
+
+// ─── Property Manager ─────────────────────────────────────────────────────────
+
+export interface Property {
+  id: string
+  managerId: string
+  address: string
+  suburb: string
+  city: string
+  postcode: string
+  propertyType: 'residential' | 'commercial' | 'industrial'
+  notes?: string
+  tenantName?: string
+  tenantPhone?: string
+  activeJobCount: number
+  totalJobsPosted: number
+  createdAt: string
+  updatedAt: string
+}

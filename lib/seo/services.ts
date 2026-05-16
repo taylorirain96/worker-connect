@@ -139,6 +139,48 @@ export const SERVICES: ServiceDefinition[] = [
     keywords: ['landscaper', 'landscaping', 'lawn mowing', 'garden design', 'tree pruning'],
     icon: '🌿',
   },
+  {
+    id: 'pool-maintenance',
+    label: 'Pool Maintenance',
+    group: 'Outdoor & Garden',
+    description: 'Regular pool cleaning, chemical balancing, filter servicing, and repairs.',
+    keywords: ['pool maintenance', 'pool cleaning', 'pool service', 'swimming pool', 'pool chemicals'],
+    icon: '🏊',
+  },
+  // ── Home Improvement (extended) ──────────────────────────────────────────
+  {
+    id: 'solar',
+    label: 'Solar Panel Installation',
+    group: 'Home Improvement',
+    description: 'Solar panel supply and installation for homes and businesses, including grid-tied and off-grid systems.',
+    keywords: ['solar panels', 'solar installation', 'solar power', 'photovoltaic', 'renewable energy'],
+    icon: '☀️',
+  },
+  {
+    id: 'insulation',
+    label: 'Insulation',
+    group: 'Home Improvement',
+    description: 'Ceiling, underfloor, and wall insulation to meet NZ Healthy Homes standards and improve energy efficiency.',
+    keywords: ['insulation', 'ceiling insulation', 'underfloor insulation', 'healthy homes', 'pink batts'],
+    icon: '🏠',
+  },
+  {
+    id: 'waterproofing',
+    label: 'Waterproofing',
+    group: 'Home Improvement',
+    description: 'Membrane waterproofing, deck coatings, basement tanking, and wet-area waterproofing.',
+    keywords: ['waterproofing', 'membrane', 'deck coating', 'leaking roof', 'wet area'],
+    icon: '💧',
+  },
+  // ── Cleaning (extended) ──────────────────────────────────────────────────
+  {
+    id: 'window-cleaning',
+    label: 'Window Cleaning',
+    group: 'Cleaning',
+    description: 'Residential and commercial window cleaning — streak-free results for all property types.',
+    keywords: ['window cleaning', 'window washer', 'glass cleaning', 'exterior windows', 'commercial windows'],
+    icon: '🪟',
+  },
 ]
 
 /**

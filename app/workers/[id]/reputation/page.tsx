@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, use } from 'react';
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import Navbar from '@/components/layout/Navbar'
@@ -16,49 +16,11 @@ import CompletionRateChart from '@/components/completion/CompletionRateChart'
 import PortfolioGallery from '@/components/portfolio/PortfolioGallery'
 import PortfolioStats from '@/components/portfolio/PortfolioStats'
 import type { ReputationScore as ReputationScoreType, WorkerVerification, CompletionStats, VerificationType, WorkerPortfolio } from '@/types/reputation'
+import type { PortfolioPhoto } from '@/types'
 import { getCompletionLabel } from '@/lib/utils/completionRateCalc'
 
-const MOCK_REPUTATION: ReputationScoreType = {
-  userId: 'demo',
-  score: 78,
-  tier: 'expert',
-  trustShields: 4,
-  breakdown: {
-    completionRate: 97,
-    rating: 82,
-    verification: 60,
-    responseTime: 75,
-    portfolio: 80,
-  },
-  calculatedAt: new Date().toISOString(),
-}
-
-const MOCK_COMPLETION: CompletionStats = {
-  workerId: 'demo',
-  completionRate: 97,
-  totalJobs: 103,
-  completedJobs: 100,
-  cancelledJobs: 3,
-  label: 'pro',
-  trend: [
-    { month: 'Jan', rate: 92 },
-    { month: 'Feb', rate: 95 },
-    { month: 'Mar', rate: 97 },
-    { month: 'Apr', rate: 96 },
-    { month: 'May', rate: 97 },
-  ],
-}
-
-const MOCK_PORTFOLIO: WorkerPortfolio = {
-  workerId: 'demo',
-  items: [],
-  totalProjects: 0,
-  avgRating: 0,
-}
-
-const MOCK_BADGES = ['Expert Worker', 'Premium Access', 'Highly Trusted']
-
-export default function WorkerReputationPage({ params }: { params: { id: string } }) {
+export default function WorkerReputationPage(props: { params: Promise<{ id: string }> }) {
+  const params = use(props.params);
   const [reputationScore, setReputationScore] = useState<ReputationScoreType | null>(null)
   const [verification, setVerification] = useState<WorkerVerification | null>(null)
   const [completionStats, setCompletionStats] = useState<CompletionStats | null>(null)
@@ -67,6 +29,23 @@ export default function WorkerReputationPage({ params }: { params: { id: string 
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedType, setSelectedType] = useState<VerificationType>('government_id')
+
+  const portfolioPhotos: PortfolioPhoto[] = portfolio
+    ? portfolio.items.flatMap((item) =>
+        [item.beforeImageUrl, item.afterImageUrl]
+          .filter((url): url is string => Boolean(url))
+          .map((url, index) => ({
+            id: `${item.id}-${index}`,
+            uid: item.workerId,
+            url,
+            title: item.title,
+            category: item.category,
+            description: item.description,
+            order: index,
+            createdAt: item.completedAt,
+          })),
+      )
+    : []
 
   useEffect(() => {
     const load = async () => {
@@ -93,11 +72,11 @@ export default function WorkerReputationPage({ params }: { params: { id: string 
             completedJobs: completed,
             cancelledJobs: total - completed,
             label: getCompletionLabel(cr),
-            trend: MOCK_COMPLETION.trend,
+            trend: [],
           })
         } else {
-          setReputationScore(MOCK_REPUTATION)
-          setCompletionStats(MOCK_COMPLETION)
+          setReputationScore(null)
+          setCompletionStats(null)
         }
 
         if (verRes.status === 'fulfilled' && verRes.value.ok) {
@@ -109,20 +88,20 @@ export default function WorkerReputationPage({ params }: { params: { id: string 
           const data = await badgeRes.value.json()
           setBadges(data.badges ?? [])
         } else {
-          setBadges(MOCK_BADGES)
+          setBadges([])
         }
 
         if (portRes.status === 'fulfilled' && portRes.value.ok) {
           const data = await portRes.value.json()
-          setPortfolio(data.portfolio ?? MOCK_PORTFOLIO)
+          setPortfolio(data.portfolio ?? null)
         } else {
-          setPortfolio(MOCK_PORTFOLIO)
+          setPortfolio(null)
         }
       } catch {
-        setReputationScore(MOCK_REPUTATION)
-        setBadges(MOCK_BADGES)
-        setPortfolio(MOCK_PORTFOLIO)
-        setCompletionStats(MOCK_COMPLETION)
+        setReputationScore(null)
+        setBadges([])
+        setPortfolio(null)
+        setCompletionStats(null)
       } finally {
         setLoading(false)
       }
@@ -184,6 +163,12 @@ export default function WorkerReputationPage({ params }: { params: { id: string 
                   <BadgeDisplay badges={badges} tier={reputationScore.tier} />
                 </div>
               )}
+
+              {!reputationScore && (
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6 text-center text-gray-400 text-sm">
+                  No reputation data available yet.
+                </div>
+              )}
             </div>
 
             {/* Main column */}
@@ -205,7 +190,7 @@ export default function WorkerReputationPage({ params }: { params: { id: string 
               {portfolio && (
                 <div className="space-y-4">
                   <PortfolioStats portfolio={portfolio} />
-                  <PortfolioGallery portfolio={portfolio} />
+                  <PortfolioGallery photos={portfolioPhotos} />
                 </div>
               )}
             </div>

@@ -102,12 +102,15 @@ function WorkerCard({ result }: { result: SearchResult<UserProfile> }) {
 function JobCard({ result }: { result: SearchResult<Job> }) {
   const j = result.item
 
-  const statusColor = {
+  const statusColors = {
     open: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
     in_progress: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
     completed: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300',
     cancelled: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-  }[j.status]
+    disputed: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  } satisfies Record<Job['status'], string>
+
+  const statusColor = statusColors[j.status]
 
   return (
     <article className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg

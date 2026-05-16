@@ -1,98 +1,47 @@
 'use client'
-import { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { useAuth } from '@/components/providers/AuthProvider'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import PhotoGallery from '@/components/jobs/PhotoGallery'
-import RatingStars from '@/components/reviews/RatingStars'
 import toast from 'react-hot-toast'
 import {
   MapPin, Clock, DollarSign, Users, AlertCircle, ArrowLeft,
-  Calendar, Star, CheckCircle, Send, Camera, ClipboardList, Eye, MessageSquare, Sparkles
+  Calendar, Star, CheckCircle, Send, Camera, ClipboardList, Eye, MessageSquare, Sparkles, LayoutList, Columns, AlertTriangle
 } from 'lucide-react'
 import { formatCurrency, formatRelativeDate, JOB_CATEGORIES, URGENCY_LABELS } from '@/lib/utils'
-import type { Job, JobPhoto } from '@/types'
+import type { Job, JobPhoto, Quote } from '@/types'
 import Link from 'next/link'
 import { applyToJob, getApplicationId, withdrawApplication, getJobApplications } from '@/lib/applications'
-import { hasReviewed, submitWorkerReview } from '@/lib/reviews/index'
+import { hasReviewed } from '@/lib/reviews/index'
 import { db } from '@/lib/firebase'
-import { getUserProfile } from '@/lib/users/getProfile'
+import { getDoc, doc, getDocs, collection, query, where } from 'firebase/firestore'
 import { hasWorkerAI } from '@/lib/subscriptions'
 import AIWorkerMatches from '@/components/ai/AIWorkerMatches'
+import QuoteList from '@/components/quotes/QuoteList'
+import QuoteComparison from '@/components/quotes/QuoteComparison'
+import { trackEvent } from '@/lib/analytics'
 
-const MOCK_JOBS: Record<string, Job & { employerRating?: number; employerJobs?: number }> = {
-  '1': {
-    id: '1',
-    title: 'Fix Leaking Bathroom Pipe',
-    description: `I have a leaking pipe under the bathroom sink. Water is dripping consistently and needs to be fixed ASAP. The pipe appears to be cracked near the joint.
+/** 7 days in milliseconds — used for the auto-completion banner threshold */
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000
 
-**What needs to be done:**
-- Inspect the pipe and identify the issue
-- Replace the damaged section
-- Ensure no other leaks exist
-- Clean up after the work is done
-
-**Access:** Easy access under the sink cabinet. No need to break any walls.
-
-**Timeline:** Needs to be done within 48 hours ideally.`,
-    category: 'plumbing',
-    employerId: 'emp1',
-    employerName: 'John Smith',
-    location: 'New York, NY',
-    budget: 150,
-    budgetType: 'fixed',
-    urgency: 'high',
-    status: 'completed',
-    skills: ['Plumbing', 'Pipe Repair', 'Fixture Installation'],
-    applicantsCount: 4,
-    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date().toISOString(),
-    employerRating: 4.7,
-    employerJobs: 12,
-  },
+/** Convert a Firestore Timestamp or ISO string to an ISO string, or return undefined */
+function tsToIso(val: unknown): string | undefined {
+  if (!val) return undefined
+  if (typeof val === 'object' && val !== null && typeof (val as { toDate?: unknown }).toDate === 'function') {
+    return (val as { toDate: () => Date }).toDate().toISOString()
+  }
+  if (typeof val === 'string') return val
+  return undefined
 }
 
-const MOCK_JOB_PHOTOS: JobPhoto[] = [
-  {
-    id: 'p1',
-    jobId: '1',
-    workerId: 'w1',
-    workerName: 'Marcus Johnson',
-    url: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600',
-    storagePath: '',
-    type: 'before',
-    caption: 'Leaking pipe under sink — before repair',
-    approvalStatus: 'approved',
-    uploadedAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 'p2',
-    jobId: '1',
-    workerId: 'w1',
-    workerName: 'Marcus Johnson',
-    url: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600',
-    storagePath: '',
-    type: 'after',
-    caption: 'New pipe installed and fully sealed',
-    approvalStatus: 'approved',
-    uploadedAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-  },
-]
-
-const RATING_LABELS: Record<number, string> = {
-  5: 'Excellent',
-  4: 'Very Good',
-  3: 'Good',
-  2: 'Fair',
-  1: 'Poor',
-}
-
-export default function JobDetailPage() {
+function JobDetailInner() {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { user, profile } = useAuth()
   const [applying, setApplying] = useState(false)
   const [showApplyForm, setShowApplyForm] = useState(false)
@@ -103,28 +52,135 @@ export default function JobDetailPage() {
   const [appliedAppId, setAppliedAppId] = useState<string | null>(null)
   const [applicantsCount, setApplicantsCount] = useState<number | null>(null)
 
+  // Job fetch state
+  const [job, setJob] = useState<(Job & { employerRating?: number; employerJobs?: number }) | null>(null)
+  const [jobPhotos, setJobPhotos] = useState<JobPhoto[]>([])
+  const [jobLoading, setJobLoading] = useState(true)
+  const [jobNotFound, setJobNotFound] = useState(false)
+
   // Review state
   const [alreadyReviewed, setAlreadyReviewed] = useState(false)
   const [checkingReview, setCheckingReview] = useState(false)
-  const [showReviewForm, setShowReviewForm] = useState(false)
-  const [reviewRating, setReviewRating] = useState(0)
-  const [reviewComment, setReviewComment] = useState('')
-  const [submittingReview, setSubmittingReview] = useState(false)
-  const [assignedWorkerName, setAssignedWorkerName] = useState<string>('Worker')
 
-  const job = MOCK_JOBS[params.id as string] || MOCK_JOBS['1']
-  const jobPhotos = MOCK_JOB_PHOTOS.filter((p) => p.jobId === (params.id as string) || p.jobId === '1')
-  const category = JOB_CATEGORIES.find((c) => c.id === job.category)
-  const urgency = URGENCY_LABELS[job.urgency]
-  const isEmployer = user?.uid === job.employerId
+  // Quote comparison state (employer view)
+  const [jobQuotes, setJobQuotes] = useState<Quote[]>([])
+  const [quotesView, setQuotesView] = useState<'list' | 'compare'>('list')
+  const [quotesLoaded, setQuotesLoaded] = useState(false)
+
+  // Job completion state
+  const [markingComplete, setMarkingComplete] = useState(false)
+  const [showCompleteModal, setShowCompleteModal] = useState(false)
+  const [localStatus, setLocalStatus] = useState<Job['status'] | undefined>(undefined)
+  const [localCompletedAt, setLocalCompletedAt] = useState<string | undefined>(undefined)
+  const [showCompletionBanner, setShowCompletionBanner] = useState(false)
+
+  // Worker "Request Completion" state
+  const [requestingCompletion, setRequestingCompletion] = useState(false)
+  const [completionRequested, setCompletionRequested] = useState(false)
+
+  // Fetch job and photos from Firestore
+  useEffect(() => {
+    const jobId = params.id as string
+    if (!db || !jobId) {
+      setJobNotFound(true)
+      setJobLoading(false)
+      return
+    }
+    setJobLoading(true)
+    Promise.all([
+      getDoc(doc(db, 'jobs', jobId)),
+      getDocs(query(collection(db, 'jobPhotos'), where('jobId', '==', jobId))),
+    ])
+      .then(([jobSnap, photosSnap]) => {
+        if (!jobSnap.exists()) {
+          setJobNotFound(true)
+          return
+        }
+        const d = jobSnap.data()
+        setJob({
+          id: jobSnap.id,
+          title: d.title ?? '',
+          description: d.description ?? '',
+          category: d.category ?? 'general',
+          employerId: d.employerId ?? '',
+          employerName: d.employerName ?? '',
+          employerAvatar: d.employerAvatar,
+          location: d.location ?? '',
+          budget: d.budget ?? 0,
+          budgetType: d.budgetType ?? 'fixed',
+          urgency: d.urgency ?? 'medium',
+          status: d.status ?? 'open',
+          skills: d.skills ?? [],
+          applicantsCount: d.applicantsCount ?? 0,
+          createdAt: tsToIso(d.createdAt) ?? '',
+          updatedAt: tsToIso(d.updatedAt) ?? '',
+          deadline: tsToIso(d.deadline),
+          assignedWorkerId: d.assignedWorkerId,
+          escrowId: d.escrowId,
+          escrowStatus: d.escrowStatus,
+          completedAt: tsToIso(d.completedAt),
+          workerDisputeDeadline: tsToIso(d.workerDisputeDeadline),
+          country: d.country,
+          recurring: d.recurring,
+          recurrenceInterval: d.recurrenceInterval,
+          nextRecurrenceAt: d.nextRecurrenceAt,
+          parentJobId: d.parentJobId,
+          propertyId: d.propertyId,
+          employerRating: d.employerRating,
+          employerJobs: d.employerJobs,
+        })
+        const photos: JobPhoto[] = photosSnap.docs.map((p) => {
+          const pd = p.data()
+          return {
+            id: p.id,
+            jobId: pd.jobId ?? jobId,
+            workerId: pd.workerId ?? '',
+            workerName: pd.workerName ?? '',
+            url: pd.url ?? '',
+            storagePath: pd.storagePath ?? '',
+            type: pd.type ?? 'other',
+            caption: pd.caption,
+            approvalStatus: pd.approvalStatus ?? 'pending',
+            uploadedAt: tsToIso(pd.uploadedAt) ?? '',
+            moderatorNote: pd.moderatorNote,
+            qualityScore: pd.qualityScore,
+          }
+        })
+        setJobPhotos(photos)
+      })
+      .catch(() => {
+        setJobNotFound(true)
+      })
+      .finally(() => {
+        setJobLoading(false)
+      })
+  }, [params.id])
+
+  const isEmployer = user?.uid === job?.employerId
+
+  // Effective job status — updated optimistically after Mark as Complete
+  const effectiveStatus = localStatus ?? job?.status
+  const effectiveCompletedAt = localCompletedAt ?? job?.completedAt
+
+  // Show "Thanks for your review!" toast when returning from the dedicated review page
+  useEffect(() => {
+    if (searchParams.get('reviewed') === 'true') {
+      toast.success('Thanks for your review! 🌟')
+      setAlreadyReviewed(true)
+      const url = new URL(window.location.href)
+      url.searchParams.delete('reviewed')
+      window.history.replaceState({}, '', url.toString())
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
-    if (!isEmployer) return
+    if (!isEmployer || !job) return
     const jobId = params.id as string
     getJobApplications(jobId)
       .then((apps) => setApplicantsCount(apps.length))
       .catch(() => setApplicantsCount(job.applicantsCount ?? 0))
-  }, [isEmployer, params.id, job.applicantsCount])
+  }, [isEmployer, params.id, job])
 
   // Check if the worker has already applied
   useEffect(() => {
@@ -148,55 +204,37 @@ export default function JobDetailPage() {
       .finally(() => setCheckingReview(false))
   }, [user, profile, params.id, isEmployer])
 
-  // Fetch assigned worker's display name for use in the review
+  // Fetch quotes for employer comparison view
   useEffect(() => {
-    if (!job.assignedWorkerId) return
-    getUserProfile(job.assignedWorkerId)
-      .then((workerProfile) => {
-        if (workerProfile?.displayName) {
-          setAssignedWorkerName(workerProfile.displayName)
-        }
-      })
+    if (!isEmployer || quotesLoaded || !job) return
+    const jobId = params.id as string
+    fetch(`/api/quotes/job/${jobId}`, { headers: { 'x-user-id': user?.uid ?? 'employer' } })
+      .then((r) => r.json())
+      .then((data) => setJobQuotes(data.quotes ?? []))
       .catch(() => {})
-  }, [job.assignedWorkerId])
+      .finally(() => setQuotesLoaded(true))
+  }, [isEmployer, params.id, user?.uid, quotesLoaded, job])
 
-  const handleSubmitReview = async () => {
-    if (!user || !profile) return
-    if (reviewRating === 0) {
-      toast.error('Please select a star rating')
-      return
-    }
-    if (reviewComment.trim().length < 10) {
-      toast.error('Comment must be at least 10 characters')
-      return
-    }
-    setSubmittingReview(true)
-    try {
-      await submitWorkerReview({
-        jobId: params.id as string,
-        jobTitle: job.title,
-        workerId: job.assignedWorkerId!,
-        workerName: assignedWorkerName,
-        employerId: user.uid,
-        employerName: profile.displayName ?? user.displayName ?? 'Employer',
-        employerPhotoURL: profile.photoURL ?? user.photoURL ?? undefined,
-        rating: reviewRating,
-        comment: reviewComment,
-      })
-      setAlreadyReviewed(true)
-      setShowReviewForm(false)
-      toast.success('Review submitted!')
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to submit review')
-    } finally {
-      setSubmittingReview(false)
-    }
+  const handleAcceptQuote = async (quoteId: string) => {
+    const acceptedQuote = jobQuotes.find((q) => q.id === quoteId)
+    const res = await fetch(`/api/quotes/${quoteId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': user?.uid ?? '' },
+      body: JSON.stringify({ status: 'accepted' }),
+    })
+    if (!res.ok) throw new Error('Failed to accept quote')
+    trackEvent('quote_accepted', { quote_id: quoteId, job_id: params.id as string, value: acceptedQuote?.totalPrice ?? acceptedQuote?.basePrice })
+    setJobQuotes((prev) => prev.map((q) => q.id === quoteId ? { ...q, status: 'accepted' as const } : q))
   }
 
-  const handleCancelReview = () => {
-    setShowReviewForm(false)
-    setReviewRating(0)
-    setReviewComment('')
+  const handleRejectQuote = async (quoteId: string) => {
+    const res = await fetch(`/api/quotes/${quoteId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': user?.uid ?? '' },
+      body: JSON.stringify({ status: 'rejected' }),
+    })
+    if (!res.ok) throw new Error('Failed to reject quote')
+    setJobQuotes((prev) => prev.map((q) => q.id === quoteId ? { ...q, status: 'rejected' as const } : q))
   }
 
   const handleApply = async () => {
@@ -209,7 +247,7 @@ export default function JobDetailPage() {
       toast.error('Only workers can apply to jobs')
       return
     }
-    if (!db) {
+    if (!db || !job) {
       toast.error('Feature not available')
       return
     }
@@ -291,15 +329,235 @@ export default function JobDetailPage() {
     }
   }
 
+  const handleMarkComplete = () => {
+    setShowCompleteModal(true)
+  }
+
+  const handleConfirmComplete = async () => {
+    if (!user) {
+      toast.error('Please sign in')
+      return
+    }
+    setShowCompleteModal(false)
+    setMarkingComplete(true)
+    try {
+      const res = await fetch(`/api/jobs/${params.id as string}/complete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ completedBy: user.uid }),
+      })
+      const data = await res.json() as {
+        success?: boolean
+        completedAt?: string
+        error?: string
+        alreadyCompleted?: boolean
+      }
+      if (res.status === 207) {
+        // Partial success: job marked complete but escrow release failed
+        const completedAt = data.completedAt ?? new Date().toISOString()
+        setLocalStatus('completed')
+        setLocalCompletedAt(completedAt)
+        setShowCompletionBanner(true)
+        toast.error(data.error ?? 'Job marked complete but escrow release failed — please contact support.')
+      } else if (res.ok) {
+        const completedAt = data.completedAt ?? new Date().toISOString()
+        setLocalStatus('completed')
+        setLocalCompletedAt(completedAt)
+        setShowCompletionBanner(true)
+        if (data.alreadyCompleted) {
+          toast.success('Job is already marked as complete.')
+        } else {
+          trackEvent('payment_completed', { job_id: params.id as string })
+          toast.success('Job marked as complete! Redirecting to leave a review…')
+          setTimeout(() => {
+            router.push(`/jobs/${params.id as string}/review`)
+          }, 1500)
+        }
+      } else {
+        toast.error(data.error ?? 'Failed to mark job as complete')
+      }
+    } catch {
+      toast.error('Failed to mark job as complete')
+    } finally {
+      setMarkingComplete(false)
+    }
+  }
+
+  const handleRequestCompletion = async () => {
+    if (!user) {
+      toast.error('Please sign in')
+      return
+    }
+    setRequestingCompletion(true)
+    try {
+      const res = await fetch(`/api/jobs/${params.id as string}/request-completion`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requestedBy: user.uid }),
+      })
+      const data = await res.json() as { success?: boolean; error?: string }
+      if (res.ok) {
+        setCompletionRequested(true)
+        toast.success('Request sent! The homeowner has been notified to confirm completion.')
+      } else {
+        toast.error(data.error ?? 'Failed to send request')
+      }
+    } catch {
+      toast.error('Failed to send request')
+    } finally {
+      setRequestingCompletion(false)
+    }
+  }
+
+  // 7-day auto-completion banner: job is in_progress and deadline was 7+ days ago
+  const sevenDayBannerVisible =
+    effectiveStatus === 'in_progress' &&
+    isEmployer &&
+    job?.deadline != null &&
+    Date.now() - new Date(job.deadline).getTime() > SEVEN_DAYS_MS
+
+  // Worker dispute window — derived once for use in the sidebar
+  const workerDisputeDeadlineStr = (job as { workerDisputeDeadline?: string } | null)?.workerDisputeDeadline
+  const withinWorkerDisputeWindow =
+    profile?.role === 'worker' &&
+    user?.uid === job?.assignedWorkerId &&
+    effectiveStatus === 'completed' &&
+    workerDisputeDeadlineStr != null &&
+    Date.now() < new Date(workerDisputeDeadlineStr).getTime()
+
+  const formattedDisputeDeadline = workerDisputeDeadlineStr
+    ? new Date(workerDisputeDeadlineStr).toLocaleString('en-NZ', {
+        day: 'numeric',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : null
+
+  // Loading state
+  if (jobLoading) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="text-center space-y-3">
+            <div className="h-10 w-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-gray-500 dark:text-gray-400">Loading job…</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    )
+  }
+
+  // Not found / error state
+  if (jobNotFound || !job) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center px-4">
+          <div className="text-center space-y-4 max-w-md">
+            <AlertCircle className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto" />
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Job not found</h2>
+            <p className="text-gray-500 dark:text-gray-400">
+              This job may have been removed or the link may be incorrect.
+            </p>
+            <Link href="/jobs">
+              <Button>
+                <ArrowLeft className="h-4 w-4" />
+                Browse Jobs
+              </Button>
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    )
+  }
+
+  const category = JOB_CATEGORIES.find((c) => c.id === job.category)
+  const urgency = URGENCY_LABELS[job.urgency]
+
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
+
+      {/* Mark as Complete — confirmation modal */}
+      {showCompleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-10 w-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
+                <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+              </div>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                Mark Job as Complete?
+              </h2>
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+              Are you sure the work is finished and you&apos;re happy with the result? This will release payment to the worker and cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setShowCompleteModal(false)}
+                disabled={markingComplete}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white border-0"
+                onClick={handleConfirmComplete}
+                loading={markingComplete}
+              >
+                <CheckCircle className="h-4 w-4" />
+                Yes, Release Payment
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <main className="flex-1">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Link href="/jobs" className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 mb-6 text-sm transition-colors">
             <ArrowLeft className="h-4 w-4" />
             Back to Jobs
           </Link>
+
+          {/* 7-day auto-completion banner */}
+          {sevenDayBannerVisible && (
+            <div className="mb-6 bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700 rounded-xl p-4 flex items-start gap-3">
+              <Clock className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-amber-800 dark:text-amber-300 text-sm">
+                  This job may be complete — please confirm or raise a dispute
+                </p>
+                <p className="text-amber-700 dark:text-amber-400 text-sm mt-0.5">
+                  The agreed end date has passed. If the work is done, mark it as complete to release payment to the worker.
+                  If there&apos;s an issue, you can raise a dispute.
+                </p>
+                <div className="flex gap-3 mt-3">
+                  <Button
+                    size="sm"
+                    className="bg-green-600 hover:bg-green-700 text-white border-0 flex items-center gap-1.5"
+                    onClick={handleMarkComplete}
+                    loading={markingComplete}
+                  >
+                    <CheckCircle className="h-3.5 w-3.5" />
+                    Mark as Complete
+                  </Button>
+                  <Link href={`/jobs/${job.id}/dispute`}>
+                    <Button size="sm" variant="outline" className="text-amber-600 border-amber-300 hover:bg-amber-50 flex items-center gap-1.5">
+                      <AlertTriangle className="h-3.5 w-3.5" />
+                      Raise a Dispute
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="grid lg:grid-cols-3 gap-6">
             {/* Main Content */}
@@ -309,9 +567,20 @@ export default function JobDetailPage() {
                   <span className="text-4xl">{category?.icon || '🛠️'}</span>
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2 mb-2">
-                      <Badge variant={job.status === 'open' ? 'success' : 'default'}>
-                        {job.status === 'open' ? 'Open' : job.status}
+                      <Badge variant={effectiveStatus === 'open' ? 'success' : effectiveStatus === 'completed' ? 'success' : 'default'}>
+                        {effectiveStatus === 'open'
+                          ? 'Open'
+                          : effectiveStatus === 'completed'
+                            ? 'Completed ✓'
+                            : effectiveStatus === 'in_progress'
+                              ? 'In Progress'
+                              : effectiveStatus}
                       </Badge>
+                      {effectiveStatus === 'completed' && effectiveCompletedAt && (
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          Completed {new Date(effectiveCompletedAt).toLocaleDateString('en-NZ', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </span>
+                      )}
                       {job.urgency === 'emergency' && (
                         <Badge variant="danger" className="flex items-center gap-1">
                           <AlertCircle className="h-3 w-3" />
@@ -341,6 +610,17 @@ export default function JobDetailPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* Dispute banner — shown when job is under dispute */}
+                {effectiveStatus === 'disputed' && (
+                  <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700 rounded-xl p-4 flex items-start gap-3">
+                    <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-amber-800 dark:text-amber-300 text-sm">This job is under dispute</p>
+                      <p className="text-amber-700 dark:text-amber-400 text-sm mt-0.5">Our team is reviewing — we&apos;ll be in touch within 24 hours.</p>
+                    </div>
+                  </div>
+                )}
 
                 <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
                   <h2 className="font-semibold text-gray-900 dark:text-white mb-3">Job Description</h2>
@@ -375,8 +655,64 @@ export default function JobDetailPage() {
                 />
               )}
 
+              {/* Quotes section — only visible to the job's employer */}
+              {isEmployer && quotesLoaded && (
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                  <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+                    <h2 className="font-semibold text-gray-900 dark:text-white">
+                      Quotes Received
+                      {jobQuotes.length > 0 && (
+                        <span className="ml-2 text-sm font-normal text-gray-500">({jobQuotes.length})</span>
+                      )}
+                    </h2>
+                    {jobQuotes.filter((q) => q.status === 'pending').length >= 2 && (
+                      <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+                        <button
+                          type="button"
+                          onClick={() => setQuotesView('list')}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                            quotesView === 'list'
+                              ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
+                          }`}
+                        >
+                          <LayoutList className="h-3.5 w-3.5" /> List
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setQuotesView('compare')}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                            quotesView === 'compare'
+                              ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
+                          }`}
+                        >
+                          <Columns className="h-3.5 w-3.5" /> Compare
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  {jobQuotes.length === 0 ? (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">No quotes submitted yet.</p>
+                  ) : quotesView === 'compare' ? (
+                    <QuoteComparison
+                      quotes={jobQuotes.filter((q) => q.status === 'pending')}
+                      onAccept={handleAcceptQuote}
+                      onReject={handleRejectQuote}
+                    />
+                  ) : (
+                    <QuoteList
+                      jobId={job.id}
+                      isEmployer
+                      onAccept={handleAcceptQuote}
+                      onReject={handleRejectQuote}
+                    />
+                  )}
+                </div>
+              )}
+
               {/* Photo Gallery — shown when job is completed */}
-              {job.status === 'completed' && (
+              {effectiveStatus === 'completed' && (
                 <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
@@ -449,7 +785,7 @@ export default function JobDetailPage() {
               )}
 
               {/* Leave a Review — shown to employer when job has an assigned worker */}
-              {isEmployer && job.assignedWorkerId && (job.status === 'in_progress' || job.status === 'completed') && !checkingReview && (
+              {isEmployer && job.assignedWorkerId && (effectiveStatus === 'in_progress' || effectiveStatus === 'completed') && !checkingReview && (
                 <div id="review" className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
                   <div className="flex items-center gap-2 mb-4">
                     <Star className="h-5 w-5 text-yellow-500 fill-yellow-400" />
@@ -461,72 +797,60 @@ export default function JobDetailPage() {
                       <CheckCircle className="h-4 w-4" />
                       You&apos;ve reviewed this job ✓
                     </div>
-                  ) : !showReviewForm ? (
+                  ) : (
                     <div>
                       <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                        How did the worker do? Your feedback helps build trust in the community.
+                        How did the tradie do? Your feedback helps build trust in the community.
                       </p>
-                      <Button
-                        size="sm"
-                        onClick={() => setShowReviewForm(true)}
-                        className="flex items-center gap-2"
-                      >
-                        <MessageSquare className="h-4 w-4" />
-                        Write a Review
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Star Rating
-                        </label>
-                        <RatingStars
-                          rating={reviewRating}
-                          interactive
-                          size="lg"
-                          onRate={setReviewRating}
-                        />
-                        {reviewRating > 0 && (
-                          <p className="mt-1 text-xs text-gray-500">
-                            {RATING_LABELS[reviewRating] ?? ''}
-                          </p>
-                        )}
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Your Review
-                          <span className="text-gray-400 font-normal"> (10–500 characters)</span>
-                        </label>
-                        <textarea
-                          rows={4}
-                          value={reviewComment}
-                          onChange={(e) => setReviewComment(e.target.value)}
-                          placeholder="Describe your experience working with this worker..."
-                          maxLength={500}
-                          className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                        />
-                        <p className="text-xs text-gray-400 mt-1 text-right">{reviewComment.length}/500</p>
-                      </div>
-                      <div className="flex gap-3">
+                      <Link href={`/jobs/${params.id as string}/review`}>
                         <Button
-                          variant="outline"
-                          onClick={handleCancelReview}
-                          className="flex-1"
+                          size="sm"
+                          className="flex items-center gap-2"
                         >
-                          Cancel
+                          <MessageSquare className="h-4 w-4" />
+                          Write a Review
                         </Button>
-                        <Button
-                          onClick={handleSubmitReview}
-                          loading={submittingReview}
-                          className="flex-1"
-                        >
-                          <Send className="h-4 w-4" />
-                          Submit Review
-                        </Button>
-                      </div>
+                      </Link>
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Job Completion Banner — shown to both parties after job is completed */}
+              {effectiveStatus === 'completed' && (
+                <div className="bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800 p-5">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-green-800 dark:text-green-300 mb-1">
+                        Job Completed ✓
+                      </h3>
+                      <p className="text-sm text-green-700 dark:text-green-400">
+                        {effectiveCompletedAt
+                          ? `Completed on ${new Date(effectiveCompletedAt).toLocaleDateString('en-NZ', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' })}.`
+                          : 'This job has been completed.'}{' '}
+                        {isEmployer
+                          ? 'Payment has been released to the worker.'
+                          : 'The employer has released your payment.'}
+                      </p>
+                      {!alreadyReviewed && isEmployer && (showCompletionBanner || !!job.assignedWorkerId) && (
+                        <div className="mt-3">
+                          <p className="text-sm text-green-700 dark:text-green-400 mb-2">
+                            How did everything go? Leave a review to help build trust in the community.
+                          </p>
+                          <Link href={`/jobs/${params.id as string}/review`}>
+                            <Button
+                              size="sm"
+                              className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white border-0"
+                            >
+                              <Star className="h-4 w-4" />
+                              Leave a Review
+                            </Button>
+                          </Link>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -556,7 +880,7 @@ export default function JobDetailPage() {
                   </div>
                 )}
 
-                {job.status === 'open' && profile?.role !== 'employer' && !showApplyForm && !alreadyApplied && (
+                {effectiveStatus === 'open' && profile?.role !== 'employer' && !showApplyForm && !alreadyApplied && (
                   <Button
                     className="w-full mt-4"
                     onClick={() => {
@@ -575,7 +899,7 @@ export default function JobDetailPage() {
                   </Button>
                 )}
 
-                {job.status === 'open' && profile?.role === 'worker' && alreadyApplied && (
+                {effectiveStatus === 'open' && profile?.role === 'worker' && alreadyApplied && (
                   <div className="mt-4 space-y-2">
                     <div className="flex items-center gap-2 text-green-600 dark:text-green-400 text-sm font-medium">
                       <CheckCircle className="h-4 w-4" />
@@ -595,7 +919,7 @@ export default function JobDetailPage() {
                   </div>
                 )}
 
-                {profile?.role === 'worker' && (job.status === 'in_progress' || job.status === 'completed') && (
+                {profile?.role === 'worker' && (effectiveStatus === 'in_progress' || effectiveStatus === 'completed') && (
                   <Link href={`/timesheets/${job.id}`} className="block mt-4">
                     <Button variant="outline" className="w-full flex items-center justify-center gap-2">
                       <ClipboardList className="h-4 w-4" />
@@ -613,6 +937,100 @@ export default function JobDetailPage() {
                     </Button>
                   </Link>
                 )}
+
+                {/* Mark as Complete — shown to the employer when job is in_progress */}
+                {isEmployer && effectiveStatus === 'in_progress' && (
+                  <Button
+                    className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white border-0 flex items-center justify-center gap-2"
+                    onClick={handleMarkComplete}
+                    loading={markingComplete}
+                  >
+                    <CheckCircle className="h-4 w-4" />
+                    Mark as Complete
+                  </Button>
+                )}
+
+                {/* Request Completion — shown to the assigned worker when job is in_progress */}
+                {profile?.role === 'worker' && user?.uid === job.assignedWorkerId && effectiveStatus === 'in_progress' && (
+                  <div className="mt-4">
+                    {completionRequested ? (
+                      <div className="flex items-center gap-2 text-green-600 dark:text-green-400 text-sm font-medium justify-center bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+                        <CheckCircle className="h-4 w-4 flex-shrink-0" />
+                        Request sent — homeowner notified
+                      </div>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        className="w-full flex items-center justify-center gap-2 text-green-600 dark:text-green-400 border-green-300 dark:border-green-700 hover:bg-green-50 dark:hover:bg-green-900/20"
+                        onClick={handleRequestCompletion}
+                        loading={requestingCompletion}
+                      >
+                        <Send className="h-4 w-4" />
+                        Request Payment Release
+                      </Button>
+                    )}
+                  </div>
+                )}
+
+                {/* Completed status — shown to the employer when job is done */}
+                {isEmployer && effectiveStatus === 'completed' && (
+                  <div className="mt-4 flex items-center gap-2 text-green-600 dark:text-green-400 text-sm font-medium justify-center">
+                    <CheckCircle className="h-4 w-4" />
+                    Job Completed ✓
+                  </div>
+                )}
+
+                {/* Raise a Dispute — homeowner: always visible when in_progress or completed
+                                     worker: only visible within the 24h dispute window */}
+                {isEmployer && (effectiveStatus === 'in_progress' || effectiveStatus === 'completed') && (
+                  <Link href={`/jobs/${job.id}/dispute`} className="block mt-4">
+                    <Button
+                      variant="outline"
+                      className="w-full flex items-center justify-center gap-2 text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                    >
+                      <AlertTriangle className="h-4 w-4" />
+                      Raise a Dispute
+                    </Button>
+                  </Link>
+                )}
+                {/* Worker: dispute available while job is in_progress */}
+                {profile?.role === 'worker' && user?.uid === job.assignedWorkerId && effectiveStatus === 'in_progress' && (
+                  <Link href={`/jobs/${job.id}/dispute`} className="block mt-4">
+                    <Button
+                      variant="outline"
+                      className="w-full flex items-center justify-center gap-2 text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                    >
+                      <AlertTriangle className="h-4 w-4" />
+                      Raise a Dispute
+                    </Button>
+                  </Link>
+                )}
+                {/* Worker: dispute available within 24h window after completion */}
+                {withinWorkerDisputeWindow && (
+                  <div className="mt-4 space-y-2">
+                    <p className="text-xs text-amber-600 dark:text-amber-400 text-center">
+                      Dispute window closes{' '}
+                      {formattedDisputeDeadline}
+                    </p>
+                    <Link href={`/jobs/${job.id}/dispute`} className="block">
+                      <Button
+                        variant="outline"
+                        className="w-full flex items-center justify-center gap-2 text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                      >
+                        <AlertTriangle className="h-4 w-4" />
+                        Raise a Dispute
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+
+                {/* Dispute in progress — shown when job is already disputed */}
+                {(isEmployer || profile?.role === 'worker') && effectiveStatus === 'disputed' && (
+                  <div className="mt-4 flex items-center gap-2 text-amber-600 dark:text-amber-400 text-sm font-medium justify-center">
+                    <AlertTriangle className="h-4 w-4" />
+                    Dispute Under Review
+                  </div>
+                )}
               </div>
 
               {/* Employer Card */}
@@ -626,9 +1044,9 @@ export default function JobDetailPage() {
                     <p className="font-medium text-gray-900 dark:text-white text-sm">{job.employerName}</p>
                     <div className="flex items-center gap-1 text-xs text-gray-500">
                       <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                      <span>{(job as { employerRating?: number }).employerRating || 'New'}</span>
-                      {(job as { employerJobs?: number }).employerJobs && (
-                        <span>· {(job as { employerJobs?: number }).employerJobs} jobs posted</span>
+                    <span>{job.employerRating || 'New'}</span>
+                      {job.employerJobs && (
+                        <span>· {job.employerJobs} jobs posted</span>
                       )}
                     </div>
                   </div>
@@ -643,5 +1061,13 @@ export default function JobDetailPage() {
       </main>
       <Footer />
     </div>
+  )
+}
+
+export default function JobDetailPage() {
+  return (
+    <Suspense>
+      <JobDetailInner />
+    </Suspense>
   )
 }

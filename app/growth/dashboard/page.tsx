@@ -11,6 +11,7 @@ import PeerBenchmarkingCard from '@/components/growth/PeerBenchmarkingCard'
 import SkillsDemandAnalysis from '@/components/growth/SkillsDemandAnalysis'
 import CompletionVelocityChart from '@/components/growth/CompletionVelocityChart'
 import RatingTrajectoryChart from '@/components/growth/RatingTrajectoryChart'
+import { useAuth } from '@/components/providers/AuthProvider'
 import type { GrowthScore, EarningsTrend, PeerComparison, ChurnRiskProfile, LifecycleStage } from '@/types'
 
 export default function GrowthDashboardPage() {
@@ -23,9 +24,11 @@ export default function GrowthDashboardPage() {
   const [loading, setLoading] = useState(true)
   const [period, setPeriod] = useState<'daily' | 'weekly' | 'monthly'>('monthly')
 
-  const workerId = 'demo'
+  const { user } = useAuth()
+  const workerId = user?.uid ?? ''
 
   useEffect(() => {
+    if (!workerId) return
     const fetchAll = async () => {
       setLoading(true)
       try {
@@ -48,7 +51,7 @@ export default function GrowthDashboardPage() {
       }
     }
     fetchAll()
-  }, [period])
+  }, [workerId, period])
 
   const handlePeriodChange = (p: 'daily' | 'weekly' | 'monthly') => setPeriod(p)
 

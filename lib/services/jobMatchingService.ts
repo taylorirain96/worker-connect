@@ -524,6 +524,14 @@ export async function matchJobsForWorker(
       relocationSuccessRate: 0,
       repeatClientRate: 0,
       hasRelocationBadge: false,
+      willingToRelocate: true,
+      fifoAvailable: false,
+      targetCountries: [] as ('NZ' | 'AU')[],
+      workRightsNZ: false,
+      workRightsAU: false,
+      accommodationRequired: false,
+      travelAssistanceRequired: false,
+      relocationPreference: 'either' as const,
     }
     result = prioritizeMoverMode(scored, moverSettings)
   }

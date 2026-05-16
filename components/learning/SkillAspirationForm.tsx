@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import type { SkillAspiration } from '@/types'
 
 interface SkillAspirationFormProps {
   workerId: string

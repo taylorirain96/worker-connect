@@ -2,13 +2,13 @@
 import Link from 'next/link'
 import { useTheme } from 'next-themes'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { Sun, Moon, Menu, X, Wrench, ChevronDown, ClipboardList, MessageSquare, Trophy } from 'lucide-react'
+import { Sun, Moon, Menu, X, Wrench, ChevronDown, ClipboardList, MessageSquare, Trophy, GraduationCap } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import { useRouter } from 'next/navigation'
 import { getInitials } from '@/lib/utils'
 import NotificationCenter from '@/components/notifications/NotificationCenter'
-import { onUnreadMessagesCount } from '@/lib/messaging'
+import { subscribeToTotalUnread } from '@/lib/services/messagingService'
 import { useRole } from '@/context/RoleContext'
 
 export default function Navbar() {
@@ -22,7 +22,7 @@ export default function Navbar() {
 
   useEffect(() => {
     if (!user) return
-    const unsub = onUnreadMessagesCount(user.uid, setUnreadMessages)
+    const unsub = subscribeToTotalUnread(user.uid, setUnreadMessages)
     return () => unsub()
   }, [user])
 
@@ -71,8 +71,20 @@ export default function Navbar() {
                 </Link>
               </>
             )}
+            {user && !isEmployer && (
+              <Link href="/workers" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
+                Find a Tradie
+              </Link>
+            )}
             <Link href="/services" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
               Services
+            </Link>
+            <Link href="/packages" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
+              Packages
+            </Link>
+            <Link href="/apprenticeships" className="flex items-center gap-1.5 text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
+              <GraduationCap className="h-4 w-4" />
+              Apprenticeships
             </Link>
             <Link href="/leaderboard" className="flex items-center gap-1.5 text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
               <Trophy className="h-4 w-4 text-yellow-900 drop-shadow-[0_0_4px_rgba(234,179,8,0.7)]" /> Leaderboard
@@ -262,8 +274,16 @@ export default function Navbar() {
                   </Link>
                 </>
               )}
+              {user && !isEmployer && (
+                <Link href="/workers" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 px-3 py-2 rounded-lg transition-colors" onClick={() => setMenuOpen(false)}>
+                  Find a Tradie
+                </Link>
+              )}
               <Link href="/services" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 px-3 py-2 rounded-lg transition-colors" onClick={() => setMenuOpen(false)}>
                 Services
+              </Link>
+              <Link href="/packages" className="text-gray-600 dark:text-gray-300 hover:text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 px-3 py-2 rounded-lg transition-colors" onClick={() => setMenuOpen(false)}>
+                Packages
               </Link>
               <Link href="/leaderboard" className="flex items-center gap-1.5 text-gray-600 dark:text-gray-300 hover:text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 px-3 py-2 rounded-lg transition-colors" onClick={() => setMenuOpen(false)}>
                 <Trophy className="h-4 w-4 text-yellow-900 drop-shadow-[0_0_4px_rgba(234,179,8,0.7)]" /> Leaderboard

@@ -1,21 +1,18 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, use } from 'react';
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import MoverModeSettings from '@/components/mover/MoverModeSettings'
 import MoverLeaderboard from '@/components/mover/MoverLeaderboard'
+import { useAuth } from '@/components/providers/AuthProvider'
 import type { MoverSettings, MoverLeaderboardEntry, MoverOpportunity } from '@/types/reputation'
 
-const MOCK_LEADERBOARD: MoverLeaderboardEntry[] = [
-  { workerId: '1', name: 'Alex Rivera', targetRelocationCity: 'New York', relocationSuccessRate: 95, completionRate: 98, rank: 1 },
-  { workerId: '2', name: 'Jordan Lee', targetRelocationCity: 'Los Angeles', relocationSuccessRate: 90, completionRate: 96, rank: 2 },
-  { workerId: '3', name: 'Sam Chen', targetRelocationCity: 'Chicago', relocationSuccessRate: 87, completionRate: 94, rank: 3 },
-]
-
-export default function MoverModePage({ params }: { params: { id: string } }) {
+export default function MoverModePage(props: { params: Promise<{ id: string }> }) {
+  const params = use(props.params);
+  const { user } = useAuth()
   const [settings, setSettings] = useState<MoverSettings | null>(null)
   const [leaderboard, setLeaderboard] = useState<MoverLeaderboardEntry[]>([])
   const [opportunities, setOpportunities] = useState<MoverOpportunity[]>([])
@@ -63,12 +60,12 @@ export default function MoverModePage({ params }: { params: { id: string } }) {
               rank: e.rank,
             })
           )
-          setLeaderboard(entries.length > 0 ? entries : MOCK_LEADERBOARD)
+          setLeaderboard(entries)
         } else {
-          setLeaderboard(MOCK_LEADERBOARD)
+          setLeaderboard([])
         }
       } catch {
-        setLeaderboard(MOCK_LEADERBOARD)
+        setLeaderboard([])
       } finally {
         setLoading(false)
       }
@@ -82,7 +79,10 @@ export default function MoverModePage({ params }: { params: { id: string } }) {
     try {
       const res = await fetch(`/api/workers/${params.id}/mover-mode`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(user?.uid ? { 'x-user-id': user.uid } : {}),
+        },
         body: JSON.stringify(updatedSettings),
       })
       if (res.ok) {

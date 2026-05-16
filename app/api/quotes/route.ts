@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { adminDb } from '@/lib/firebase-admin'
+import { sendQuoteReceivedEmail } from '@/lib/email/transactional'
+import { sendAdminNotification } from '@/lib/notifications/admin'
 
 export const dynamic = 'force-dynamic'
 
@@ -30,6 +33,7 @@ export async function POST(req: NextRequest) {
       timeline?: string
       availability?: string
       conditions?: string
+      attachments?: { url: string; name: string; type: 'image' | 'document' }[]
     }
 
     const {
@@ -48,6 +52,7 @@ export async function POST(req: NextRequest) {
       timeline,
       availability,
       conditions,
+      attachments,
     } = body
 
     if (!jobId || !jobTitle || !employerId || !workerId || !workerName || !description) {
@@ -82,7 +87,45 @@ export async function POST(req: NextRequest) {
       timeline,
       availability,
       conditions,
+      attachments,
     })
+
+    // Send "Quote Received" email to the homeowner (non-fatal)
+    try {
+      let homeownerEmail: string | undefined
+      let homeownerName: string | undefined
+      if (adminDb) {
+        const employerSnap = await adminDb.collection('users').doc(employerId).get()
+        if (!employerSnap.exists) {
+          console.warn(`Quote-received email: employer document not found for id ${employerId}`)
+        } else {
+          const employerData = employerSnap.data()
+          homeownerEmail = employerData?.email as string | undefined
+          homeownerName = (employerData?.displayName ?? employerData?.name) as string | undefined
+        }
+      }
+      if (homeownerEmail) {
+        await sendQuoteReceivedEmail({
+          homeownerEmail,
+          homeownerName: homeownerName ?? 'there',
+          workerName,
+          jobTitle,
+          amount: totalPrice,
+          jobId,
+        })
+      }
+
+      // Push notification to homeowner
+      await sendAdminNotification({
+        userId: employerId,
+        title: 'New quote received 📋',
+        body: `${workerName} submitted a quote of NZ$${totalPrice.toFixed(2)} for "${jobTitle}".`,
+        type: 'application_received',
+        link: `/jobs/${jobId}`,
+      })
+    } catch (emailErr) {
+      console.error('Failed to send quote-received email:', emailErr)
+    }
 
     return NextResponse.json({ id: quoteId, totalPrice }, { status: 201 })
   } catch (err) {

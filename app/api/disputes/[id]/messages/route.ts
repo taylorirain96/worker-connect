@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server'
+import { adminDb } from '@/lib/firebase-admin'
+import { FieldValue } from 'firebase-admin/firestore'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,8 +11,14 @@ export async function GET(
   const params = await context.params
   try {
     const { id } = params
-    // In production, fetch messages for this dispute from Firestore ordered by timestamp
-    return NextResponse.json({ messages: [], disputeId: id })
+    const snap = await adminDb
+      .collection('disputes')
+      .doc(id)
+      .collection('messages')
+      .orderBy('timestamp', 'asc')
+      .get()
+    const messages = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+    return NextResponse.json({ messages, disputeId: id })
   } catch (error) {
     console.error('GET /api/disputes/[id]/messages error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -31,12 +39,27 @@ export async function POST(
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    // In production:
-    // const adminDb = (await import('@/lib/firebase-admin')).adminDb
-    // const docRef = await adminDb.collection('disputeMessages').add({ disputeId: id, ...body, read: false, timestamp: FieldValue.serverTimestamp() })
+    if (!adminDb) {
+      return NextResponse.json({ error: 'Database unavailable' }, { status: 503 })
+    }
 
-    const mockMessage = {
-      id: `msg_${Date.now()}`,
+    const docRef = await adminDb
+      .collection('disputes')
+      .doc(id)
+      .collection('messages')
+      .add({
+        disputeId: id,
+        senderId,
+        senderName,
+        senderRole: senderRole ?? 'client',
+        message,
+        isInternal: isInternal ?? false,
+        read: false,
+        timestamp: FieldValue.serverTimestamp(),
+      })
+
+    const created = {
+      id: docRef.id,
       disputeId: id,
       senderId,
       senderName,
@@ -47,7 +70,7 @@ export async function POST(
       timestamp: new Date().toISOString(),
     }
 
-    return NextResponse.json({ message: mockMessage }, { status: 201 })
+    return NextResponse.json({ message: created }, { status: 201 })
   } catch (error) {
     console.error('POST /api/disputes/[id]/messages error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

@@ -2,19 +2,19 @@
 const withMDX = require('@next/mdx')({
   extension: /\.mdx?$/,
   options: {
-    remarkPlugins: [require('remark-gfm')],
+    remarkPlugins: [],
   },
 })
 
 const nextConfig = {
   pageExtensions: ['ts', 'tsx', 'md', 'mdx'],
-  typescript: {
-    ignoreBuildErrors: true,
+  async redirects() {
+    return [
+      // Legacy job-creation URLs — normalise to /jobs/create
+      { source: '/jobs/new', destination: '/jobs/create', permanent: true },
+      { source: '/jobs/post', destination: '/jobs/create', permanent: true },
+    ]
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  swcMinify: true,
   images: {
     remotePatterns: [
       {

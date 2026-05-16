@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import { Wrench, Twitter, Linkedin, Facebook } from 'lucide-react'
+import { Wrench } from 'lucide-react'
+import SocialMark from '@/components/ui/SocialMark'
 
 export default function Footer() {
   return (
@@ -18,14 +19,26 @@ export default function Footer() {
               carpenters, HVAC technicians, and more.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-gray-400 hover:text-primary-600 transition-colors">
-                <Twitter className="h-5 w-5" />
+              <a
+                href="#"
+                aria-label="Follow QuickTrade on X"
+                className="text-gray-400 hover:text-primary-600 transition-colors"
+              >
+                <SocialMark platformToken="X" className="h-5 w-5 text-xs" />
               </a>
-              <a href="#" className="text-gray-400 hover:text-primary-600 transition-colors">
-                <Linkedin className="h-5 w-5" />
+              <a
+                href="#"
+                aria-label="Follow QuickTrade on LinkedIn"
+                className="text-gray-400 hover:text-primary-600 transition-colors"
+              >
+                <SocialMark platformToken="in" className="h-5 w-5 text-xs" />
               </a>
-              <a href="#" className="text-gray-400 hover:text-primary-600 transition-colors">
-                <Facebook className="h-5 w-5" />
+              <a
+                href="#"
+                aria-label="Follow QuickTrade on Facebook"
+                className="text-gray-400 hover:text-primary-600 transition-colors"
+              >
+                <SocialMark platformToken="f" className="h-5 w-5 text-xs" />
               </a>
             </div>
           </div>
@@ -35,6 +48,11 @@ export default function Footer() {
               <li>
                 <Link href="/services" className="hover:text-primary-600 transition-colors">
                   Services
+                </Link>
+              </li>
+              <li>
+                <Link href="/packages" className="hover:text-primary-600 transition-colors">
+                  Service Packages
                 </Link>
               </li>
               <li>
@@ -48,8 +66,8 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/services" className="hover:text-primary-600 transition-colors">
-                  Services
+                <Link href="/blog" className="hover:text-primary-600 transition-colors">
+                  Blog
                 </Link>
               </li>
               <li>
@@ -68,6 +86,11 @@ export default function Footer() {
             <h4 className="font-semibold text-gray-900 dark:text-white mb-4">Company</h4>
             <ul className="space-y-2 text-sm text-gray-500 dark:text-gray-400">
               <li>
+                <Link href="/about" className="hover:text-primary-600 transition-colors">
+                  About Us
+                </Link>
+              </li>
+              <li>
                 <Link href="/press" className="hover:text-primary-600 transition-colors">
                   Press &amp; Media
                 </Link>
@@ -84,22 +107,12 @@ export default function Footer() {
               </li>
               <li>
                 <Link href="/help" className="hover:text-primary-600 transition-colors">
-                  Help Center
+                  Help Centre
                 </Link>
               </li>
               <li>
                 <Link href="/contact" className="hover:text-primary-600 transition-colors">
                   Contact Us
-                </Link>
-              </li>
-              <li>
-                <Link href="/press" className="hover:text-primary-600 transition-colors">
-                  Press
-                </Link>
-              </li>
-              <li>
-                <Link href="/partners" className="hover:text-primary-600 transition-colors">
-                  Partners
                 </Link>
               </li>
               <li>

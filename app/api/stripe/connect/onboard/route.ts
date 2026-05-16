@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { rateLimit } from '@/lib/rateLimit'
 
 /**
  * POST /api/stripe/connect/onboard
@@ -7,6 +8,13 @@ import type { NextRequest } from 'next/server'
  * Body: { workerId: string, email: string, refreshUrl: string, returnUrl: string }
  */
 export async function POST(req: NextRequest) {
+  if (rateLimit(req, { max: 20, windowMs: 60_000 })) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please wait a moment before trying again.' },
+      { status: 429 }
+    )
+  }
+
   try {
     const stripeSecretKey = process.env.STRIPE_SECRET_KEY
     if (!stripeSecretKey) {

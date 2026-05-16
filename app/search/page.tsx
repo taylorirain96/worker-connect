@@ -2,6 +2,7 @@
 import { Suspense, useState, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { SlidersHorizontal, Bookmark, X, Users, Briefcase, LayoutGrid } from 'lucide-react'
+import { useAuth } from '@/components/providers/AuthProvider'
 import SearchBar from '@/components/search/SearchBar'
 import SearchFilters from '@/components/search/SearchFilters'
 import SearchResults from '@/components/search/SearchResults'
@@ -13,6 +14,7 @@ type TabType = 'all' | 'workers' | 'jobs'
 function SearchPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { user } = useAuth()
 
   const [query, setQuery] = useState(searchParams.get('q') ?? '')
   const [activeTab, setActiveTab] = useState<TabType>((searchParams.get('type') as TabType) ?? 'all')
@@ -26,8 +28,7 @@ function SearchPageContent() {
   const [loading, setLoading] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
   const [showSaved, setShowSaved] = useState(false)
-  // TODO: replace with real auth context (e.g., useAuth hook) to get the logged-in user ID
-  const [userId] = useState<string | null>(null)
+  const userId = user?.uid ?? null
 
   const updateUrl = useCallback(
     (q: string, type: TabType) => {

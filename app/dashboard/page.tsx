@@ -18,6 +18,10 @@ export default function DashboardPage() {
         router.push('/auth/login')
       } else if (profile?.role === 'admin') {
         router.push('/admin')
+      } else if (profile?.role === 'homeowner') {
+        router.push('/dashboard/homeowner')
+      } else if (profile?.role === 'jobseeker') {
+        router.push('/dashboard/jobseeker')
       }
     }
   }, [user, profile, loading, router])
@@ -31,7 +35,7 @@ export default function DashboardPage() {
   }
 
   // Redirect is handled by useEffect above; show spinner while it processes
-  if (!user || profile?.role === 'admin') {
+  if (!user || profile?.role === 'admin' || profile?.role === 'homeowner' || profile?.role === 'jobseeker') {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <LoadingSpinner size="lg" />

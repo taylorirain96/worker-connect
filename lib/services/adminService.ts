@@ -1,39 +1,11 @@
 /**
  * Admin Service
  * Provides admin authentication, permission checking, and audit logging.
- * Currently uses mock data — replace Firestore stubs with real queries when ready.
+ * Backed by Firestore `adminUsers` and `adminAuditLog` collections via the Admin SDK.
  */
 
+import { adminDb } from '@/lib/firebase-admin'
 import type { AdminUser } from '@/types'
-
-// ─── Mock admin users ─────────────────────────────────────────────────────────
-
-const MOCK_ADMIN_USERS: AdminUser[] = [
-  {
-    id: 'admin1',
-    email: 'superadmin@quicktrade.com',
-    role: 'super_admin',
-    permissions: ['view', 'edit', 'delete', 'manage_users', 'manage_payments', 'manage_disputes', 'system_settings'],
-    createdAt: new Date(Date.now() - 365 * 86400000).toISOString(),
-    lastLogin: new Date(Date.now() - 3600000).toISOString(),
-  },
-  {
-    id: 'admin2',
-    email: 'moderator@quicktrade.com',
-    role: 'moderator',
-    permissions: ['view', 'edit', 'manage_disputes'],
-    createdAt: new Date(Date.now() - 180 * 86400000).toISOString(),
-    lastLogin: new Date(Date.now() - 7200000).toISOString(),
-  },
-  {
-    id: 'admin3',
-    email: 'analyst@quicktrade.com',
-    role: 'analyst',
-    permissions: ['view'],
-    createdAt: new Date(Date.now() - 90 * 86400000).toISOString(),
-    lastLogin: new Date(Date.now() - 86400000).toISOString(),
-  },
-]
 
 // ─── Permission definitions ───────────────────────────────────────────────────
 
@@ -46,45 +18,46 @@ const ROLE_PERMISSIONS: Record<AdminUser['role'], string[]> = {
 // ─── Admin Service Methods ────────────────────────────────────────────────────
 
 /**
- * Verify that a user has admin access.
- * TODO: Replace with Firestore check using adminDb.
+ * Verify that a user has admin access by checking the Firestore `adminUsers` collection.
  */
 export async function verifyAdminAccess(userId: string): Promise<boolean> {
-  await new Promise((r) => setTimeout(r, 100))
-  // In production: check Firestore adminUsers collection
-  return MOCK_ADMIN_USERS.some((u) => u.id === userId)
+  const snap = await adminDb.collection('adminUsers').doc(userId).get()
+  return snap.exists
 }
 
 /**
  * Check if an admin user has a specific permission.
- * TODO: Replace with Firestore check using adminDb.
  */
 export async function checkAdminPermission(userId: string, permission: string): Promise<boolean> {
-  await new Promise((r) => setTimeout(r, 100))
-  const admin = MOCK_ADMIN_USERS.find((u) => u.id === userId)
-  if (!admin) return false
-  const permissions = ROLE_PERMISSIONS[admin.role] ?? []
+  const snap = await adminDb.collection('adminUsers').doc(userId).get()
+  if (!snap.exists) return false
+  const data = snap.data() as Pick<AdminUser, 'role'> | undefined
+  const role = data?.role
+  if (!role) return false
+  const permissions = ROLE_PERMISSIONS[role] ?? []
   return permissions.includes(permission)
 }
 
 /**
- * Log an admin action for audit trail.
- * TODO: Replace with Firestore write using adminDb.
+ * Log an admin action for audit trail by writing to the `adminAuditLog` collection.
  */
 export async function logAdminAction(
   userId: string,
   action: string,
   details: Record<string, unknown>
 ): Promise<void> {
-  // In production: write to Firestore adminAuditLog collection
-  console.info('[Admin Audit]', { userId, action, details, timestamp: new Date().toISOString() })
+  await adminDb.collection('adminAuditLog').add({
+    userId,
+    action,
+    details,
+    timestamp: new Date().toISOString(),
+  })
 }
 
 /**
- * Get all admin users.
- * TODO: Replace with Firestore query using adminDb.
+ * Get all admin users from Firestore.
  */
 export async function getAdminUsers(): Promise<AdminUser[]> {
-  await new Promise((r) => setTimeout(r, 200))
-  return MOCK_ADMIN_USERS
+  const snap = await adminDb.collection('adminUsers').get()
+  return snap.docs.map((doc) => ({ id: doc.id, ...doc.data() } as AdminUser))
 }

@@ -7,6 +7,17 @@ import Button from '@/components/ui/Button'
 import { CreditCard, Lock, AlertCircle, Wallet, Building2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import toast from 'react-hot-toast'
+import { loadStripe } from '@stripe/stripe-js'
+import {
+  Elements,
+  CardElement,
+  useStripe,
+  useElements,
+} from '@stripe/react-stripe-js'
+
+const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+  ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
+  : null
 
 type PaymentMethod = 'card' | 'wallet' | 'bank_transfer'
 
@@ -49,7 +60,7 @@ interface PaymentFormProps {
   onError?: (error: string) => void
 }
 
-export default function PaymentForm({
+function PaymentFormInner({
   amount,
   currency = 'usd',
   jobId,
@@ -59,6 +70,8 @@ export default function PaymentForm({
   onSuccess,
   onError,
 }: PaymentFormProps) {
+  const stripe = useStripe()
+  const elements = useElements()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card')
@@ -99,30 +112,44 @@ export default function PaymentForm({
         clientSecret: string
       }
 
-      // Step 2: Confirm via /api/payments/confirm
-      // TODO: In production, use Stripe.js to confirm with real credentials:
-      //   - card: await stripe.confirmCardPayment(clientSecret, { payment_method: { card: cardElement, billing_details: { name: data.cardholderName, email: data.email } } })
-      //   - wallet: await stripe.confirmPaymentIntent(clientSecret, { payment_method: 'apple_pay' / 'google_pay' })
-      //   - bank_transfer: await stripe.confirmUsBankAccountPayment(clientSecret, ...)
-      // The server-side confirm route handles cases where Stripe keys are absent (returns mock success).
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const _clientSecret = clientSecret
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const _formData = data
-
-      const confirmRes = await fetch('/api/payments/confirm', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          paymentIntentId,
-          // TODO: replace with the real Stripe payment method ID obtained via Stripe.js
-          paymentMethodId: `pm_mock_${paymentMethod}_${Date.now()}`,
-        }),
-      })
-
-      if (!confirmRes.ok) {
-        const err = (await confirmRes.json()) as { error?: string }
-        throw new Error(err.error ?? 'Payment confirmation failed')
+      // Step 2: Confirm the payment using Stripe.js
+      if (stripe && clientSecret) {
+        if (paymentMethod === 'card') {
+          const cardElement = elements?.getElement(CardElement)
+          if (!cardElement) throw new Error('Card element not ready')
+          const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+            payment_method: {
+              card: cardElement,
+              billing_details: { name: data.cardholderName, email: data.email },
+            },
+          })
+          if (stripeError) throw new Error(stripeError.message ?? 'Payment failed')
+          if (paymentIntent?.status !== 'succeeded' && paymentIntent?.status !== 'requires_capture') {
+            throw new Error('Payment was not successful')
+          }
+        } else {
+          // wallet / bank_transfer: call server-side confirm for non-card flows
+          const confirmRes = await fetch('/api/payments/confirm', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ paymentIntentId }),
+          })
+          if (!confirmRes.ok) {
+            const err = (await confirmRes.json()) as { error?: string }
+            throw new Error(err.error ?? 'Payment confirmation failed')
+          }
+        }
+      } else {
+        // Stripe.js not loaded (e.g. missing publishable key) — fall back to server confirm
+        const confirmRes = await fetch('/api/payments/confirm', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ paymentIntentId }),
+        })
+        if (!confirmRes.ok) {
+          const err = (await confirmRes.json()) as { error?: string }
+          throw new Error(err.error ?? 'Payment confirmation failed')
+        }
       }
 
       toast.success('Payment successful!')
@@ -194,22 +221,34 @@ export default function PaymentForm({
             )}
           </div>
 
-          {/* Stripe card element placeholder */}
+          {/* Stripe CardElement */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Card details
             </label>
-            <div className="flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5">
-              <CreditCard className="h-4 w-4 text-gray-400 flex-shrink-0" />
-              <span className="text-sm text-gray-400">
-                Card number powered by Stripe Elements
-              </span>
-            </div>
-            <p className="mt-1 text-xs text-gray-400">
-              Integrate{' '}
-              <code className="font-mono">@stripe/react-stripe-js</code>{' '}
-              CardElement here for live use.
-            </p>
+            {stripe ? (
+              <div className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5">
+                <CardElement
+                  options={{
+                    style: {
+                      base: {
+                        fontSize: '14px',
+                        color: '#374151',
+                        '::placeholder': { color: '#9ca3af' },
+                      },
+                    },
+                    hidePostalCode: false,
+                  }}
+                />
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5">
+                <CreditCard className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                <span className="text-sm text-gray-400">
+                  Card number powered by Stripe Elements
+                </span>
+              </div>
+            )}
           </div>
         </>
       )}
@@ -263,8 +302,22 @@ export default function PaymentForm({
       </Button>
 
       <p className="text-center text-xs text-gray-400">
-        Secured by Stripe · PCI DSS Level 1 compliant
+        Secured by{' '}
+        <a href="https://stripe.com" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-600">
+          Stripe
+        </a>
       </p>
     </form>
+  )
+}
+
+export default function PaymentForm(props: PaymentFormProps) {
+  if (!stripePromise) {
+    return <PaymentFormInner {...props} />
+  }
+  return (
+    <Elements stripe={stripePromise}>
+      <PaymentFormInner {...props} />
+    </Elements>
   )
 }

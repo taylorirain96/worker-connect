@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { rateLimit } from '@/lib/rateLimit'
 
 export const dynamic = 'force-dynamic'
 
@@ -6,7 +7,7 @@ const SYSTEM_PROMPT = `You are QuickTrade's friendly support assistant. QuickTra
 
 You help users with:
 - How to post a job or find work
-- Pricing (Free: browse only, Pro $29/mo: unlimited posts, Premium $79/mo: featured + analytics)
+- Pricing (Free: browse only, Pro $29/mo: unlimited jobs + analytics, Enterprise $99/mo: API access + custom integrations)
 - How payments work (escrow — held until job complete, then released to worker)
 - AI writing tools (CV builder, bio writer, cover letters — available on paid plans)
 - Reviews and ratings system
@@ -20,6 +21,13 @@ interface ChatMessage {
 }
 
 export async function POST(request: NextRequest) {
+  if (rateLimit(request, { max: 10, windowMs: 60_000 })) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please wait a moment before trying again.' },
+      { status: 429 }
+    )
+  }
+
   try {
     const { messages } = await request.json() as { messages: ChatMessage[] }
 

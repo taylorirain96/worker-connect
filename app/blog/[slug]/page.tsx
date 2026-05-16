@@ -5,10 +5,11 @@ import Script from 'next/script'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { getAllPosts, getPostBySlug } from '@/lib/blog/posts'
+import { getServiceBySlug, getServiceDetails } from '@/lib/seo/servicesData'
 import { SITE_URL } from '@/lib/seo/config'
 
 interface Props {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }
 
 const mdxModules: Record<string, () => Promise<{ default: React.ComponentType }>> = {
@@ -38,13 +39,72 @@ const mdxModules: Record<string, () => Promise<{ default: React.ComponentType }>
     import('@/content/blog/how-to-hire-a-plasterer-nz.mdx'),
   'moving-house-nz-checklist': () =>
     import('@/content/blog/moving-house-nz-checklist.mdx'),
+  'how-much-does-a-heat-pump-cost-nz': () =>
+    import('@/content/blog/how-much-does-a-heat-pump-cost-nz.mdx'),
+  'find-licensed-plumber-new-zealand': () =>
+    import('@/content/blog/find-licensed-plumber-new-zealand.mdx'),
+  'best-handyman-services-nz': () =>
+    import('@/content/blog/best-handyman-services-nz.mdx'),
+  'end-of-tenancy-cleaning-nz': () =>
+    import('@/content/blog/end-of-tenancy-cleaning-nz.mdx'),
+  'deck-building-cost-nz': () =>
+    import('@/content/blog/deck-building-cost-nz.mdx'),
+  'hire-painter-new-zealand': () =>
+    import('@/content/blog/hire-painter-new-zealand.mdx'),
+  'lawn-mowing-service-nz': () =>
+    import('@/content/blog/lawn-mowing-service-nz.mdx'),
+  'electrician-call-out-fee-nz': () =>
+    import('@/content/blog/electrician-call-out-fee-nz.mdx'),
+  'home-renovation-cost-nz': () =>
+    import('@/content/blog/home-renovation-cost-nz.mdx'),
+  'how-to-find-a-reliable-electrician-nz': () =>
+    import('@/content/blog/how-to-find-a-reliable-electrician-nz.mdx'),
+  'nz-building-consent-guide-2026': () =>
+    import('@/content/blog/nz-building-consent-guide-2026.mdx'),
+  'best-time-to-renovate-your-nz-home': () =>
+    import('@/content/blog/best-time-to-renovate-your-nz-home.mdx'),
+  'how-much-does-a-bathroom-renovation-cost-nz': () =>
+    import('@/content/blog/how-much-does-a-bathroom-renovation-cost-nz.mdx'),
+  'deck-building-costs-nz-2026': () =>
+    import('@/content/blog/deck-building-costs-nz-2026.mdx'),
+  'find-tradies-tauranga': () =>
+    import('@/content/blog/find-tradies-tauranga.mdx'),
+  'find-tradies-hamilton': () =>
+    import('@/content/blog/find-tradies-hamilton.mdx'),
+  'solar-panel-installation-nz-guide': () =>
+    import('@/content/blog/solar-panel-installation-nz-guide.mdx'),
+  'landlord-maintenance-obligations-nz': () =>
+    import('@/content/blog/landlord-maintenance-obligations-nz.mdx'),
+  'plumbers-palmerston-north': () =>
+    import('@/content/blog/plumbers-palmerston-north.mdx'),
+  'find-tradies-rotorua': () =>
+    import('@/content/blog/find-tradies-rotorua.mdx'),
+  'pest-control-nz-guide': () =>
+    import('@/content/blog/pest-control-nz-guide.mdx'),
+  'home-insulation-nz-guide': () =>
+    import('@/content/blog/home-insulation-nz-guide.mdx'),
+  'how-to-get-multiple-quotes-nz': () =>
+    import('@/content/blog/how-to-get-multiple-quotes-nz.mdx'),
+  'hiring-a-cleaner-nz': () =>
+    import('@/content/blog/hiring-a-cleaner-nz.mdx'),
+  'airtasker-alternative-nz': () =>
+    import('@/content/blog/airtasker-alternative-nz.mdx'),
+  'spring-home-maintenance-checklist-nz': () =>
+    import('@/content/blog/spring-home-maintenance-checklist-nz.mdx'),
+  'hire-construction-workers-nz': () =>
+    import('@/content/blog/hire-construction-workers-nz.mdx'),
+  'fence-installation-cost-nz': () =>
+    import('@/content/blog/fence-installation-cost-nz.mdx'),
+  'concrete-driveway-cost-nz': () =>
+    import('@/content/blog/concrete-driveway-cost-nz.mdx'),
 }
 
 export function generateStaticParams() {
   return getAllPosts().map((post) => ({ slug: post.slug }))
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const params = await props.params;
   const post = getPostBySlug(params.slug)
   if (!post) return {}
   return {
@@ -61,7 +121,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default async function BlogPostPage({ params }: Props) {
+export default async function BlogPostPage(props: Props) {
+  const params = await props.params;
   const post = getPostBySlug(params.slug)
   if (!post) notFound()
 
@@ -69,6 +130,9 @@ export default async function BlogPostPage({ params }: Props) {
   if (!loader) notFound()
 
   const { default: MDXContent } = await loader()
+
+  const relatedService = post.relatedServiceSlug ? getServiceBySlug(post.relatedServiceSlug) : null
+  const relatedServiceDetails = post.relatedServiceSlug ? getServiceDetails(post.relatedServiceSlug) : null
 
   const articleJsonLd = {
     '@context': 'https://schema.org',
@@ -99,6 +163,18 @@ export default async function BlogPostPage({ params }: Props) {
     ],
   }
 
+  const faqJsonLd = relatedServiceDetails?.faqs.length
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: relatedServiceDetails.faqs.map((faq) => ({
+          '@type': 'Question',
+          name: faq.question,
+          acceptedAnswer: { '@type': 'Answer', text: faq.answer },
+        })),
+      }
+    : null
+
   return (
     <div className="flex flex-col min-h-screen luxury-bg">
       <Script
@@ -111,6 +187,13 @@ export default async function BlogPostPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
+      {faqJsonLd && (
+        <Script
+          id="jsonld-post-faq"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+        />
+      )}
 
       <Navbar />
 
@@ -155,6 +238,29 @@ export default async function BlogPostPage({ params }: Props) {
           <MDXContent />
         </article>
       </section>
+
+      {/* Related Service — internal link for SEO */}
+      {relatedService && (
+        <section className="py-10 px-4 sm:px-6 border-t border-slate-800">
+          <div className="max-w-3xl mx-auto">
+            <p className="text-slate-500 text-xs uppercase tracking-wider font-semibold mb-3">Related Service</p>
+            <Link
+              href={`/services/${relatedService.slug}`}
+              className="group flex items-center justify-between gap-4 bg-slate-900 border border-slate-700/50 hover:border-indigo-500/40 rounded-xl px-6 py-4 transition-all"
+            >
+              <div>
+                <p className="text-white font-semibold group-hover:text-indigo-300 transition-colors">
+                  {relatedService.name} Services in New Zealand
+                </p>
+                <p className="text-slate-400 text-sm mt-0.5">{relatedService.description}</p>
+              </div>
+              <span className="text-indigo-400 text-sm font-medium whitespace-nowrap group-hover:text-indigo-300 transition-colors">
+                View service →
+              </span>
+            </Link>
+          </div>
+        </section>
+      )}
 
       {/* CTA */}
       <section

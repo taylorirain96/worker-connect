@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
@@ -11,90 +11,42 @@ import type { Invoice } from '@/types'
 import { FileText, ArrowLeft, Download, PlusCircle } from 'lucide-react'
 import Button from '@/components/ui/Button'
 
-// ─── Mock data (replace with Firestore calls via paymentService) ──────────────
-const MOCK_INVOICES: Invoice[] = [
-  {
-    id: 'inv_mock_001',
-    jobId: 'job_1',
-    jobTitle: 'Plumbing Repair — Kitchen Sink',
-    employerId: 'emp_1',
-    workerId: 'worker_1',
-    workerName: 'Alex Johnson',
-    amount: 320,
-    tax: 25.60,
-    total: 345.60,
-    status: 'paid',
-    dueDate: new Date(Date.now() - 10 * 86400000).toISOString(),
-    createdAt: new Date(Date.now() - 15 * 86400000).toISOString(),
-    paidAt: new Date(Date.now() - 8 * 86400000).toISOString(),
-  },
-  {
-    id: 'inv_mock_002',
-    jobId: 'job_2',
-    jobTitle: 'Electrical Panel Upgrade',
-    employerId: 'emp_2',
-    workerId: 'worker_1',
-    workerName: 'Alex Johnson',
-    amount: 850,
-    tax: 68,
-    total: 918,
-    status: 'sent',
-    dueDate: new Date(Date.now() + 5 * 86400000).toISOString(),
-    createdAt: new Date(Date.now() - 2 * 86400000).toISOString(),
-  },
-  {
-    id: 'inv_mock_003',
-    jobId: 'job_3',
-    jobTitle: 'HVAC Maintenance Service',
-    employerId: 'emp_1',
-    workerId: 'worker_1',
-    workerName: 'Alex Johnson',
-    amount: 200,
-    tax: 16,
-    total: 216,
-    status: 'overdue',
-    dueDate: new Date(Date.now() - 5 * 86400000).toISOString(),
-    createdAt: new Date(Date.now() - 20 * 86400000).toISOString(),
-  },
-  {
-    id: 'inv_mock_004',
-    jobId: 'job_4',
-    jobTitle: 'Carpentry — Deck Repair',
-    employerId: 'emp_3',
-    workerId: 'worker_1',
-    workerName: 'Alex Johnson',
-    amount: 450,
-    tax: 36,
-    total: 486,
-    status: 'paid',
-    dueDate: new Date(Date.now() - 25 * 86400000).toISOString(),
-    createdAt: new Date(Date.now() - 30 * 86400000).toISOString(),
-    paidAt: new Date(Date.now() - 22 * 86400000).toISOString(),
-  },
-]
-
 type StatusFilter = 'all' | Invoice['status']
 
 export default function InvoicesPage() {
   const { user } = useAuth()
+  const [invoices, setInvoices] = useState<Invoice[]>([])
+  const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<StatusFilter>('all')
 
-  const filtered = filter === 'all' ? MOCK_INVOICES : MOCK_INVOICES.filter((i) => i.status === filter)
-  const totalPaid = MOCK_INVOICES.filter((i) => i.status === 'paid').reduce((s, i) => s + i.total, 0)
-  const totalOutstanding = MOCK_INVOICES
+  useEffect(() => {
+    if (!user) {
+      setLoading(false)
+      return
+    }
+    fetch(`/api/invoices?workerId=${encodeURIComponent(user.uid)}`)
+      .then((r) => r.json())
+      .then((data: { invoices?: Invoice[] }) => {
+        setInvoices(Array.isArray(data.invoices) ? data.invoices : [])
+      })
+      .catch(() => setInvoices([]))
+      .finally(() => setLoading(false))
+  }, [user])
+
+  const filtered = filter === 'all' ? invoices : invoices.filter((i) => i.status === filter)
+  const totalPaid = invoices.filter((i) => i.status === 'paid' || i.status === 'completed').reduce((s, i) => s + i.total, 0)
+  const totalOutstanding = invoices
     .filter((i) => i.status === 'sent' || i.status === 'overdue')
     .reduce((s, i) => s + i.total, 0)
 
   const handleDownload = (invoice: Invoice) => {
-    // In production, generate PDF via a server-side API and trigger download
-    // e.g., fetch(`/api/invoices/${invoice.id}/pdf`) and create a blob URL
     const content = [
-      `INVOICE — INV-${invoice.id.slice(-6).toUpperCase()}`,
+      `INVOICE — ${invoice.invoiceNumber ?? `INV-${invoice.id.slice(-6).toUpperCase()}`}`,
       ``,
-      `Job: ${invoice.jobTitle}`,
-      `Worker: ${invoice.workerName}`,
+      `Job: ${invoice.jobTitle ?? ''}`,
+      `Worker: ${invoice.workerName ?? ''}`,
       ``,
-      `Subtotal: $${invoice.amount.toFixed(2)}`,
+      `Subtotal: $${(invoice.amount ?? invoice.subtotal ?? 0).toFixed(2)}`,
       `Tax: $${invoice.tax.toFixed(2)}`,
       `TOTAL: $${invoice.total.toFixed(2)}`,
       ``,
@@ -186,7 +138,11 @@ export default function InvoicesPage() {
           {/* Invoice list */}
           <Card padding="none">
             <div className="divide-y divide-gray-100 dark:divide-gray-700">
-              {filtered.length === 0 ? (
+              {loading ? (
+                <div className="py-12 text-center">
+                  <div className="h-8 w-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto" />
+                </div>
+              ) : filtered.length === 0 ? (
                 <div className="py-12 text-center text-gray-400 dark:text-gray-600">
                   <FileText className="h-10 w-10 mx-auto mb-2 opacity-40" />
                   No invoices found

@@ -5,24 +5,33 @@
  * Called when the employer marks the job as complete, or automatically after 7 days.
  *
  * Commission tiers (deducted from escrow before paying worker):
- *   New Worker (0–5 jobs):     10%
- *   Established (6–20 jobs):    8%
- *   Pro Worker (21–50 jobs):    6%
- *   Elite Worker (50+ jobs):    5%
- *
- * TODO: Replace STRIPE_SECRET_KEY with your live key when going live.
- * TODO: In production, use Stripe Connect Transfer to pay the worker directly.
+ *   New Worker (0–5 jobs):     18%
+ *   Established (6–20 jobs):   15%
+ *   Pro Worker (21–50 jobs):   12%
+ *   Elite Worker (51+ jobs):   10%
  */
 import { NextResponse } from 'next/server'
 import { getWorkerTier } from '@/types'
 import { isStripeConfigured } from '@/lib/stripe'
 import Stripe from 'stripe'
+import { rateLimit } from '@/lib/rateLimit'
+import { sendPaymentReleasedEmail } from '@/lib/email/transactional'
+import { adminDb } from '@/lib/firebase-admin'
+import { sendAdminNotification } from '@/lib/notifications/admin'
 
 export async function POST(request: Request) {
+  if (rateLimit(request, { max: 20, windowMs: 60_000 })) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please wait a moment before trying again.' },
+      { status: 429 }
+    )
+  }
+
   try {
     const body = await request.json() as {
       paymentIntentId?: string
       jobId?: string
+      jobTitle?: string
       workerId?: string
       workerCompletedJobs?: number
       amount?: number
@@ -32,6 +41,7 @@ export async function POST(request: Request) {
     const {
       paymentIntentId,
       jobId,
+      jobTitle,
       workerId,
       workerCompletedJobs = 0,
       amount,
@@ -51,6 +61,37 @@ export async function POST(request: Request) {
     const commission = commissionCents / 100
     const workerReceives = workerReceivesCents / 100
 
+    // Send "Payment Released" email to worker (non-blocking)
+    const sendPaymentEmail = async () => {
+      try {
+        let workerEmail: string | undefined
+        let workerName: string | undefined
+        if (adminDb) {
+          const workerSnap = await adminDb.collection('users').doc(workerId).get()
+          if (workerSnap.exists) {
+            const data = workerSnap.data()
+            workerEmail = data?.email as string | undefined
+            workerName = (data?.displayName ?? data?.name ?? 'there') as string
+          }
+        }
+        if (workerEmail) {
+          await sendPaymentReleasedEmail({
+            workerEmail,
+            workerName: workerName ?? 'there',
+            jobTitle: jobTitle ?? jobId,
+            grossAmount: amount,
+            commissionAmount: commission,
+            workerAmount: workerReceives,
+            jobId,
+          })
+        }
+      } catch (emailErr) {
+        console.error('Failed to send payment-released email:', emailErr)
+      }
+    }
+
+    let stripeOk = false
+
     if (isStripeConfigured()) {
       const key = process.env.STRIPE_SECRET_KEY!
       const stripe = new Stripe(key, { apiVersion: '2024-06-20' })
@@ -61,7 +102,6 @@ export async function POST(request: Request) {
       })
 
       // Transfer worker's share to their Connect account if available
-      // TODO: Set up Stripe Connect for workers to receive payouts
       if (workerStripeAccountId) {
         await stripe.transfers.create({
           amount: workerReceivesCents,
@@ -78,22 +118,24 @@ export async function POST(request: Request) {
         })
       }
 
-      return NextResponse.json({
-        success: true,
-        paymentIntentId,
-        amount,
-        commission,
-        commissionRate: tierInfo.commissionRate,
-        workerReceives,
-        workerTier: tierInfo.tier,
-        workerTierLabel: tierInfo.label,
-        currency: 'nzd',
-        releasedAt: new Date().toISOString(),
-      })
+      stripeOk = true
     }
 
-    // Mock response when Stripe is not configured (test/dev mode)
-    return NextResponse.json({
+    // Fire-and-forget payment email regardless of Stripe mode (non-blocking)
+    sendPaymentEmail().catch(() => {})
+
+    // Push notification to worker: payment released (non-blocking)
+    if (workerId) {
+      sendAdminNotification({
+        userId: workerId,
+        title: 'Payment released 💰',
+        body: `NZ$${workerReceives.toFixed(2)} has been released for "${jobTitle ?? jobId}".`,
+        type: 'payment_received',
+        link: `/jobs/${jobId}`,
+      }).catch(() => {})
+    }
+
+    const responsePayload = {
       success: true,
       paymentIntentId,
       amount,
@@ -104,7 +146,10 @@ export async function POST(request: Request) {
       workerTierLabel: tierInfo.label,
       currency: 'nzd',
       releasedAt: new Date().toISOString(),
-    })
+      ...(stripeOk ? {} : { mock: true }),
+    }
+
+    return NextResponse.json(responsePayload)
   } catch (error) {
     console.error('POST /api/stripe/release-payment error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

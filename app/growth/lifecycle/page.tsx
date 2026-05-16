@@ -6,6 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import ChurnRiskIndicator from '@/components/lifecycle/ChurnRiskIndicator'
 import EngagementScoreCard from '@/components/lifecycle/EngagementScoreCard'
 import LifecycleStageCard from '@/components/lifecycle/LifecycleStageCard'
+import { useAuth } from '@/components/providers/AuthProvider'
 import type { ChurnRiskProfile, EngagementScore, LifecycleStage } from '@/types'
 
 export default function LifecyclePage() {
@@ -15,9 +16,11 @@ export default function LifecyclePage() {
   const [retentionRecs, setRetentionRecs] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
 
-  const workerId = 'demo'
+  const { user } = useAuth()
+  const workerId = user?.uid ?? ''
 
   useEffect(() => {
+    if (!workerId) return
     const fetchAll = async () => {
       setLoading(true)
       try {
@@ -36,7 +39,7 @@ export default function LifecyclePage() {
       }
     }
     fetchAll()
-  }, [])
+  }, [workerId])
 
   if (loading || !churnRisk || !engagement || !lifecycle) {
     return (

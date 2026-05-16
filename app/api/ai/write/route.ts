@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { rateLimit } from '@/lib/rateLimit'
 
 export const dynamic = 'force-dynamic'
 
@@ -74,6 +75,18 @@ Keep it under 300 words. Write in first person for the summary, third person for
 }
 
 export async function POST(request: NextRequest) {
+  if (rateLimit(request, { max: 10, windowMs: 60_000 })) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please wait a moment before trying again.' },
+      { status: 429 }
+    )
+  }
+
+  const headerUserId = request.headers.get('x-user-id')
+  if (!headerUserId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     const body = await request.json() as WriteRequest
     const { type, userId, userRole, inputs } = body
@@ -82,9 +95,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    // TODO: Verify the Firebase ID token from the Authorization header to authenticate
-    // the user server-side and enforce subscription tier checks via adminDb before
-    // calling OpenAI. For now, subscription gating is enforced on the client.
+    // Verify the caller is the authenticated user
+    if (headerUserId !== userId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
 
     const apiKey = process.env.OPENAI_API_KEY
     if (!apiKey) {

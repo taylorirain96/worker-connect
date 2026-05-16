@@ -1,3 +1,4 @@
+'use client'
 import Link from 'next/link'
 import { MapPin, Clock, DollarSign, Users, Wrench } from 'lucide-react'
 import type { Job } from '@/types'
@@ -6,9 +7,10 @@ import Badge from '@/components/ui/Badge'
 
 interface JobCardProps {
   job: Job
+  showApplyButton?: boolean
 }
 
-export default function JobCard({ job }: JobCardProps) {
+export default function JobCard({ job, showApplyButton }: JobCardProps) {
   const category = JOB_CATEGORIES.find((c) => c.id === job.category)
   const status = STATUS_LABELS[job.status]
   const isUrgent = job.urgency === 'high' || job.urgency === 'emergency'
@@ -16,14 +18,14 @@ export default function JobCard({ job }: JobCardProps) {
   const CategoryIcon = (category ? CATEGORY_ICONS[category.id] : null) ?? Wrench
 
   return (
-    <Link href={`/jobs/${job.id}`}>
-      <div
-        className={`bg-white dark:bg-gray-800 rounded-xl border p-5 hover:shadow-md transition-all cursor-pointer group ${
-          isUrgent
-            ? 'border-indigo-500/40 dark:border-indigo-500/40'
-            : 'border-slate-700/50 dark:border-slate-700/50'
-        }`}
-      >
+    <div
+      className={`bg-white dark:bg-gray-800 rounded-xl border p-5 hover:shadow-md transition-all group ${
+        isUrgent
+          ? 'border-indigo-500/40 dark:border-indigo-500/40'
+          : 'border-slate-700/50 dark:border-slate-700/50'
+      }`}
+    >
+      <Link href={`/jobs/${job.id}`} className="block">
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-3 min-w-0">
             <div className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-lg bg-indigo-500/20">
@@ -37,7 +39,7 @@ export default function JobCard({ job }: JobCardProps) {
             </div>
           </div>
           <div className="flex flex-col items-end gap-1 flex-shrink-0">
-            <Badge variant={job.status === 'open' ? 'success' : job.status === 'in_progress' ? 'info' : 'default'}>
+            <Badge variant={job.status === 'open' ? 'success' : job.status === 'in_progress' ? 'info' : job.status === 'completed' ? 'success' : 'default'}>
               {status?.label}
             </Badge>
             {isUrgent && (
@@ -83,7 +85,17 @@ export default function JobCard({ job }: JobCardProps) {
             <span>{formatRelativeDate(job.createdAt)}</span>
           </div>
         </div>
-      </div>
-    </Link>
+      </Link>
+
+      {showApplyButton && job.status === 'open' && (
+        <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+          <Link href={`/jobs/${job.id}`}>
+            <button className="w-full py-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg transition-colors">
+              Apply Now
+            </button>
+          </Link>
+        </div>
+      )}
+    </div>
   )
 }

@@ -2,6 +2,7 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
+import SocialMark from '@/components/ui/SocialMark'
 import Link from 'next/link'
 import {
   Shield,
@@ -17,117 +18,18 @@ import {
   MessageSquare,
   Building2,
   ExternalLink,
-  Linkedin,
-  Facebook,
   BarChart2,
 } from 'lucide-react'
 import type { BusinessProfile, BusinessReview } from '@/types'
 import { TrustBadgeList, TrustScoreBar } from '@/components/business/TrustBadge'
 
-// Mock data — replace with Firestore fetch once DB is connected
-const MOCK_BUSINESSES: Record<string, BusinessProfile> = {
-  'apex-general-contracting': {
-    id: 'b1',
-    userId: 'u1',
-    companyName: 'Apex General Contracting',
-    slug: 'apex-general-contracting',
-    industry: 'General Contractor',
-    companySize: '11-50',
-    yearsInBusiness: 12,
-    serviceAreas: ['New York, NY', 'Newark, NJ', 'Jersey City, NJ', 'Hoboken, NJ'],
-    website: 'https://apexgc.example.com',
-    linkedIn: 'https://linkedin.com/company/apexgc',
-    description:
-      'Apex General Contracting has been delivering high-quality construction and renovation projects across the tri-state area for over 12 years. We specialize in commercial renovations, multi-family residential builds, and facility management for enterprise clients.',
-    missionStatement:
-      'Building lasting relationships through quality craftsmanship, on-time delivery, and transparent communication.',
-    licenseNumber: 'GC-445821-NY',
-    licenseVerified: true,
-    hasGeneralLiability: true,
-    hasWorkersComp: true,
-    backgroundCheckStatus: 'clear',
-    bbbRating: 'A+',
-    googleRating: 4.8,
-    certifications: ['OSHA 30', 'EPA Lead-Safe', 'LEED Green Associate'],
-    subscriptionTier: 'enterprise',
-    isVerifiedContractor: true,
-    isEnterprisePartner: true,
-    totalJobsPosted: 134,
-    workersHiredYTD: 47,
-    avgJobValue: 8500,
-    successRate: 97,
-    avgTimeToFill: 2.3,
-    repeatHireRate: 68,
-    overallRating: 4.8,
-    reviewCount: 89,
-    ratingBreakdown: {
-      communication: 4.9,
-      quality: 4.8,
-      timeliness: 4.7,
-      fairPay: 4.8,
-    },
-    responseRate: 94,
-    profileCompletionPct: 95,
-    createdAt: new Date(Date.now() - 365 * 3 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-}
-
-const MOCK_REVIEWS: BusinessReview[] = [
-  {
-    id: 'r1',
-    businessId: 'b1',
-    workerId: 'w1',
-    workerName: 'Mike Johnson',
-    jobTitle: 'Commercial Bathroom Renovation',
-    rating: 5,
-    communication: 5,
-    quality: 5,
-    timeliness: 5,
-    fairPay: 5,
-    comment:
-      'Apex is one of the best contractors I have worked for. Clear scope, fair pay, and they always have materials ready on-site. Will definitely work with them again.',
-    createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 'r2',
-    businessId: 'b1',
-    workerId: 'w2',
-    workerName: 'Sarah Chen',
-    jobTitle: 'Office Building Electrical Upgrade',
-    rating: 5,
-    communication: 5,
-    quality: 5,
-    timeliness: 4,
-    fairPay: 5,
-    comment:
-      'Professional team, paid on time, and communicated every step of the way. Highly recommend to any electrician looking for steady commercial work.',
-    createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 'r3',
-    businessId: 'b1',
-    workerId: 'w3',
-    workerName: 'Carlos Rivera',
-    jobTitle: 'HVAC Installation – 40-Unit Apartment Complex',
-    rating: 4,
-    communication: 4,
-    quality: 5,
-    timeliness: 4,
-    fairPay: 4,
-    comment:
-      'Great project to work on. Organized crew and project manager was responsive. A few timeline shifts, but overall a solid employer.',
-    createdAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-]
-
 // Compute trust verification count and score from BusinessProfile fields
 function computeProfileVerification(biz: BusinessProfile): { verifiedCount: number; trustScore: number } {
   let verifiedCount = 0
   if (biz.licenseVerified) verifiedCount++
-  if (biz.hasGeneralLiability || biz.hasWorkersComp) verifiedCount++
+  if (biz.hasPublicLiability || biz.hasGeneralLiability || biz.hasACCEmployerLevy || biz.hasWorkersComp) verifiedCount++
   if (biz.backgroundCheckStatus === 'clear') verifiedCount++
-  if (biz.bbbRating || biz.googleRating) verifiedCount++
+  if (biz.isRatedTrader || biz.bbbRating || biz.googleRating) verifiedCount++
   if (biz.certifications && biz.certifications.length > 0) verifiedCount++
   return { verifiedCount, trustScore: verifiedCount * 20 }
 }
@@ -189,8 +91,31 @@ const companySizeLabels: Record<string, string> = {
   '50+': '50+ Employees',
 }
 
-export default function BusinessProfilePage({ params }: { params: { slug: string } }) {
-  const biz = MOCK_BUSINESSES[params.slug]
+export default async function BusinessProfilePage(props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
+  const slug = params.slug
+
+  let biz: BusinessProfile | null = null
+  let reviews: BusinessReview[] = []
+
+  try {
+    const { adminDb } = await import('@/lib/firebase-admin')
+    const bizSnap = await adminDb.collection('businesses').where('slug', '==', slug).limit(1).get()
+    if (!bizSnap.empty) {
+      const doc = bizSnap.docs[0]
+      biz = { id: doc.id, ...doc.data() } as BusinessProfile
+      const reviewsSnap = await adminDb
+        .collection('reviews')
+        .where('businessId', '==', doc.id)
+        .orderBy('createdAt', 'desc')
+        .limit(20)
+        .get()
+      reviews = reviewsSnap.docs.map((d) => ({ id: d.id, ...d.data() })) as BusinessReview[]
+    }
+  } catch {
+    // Firestore unavailable — biz remains null → 404
+  }
+
   const { verifiedCount, trustScore } = biz ? computeProfileVerification(biz) : { verifiedCount: 0, trustScore: 0 }
 
   if (!biz) {
@@ -202,7 +127,7 @@ export default function BusinessProfilePage({ params }: { params: { slug: string
             <Building2 className="h-16 w-16 text-gray-300 mx-auto mb-4" />
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Business Not Found</h1>
             <p className="text-gray-500 dark:text-gray-400 mb-6">
-              No business profile found for <strong>@{params.slug}</strong>.
+              No business profile found for <strong>@{slug}</strong>.
             </p>
             <Link
               href="/"
@@ -238,7 +163,7 @@ export default function BusinessProfilePage({ params }: { params: { slug: string
               <div className="flex-1 pb-2">
                 <div className="flex flex-wrap items-center gap-2 mb-1">
                   <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
-                    {biz.companyName}
+                    {biz.companyName || 'Independent Tradesperson'}
                   </h1>
                   {biz.licenseVerified && (
                     <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-2 py-0.5 rounded-full text-xs font-semibold">
@@ -295,9 +220,10 @@ export default function BusinessProfilePage({ params }: { params: { slug: string
                     href={biz.linkedIn}
                     target="_blank"
                     rel="noopener noreferrer"
+                    aria-label={`${biz.companyName} on LinkedIn`}
                     className="p-2 rounded-lg text-gray-500 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
                   >
-                    <Linkedin className="h-5 w-5" />
+                    <SocialMark platformToken="in" className="h-5 w-5 text-xs" />
                   </a>
                 )}
                 {biz.facebook && (
@@ -305,9 +231,10 @@ export default function BusinessProfilePage({ params }: { params: { slug: string
                     href={biz.facebook}
                     target="_blank"
                     rel="noopener noreferrer"
+                    aria-label={`${biz.companyName} on Facebook`}
                     className="p-2 rounded-lg text-gray-500 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
                   >
-                    <Facebook className="h-5 w-5" />
+                    <SocialMark platformToken="f" className="h-5 w-5 text-xs" />
                   </a>
                 )}
                 <Link
@@ -339,7 +266,7 @@ export default function BusinessProfilePage({ params }: { params: { slug: string
               {/* About */}
               <Card>
                 <CardHeader>
-                  <CardTitle>About {biz.companyName}</CardTitle>
+                  <CardTitle>About {biz.companyName || 'This Business'}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">{biz.description}</p>
@@ -379,7 +306,7 @@ export default function BusinessProfilePage({ params }: { params: { slug: string
 
                   {/* Review list */}
                   <div className="space-y-4">
-                    {MOCK_REVIEWS.map((review) => (
+                    {reviews.map((review) => (
                       <div
                         key={review.id}
                         className="border-b border-gray-100 dark:border-gray-700 pb-4 last:border-0 last:pb-0"
@@ -481,18 +408,26 @@ export default function BusinessProfilePage({ params }: { params: { slug: string
                         </Badge>
                       </div>
                     )}
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-400">General Liability</span>
-                      <Badge variant={biz.hasGeneralLiability ? 'success' : 'danger'}>
-                        {biz.hasGeneralLiability ? 'Active' : 'None'}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-400">Workers&apos; Comp</span>
-                      <Badge variant={biz.hasWorkersComp ? 'success' : 'danger'}>
-                        {biz.hasWorkersComp ? 'Active' : 'None'}
-                      </Badge>
-                    </div>
+                    {(() => {
+                      const hasLiability = biz.hasPublicLiability ?? biz.hasGeneralLiability
+                      const hasACC = biz.hasACCEmployerLevy ?? biz.hasWorkersComp
+                      return (
+                        <>
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-600 dark:text-gray-400">Public Liability</span>
+                            <Badge variant={hasLiability ? 'success' : 'danger'}>
+                              {hasLiability ? 'Active' : 'None'}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-600 dark:text-gray-400">ACC / Workplace Insurance</span>
+                            <Badge variant={hasACC ? 'success' : 'danger'}>
+                              {hasACC ? 'Active' : 'None'}
+                            </Badge>
+                          </div>
+                        </>
+                      )
+                    })()}
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-600 dark:text-gray-400">Background Check</span>
                       <Badge variant={biz.backgroundCheckStatus === 'clear' ? 'success' : 'warning'}>
@@ -503,10 +438,10 @@ export default function BusinessProfilePage({ params }: { params: { slug: string
                           : 'Not Done'}
                       </Badge>
                     </div>
-                    {biz.bbbRating && (
+                    {biz.isRatedTrader && (
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600 dark:text-gray-400">BBB Rating</span>
-                        <span className="font-semibold text-green-600">{biz.bbbRating}</span>
+                        <span className="text-gray-600 dark:text-gray-400">Rated Trader</span>
+                        <Badge variant="success">Verified Member</Badge>
                       </div>
                     )}
                     {biz.googleRating && (

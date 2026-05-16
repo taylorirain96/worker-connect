@@ -6,7 +6,9 @@ import type { UserProfile } from '@/types'
  */
 export function getDashboardPath(profile: UserProfile | null): string {
   if (!profile) return '/dashboard'
+  if (profile.role === 'homeowner') return '/dashboard/homeowner'
   if (profile.role === 'employer') return '/dashboard/employer'
   if (profile.role === 'admin') return '/admin'
+  if (profile.role === 'jobseeker') return '/dashboard/jobseeker'
   return '/dashboard/worker'
 }

@@ -9,7 +9,7 @@ import { Card, CardContent } from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import toast from 'react-hot-toast'
-import { ArrowLeft, Star, ChevronDown, ChevronUp, Users, MessageSquare, Loader2 } from 'lucide-react'
+import { ArrowLeft, Star, ChevronDown, ChevronUp, Users, MessageSquare, Loader2, CheckCircle, ShieldCheck, HardHat } from 'lucide-react'
 import { formatRelativeDate } from '@/lib/utils'
 import { getJobApplications, acceptApplication, rejectApplication } from '@/lib/applications'
 import { db } from '@/lib/firebase'
@@ -96,7 +96,31 @@ export default function ApplicantsPage() {
 
         // Fetch applications
         const apps = await getJobApplications(jobId)
-        setApplications(apps)
+
+        if (db && apps.length > 0) {
+          const firestore = db
+          const uniqueWorkerIds = Array.from(new Set(apps.map((app) => app.workerId).filter(Boolean)))
+          const workerProfiles = await Promise.all(
+            uniqueWorkerIds.map(async (workerId) => {
+              const workerSnap = await getDoc(doc(firestore, 'users', workerId))
+              return [workerId, workerSnap.exists() ? workerSnap.data() : null] as const
+            })
+          )
+
+          const workerProfileMap = new Map(workerProfiles)
+          setApplications(
+            apps.map((app) => {
+              const workerProfile = workerProfileMap.get(app.workerId)
+              return {
+                ...app,
+                workerBackgroundCheckStatus: workerProfile?.backgroundCheckStatus,
+                workerWorksafeComplete: Boolean(workerProfile?.worksafeCompliance?.completedAt),
+              }
+            })
+          )
+        } else {
+          setApplications(apps)
+        }
       } catch {
         toast.error('Failed to load applicants')
       } finally {
@@ -316,6 +340,23 @@ export default function ApplicantsPage() {
                             <span className="flex items-center gap-0.5 text-xs text-gray-500">
                               <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
                               {app.workerRating.toFixed(1)}
+                            </span>
+                          )}
+
+                          {/* Verified badge */}
+                          {app.workerVerified && (
+                            <CheckCircle className="h-4 w-4 text-blue-500 flex-shrink-0" aria-label="Verified" />
+                          )}
+                          {app.workerBackgroundCheckStatus === 'approved' && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-[11px] font-medium text-green-700 dark:bg-green-900/20 dark:text-green-300">
+                              <ShieldCheck className="h-3 w-3" />
+                              Background checked
+                            </span>
+                          )}
+                          {app.workerWorksafeComplete && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-orange-50 px-2 py-0.5 text-[11px] font-medium text-orange-700 dark:bg-orange-900/20 dark:text-orange-300">
+                              <HardHat className="h-3 w-3" />
+                              WorkSafe compliant
                             </span>
                           )}
 

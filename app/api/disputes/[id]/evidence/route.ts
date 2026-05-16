@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server'
+import { adminDb } from '@/lib/firebase-admin'
+import { FieldValue } from 'firebase-admin/firestore'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,8 +11,14 @@ export async function GET(
   const params = await context.params
   try {
     const { id } = params
-    // In production, fetch evidence for this dispute from Firestore
-    return NextResponse.json({ evidence: [], disputeId: id })
+    const snap = await adminDb
+      .collection('disputes')
+      .doc(id)
+      .collection('evidence')
+      .orderBy('timestamp', 'desc')
+      .get()
+    const evidence = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+    return NextResponse.json({ evidence, disputeId: id })
   } catch (error) {
     console.error('GET /api/disputes/[id]/evidence error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -31,12 +39,28 @@ export async function POST(
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    // In production, write to Firestore and return the created record:
-    // const adminDb = (await import('@/lib/firebase-admin')).adminDb
-    // const docRef = await adminDb.collection('disputeEvidence').add({ disputeId: id, ...body, timestamp: FieldValue.serverTimestamp() })
+    if (!adminDb) {
+      return NextResponse.json({ error: 'Database unavailable' }, { status: 503 })
+    }
 
-    const mockEvidence = {
-      id: `ev_${Date.now()}`,
+    const docRef = await adminDb
+      .collection('disputes')
+      .doc(id)
+      .collection('evidence')
+      .add({
+        disputeId: id,
+        type,
+        fileUrl: fileUrl ?? null,
+        fileName: fileName ?? null,
+        fileSize: fileSize ?? null,
+        description,
+        uploadedBy,
+        uploaderName: uploaderName ?? 'User',
+        timestamp: FieldValue.serverTimestamp(),
+      })
+
+    const created = {
+      id: docRef.id,
       disputeId: id,
       type,
       fileUrl: fileUrl ?? null,
@@ -48,7 +72,7 @@ export async function POST(
       timestamp: new Date().toISOString(),
     }
 
-    return NextResponse.json({ evidence: mockEvidence }, { status: 201 })
+    return NextResponse.json({ evidence: created }, { status: 201 })
   } catch (error) {
     console.error('POST /api/disputes/[id]/evidence error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

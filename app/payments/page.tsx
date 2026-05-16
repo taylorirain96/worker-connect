@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
@@ -12,90 +12,38 @@ import {
   CreditCard, DollarSign, Clock, CheckCircle, XCircle, ArrowLeft, TrendingUp
 } from 'lucide-react'
 
-// ─── Mock data (replace with Firestore calls via paymentService) ──────────────
-const MOCK_PAYMENTS: Payment[] = [
-  {
-    id: 'pay_1',
-    jobId: 'job_1',
-    jobTitle: 'Plumbing Repair — Kitchen Sink',
-    employerId: 'emp_1',
-    workerId: 'worker_1',
-    amount: 320,
-    currency: 'usd',
-    status: 'completed',
-    stripePaymentIntentId: 'pi_mock_1',
-    createdAt: new Date(Date.now() - 8 * 86400000).toISOString(),
-    updatedAt: new Date(Date.now() - 8 * 86400000).toISOString(),
-  },
-  {
-    id: 'pay_2',
-    jobId: 'job_2',
-    jobTitle: 'Electrical Panel Upgrade',
-    employerId: 'emp_2',
-    workerId: 'worker_1',
-    amount: 850,
-    currency: 'usd',
-    status: 'processing',
-    stripePaymentIntentId: 'pi_mock_2',
-    createdAt: new Date(Date.now() - 2 * 86400000).toISOString(),
-    updatedAt: new Date(Date.now() - 86400000).toISOString(),
-  },
-  {
-    id: 'pay_3',
-    jobId: 'job_3',
-    jobTitle: 'HVAC Maintenance Service',
-    employerId: 'emp_1',
-    workerId: 'worker_1',
-    amount: 200,
-    currency: 'usd',
-    status: 'pending',
-    stripePaymentIntentId: 'pi_mock_3',
-    createdAt: new Date(Date.now() - 86400000).toISOString(),
-    updatedAt: new Date(Date.now() - 86400000).toISOString(),
-  },
-  {
-    id: 'pay_4',
-    jobId: 'job_4',
-    jobTitle: 'Carpentry — Deck Repair',
-    employerId: 'emp_3',
-    workerId: 'worker_1',
-    amount: 450,
-    currency: 'usd',
-    status: 'completed',
-    stripePaymentIntentId: 'pi_mock_4',
-    createdAt: new Date(Date.now() - 20 * 86400000).toISOString(),
-    updatedAt: new Date(Date.now() - 20 * 86400000).toISOString(),
-  },
-  {
-    id: 'pay_5',
-    jobId: 'job_5',
-    jobTitle: 'Roof Inspection & Repair',
-    employerId: 'emp_2',
-    workerId: 'worker_1',
-    amount: 175,
-    currency: 'usd',
-    status: 'failed',
-    stripePaymentIntentId: 'pi_mock_5',
-    createdAt: new Date(Date.now() - 30 * 86400000).toISOString(),
-    updatedAt: new Date(Date.now() - 30 * 86400000).toISOString(),
-  },
-]
-
 type StatusFilter = 'all' | Payment['status']
 
 export default function PaymentsPage() {
   const { user } = useAuth()
+  const [payments, setPayments] = useState<Payment[]>([])
+  const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<StatusFilter>('all')
 
-  const filtered = filter === 'all' ? MOCK_PAYMENTS : MOCK_PAYMENTS.filter((p) => p.status === filter)
+  useEffect(() => {
+    if (!user) {
+      setLoading(false)
+      return
+    }
+    const role = (['employer', 'property_manager', 'homeowner'].includes((user as { role?: string }).role ?? '')) ? 'employer' : 'worker'
+    fetch(`/api/payments?userId=${encodeURIComponent(user.uid)}&role=${role}`)
+      .then((r) => r.json())
+      .then((data: { payments?: Payment[] }) => {
+        setPayments(Array.isArray(data.payments) ? data.payments : [])
+      })
+      .catch(() => setPayments([]))
+      .finally(() => setLoading(false))
+  }, [user])
 
-  const totalCompleted = MOCK_PAYMENTS
+  const filtered = filter === 'all' ? payments : payments.filter((p) => p.status === filter)
+
+  const totalCompleted = payments
     .filter((p) => p.status === 'completed')
     .reduce((s, p) => s + p.amount, 0)
-  const totalPending = MOCK_PAYMENTS
+  const totalPending = payments
     .filter((p) => p.status === 'pending' || p.status === 'processing')
     .reduce((s, p) => s + p.amount, 0)
-  const failedCount = MOCK_PAYMENTS.filter((p) => p.status === 'failed').length
+  const failedCount = payments.filter((p) => p.status === 'failed').length
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -202,7 +150,11 @@ export default function PaymentsPage() {
           {/* Payment list */}
           <Card padding="none">
             <div className="divide-y divide-gray-100 dark:divide-gray-700">
-              {filtered.length === 0 ? (
+              {loading ? (
+                <div className="py-12 text-center text-gray-400 dark:text-gray-600">
+                  <div className="h-8 w-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto" />
+                </div>
+              ) : filtered.length === 0 ? (
                 <div className="py-12 text-center text-gray-400 dark:text-gray-600">
                   <CreditCard className="h-10 w-10 mx-auto mb-2 opacity-40" />
                   No payments found

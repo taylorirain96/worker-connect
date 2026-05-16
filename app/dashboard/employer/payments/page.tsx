@@ -29,6 +29,7 @@ import {
   AlertCircle,
 } from 'lucide-react'
 import { POSTING_FEES, getPostingFee, type EscrowRecord, type PostingFeeSize } from '@/types'
+import toast from 'react-hot-toast'
 
 function formatNZD(amount: number): string {
   return new Intl.NumberFormat('en-NZ', {
@@ -55,104 +56,6 @@ interface EmployerPaymentSummary {
   escrows: Array<EscrowRecord & { jobTitle: string }>
 }
 
-// ─── Mock data (replace with Firestore queries in production) ─────────────────
-
-const MOCK_POSTED_JOBS: PostedJobRecord[] = [
-  {
-    id: 'job_1',
-    title: 'Bathroom Renovation — Tile Work',
-    estimatedBudget: 1850,
-    postingFee: 29.99,
-    feeSize: 'medium',
-    feePaid: true,
-    postedAt: new Date(Date.now() - 12 * 86400000).toISOString(),
-    status: 'completed',
-  },
-  {
-    id: 'job_2',
-    title: 'Kitchen Sink Replacement',
-    estimatedBudget: 420,
-    postingFee: 14.99,
-    feeSize: 'small',
-    feePaid: true,
-    postedAt: new Date(Date.now() - 3 * 86400000).toISOString(),
-    status: 'in_progress',
-  },
-  {
-    id: 'job_3',
-    title: 'Electrical Panel Upgrade',
-    estimatedBudget: 2800,
-    postingFee: 54.99,
-    feeSize: 'large',
-    feePaid: true,
-    postedAt: new Date(Date.now() - 35 * 86400000).toISOString(),
-    status: 'completed',
-  },
-  {
-    id: 'job_4',
-    title: 'Fence Installation — 20m',
-    estimatedBudget: 1100,
-    postingFee: 29.99,
-    feeSize: 'medium',
-    feePaid: false,
-    postedAt: new Date(Date.now() - 1 * 86400000).toISOString(),
-    status: 'draft',
-  },
-]
-
-const MOCK_ESCROWS: Array<EscrowRecord & { jobTitle: string }> = [
-  {
-    id: 'escrow_1',
-    jobId: 'job_1',
-    jobTitle: 'Bathroom Renovation — Tile Work',
-    workerId: 'worker_1',
-    employerId: 'emp_1',
-    amount: 1850,
-    commission: 148,
-    commissionRate: 0.08,
-    workerReceives: 1702,
-    currency: 'nzd',
-    status: 'released',
-    workerTier: 'established',
-    createdAt: new Date(Date.now() - 10 * 86400000).toISOString(),
-    updatedAt: new Date(Date.now() - 3 * 86400000).toISOString(),
-    releasedAt: new Date(Date.now() - 3 * 86400000).toISOString(),
-  },
-  {
-    id: 'escrow_2',
-    jobId: 'job_2',
-    jobTitle: 'Kitchen Sink Replacement',
-    workerId: 'worker_2',
-    employerId: 'emp_1',
-    amount: 420,
-    commission: 33.60,
-    commissionRate: 0.08,
-    workerReceives: 386.40,
-    currency: 'nzd',
-    status: 'in_escrow',
-    workerTier: 'established',
-    createdAt: new Date(Date.now() - 2 * 86400000).toISOString(),
-    updatedAt: new Date(Date.now() - 2 * 86400000).toISOString(),
-  },
-  {
-    id: 'escrow_3',
-    jobId: 'job_3',
-    jobTitle: 'Electrical Panel Upgrade',
-    workerId: 'worker_3',
-    employerId: 'emp_1',
-    amount: 2800,
-    commission: 224,
-    commissionRate: 0.08,
-    workerReceives: 2576,
-    currency: 'nzd',
-    status: 'released',
-    workerTier: 'established',
-    createdAt: new Date(Date.now() - 30 * 86400000).toISOString(),
-    updatedAt: new Date(Date.now() - 22 * 86400000).toISOString(),
-    releasedAt: new Date(Date.now() - 22 * 86400000).toISOString(),
-  },
-]
-
 const ESCROW_STATUS_CONFIG: Record<
   EscrowRecord['status'],
   { label: string; icon: React.ElementType; colorClass: string }
@@ -172,15 +75,18 @@ export default function EmployerPaymentsPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // TODO: Replace with real Firestore queries:
-    // jobs: collection('jobs').where('employerId', '==', user.uid)
-    // escrows: collection('escrows').where('employerId', '==', user.uid)
-    void user
-    setTimeout(() => {
-      setData({ postedJobs: MOCK_POSTED_JOBS, escrows: MOCK_ESCROWS })
-      setLoading(false)
-    }, 300)
-  }, [user])
+    if (!user?.uid) return
+    fetch('/api/employer/payments', { headers: { 'x-user-id': user.uid } })
+      .then((r) => r.json())
+      .then((json: { postedJobs?: PostedJobRecord[]; escrows?: Array<EscrowRecord & { jobTitle: string }> }) => {
+        setData({
+          postedJobs: json.postedJobs ?? [],
+          escrows: (json.escrows ?? []) as Array<EscrowRecord & { jobTitle: string }>,
+        })
+      })
+      .catch(() => toast.error('Failed to load payment data'))
+      .finally(() => setLoading(false))
+  }, [user?.uid])
 
   const totalPostingFees = data.postedJobs.filter((j) => j.feePaid).reduce((sum, j) => sum + j.postingFee, 0)
   const activeEscrow     = data.escrows.filter((e) => e.status === 'in_escrow').reduce((sum, e) => sum + e.amount, 0)
@@ -297,7 +203,7 @@ export default function EmployerPaymentsPage() {
                     <div className="text-center py-8">
                       <Briefcase className="h-8 w-8 text-gray-300 mx-auto mb-2" />
                       <p className="text-gray-500 text-sm">No jobs posted yet</p>
-                      <Link href="/jobs/post">
+                      <Link href="/jobs/create">
                         <Button size="sm" className="mt-3">Post a Job</Button>
                       </Link>
                     </div>
@@ -392,7 +298,7 @@ export default function EmployerPaymentsPage() {
               </Card>
 
               {/* Post a job CTA */}
-              <Link href="/jobs/post">
+              <Link href="/jobs/create">
                 <Button className="w-full flex items-center justify-center gap-2">
                   <Briefcase className="h-4 w-4" />
                   Post a New Job

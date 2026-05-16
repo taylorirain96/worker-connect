@@ -1,46 +1,79 @@
-// @ts-nocheck
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { AlertTriangle, Upload, FileText, CheckCircle, Clock } from 'lucide-react'
 import type { DisputeAppeal } from '@/types/dispute'
-
-// Mock data for demonstration
-const MOCK_APPEALS: DisputeAppeal[] = [
-  {
-    id: 'appeal-1',
-    userId: 'user-123',
-    ratingId: 'rating-456',
-    originalRating: 2,
-    reason: 'Client provided inaccurate job description; completion time was misrepresented.',
-    evidenceUrls: ['https://example.com/evidence1.jpg'],
-    status: 'reviewing',
-    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-]
+import { useAuth } from '@/components/providers/AuthProvider'
 
 export default function TrustMediationPage() {
-  const [appeals, setAppeals] = useState<DisputeAppeal[]>(MOCK_APPEALS)
+  const { user } = useAuth()
+  const [appeals, setAppeals] = useState<DisputeAppeal[]>([])
+  const [loading, setLoading] = useState(true)
   const [showNewAppealForm, setShowNewAppealForm] = useState(false)
   const [reason, setReason] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
-  const handleSubmitAppeal = () => {
-    const newAppeal: DisputeAppeal = {
-      id: `appeal-${Date.now()}`,
-      userId: 'user-123',
-      ratingId: `rating-${Date.now()}`,
-      originalRating: 2,
-      reason,
-      evidenceUrls: [],
-      status: 'pending',
-      createdAt: new Date().toISOString(),
+  useEffect(() => {
+    if (!user) return
+    async function load() {
+      try {
+        const res = await fetch(`/api/rating-appeals?workerId=${user!.uid}`, {
+          headers: { 'x-user-id': user!.uid },
+        })
+        if (res.ok) {
+          const data = await res.json() as { appeals?: DisputeAppeal[] }
+          setAppeals(data.appeals ?? [])
+        }
+      } catch {
+        setAppeals([])
+      } finally {
+        setLoading(false)
+      }
     }
-    setAppeals([newAppeal, ...appeals])
-    setReason('')
-    setShowNewAppealForm(false)
+    load()
+  }, [user])
+
+  const handleSubmitAppeal = async () => {
+    if (!reason.trim() || !user) return
+    setSubmitting(true)
+    try {
+      const res = await fetch('/api/rating-appeals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-user-id': user.uid },
+        body: JSON.stringify({
+          jobId: '',
+          workerId: user.uid,
+          currentRating: 2,
+          appealReason: reason.trim(),
+        }),
+      })
+      if (res.ok) {
+        const data = await res.json() as { id: string }
+        const newAppeal: DisputeAppeal = {
+          id: data.id,
+          userId: user.uid,
+          ratingId: '',
+          originalRating: 2,
+          reason: reason.trim(),
+          evidenceUrls: [],
+          status: 'pending',
+          createdAt: new Date().toISOString(),
+        }
+        setAppeals((p) => [newAppeal, ...p])
+        setReason('')
+        setShowNewAppealForm(false)
+      }
+    } catch {
+      // leave form open
+    } finally {
+      setSubmitting(false)
+    }
   }
 
-  const STATUS_CONFIG = {
+  const STATUS_CONFIG: Record<
+    DisputeAppeal['status'],
+    { label: string; color: string; bg: string; icon: typeof Clock }
+  > = {
     pending: { label: 'Pending Review', color: 'text-yellow-400', bg: 'bg-yellow-900/20', icon: Clock },
     reviewing: { label: 'Under Review', color: 'text-blue-400', bg: 'bg-blue-900/20', icon: FileText },
     resolved: { label: 'Resolved', color: 'text-emerald-400', bg: 'bg-emerald-900/20', icon: CheckCircle },
@@ -68,7 +101,11 @@ export default function TrustMediationPage() {
           </button>
         </div>
 
-        {appeals.length === 0 && (
+        {loading && (
+          <p className="text-gray-400 text-center py-8 text-sm">Loading appeals…</p>
+        )}
+
+        {!loading && appeals.length === 0 && (
           <p className="text-gray-400 text-center py-8">No active appeals</p>
         )}
 
@@ -133,7 +170,7 @@ export default function TrustMediationPage() {
           <div className="flex gap-3">
             <button
               onClick={handleSubmitAppeal}
-              disabled={!reason.trim()}
+              disabled={!reason.trim() || submitting}
               className="px-5 py-2 rounded-lg bg-gradient-to-r from-[#b822e4] to-[#e97be4] text-white font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
               Submit Appeal
