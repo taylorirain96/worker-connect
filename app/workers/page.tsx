@@ -4,8 +4,13 @@ import Script from 'next/script'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import WorkersBrowser from '@/components/workers/WorkersBrowser'
-import { SITE_URL } from '@/lib/seo/config'
+import { SITE_URL, SITE_NAME } from '@/lib/seo/config'
+import { getWorkersServer } from '@/lib/services/workerServerService'
 import { Shield, Star, BadgeCheck, MapPin, Clock, CheckCircle } from 'lucide-react'
+
+// Re-query top workers periodically so the SSR ItemList JSON-LD stays
+// reasonably fresh as new workers join, without going fully dynamic.
+export const revalidate = 300
 
 export const metadata: Metadata = {
   title: 'Find Trusted Tradies in New Zealand | QuickTrade',
@@ -59,7 +64,7 @@ const WORKER_FAQS = [
   },
 ]
 
-const jsonLd = {
+const baseJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'ItemList',
   name: 'Find Tradespeople in New Zealand',
@@ -87,7 +92,50 @@ const breadcrumbJsonLd = {
   ],
 }
 
-export default function WorkersPage() {
+export default async function WorkersPage() {
+  const topWorkers = await getWorkersServer(20)
+
+  // Enrich the listing's ItemList JSON-LD with real Person items so
+  // crawlers see structured data for each surfaced worker, not just the
+  // page-level container.
+  const jsonLd =
+    topWorkers.length > 0
+      ? {
+          ...baseJsonLd,
+          itemListOrder: 'https://schema.org/ItemListOrderDescending',
+          numberOfItems: topWorkers.length,
+          itemListElement: topWorkers.map((worker, index) => ({
+            '@type': 'ListItem',
+            position: index + 1,
+            url: `${SITE_URL}/workers/${worker.uid}`,
+            item: {
+              '@type': 'Person',
+              '@id': `${SITE_URL}/workers/${worker.uid}`,
+              name: worker.displayName || 'QuickTrade Worker',
+              url: `${SITE_URL}/workers/${worker.uid}`,
+              ...(worker.photoURL ? { image: worker.photoURL } : {}),
+              ...(worker.bio ? { description: worker.bio } : {}),
+              ...(worker.location
+                ? { address: { '@type': 'PostalAddress', addressLocality: worker.location } }
+                : {}),
+              ...(worker.skills && worker.skills.length > 0 ? { knowsAbout: worker.skills } : {}),
+              ...(typeof worker.rating === 'number' && (worker.reviewCount ?? 0) > 0
+                ? {
+                    aggregateRating: {
+                      '@type': 'AggregateRating',
+                      ratingValue: worker.rating,
+                      reviewCount: worker.reviewCount,
+                      bestRating: 5,
+                      worstRating: 1,
+                    },
+                  }
+                : {}),
+              worksFor: { '@type': 'Organization', name: SITE_NAME, url: SITE_URL },
+            },
+          })),
+        }
+      : baseJsonLd
+
   return (
     <div className="flex flex-col min-h-screen luxury-bg">
       <Script
