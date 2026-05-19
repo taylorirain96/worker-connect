@@ -36,11 +36,12 @@ export async function GET(request: NextRequest) {
     }
 
     const Stripe = (await import('stripe')).default
-    const stripe = new Stripe(stripeKey, { apiVersion: '2024-06-20' })
+    const stripe = new Stripe(stripeKey, { apiVersion: '2026-04-22.dahlia' })
 
-    const balance = await stripe.balance.retrieve({
-      stripeAccount: stripeAccountId,
-    })
+    const balance = await stripe.balance.retrieve(
+      undefined,
+      { stripeAccount: stripeAccountId }
+    )
 
     const available = balance.available.reduce((sum, b) => sum + b.amount, 0) / 100
     const pending = balance.pending.reduce((sum, b) => sum + b.amount, 0) / 100

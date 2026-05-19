@@ -66,7 +66,7 @@ export async function POST(request: Request) {
     // Use capture_method: 'manual' to hold funds without immediate capture
     if (isStripeConfigured()) {
       const key = process.env.STRIPE_SECRET_KEY!
-      const stripe = new Stripe(key, { apiVersion: '2024-06-20' })
+      const stripe = new Stripe(key, { apiVersion: '2026-04-22.dahlia' })
       const intent = await stripe.paymentIntents.create({
         amount: Math.round(quoteAmount * 100),
         currency: 'nzd',

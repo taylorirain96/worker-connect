@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
 
     const stripe = getStripe()
 
-    const lineItems: import('stripe').Stripe.Checkout.SessionCreateParams.LineItem[] = [
+    const lineItems: NonNullable<import('stripe').Stripe.Checkout.SessionCreateParams['line_items']> = [
       {
         price_data: {
           currency: 'nzd',
