@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     }
 
     const Stripe = (await import('stripe')).default
-    const stripe = new Stripe(stripeKey, { apiVersion: '2024-06-20' })
+    const stripe = new Stripe(stripeKey, { apiVersion: '2026-04-22.dahlia' })
 
     const amountCents = Math.round(amount * 100)
 
