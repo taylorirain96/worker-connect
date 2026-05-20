@@ -13,6 +13,14 @@ import { defineConfig, devices } from '@playwright/test';
 const PORT = Number(process.env.PORT ?? 3000);
 const BASE_URL = process.env.E2E_BASE_URL ?? `http://127.0.0.1:${PORT}`;
 
+// Default a deterministic signing secret for the `auth-session` cookie so that
+// the test process (which mints cookies via `lib/auth/sessionToken`) and the
+// Next.js server (which verifies them in `middleware.ts`) share a key. Real
+// deployments must override this via the environment.
+const AUTH_SESSION_SECRET =
+  process.env.AUTH_SESSION_SECRET ?? 'e2e-test-secret-do-not-use-in-production';
+process.env.AUTH_SESSION_SECRET = AUTH_SESSION_SECRET;
+
 export default defineConfig({
   testDir: './e2e',
   // Fail the build on CI if `test.only` is left in source.
@@ -45,5 +53,8 @@ export default defineConfig({
         timeout: 120_000,
         stdout: 'pipe',
         stderr: 'pipe',
+        env: {
+          AUTH_SESSION_SECRET,
+        },
       },
 });
