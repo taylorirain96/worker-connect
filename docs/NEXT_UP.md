@@ -87,7 +87,7 @@ flow with an automated end-to-end test.
 **Status**
 - ✅ Playwright scaffolding landed: `@playwright/test` dev dep,
   `playwright.config.ts` (webServer = `npm run start`), `e2e/smoke.spec.ts`
-  covering the homepage + `/auth/signin`, `npm run test:e2e` script, and a
+  covering the homepage + `/auth/login`, `npm run test:e2e` script, and a
   `.github/workflows/e2e.yml` job running on PRs.
 - 🟡 `e2e/revenue-path.spec.ts` exists as a `test.fixme` placeholder with the
   full step-by-step plan in comments. Still needs the Firebase emulator +
