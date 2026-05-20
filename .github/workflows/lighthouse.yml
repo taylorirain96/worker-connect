@@ -1,0 +1,68 @@
+name: Lighthouse
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Audit the highest-traffic public SEO surfaces (homepage + services landing
+# pages, including one NZ region/city and one AU city). Assertions are
+# currently set to `warn` in `lighthouserc.json` so the job never blocks a PR
+# until a green baseline has been captured. Once we are consistently above the
+# targets in `docs/NEXT_UP.md` task #7 (≥90 Performance, ≥95 SEO), we can flip
+# the relevant assertions to `error`.
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build app
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+
+      - name: Start app
+        run: |
+          npm run start &
+          echo "APP_PID=$!" >> "$GITHUB_ENV"
+          # Wait for the server to accept connections.
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:3000/ > /dev/null; then
+              echo "App is up after ${i}s"
+              break
+            fi
+            sleep 1
+          done
+
+      - name: Run Lighthouse CI
+        run: npx --yes @lhci/cli@0.14.x autorun --config=./lighthouserc.json
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+
+      - name: Stop app
+        if: always()
+        run: |
+          if [ -n "${APP_PID:-}" ]; then
+            kill "${APP_PID}" || true
+          fi
+
+      - name: Upload Lighthouse report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report
+          path: .lighthouseci
+          retention-days: 7
