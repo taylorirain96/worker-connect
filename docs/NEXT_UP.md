@@ -80,19 +80,32 @@ forged cookie no longer satisfies the `/dashboard` and `/admin` guards.
 
 ---
 
-### 5. Playwright E2E for the highest-revenue path
+### 5. Playwright E2E for the highest-revenue path 🟡 In progress
 **Goal:** Lock in the post-job → quote → accept → escrow → release → review
 flow with an automated end-to-end test.
 
-**Pointers**
-- No `playwright/` or `e2e/` directory exists yet.
-- Run against a Firebase emulator (already used in some unit tests — check
-  `firestore.rules` and `package.json` scripts) or a seeded test project.
+**Status**
+- ✅ Playwright scaffolding landed: `@playwright/test` dev dep,
+  `playwright.config.ts` (webServer = `npm run start`), `e2e/smoke.spec.ts`
+  covering the homepage + `/auth/signin`, `npm run test:e2e` script, and a
+  `.github/workflows/e2e.yml` job running on PRs.
+- 🟡 `e2e/revenue-path.spec.ts` exists as a `test.fixme` placeholder with the
+  full step-by-step plan in comments. Still needs the Firebase emulator +
+  Stripe test-mode harness before it can be un-fixme'd.
+
+**Remaining work**
+- Wire a `globalSetup` that boots the Firebase emulator (auth + firestore)
+  and seeds one homeowner + one worker fixture account.
+- Inject Stripe test-mode keys (or `stripe-mock`) plus a webhook signing
+  secret so `/api/stripe/webhook` accepts simulated
+  `payment_intent.succeeded` / `charge.refunded` events during the run.
+- Implement the revenue-path steps in `e2e/revenue-path.spec.ts` using two
+  browser contexts (homeowner + worker).
 
 **Acceptance**
 - `npm run test:e2e` runs Playwright headless, exercising the full path with
   one homeowner + one worker test account.
-- New GitHub Actions job in `.github/workflows/` runs E2E on PRs.
+- New GitHub Actions job in `.github/workflows/` runs E2E on PRs. ✅
 
 ---
 
