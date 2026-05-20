@@ -59,21 +59,15 @@ Chat), all reusing existing REST endpoints with the `x-user-id` header.
 
 ---
 
-### 3. Sentry / error monitoring
-**Goal:** Capture client + server errors with stack traces and release tags.
-
-**Pointers**
-- No monitoring SDK currently in `package.json`.
-- Add `@sentry/nextjs`; configure via `sentry.client.config.ts`,
-  `sentry.server.config.ts`, `sentry.edge.config.ts`, and Next.js wrapper in
-  `next.config.js`.
-- Add `SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN` to
-  `.env.example`.
-
-**Acceptance**
-- Errors thrown in API routes and React components reach Sentry in dev.
-- Source maps uploaded on Vercel build.
-- PII scrubbing enabled (`beforeSend` strips `email`, `name`, headers).
+### 3. ~~Sentry / error monitoring~~ ✅ Shipped
+`@sentry/nextjs` is wired up via `instrumentation.ts` (Node + Edge),
+`instrumentation-client.ts` (browser), `app/global-error.tsx`, and the
+`withSentryConfig` wrapper in `next.config.js`. DSN, org, project, auth-token,
+environment, release, and traces-sample-rate vars are documented in
+`.env.example`. `beforeSend` scrubs PII (user email/name/IP, auth/cookie
+headers, request body email/name/phone/password/idToken) before events leave
+the process. Source maps upload only when `SENTRY_AUTH_TOKEN` is configured,
+so builds without the secret still succeed.
 
 ---
 
