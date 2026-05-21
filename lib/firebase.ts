@@ -42,15 +42,20 @@ if ((apiKey && projectId) || useEmulator) {
     storage = getStorage(app)
 
     if (useEmulator && typeof window !== 'undefined') {
+      // Default ports match `firebase.json`; override via env vars when
+      // running against a non-default emulator setup.
+      const authHost = process.env.NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_URL ?? 'http://127.0.0.1:9099'
+      const firestoreHost = process.env.NEXT_PUBLIC_FIRESTORE_EMULATOR_HOST ?? '127.0.0.1:8080'
+      const [fsHostname, fsPortStr] = firestoreHost.split(':')
       // Connect once per page load. Re-connecting a live SDK is a no-op
       // wrapped in try/catch because the SDK throws when called twice.
       try {
-        connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true })
+        connectAuthEmulator(auth, authHost, { disableWarnings: true })
       } catch {
         /* already connected */
       }
       try {
-        connectFirestoreEmulator(db, '127.0.0.1', 8080)
+        connectFirestoreEmulator(db, fsHostname, Number(fsPortStr) || 8080)
       } catch {
         /* already connected */
       }

@@ -86,7 +86,7 @@ async function resetEmulator(projectId: string): Promise<void> {
 
   for (const url of endpoints) {
     const res = await fetch(url, { method: 'DELETE' });
-    if (!res.ok && res.status !== 200) {
+    if (!res.ok) {
       throw new Error(
         `Failed to reset Firebase emulator at ${url}: ${res.status} ${res.statusText}`,
       );
