@@ -4,7 +4,7 @@
 > pointers needed to start, and a clear acceptance criterion so any contributor
 > (human or agent) can pick one up cold.
 
-Last updated: 2026-05-20
+Last updated: 2026-05-21
 
 ---
 
@@ -100,18 +100,37 @@ flow with an automated end-to-end test.
   `playwright.config.ts` (webServer = `npm run start`), `e2e/smoke.spec.ts`
   covering the homepage + `/auth/login`, `npm run test:e2e` script, and a
   `.github/workflows/e2e.yml` job running on PRs.
-- 🟡 `e2e/revenue-path.spec.ts` exists as a `test.fixme` placeholder with the
-  full step-by-step plan in comments. Still needs the Firebase emulator +
-  Stripe test-mode harness before it can be un-fixme'd.
+- ✅ **Firebase emulator harness foundation landed:**
+  - `firebase.json` declares Auth (`9099`) and Firestore (`8080`) emulator
+    ports.
+  - `e2e/fixtures.ts` exports shared homeowner + worker fixture constants
+    (UIDs, emails, passwords, roles) reused by setup and specs.
+  - `e2e/globalSetup.ts` resets the emulator (auth + firestore REST DELETE)
+    and seeds the two fixture accounts via `firebase-admin`. It's a no-op
+    when emulator env vars aren't set, so existing smoke/auth specs keep
+    running without Java.
+  - `playwright.config.ts` wires `globalSetup` and forwards
+    `FIRESTORE_EMULATOR_HOST` / `FIREBASE_AUTH_EMULATOR_HOST` /
+    `NEXT_PUBLIC_USE_FIREBASE_EMULATOR` to the Next.js `webServer`.
+  - `lib/firebase.ts` calls `connectAuthEmulator` /
+    `connectFirestoreEmulator` in the browser when
+    `NEXT_PUBLIC_USE_FIREBASE_EMULATOR=1`.
+- 🟡 `e2e/revenue-path.spec.ts` is still a `test.fixme` placeholder. Stripe
+  test-mode keys + a webhook signing secret (or `stripe-mock`) still need
+  to be injected so `/api/stripe/webhook` accepts simulated
+  `payment_intent.succeeded` / `charge.refunded` events.
 
 **Remaining work**
-- Wire a `globalSetup` that boots the Firebase emulator (auth + firestore)
-  and seeds one homeowner + one worker fixture account.
-- Inject Stripe test-mode keys (or `stripe-mock`) plus a webhook signing
-  secret so `/api/stripe/webhook` accepts simulated
+- Add a `test:e2e:emulators` script (e.g. via `firebase emulators:exec`)
+  and a CI job that installs Java + `firebase-tools` so the seeded harness
+  actually runs on PRs. The current `e2e.yml` job still only runs the
+  smoke + auth-middleware specs.
+- Inject Stripe test-mode keys (or stand up `stripe-mock`) plus a webhook
+  signing secret so `/api/stripe/webhook` accepts simulated
   `payment_intent.succeeded` / `charge.refunded` events during the run.
 - Implement the revenue-path steps in `e2e/revenue-path.spec.ts` using two
-  browser contexts (homeowner + worker).
+  browser contexts (homeowner + worker) and the fixtures from
+  `e2e/fixtures.ts`.
 
 **Acceptance**
 - `npm run test:e2e` runs Playwright headless, exercising the full path with
@@ -174,3 +193,59 @@ service×city pages.
 - New GitHub Actions job in `.github/workflows/` runs Lighthouse on PRs. ✅
 - Any LCP/CLS regressions on those pages fixed (likely image sizing,
   font loading, and server-rendered above-the-fold content).
+
+---
+
+### 8. Mover Mode — replace placeholder opportunities & stats with real data
+**Goal:** Stop shipping hardcoded mover data to workers using the
+Relocation / FIFO feature.
+
+**Pointers**
+- `lib/services/moverService.ts` — `getMoverOpportunities` returns two
+  hardcoded jobs and `getMoverStats` returns hardcoded city + monthly
+  arrays. Only `getMoverLeaderboard` is wired to Firestore.
+- `app/workers/[id]/mover/page.tsx` — consumes the placeholder helpers.
+- `app/api/jobs/mover-opportunities/route.ts` — already exists; should
+  become the canonical query path for `getMoverOpportunities`.
+
+**Remaining work**
+- Implement `getMoverOpportunities(targetCity)` as a real Firestore query
+  on `jobs` (filter by `location`/`region`, `status === 'open'`,
+  willingToRelocate match), ordered by urgency + budget, capped at N.
+- Implement `getMoverStats()` as a server aggregation (Firestore counts +
+  per-month rollups) or back it with a scheduled cron writing to a
+  `moverStats` doc.
+- Update the mover page to surface the real data + a proper empty state.
+
+**Acceptance**
+- No hardcoded `opp_${Date.now()}` / placeholder city arrays remain in
+  `lib/services/moverService.ts`.
+- Mover page renders live opportunities for the worker's target city, or a
+  clear empty state when none match.
+
+---
+
+### 9. Admin analytics — replace mock platform-wide data
+**Goal:** Make the admin analytics dashboard reflect real platform activity.
+
+**Pointers**
+- `lib/services/analyticsService.ts` — top-of-file comment already calls
+  out that admin analytics uses mock data pending "a dedicated server-side
+  aggregation route". Worker analytics already query Firestore.
+- Admin dashboard pages under `app/dashboard/admin/` consume the mocked
+  helpers.
+
+**Remaining work**
+- Add a server-side aggregation route (e.g.
+  `/api/admin/analytics/platform`) that, behind the admin role guard, runs
+  Firestore aggregation queries for monthly revenue, weekly activity,
+  growth score, etc. — or rolls them into a `platformAnalytics/{period}`
+  doc updated by a daily cron.
+- Swap the admin analytics consumers to fetch from the new route and
+  remove the mock fallbacks.
+
+**Acceptance**
+- `lib/services/analyticsService.ts` no longer ships mock platform-wide
+  arrays.
+- Admin analytics pages render real numbers (or a clear empty state on a
+  fresh install).

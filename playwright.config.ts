@@ -30,6 +30,9 @@ export default defineConfig({
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
   timeout: 60_000,
   expect: { timeout: 10_000 },
+  // Seeds Firebase emulator fixtures when `FIRESTORE_EMULATOR_HOST` /
+  // `FIREBASE_AUTH_EMULATOR_HOST` are set; no-op otherwise.
+  globalSetup: require.resolve('./e2e/globalSetup'),
   use: {
     baseURL: BASE_URL,
     trace: 'on-first-retry',
@@ -55,6 +58,22 @@ export default defineConfig({
         stderr: 'pipe',
         env: {
           AUTH_SESSION_SECRET,
+          // Forward emulator hosts so the Next.js server (and firebase-admin
+          // inside it) connect to the emulator instead of real Firebase when
+          // the harness is in use. Both vars are auto-honored by
+          // firebase-admin and by the client SDK (via `NEXT_PUBLIC_USE_FIREBASE_EMULATOR`).
+          ...(process.env.FIRESTORE_EMULATOR_HOST
+            ? { FIRESTORE_EMULATOR_HOST: process.env.FIRESTORE_EMULATOR_HOST }
+            : {}),
+          ...(process.env.FIREBASE_AUTH_EMULATOR_HOST
+            ? { FIREBASE_AUTH_EMULATOR_HOST: process.env.FIREBASE_AUTH_EMULATOR_HOST }
+            : {}),
+          ...(process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATOR
+            ? { NEXT_PUBLIC_USE_FIREBASE_EMULATOR: process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATOR }
+            : {}),
+          ...(process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID
+            ? { NEXT_PUBLIC_FIREBASE_PROJECT_ID: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID }
+            : {}),
         },
       },
 });
