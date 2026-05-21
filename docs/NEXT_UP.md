@@ -196,32 +196,27 @@ service×city pages.
 
 ---
 
-### 8. Mover Mode — replace placeholder opportunities & stats with real data
-**Goal:** Stop shipping hardcoded mover data to workers using the
-Relocation / FIFO feature.
+### 8. ~~Mover Mode — replace placeholder opportunities & stats with real data~~ ✅ Shipped
+`lib/services/moverService.ts` now backs both helpers with live Firestore
+queries via `adminDb`:
 
-**Pointers**
-- `lib/services/moverService.ts` — `getMoverOpportunities` returns two
-  hardcoded jobs and `getMoverStats` returns hardcoded city + monthly
-  arrays. Only `getMoverLeaderboard` is wired to Firestore.
-- `app/workers/[id]/mover/page.tsx` — consumes the placeholder helpers.
-- `app/api/jobs/mover-opportunities/route.ts` — already exists; should
-  become the canonical query path for `getMoverOpportunities`.
+- `getMoverOpportunities(targetCity)` queries the `jobs` collection
+  (`status == 'open'`, `createdAt desc`, limit 50), filters by case-insensitive
+  city match, ranks by urgency then budget desc, and returns the top 20 as
+  `MoverOpportunity[]`. `premiumMatch` reflects `featuredListing` /
+  high+emergency urgency.
+- `getMoverStats()` aggregates `moverSettings where isActive == true` for
+  `totalMoverWorkers`, `avgRelocationSuccessRate`, and the top 5
+  `targetRelocationCity` values; then walks recent completed jobs
+  (`status == 'completed'`, limit 500) and buckets placements by month for the
+  last 3 calendar months, computing avg success rate from the assigned
+  workers' `moverSettings`.
 
-**Remaining work**
-- Implement `getMoverOpportunities(targetCity)` as a real Firestore query
-  on `jobs` (filter by `location`/`region`, `status === 'open'`,
-  willingToRelocate match), ordered by urgency + budget, capped at N.
-- Implement `getMoverStats()` as a server aggregation (Firestore counts +
-  per-month rollups) or back it with a scheduled cron writing to a
-  `moverStats` doc.
-- Update the mover page to surface the real data + a proper empty state.
-
-**Acceptance**
-- No hardcoded `opp_${Date.now()}` / placeholder city arrays remain in
-  `lib/services/moverService.ts`.
-- Mover page renders live opportunities for the worker's target city, or a
-  clear empty state when none match.
+The `/api/jobs/mover-opportunities` legacy branch was simplified to delegate
+to `getMoverOpportunities` (no more duplicated inline Firestore query). The
+mover page at `/workers/[id]/mover` now renders a proper empty state when no
+opportunities match (or when no target city is set yet) and surfaces a
+"Network Stats" panel from `/api/analytics/mover-stats`.
 
 ---
 
