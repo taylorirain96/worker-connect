@@ -1,7 +1,8 @@
 /**
  * Analytics Service
  * Provides worker and admin analytics data.
- * Worker analytics: backed by real Firestore queries with mock fallback.
+ * Worker analytics: backed by real Firestore queries; returns empty/zero values
+ *   when Firestore is unavailable or the worker has no data.
  * Admin analytics: uses mock data pending a dedicated server-side aggregation route.
  */
 
@@ -138,59 +139,65 @@ function last30DayLabels(): string[] {
   })
 }
 
-// ─── Worker mock-data constants (used as fallback) ─────────────────────────────
-
-const WORKER_MOCK_MONTHLY: MonthlyRevenue[] = last12Months().map((month, i) => {
-  const base = 2500 + Math.sin(i * 0.8) * 800
-  const jobs = Math.round(6 + Math.sin(i * 0.6) * 3)
-  return { month, revenue: Math.round(base), jobs }
-})
-
-const WORKER_MOCK_WEEKLY: WeeklyActivity[] = last7Days().map((day, i) => ({
-  day,
-  jobs: [2, 3, 1, 4, 3, 5, 2][i],
-  earnings: [320, 480, 150, 620, 510, 780, 295][i],
-}))
+// ─── Worker analytics helpers ─────────────────────────────────────────────────
 
 const CATEGORY_COLORS = [
   '#6366f1', '#22d3ee', '#f59e0b', '#10b981', '#ef4444',
   '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#3b82f6', '#84cc16',
 ]
 
-const WORKER_CATEGORIES: JobCategoryBreakdown[] = [
-  { category: 'Plumbing',     count: 18, revenue: 4320, color: CATEGORY_COLORS[0] },
-  { category: 'Electrical',   count: 12, revenue: 5100, color: CATEGORY_COLORS[1] },
-  { category: 'Carpentry',    count: 8,  revenue: 2640, color: CATEGORY_COLORS[2] },
-  { category: 'HVAC',         count: 6,  revenue: 3180, color: CATEGORY_COLORS[3] },
-  { category: 'General',      count: 10, revenue: 1850, color: CATEGORY_COLORS[4] },
-  { category: 'Painting',     count: 5,  revenue: 1200, color: CATEGORY_COLORS[5] },
-]
+/**
+ * Best-effort extraction of a `Date` from a Firestore field that may be a
+ * Timestamp (with `.toDate()`), an ISO string, or missing.
+ */
+function toDate(value: unknown): Date | null {
+  if (!value) return null
+  if (typeof value === 'object' && value !== null && 'toDate' in value &&
+      typeof (value as { toDate: unknown }).toDate === 'function') {
+    const d = (value as { toDate: () => Date }).toDate()
+    return isNaN(d.getTime()) ? null : d
+  }
+  if (typeof value === 'string') {
+    const d = new Date(value)
+    return isNaN(d.getTime()) ? null : d
+  }
+  return null
+}
 
-const RECENT_JOBS: RecentJobEntry[] = [
-  { id: 'j1', title: 'Fix Leaking Kitchen Pipe', employer: 'John Smith', status: 'completed', earnings: 320, date: new Date(Date.now() - 86400000).toISOString(), rating: 5, category: 'Plumbing' },
-  { id: 'j2', title: 'Install Electrical Panel', employer: 'Sarah Johnson', status: 'in_progress', earnings: 850, date: new Date(Date.now() - 2 * 86400000).toISOString(), category: 'Electrical' },
-  { id: 'j3', title: 'HVAC Maintenance', employer: 'Mike Williams', status: 'completed', earnings: 200, date: new Date(Date.now() - 3 * 86400000).toISOString(), rating: 4, category: 'HVAC' },
-  { id: 'j4', title: 'Deck Repair', employer: 'Linda Davis', status: 'completed', earnings: 480, date: new Date(Date.now() - 5 * 86400000).toISOString(), rating: 5, category: 'Carpentry' },
-  { id: 'j5', title: 'Interior Painting', employer: 'Bob Wilson', status: 'cancelled', earnings: 0, date: new Date(Date.now() - 7 * 86400000).toISOString(), category: 'Painting' },
-  { id: 'j6', title: 'Bathroom Renovation', employer: 'Carol Brown', status: 'completed', earnings: 1200, date: new Date(Date.now() - 9 * 86400000).toISOString(), rating: 5, category: 'General' },
-]
-
-const STATUS_BREAKDOWN: StatusBreakdownEntry[] = [
-  { status: 'Completed',   count: 47, color: '#10b981' },
-  { status: 'In Progress', count: 3,  color: '#3b82f6' },
-  { status: 'Pending',     count: 5,  color: '#f59e0b' },
-  { status: 'Cancelled',   count: 4,  color: '#ef4444' },
-]
-
-
+function emptyWorkerAnalytics(): WorkerAnalytics {
+  return {
+    totalEarnings: 0,
+    jobsCompleted: 0,
+    averageRating: 0,
+    responseTimeHours: 0,
+    acceptanceRate: 0,
+    completionRate: 0,
+    onTimeRate: 0,
+    cancellationRate: 0,
+    avgJobDurationHours: 0,
+    customerSatisfaction: 0,
+    monthlyRevenue: last12Months().map((month) => ({ month, revenue: 0, jobs: 0 })),
+    weeklyActivity: last7Days().map((day) => ({ day, jobs: 0, earnings: 0 })),
+    categoryBreakdown: [],
+    projectedNextMonthEarnings: 0,
+    recentJobs: [],
+    statusBreakdown: [
+      { status: 'Completed', count: 0, color: '#10b981' },
+      { status: 'In Progress', count: 0, color: '#3b82f6' },
+      { status: 'Pending', count: 0, color: '#f59e0b' },
+      { status: 'Cancelled', count: 0, color: '#ef4444' },
+    ],
+  }
+}
 
 /**
  * Fetch analytics for the current worker from Firestore.
- * Falls back to mock data when Firestore is unavailable.
+ * Returns an empty analytics object when Firestore is unavailable or the
+ * worker has no data yet.
  */
 export async function getWorkerAnalytics(workerId: string): Promise<WorkerAnalytics> {
   if (!db) {
-    return getMockWorkerAnalytics()
+    return emptyWorkerAnalytics()
   }
 
   try {
@@ -299,53 +306,67 @@ export async function getWorkerAnalytics(workerId: string): Promise<WorkerAnalyt
     const cancellationRate =
       jobs.length > 0 ? Math.round((cancelledJobs.length / jobs.length) * 100) : 0
 
+    // Weekly activity: group completed jobs by day-of-week over the last 7 days
+    const now = new Date()
+    const weekStart = new Date(now)
+    weekStart.setHours(0, 0, 0, 0)
+    weekStart.setDate(weekStart.getDate() - 6)
+    // Indexed by JS Date#getDay() (0 = Sun .. 6 = Sat); the final array is
+    // re-ordered to Mon..Sun below to match last7Days().
+    const DAY_LABELS_BY_GETDAY = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    const weeklyMap = new Map<string, { jobs: number; earnings: number }>()
+    for (const job of completedJobs) {
+      const completedDate = toDate(job.completedAt) ?? toDate(job.updatedAt)
+      if (!completedDate || completedDate < weekStart || completedDate > now) continue
+      const key = DAY_LABELS_BY_GETDAY[completedDate.getDay()]
+      const existing = weeklyMap.get(key) ?? { jobs: 0, earnings: 0 }
+      existing.jobs += 1
+      existing.earnings += typeof job.budget === 'number' ? job.budget : 0
+      weeklyMap.set(key, existing)
+    }
+    // Emit Mon..Sun in order, matching last7Days()
+    const weeklyActivity: WeeklyActivity[] = last7Days().map((day) => {
+      const entry = weeklyMap.get(day) ?? { jobs: 0, earnings: 0 }
+      return { day, jobs: entry.jobs, earnings: entry.earnings }
+    })
+
+    // On-time rate: of completed jobs with a deadline, fraction completed on or before it
+    const completedWithDeadline = completedJobs
+      .map((j) => ({ deadline: toDate(j.deadline), completedAt: toDate(j.completedAt) }))
+      .filter((j): j is { deadline: Date; completedAt: Date } => j.deadline !== null && j.completedAt !== null)
+    const onTimeCount = completedWithDeadline.filter(
+      (j) => j.completedAt.getTime() <= j.deadline.getTime()
+    ).length
+    const onTimeRate =
+      completedWithDeadline.length > 0
+        ? Math.round((onTimeCount / completedWithDeadline.length) * 100)
+        : 0
+
     return {
       totalEarnings,
       jobsCompleted: completedJobs.length,
       averageRating,
-      responseTimeHours: 1.4, // requires message-response tracking; use default until implemented
-      acceptanceRate: 82,     // requires application-tracking; use default until implemented
+      // The following metrics require additional tracking not yet captured in
+      // Firestore (message-response timing, application accept/decline events,
+      // and per-job start/end timestamps). They are reported as 0 until the
+      // backing data is wired through.
+      responseTimeHours: 0,
+      acceptanceRate: 0,
       completionRate,
-      onTimeRate: 91,         // requires on-time completion tracking; use default until implemented
+      onTimeRate,
       cancellationRate,
-      avgJobDurationHours: 3.2, // requires duration tracking; use default until implemented
-      customerSatisfaction: reviews.length > 0 ? Math.round(averageRating * 20) : 96,
+      avgJobDurationHours: 0,
+      customerSatisfaction: reviews.length > 0 ? Math.round(averageRating * 20) : 0,
       monthlyRevenue,
-      weeklyActivity: WORKER_MOCK_WEEKLY,
-      categoryBreakdown: categoryBreakdown.length > 0 ? categoryBreakdown : WORKER_CATEGORIES,
+      weeklyActivity,
+      categoryBreakdown,
       projectedNextMonthEarnings,
-      recentJobs: recentJobs.length > 0 ? recentJobs : RECENT_JOBS,
+      recentJobs,
       statusBreakdown,
     }
   } catch {
-    // Fall back to mock data when Firestore is unavailable or indexes not yet created
-    return getMockWorkerAnalytics()
-  }
-}
-
-function getMockWorkerAnalytics(): WorkerAnalytics {
-  const totalEarnings = WORKER_MOCK_MONTHLY.reduce((s, m) => s + m.revenue, 0)
-  const lastMonth = WORKER_MOCK_MONTHLY[WORKER_MOCK_MONTHLY.length - 1].revenue
-  const prevMonth = WORKER_MOCK_MONTHLY[WORKER_MOCK_MONTHLY.length - 2].revenue
-  const projectedNextMonthEarnings = Math.round(lastMonth * 1.08 + (lastMonth - prevMonth) * 0.3)
-
-  return {
-    totalEarnings,
-    jobsCompleted: 59,
-    averageRating: 4.8,
-    responseTimeHours: 1.4,
-    acceptanceRate: 82,
-    completionRate: 94,
-    onTimeRate: 91,
-    cancellationRate: 6,
-    avgJobDurationHours: 3.2,
-    customerSatisfaction: 96,
-    monthlyRevenue: WORKER_MOCK_MONTHLY,
-    weeklyActivity: WORKER_MOCK_WEEKLY,
-    categoryBreakdown: WORKER_CATEGORIES,
-    projectedNextMonthEarnings,
-    recentJobs: RECENT_JOBS,
-    statusBreakdown: STATUS_BREAKDOWN,
+    // Return empty analytics when Firestore is unavailable or indexes are missing
+    return emptyWorkerAnalytics()
   }
 }
 
