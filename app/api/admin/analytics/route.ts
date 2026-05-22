@@ -20,20 +20,6 @@ function setCached<T>(key: string, data: T, ttlMs = 5 * 60 * 1000): void {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function buildDayLabels(days: number): string[] {
-  return Array.from({ length: days }, (_, i) => {
-    const d = new Date()
-    d.setDate(d.getDate() - (days - 1 - i))
-    return d.toLocaleDateString('en-NZ', { day: 'numeric', month: 'short' })
-  })
-}
-
-/** Deterministic pseudo-random value (0..1) seeded on integers */
-function det(seed: number): number {
-  const x = Math.sin(seed * 9301 + 49297) * 233280
-  return x - Math.floor(x)
-}
-
 // ─── Dashboard data aggregation ───────────────────────────────────────────────
 
 interface DashboardResult {
@@ -53,7 +39,7 @@ interface DashboardResult {
   recentActivity: { id: string; type: string; userName: string; description: string; createdAt: string }[]
   topWorkers: { rank: number; name: string; jobsCompleted: number; earnings: number; rating: number }[]
   topCities: { rank: number; city: string; jobsPosted: number }[]
-  adminAnalytics?: {
+  adminAnalytics: {
     totalRevenue: number
     monthlyRevenue: number
     revenueGrowth: number
@@ -82,7 +68,7 @@ interface DashboardResult {
   }
 }
 
-type AdminAnalyticsTopWorker = NonNullable<DashboardResult['adminAnalytics']>['topWorkers'][number]
+type AdminAnalyticsTopWorker = DashboardResult['adminAnalytics']['topWorkers'][number]
 
 const CATEGORY_COLORS = [
   '#6366f1', '#22d3ee', '#f59e0b', '#10b981', '#ef4444',
@@ -129,7 +115,7 @@ async function buildDashboardData(): Promise<DashboardResult> {
   const now = new Date()
   const DAYS = 30
 
-  // ── Try Firestore; fall back to deterministic mock data ───────────────────
+  // ── Try Firestore; fall back to empty/zero values ─────────────────────────
   let totalUsers = 0
   let homeownerCount = 0
   let workerCount = 0
@@ -147,7 +133,6 @@ async function buildDashboardData(): Promise<DashboardResult> {
   let completedJobs = 0
   let disputeCount = 0
   let resolvedDisputeCount = 0
-  let hasLiveAdminAnalytics = false
 
   const dailySignups: { date: string; homeowners: number; workers: number }[] = []
   const dailyJobs: { date: string; jobs: number }[] = []
@@ -167,6 +152,47 @@ async function buildDashboardData(): Promise<DashboardResult> {
   const categoryCounts: Record<string, number> = {}
   const cityCounts: Record<string, number> = {}
 
+  // Day-bucket scaffolding for last DAYS days (yyyy-mm-dd keys, localised labels).
+  const dayStart = new Date(now)
+  dayStart.setDate(dayStart.getDate() - (DAYS - 1))
+  dayStart.setHours(0, 0, 0, 0)
+  const dayBuckets: { key: string; label: string }[] = []
+  for (let i = 0; i < DAYS; i++) {
+    const d = new Date(dayStart)
+    d.setDate(dayStart.getDate() + i)
+    dayBuckets.push({
+      key: d.toISOString().slice(0, 10),
+      label: d.toLocaleDateString('en-NZ', { day: 'numeric', month: 'short' }),
+    })
+  }
+  const dayKeySet = new Set(dayBuckets.map((b) => b.key))
+  const signupsByDay = new Map<string, { homeowners: number; workers: number }>()
+  const jobsCountByDay = new Map<string, number>()
+  const revenueByDay = new Map<string, number>()
+
+  function dayKey(value: unknown): string | null {
+    if (typeof value === 'string') {
+      // ISO string starts with yyyy-mm-dd
+      const k = value.slice(0, 10)
+      return dayKeySet.has(k) ? k : null
+    }
+    if (value instanceof Date && !Number.isNaN(value.getTime())) {
+      const k = value.toISOString().slice(0, 10)
+      return dayKeySet.has(k) ? k : null
+    }
+    if (typeof value === 'object' && value !== null) {
+      const maybeToDate = (value as { toDate?: () => Date }).toDate
+      if (typeof maybeToDate === 'function') {
+        const d = maybeToDate()
+        if (!Number.isNaN(d.getTime())) {
+          const k = d.toISOString().slice(0, 10)
+          return dayKeySet.has(k) ? k : null
+        }
+      }
+    }
+    return null
+  }
+
   try {
     // Real Firestore aggregation
     const usersSnap = await adminDb.collection('users').get()
@@ -181,6 +207,13 @@ async function buildDashboardData(): Promise<DashboardResult> {
       if (createdAt) {
         if (createdAt >= monthStart) newUsersThisMonth++
         else if (createdAt >= lastMonthStart && createdAt < monthStart) newUsersLastMonth++
+        const k = dayKey(createdAt)
+        if (k) {
+          const bucket = signupsByDay.get(k) ?? { homeowners: 0, workers: 0 }
+          if (role === 'homeowner') bucket.homeowners++
+          else if (role === 'worker' || role === 'tradie') bucket.workers++
+          signupsByDay.set(k, bucket)
+        }
       }
     })
 
@@ -210,6 +243,8 @@ async function buildDashboardData(): Promise<DashboardResult> {
         current.jobs += 1
         monthlyRevenueMap.set(jobMonth, current)
       }
+      const k = dayKey(d.createdAt)
+      if (k) jobsCountByDay.set(k, (jobsCountByDay.get(k) ?? 0) + 1)
       if (d.assignedAt && d.createdAt) {
         const diff = (new Date(d.assignedAt).getTime() - new Date(d.createdAt).getTime()) / 3600000
         if (diff > 0 && diff < 720) { hireTimeTotal += diff; hireTimeCount++ }
@@ -234,6 +269,8 @@ async function buildDashboardData(): Promise<DashboardResult> {
           current.revenue += amt
           monthlyRevenueMap.set(paymentMonth, current)
         }
+        const k = dayKey(d.createdAt)
+        if (k) revenueByDay.set(k, (revenueByDay.get(k) ?? 0) + amt)
       })
     } catch { /* payments not available */ }
 
@@ -267,14 +304,6 @@ async function buildDashboardData(): Promise<DashboardResult> {
         .map(([city, jobsPosted], i) => ({ rank: i + 1, city, jobsPosted }))
     )
 
-    // Daily series (approximation from Firestore)
-    const dayLabels = buildDayLabels(DAYS)
-    for (let i = 0; i < DAYS; i++) {
-      dailySignups.push({ date: dayLabels[i], homeowners: Math.round(det(i * 3 + 1) * 8 + 1), workers: Math.round(det(i * 3 + 2) * 6 + 1) })
-      dailyJobs.push({ date: dayLabels[i], jobs: Math.round(det(i * 5 + 3) * 15 + 2) })
-      dailyRevenue.push({ date: dayLabels[i], revenue: Math.round(det(i * 7 + 4) * 2000 + 500) })
-    }
-
     // Top workers
     const workersSnap = await adminDb.collection('users')
       .where('role', 'in', ['worker', 'tradie'])
@@ -301,7 +330,6 @@ async function buildDashboardData(): Promise<DashboardResult> {
         category: Array.isArray(d.skills) && d.skills.length > 0 ? String(d.skills[0]) : 'General',
       })
     })
-    hasLiveAdminAnalytics = true
 
     // Recent activity
     const recentJobs = await adminDb.collection('jobs').orderBy('createdAt', 'desc').limit(10).get()
@@ -330,88 +358,16 @@ async function buildDashboardData(): Promise<DashboardResult> {
     recentActivity.splice(20)
 
   } catch {
-    // ── Deterministic mock data (Firestore not configured) ─────────────────
-    totalUsers = 1284
-    homeownerCount = 521
-    workerCount = 612
-    newUsersThisMonth = 87
-    newUsersLastMonth = 74
-    totalJobsThisMonth = 318
-    totalJobsLastMonth = 274
-    revenueThisMonth = 9820
-    revenueLastMonth = 8450
-    activeJobs = 87
-    avgJobValue = 285
-    avgTimeToHire = 6
+    // Firestore unavailable — return empty/zero values rather than fabricated data.
+  }
 
-    const dayLabels = buildDayLabels(DAYS)
-    for (let i = 0; i < DAYS; i++) {
-      dailySignups.push({ date: dayLabels[i], homeowners: Math.round(det(i * 3 + 1) * 10 + 3), workers: Math.round(det(i * 3 + 2) * 8 + 2) })
-      dailyJobs.push({ date: dayLabels[i], jobs: Math.round(det(i * 5 + 3) * 18 + 4) })
-      dailyRevenue.push({ date: dayLabels[i], revenue: Math.round(det(i * 7 + 4) * 800 + 200) })
-    }
-
-    jobsByCategory.push(
-      { name: 'Plumbing', value: 142 },
-      { name: 'Electrical', value: 128 },
-      { name: 'Cleaning', value: 115 },
-      { name: 'Carpentry', value: 98 },
-      { name: 'Landscaping', value: 87 },
-      { name: 'Painting', value: 74 },
-      { name: 'Roofing', value: 52 },
-      { name: 'HVAC', value: 43 },
-      { name: 'Flooring', value: 38 },
-      { name: 'Moving', value: 31 },
-    )
-
-    jobsByCity.push(
-      { name: 'Auckland', value: 312 },
-      { name: 'Wellington', value: 187 },
-      { name: 'Christchurch', value: 143 },
-      { name: 'Hamilton', value: 89 },
-      { name: 'Tauranga', value: 67 },
-      { name: 'Dunedin', value: 54 },
-      { name: 'Palmerston North', value: 41 },
-      { name: 'Napier', value: 33 },
-      { name: 'Nelson', value: 28 },
-      { name: 'Rotorua', value: 22 },
-    )
-
-    const workerNames = ['James Tane', 'Aroha Williams', 'Mike Chen', 'Liam O\'Brien', 'Sophie Patel',
-      'Hemi Walker', 'Anna Schmidt', 'Raj Kumar', 'Daniel Ngata', 'Lucy Faʻalogo']
-    for (let i = 0; i < 10; i++) {
-      topWorkers.push({
-        rank: i + 1,
-        name: workerNames[i],
-        jobsCompleted: Math.round(det(i * 11 + 5) * 80 + 20 - i * 5),
-        earnings: Math.round(det(i * 13 + 6) * 15000 + 5000 - i * 400),
-        rating: parseFloat((5 - det(i * 7 + 7) * 1.5).toFixed(1)),
-      })
-    }
-
-    jobsByCity.forEach((c, i) => {
-      topCities.push({ rank: i + 1, city: c.name, jobsPosted: c.value })
-    })
-
-    const eventTypes = ['new_signup', 'job_posted', 'job_completed', 'dispute_raised', 'payment_released']
-    const userNames = ['James Tane', 'Aroha Williams', 'Mike Chen', 'Liam O\'Brien', 'Sophie Patel',
-      'Emma Wilson', 'Noah Smith', 'Olivia Johnson', 'William Brown', 'Isabella Davis',
-      'Elijah Anderson', 'Charlotte Thomas', 'James Jackson', 'Amelia White', 'Benjamin Harris',
-      'Mia Martin', 'Lucas Thompson', 'Harper Garcia', 'Mason Martinez', 'Evelyn Robinson']
-    const descriptions: Record<string, string> = {
-      new_signup: 'Signed up as homeowner',
-      job_posted: 'Posted a plumbing job',
-      job_completed: 'Completed electrical work',
-      dispute_raised: 'Raised dispute on job #482',
-      payment_released: 'Payment of $340 released',
-    }
-    for (let i = 0; i < 20; i++) {
-      const type = eventTypes[i % eventTypes.length]
-      const hoursAgo = Math.round(det(i * 17 + 8) * 48)
-      const ts = new Date(Date.now() - hoursAgo * 3600000).toISOString()
-      recentActivity.push({ id: `act-${i}`, type, userName: userNames[i], description: descriptions[type], createdAt: ts })
-    }
-    recentActivity.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+  // Daily series — bucketed from real Firestore createdAt timestamps (zeros
+  // where no events occurred or Firestore was unavailable).
+  for (const b of dayBuckets) {
+    const signups = signupsByDay.get(b.key) ?? { homeowners: 0, workers: 0 }
+    dailySignups.push({ date: b.label, homeowners: signups.homeowners, workers: signups.workers })
+    dailyJobs.push({ date: b.label, jobs: jobsCountByDay.get(b.key) ?? 0 })
+    dailyRevenue.push({ date: b.label, revenue: revenueByDay.get(b.key) ?? 0 })
   }
 
   const userGrowthPct = newUsersLastMonth > 0
@@ -469,26 +425,24 @@ async function buildDashboardData(): Promise<DashboardResult> {
     recentActivity,
     topWorkers,
     topCities,
-    adminAnalytics: hasLiveAdminAnalytics
-      ? {
-          totalRevenue,
-          monthlyRevenue: revenueThisMonth,
-          revenueGrowth: revenueGrowthPct,
-          totalUsers,
-          newUsersThisMonth,
-          userGrowthRate: userGrowthPct,
-          totalJobs,
-          completedJobs,
-          activeJobs,
-          jobCompletionRate,
-          disputeCount,
-          disputeResolutionRate,
-          topWorkers: adminTopWorkers,
-          monthlyRevenueChart,
-          categoryStats,
-          dailyStats,
-        }
-      : undefined,
+    adminAnalytics: {
+      totalRevenue,
+      monthlyRevenue: revenueThisMonth,
+      revenueGrowth: revenueGrowthPct,
+      totalUsers,
+      newUsersThisMonth,
+      userGrowthRate: userGrowthPct,
+      totalJobs,
+      completedJobs,
+      activeJobs,
+      jobCompletionRate,
+      disputeCount,
+      disputeResolutionRate,
+      topWorkers: adminTopWorkers,
+      monthlyRevenueChart,
+      categoryStats,
+      dailyStats,
+    },
   }
 
   setCached('dashboard', result)
