@@ -220,27 +220,38 @@ opportunities match (or when no target city is set yet) and surfaces a
 
 ---
 
-### 9. Admin analytics — replace mock platform-wide data
-**Goal:** Make the admin analytics dashboard reflect real platform activity.
+### 9. ~~Admin analytics — replace mock platform-wide data~~ ✅ Shipped
+`lib/services/analyticsService.ts` no longer ships mock platform-wide arrays
+(`ADMIN_MONTHLY_REVENUE`, `ADMIN_DAILY_STATS`, `TOP_WORKERS`, `ADMIN_CATEGORIES`
+were all removed). `getAdminAnalytics()` now fetches from
+`/api/admin/analytics?metric=dashboard` and returns an empty/zero
+`AdminAnalytics` (with a 12-month zero-filled chart) when the API is
+unavailable or the platform has no data yet — the same convention used by
+homeowner/employer/jobseeker dashboards and worker analytics.
+
+The dashboard aggregation route now always populates `adminAnalytics` and
+buckets the daily signups/jobs/revenue series from real Firestore `createdAt`
+timestamps instead of the previous `det()`-seeded pseudo-random series. The
+Firestore-failure branch returns empty/zero values rather than fabricated
+names, categories, cities, or activity events.
+
+### 10. Admin analytics — secondary metric endpoints (revenue/payments/disputes/system)
+**Goal:** Back the non-dashboard `/api/admin/analytics?metric=…` branches with
+real Firestore data so the date-range filters on the legacy admin analytics
+page reflect actual platform activity.
 
 **Pointers**
-- `lib/services/analyticsService.ts` — top-of-file comment already calls
-  out that admin analytics uses mock data pending "a dedicated server-side
-  aggregation route". Worker analytics already query Firestore.
-- Admin dashboard pages under `app/dashboard/admin/` consume the mocked
-  helpers.
-
-**Remaining work**
-- Add a server-side aggregation route (e.g.
-  `/api/admin/analytics/platform`) that, behind the admin role guard, runs
-  Firestore aggregation queries for monthly revenue, weekly activity,
-  growth score, etc. — or rolls them into a `platformAnalytics/{period}`
-  doc updated by a daily cron.
-- Swap the admin analytics consumers to fetch from the new route and
-  remove the mock fallbacks.
+- `app/api/admin/analytics/route.ts` — the `revenue`, `payments`, `disputes`,
+  and `system` branches still return hard-coded numbers (the `dashboard`
+  branch is now live from Firestore as of task #9).
+- `app/admin/analytics/page.tsx` and `app/admin/dashboard/page.tsx` consume
+  these via `getAdminAnalytics()` for the dashboard payload but the
+  date-range filter still hits the legacy mock branches when admins switch
+  ranges.
 
 **Acceptance**
-- `lib/services/analyticsService.ts` no longer ships mock platform-wide
-  arrays.
-- Admin analytics pages render real numbers (or a clear empty state on a
-  fresh install).
+- `revenue`, `payments`, `disputes` and `system` metric branches read from
+  `payments`, `disputes`, and runtime telemetry rather than fixed
+  constants.
+- Empty state surfaces zeros (no fabricated values) when collections are
+  empty or Firestore is unavailable.

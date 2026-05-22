@@ -3,7 +3,9 @@
  * Provides worker and admin analytics data.
  * Worker analytics: backed by real Firestore queries; returns empty/zero values
  *   when Firestore is unavailable or the worker has no data.
- * Admin analytics: uses mock data pending a dedicated server-side aggregation route.
+ * Admin analytics: fetched from `/api/admin/analytics?metric=dashboard`, which
+ *   aggregates live Firestore data on the server. Returns empty/zero values when
+ *   the API is unavailable or the platform has no data yet.
  */
 
 import { formatCurrency } from '@/lib/utils'
@@ -372,49 +374,36 @@ export async function getWorkerAnalytics(workerId: string): Promise<WorkerAnalyt
 
 // ─── Admin Analytics ──────────────────────────────────────────────────────────
 
-const ADMIN_MONTHLY_REVENUE: MonthlyRevenue[] = last12Months().map((month, i) => {
-  const base = 150000 + i * 8000
-  return {
-    month,
-    revenue: Math.round(base + Math.sin(i * 0.7) * 20000),
-    jobs: Math.round(3200 + i * 120 + Math.sin(i * 0.5) * 300),
-  }
-})
-
-const ADMIN_DAILY_STATS: DailyStat[] = last30DayLabels().map((date, i) => ({
-  date,
-  jobs: Math.round(100 + Math.sin(i * 0.5) * 30 + Math.random() * 20),
-  revenue: Math.round(6000 + Math.sin(i * 0.5) * 2000 + Math.random() * 1000),
-  newUsers: Math.round(40 + Math.sin(i * 0.3) * 15 + Math.random() * 10),
-}))
-
-const TOP_WORKERS: TopWorkerEntry[] = [
-  { rank: 1, workerId: 'w1', name: 'Marcus Johnson',   jobsCompleted: 124, totalEarnings: 28400, rating: 4.9, category: 'Electrical' },
-  { rank: 2, workerId: 'w2', name: 'Elena Rodriguez',  jobsCompleted: 98,  totalEarnings: 22100, rating: 4.8, category: 'Plumbing' },
-  { rank: 3, workerId: 'w3', name: 'David Chen',       jobsCompleted: 87,  totalEarnings: 19600, rating: 4.9, category: 'HVAC' },
-  { rank: 4, workerId: 'w4', name: 'Sarah Thompson',   jobsCompleted: 76,  totalEarnings: 16800, rating: 4.7, category: 'Carpentry' },
-  { rank: 5, workerId: 'w5', name: 'James Williams',   jobsCompleted: 71,  totalEarnings: 15200, rating: 4.8, category: 'Roofing' },
-]
-
-const ADMIN_CATEGORIES: JobCategoryBreakdown[] = [
-  { category: 'Plumbing',     count: 8240,  revenue: 1980000, color: CATEGORY_COLORS[0] },
-  { category: 'Electrical',   count: 6810,  revenue: 2890000, color: CATEGORY_COLORS[1] },
-  { category: 'Carpentry',    count: 5120,  revenue: 1540000, color: CATEGORY_COLORS[2] },
-  { category: 'HVAC',         count: 4380,  revenue: 2310000, color: CATEGORY_COLORS[3] },
-  { category: 'Roofing',      count: 3210,  revenue: 1720000, color: CATEGORY_COLORS[4] },
-  { category: 'Landscaping',  count: 4820,  revenue: 960000,  color: CATEGORY_COLORS[5] },
-  { category: 'Painting',     count: 3960,  revenue: 890000,  color: CATEGORY_COLORS[6] },
-  { category: 'General',      count: 7420,  revenue: 1340000, color: CATEGORY_COLORS[7] },
-]
-
 interface AdminAnalyticsApiResponse {
   data?: {
     adminAnalytics?: AdminAnalytics
   }
 }
 
+function emptyAdminAnalytics(): AdminAnalytics {
+  return {
+    totalRevenue: 0,
+    monthlyRevenue: 0,
+    revenueGrowth: 0,
+    totalUsers: 0,
+    newUsersThisMonth: 0,
+    userGrowthRate: 0,
+    totalJobs: 0,
+    completedJobs: 0,
+    activeJobs: 0,
+    jobCompletionRate: 0,
+    disputeCount: 0,
+    disputeResolutionRate: 0,
+    topWorkers: [],
+    monthlyRevenueChart: last12Months().map((month) => ({ month, revenue: 0, jobs: 0 })),
+    categoryStats: [],
+    dailyStats: [],
+  }
+}
+
 /**
- * Fetch platform-wide analytics for admins.
+ * Fetch platform-wide analytics for admins. Returns empty/zero values when the
+ * aggregation API is unavailable or the platform has no data yet.
  */
 export async function getAdminAnalytics(): Promise<AdminAnalytics> {
   try {
@@ -430,35 +419,10 @@ export async function getAdminAnalytics(): Promise<AdminAnalytics> {
       }
     }
   } catch {
-    // Fall through to the legacy mock payload when the API is unavailable locally.
+    // Fall through to empty analytics when the API is unavailable.
   }
 
-  await new Promise((r) => setTimeout(r, 400))
-
-  const lastMonthRevenue = ADMIN_MONTHLY_REVENUE[ADMIN_MONTHLY_REVENUE.length - 1].revenue
-  const prevMonthRevenue = ADMIN_MONTHLY_REVENUE[ADMIN_MONTHLY_REVENUE.length - 2].revenue
-  const revenueGrowth = parseFloat(
-    (((lastMonthRevenue - prevMonthRevenue) / prevMonthRevenue) * 100).toFixed(1)
-  )
-
-  return {
-    totalRevenue: 2_850_000,
-    monthlyRevenue: lastMonthRevenue,
-    revenueGrowth,
-    totalUsers: 12_483,
-    newUsersThisMonth: 842,
-    userGrowthRate: 7.2,
-    totalJobs: 45_892,
-    completedJobs: 38_765,
-    activeJobs: 1_243,
-    jobCompletionRate: 84.5,
-    disputeCount: 47,
-    disputeResolutionRate: 91.5,
-    topWorkers: TOP_WORKERS,
-    monthlyRevenueChart: ADMIN_MONTHLY_REVENUE,
-    categoryStats: ADMIN_CATEGORIES,
-    dailyStats: ADMIN_DAILY_STATS,
-  }
+  return emptyAdminAnalytics()
 }
 
 // ─── CSV export helper ────────────────────────────────────────────────────────
