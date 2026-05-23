@@ -52,7 +52,7 @@ export async function getMoverOpportunities(targetCity: string): Promise<MoverOp
       .collection('jobs')
       .where('status', '==', 'open')
       .orderBy('createdAt', 'desc')
-      .limit(200)
+      .limit(100)
       .get()
 
     const urgencyRank: Record<string, number> = { emergency: 0, high: 1, medium: 2, low: 3 }
