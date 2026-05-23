@@ -21,6 +21,19 @@ const AUTH_SESSION_SECRET =
   process.env.AUTH_SESSION_SECRET ?? 'e2e-test-secret-do-not-use-in-production';
 process.env.AUTH_SESSION_SECRET = AUTH_SESSION_SECRET;
 
+// When the emulator suite is in play, default the project id so
+// `firebase-admin` (server side) and the client SDK (which reads
+// NEXT_PUBLIC_FIREBASE_PROJECT_ID) both target the same project namespace
+// as `e2e/globalSetup.ts` seeds.
+if (process.env.FIRESTORE_EMULATOR_HOST || process.env.FIREBASE_AUTH_EMULATOR_HOST) {
+  process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID =
+    process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? 'quicktrade-e2e';
+  process.env.GCLOUD_PROJECT = process.env.GCLOUD_PROJECT ?? 'quicktrade-e2e';
+  process.env.GOOGLE_CLOUD_PROJECT = process.env.GOOGLE_CLOUD_PROJECT ?? 'quicktrade-e2e';
+  process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATOR =
+    process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATOR ?? '1';
+}
+
 export default defineConfig({
   testDir: './e2e',
   // Fail the build on CI if `test.only` is left in source.
@@ -73,6 +86,15 @@ export default defineConfig({
             : {}),
           ...(process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID
             ? { NEXT_PUBLIC_FIREBASE_PROJECT_ID: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID }
+            : {}),
+          ...(process.env.GCLOUD_PROJECT
+            ? { GCLOUD_PROJECT: process.env.GCLOUD_PROJECT }
+            : {}),
+          ...(process.env.GOOGLE_CLOUD_PROJECT
+            ? { GOOGLE_CLOUD_PROJECT: process.env.GOOGLE_CLOUD_PROJECT }
+            : {}),
+          ...(process.env.STRIPE_WEBHOOK_SECRET
+            ? { STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET }
             : {}),
         },
       },

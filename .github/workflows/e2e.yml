@@ -45,3 +45,56 @@ jobs:
           name: playwright-report
           path: playwright-report
           retention-days: 7
+
+  revenue-path:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Setup Java (required by firebase emulators)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Build app
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: quicktrade-e2e
+          NEXT_PUBLIC_USE_FIREBASE_EMULATOR: '1'
+
+      - name: Run revenue-path Playwright tests against emulator
+        run: npm run test:e2e:emulators
+        env:
+          CI: 'true'
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: quicktrade-e2e
+          NEXT_PUBLIC_USE_FIREBASE_EMULATOR: '1'
+          AUTH_SESSION_SECRET: e2e-test-secret-do-not-use-in-production
+          # Webhook secret is set so the stripe/webhook route's startup
+          # validation does not error. The revenue-path spec does not
+          # currently drive the webhook (see file-level comment in
+          # e2e/revenue-path.spec.ts).
+          STRIPE_WEBHOOK_SECRET: whsec_e2e_test
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-revenue-path
+          path: playwright-report
+          retention-days: 7
