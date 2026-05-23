@@ -471,27 +471,127 @@ export async function GET(request: NextRequest) {
 
     const start = new Date(startDate)
     const end = new Date(endDate)
-    const daysDiff = Math.ceil((end.getTime() - start.getTime()) / 86400000)
+    const startMs = start.getTime()
+    const endMs = end.getTime()
+    if (Number.isNaN(startMs) || Number.isNaN(endMs) || endMs < startMs) {
+      return NextResponse.json(
+        { error: 'Invalid date range: startDate and endDate must be valid dates and endDate must be on or after startDate' },
+        { status: 400 },
+      )
+    }
+    const MS_PER_HOUR = 3_600_000
+    const MS_PER_DAY = 86_400_000
+    const daysDiff = Math.max(1, Math.ceil((endMs - startMs) / MS_PER_DAY))
+    const periodMs = Math.max(1, endMs - startMs)
 
-    // In production: aggregate from Firestore using admin SDK
+    // Classify a payment status into the high-level buckets the admin UI
+    // reports. Centralised so the `revenue` and `payments` branches stay in
+    // sync if Stripe webhook statuses ever change.
+    function paymentBucket(status: string): 'succeeded' | 'failed' | 'pending' | 'refunded' | 'other' {
+      if (status === 'completed' || status === 'released') return 'succeeded'
+      if (status === 'failed') return 'failed'
+      if (status === 'pending' || status === 'processing') return 'pending'
+      if (status === 'refunded') return 'refunded'
+      return 'other'
+    }
+
+    // Parse a Firestore value that may be an ISO string, Date, or Timestamp-like
+    // ({toDate(): Date}); return ms since epoch or null if unparseable.
+    function toMs(value: unknown): number | null {
+      if (typeof value === 'string') {
+        const t = Date.parse(value)
+        return Number.isNaN(t) ? null : t
+      }
+      if (value instanceof Date) {
+        const t = value.getTime()
+        return Number.isNaN(t) ? null : t
+      }
+      if (typeof value === 'object' && value !== null) {
+        const maybeToDate = (value as { toDate?: () => Date }).toDate
+        if (typeof maybeToDate === 'function') {
+          const d = maybeToDate()
+          if (d instanceof Date) {
+            const t = d.getTime()
+            return Number.isNaN(t) ? null : t
+          }
+        }
+      }
+      return null
+    }
 
     if (metric === 'revenue') {
-      const dailyRevenue = Array.from({ length: Math.min(daysDiff, 90) }, (_, i) => {
-        const d = new Date(start)
-        d.setDate(d.getDate() + i)
-        // Use deterministic variation based on index to avoid Math.random() in production paths
-        const variation = Math.abs(Math.sin(i * 1.7 + 3.14) * 1000)
-        const revenue = Math.round(5000 + Math.sin(i * 0.5) * 2000 + variation)
-        return {
-          date: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-          revenue,
-          transactions: Math.round(revenue / 185),
-          commission: Math.round(revenue * 0.1),
-        }
-      })
+      // Day-bucket scaffolding across the requested range (cap chart at 90 days)
+      const chartDays = Math.min(daysDiff, 90)
+      const chartStart = new Date(end)
+      chartStart.setHours(0, 0, 0, 0)
+      chartStart.setDate(chartStart.getDate() - (chartDays - 1))
+      const dailyKeys: string[] = []
+      const dailyLabels: string[] = []
+      for (let i = 0; i < chartDays; i++) {
+        const d = new Date(chartStart)
+        d.setDate(chartStart.getDate() + i)
+        dailyKeys.push(d.toISOString().slice(0, 10))
+        dailyLabels.push(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }))
+      }
+      const dailyKeySet = new Set(dailyKeys)
+      const revenueByDay = new Map<string, number>()
+      const commissionByDay = new Map<string, number>()
+      const txByDay = new Map<string, number>()
 
-      const totalRevenue = dailyRevenue.reduce((s, d) => s + d.revenue, 0)
-      const prevRevenue = Math.round(totalRevenue * 0.91)
+      let totalGross = 0
+      let totalCommission = 0
+      let transactionCount = 0
+      let succeededCount = 0
+      let prevPeriodGross = 0
+      const prevStartMs = startMs - periodMs
+
+      try {
+        const paymentsSnap = await adminDb.collection('payments').get()
+        paymentsSnap.forEach((doc) => {
+          const d = doc.data() as Record<string, unknown>
+          const createdMs = toMs(d.createdAt)
+          if (createdMs === null) return
+          const amount = Number(d.amount ?? 0) || 0
+          const commission = Number(d.commission ?? d.platformFee ?? 0) || 0
+          const status = String(d.status ?? '')
+
+          if (createdMs >= startMs && createdMs <= endMs) {
+            totalGross += amount
+            totalCommission += commission
+            transactionCount++
+            if (paymentBucket(status) === 'succeeded') succeededCount++
+
+            const k = new Date(createdMs).toISOString().slice(0, 10)
+            if (dailyKeySet.has(k)) {
+              revenueByDay.set(k, (revenueByDay.get(k) ?? 0) + amount)
+              commissionByDay.set(k, (commissionByDay.get(k) ?? 0) + commission)
+              txByDay.set(k, (txByDay.get(k) ?? 0) + 1)
+            }
+          } else if (createdMs >= prevStartMs && createdMs < startMs) {
+            prevPeriodGross += amount
+          }
+        })
+      } catch {
+        // Firestore unavailable — fall through to zero-filled response
+      }
+
+      const daily = dailyKeys.map((k, i) => ({
+        date: dailyLabels[i] ?? k,
+        revenue: Math.round(revenueByDay.get(k) ?? 0),
+        transactions: txByDay.get(k) ?? 0,
+        commission: Math.round(commissionByDay.get(k) ?? 0),
+      }))
+
+      const workerEarnings = Math.max(0, Math.round(totalGross - totalCommission))
+      const averageTransactionValue = transactionCount > 0
+        ? Math.round(totalGross / transactionCount)
+        : 0
+      const successRate = transactionCount > 0
+        ? parseFloat(((succeededCount / transactionCount) * 100).toFixed(1))
+        : 0
+      const revenueGrowth = prevPeriodGross > 0
+        ? parseFloat((((totalGross - prevPeriodGross) / prevPeriodGross) * 100).toFixed(1))
+        : 0
 
       return NextResponse.json({
         metric: 'revenue',
@@ -499,74 +599,161 @@ export async function GET(request: NextRequest) {
         startDate,
         endDate,
         data: {
-          totalRevenue,
-          platformCommission: Math.round(totalRevenue * 0.1),
-          workerEarnings: Math.round(totalRevenue * 0.78),
-          employerSpent: totalRevenue,
-          averageTransactionValue: 185,
-          transactionCount: dailyRevenue.reduce((s, d) => s + d.transactions, 0),
-          successRate: 97.8,
-          previousPeriodRevenue: prevRevenue,
-          revenueGrowth: parseFloat((((totalRevenue - prevRevenue) / prevRevenue) * 100).toFixed(1)),
-          daily: dailyRevenue,
+          totalRevenue: Math.round(totalGross),
+          platformCommission: Math.round(totalCommission),
+          workerEarnings,
+          employerSpent: Math.round(totalGross),
+          averageTransactionValue,
+          transactionCount,
+          successRate,
+          previousPeriodRevenue: Math.round(prevPeriodGross),
+          revenueGrowth,
+          daily,
         },
       })
     }
 
     if (metric === 'payments') {
+      let total = 0
+      let succeeded = 0
+      let failed = 0
+      let pending = 0
+      let refunded = 0
+      let totalAmount = 0
+      const methodCounts = new Map<string, { count: number; amount: number }>()
+
+      try {
+        const paymentsSnap = await adminDb.collection('payments').get()
+        paymentsSnap.forEach((doc) => {
+          const d = doc.data() as Record<string, unknown>
+          const createdMs = toMs(d.createdAt)
+          if (createdMs === null || createdMs < startMs || createdMs > endMs) return
+
+          const amount = Number(d.amount ?? 0) || 0
+          const status = String(d.status ?? '')
+          const method = String(d.paymentMethod ?? d.method ?? 'unknown') || 'unknown'
+
+          total++
+          totalAmount += amount
+          const bucket = paymentBucket(status)
+          if (bucket === 'succeeded') succeeded++
+          else if (bucket === 'failed') failed++
+          else if (bucket === 'pending') pending++
+          else if (bucket === 'refunded') refunded++
+
+          const methodBucket = methodCounts.get(method) ?? { count: 0, amount: 0 }
+          methodBucket.count++
+          methodBucket.amount += amount
+          methodCounts.set(method, methodBucket)
+        })
+      } catch {
+        // Firestore unavailable — fall through to zero response
+      }
+
+      const byMethod = Array.from(methodCounts.entries())
+        .map(([method, { count, amount }]) => ({
+          method,
+          count,
+          amount: Math.round(amount),
+          percentage: total > 0 ? parseFloat(((count / total) * 100).toFixed(1)) : 0,
+        }))
+        .sort((a, b) => b.count - a.count)
+
+      const averageValue = total > 0 ? Math.round(totalAmount / total) : 0
+
       return NextResponse.json({
         metric: 'payments',
         granularity,
         startDate,
         endDate,
         data: {
-          total: 14823,
-          succeeded: 14511,
-          failed: 312,
-          pending: 87,
-          byMethod: [
-            { method: 'card', count: 10240, amount: 1892440, percentage: 69.1 },
-            { method: 'bank_transfer', count: 3480, amount: 642800, percentage: 23.5 },
-            { method: 'apple_pay', count: 840, amount: 155400, percentage: 5.7 },
-            { method: 'google_pay', count: 263, amount: 48655, percentage: 1.7 },
-          ],
-          averageValue: 185,
+          total,
+          succeeded,
+          failed,
+          pending,
+          refunded,
+          byMethod,
+          averageValue,
         },
       })
     }
 
     if (metric === 'disputes') {
+      let total = 0
+      let open = 0
+      let resolved = 0
+      let resolutionTimeTotalHours = 0
+      let resolutionTimeCount = 0
+      const reasonCounts = new Map<string, number>()
+
+      try {
+        const disputesSnap = await adminDb.collection('disputes').get()
+        disputesSnap.forEach((doc) => {
+          const d = doc.data() as Record<string, unknown>
+          const createdMs = toMs(d.createdAt)
+          if (createdMs === null || createdMs < startMs || createdMs > endMs) return
+
+          const status = String(d.status ?? '')
+          total++
+          if (status === 'resolved' || status === 'closed' || status === 'refunded') resolved++
+          else open++
+
+          const resolvedMs = toMs(d.resolvedAt)
+          if (resolvedMs !== null && resolvedMs >= createdMs) {
+            resolutionTimeTotalHours += (resolvedMs - createdMs) / MS_PER_HOUR
+            resolutionTimeCount++
+          }
+
+          const reason = String(d.reason ?? 'other') || 'other'
+          reasonCounts.set(reason, (reasonCounts.get(reason) ?? 0) + 1)
+        })
+      } catch {
+        // Firestore unavailable — fall through to zero response
+      }
+
+      const averageResolutionTime = resolutionTimeCount > 0
+        ? parseFloat((resolutionTimeTotalHours / resolutionTimeCount).toFixed(1))
+        : 0
+      const resolutionSuccessRate = total > 0
+        ? parseFloat(((resolved / total) * 100).toFixed(1))
+        : 0
+      const topReasons = Array.from(reasonCounts.entries())
+        .map(([reason, count]) => ({
+          reason,
+          count,
+          percentage: total > 0 ? parseFloat(((count / total) * 100).toFixed(1)) : 0,
+        }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5)
+
       return NextResponse.json({
         metric: 'disputes',
         granularity,
         startDate,
         endDate,
         data: {
-          total: 47,
-          open: 12,
-          resolved: 35,
-          averageResolutionTime: 28.4,
-          resolutionSuccessRate: 91.5,
-          topReasons: [
-            { reason: 'Quality Issues', count: 18, percentage: 38.3 },
-            { reason: 'Non-delivery', count: 11, percentage: 23.4 },
-            { reason: 'Overcharge', count: 8, percentage: 17.0 },
-            { reason: 'Misrepresentation', count: 6, percentage: 12.8 },
-            { reason: 'Other', count: 4, percentage: 8.5 },
-          ],
+          total,
+          open,
+          resolved,
+          averageResolutionTime,
+          resolutionSuccessRate,
+          topReasons,
         },
       })
     }
 
     if (metric === 'system') {
+      // No runtime telemetry collection exists yet; surface zeros rather than
+      // fabricated values so the admin UI clearly reflects the absence of data.
+      // Wire this to Sentry / a metrics collection in a follow-up.
       return NextResponse.json({
         metric: 'system',
         data: {
-          apiResponseTime: { avg: 142, p95: 380, p99: 620 },
-          errorRate: 0.23,
-          uptime: 99.94,
-          activeUsers: 1243,
-          concurrentSessions: 387,
+          apiResponseTime: { avg: 0, p95: 0, p99: 0 },
+          errorRate: 0,
+          uptime: 0,
+          activeUsers: 0,
+          concurrentSessions: 0,
         },
       })
     }

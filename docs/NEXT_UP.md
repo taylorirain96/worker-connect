@@ -235,23 +235,28 @@ timestamps instead of the previous `det()`-seeded pseudo-random series. The
 Firestore-failure branch returns empty/zero values rather than fabricated
 names, categories, cities, or activity events.
 
-### 10. Admin analytics — secondary metric endpoints (revenue/payments/disputes/system)
-**Goal:** Back the non-dashboard `/api/admin/analytics?metric=…` branches with
-real Firestore data so the date-range filters on the legacy admin analytics
-page reflect actual platform activity.
+### 10. ~~Admin analytics — secondary metric endpoints (revenue/payments/disputes/system)~~ ✅ Shipped
+`app/api/admin/analytics/route.ts` no longer returns hard-coded constants from
+the `revenue`, `payments`, `disputes`, and `system` branches:
 
-**Pointers**
-- `app/api/admin/analytics/route.ts` — the `revenue`, `payments`, `disputes`,
-  and `system` branches still return hard-coded numbers (the `dashboard`
-  branch is now live from Firestore as of task #9).
-- `app/admin/analytics/page.tsx` and `app/admin/dashboard/page.tsx` consume
-  these via `getAdminAnalytics()` for the dashboard payload but the
-  date-range filter still hits the legacy mock branches when admins switch
-  ranges.
+- **`metric=revenue`** aggregates the `payments` collection over the requested
+  `startDate`/`endDate` window: gross volume (`employerSpent`), platform
+  commission (`commission` / `platformFee`), worker earnings (gross − commission),
+  transaction count, success rate (`completed`/`released` over total), previous
+  equal-length-period delta, and a daily series capped at 90 buckets.
+- **`metric=payments`** counts payments in range by status
+  (`succeeded`/`failed`/`pending`/`refunded`) and groups by `paymentMethod`
+  with per-method count, amount, and percentage.
+- **`metric=disputes`** counts the `disputes` collection in range, splits
+  open vs resolved (`resolved`/`closed`/`refunded`), computes
+  `averageResolutionTime` from `resolvedAt − createdAt` (hours), and surfaces
+  the top 5 `reason` buckets.
+- **`metric=system`** returns explicit zeros — there is no runtime telemetry
+  collection yet, so this branch deliberately surfaces empty values instead
+  of fabricating uptime/latency numbers. Wiring it to Sentry or a metrics
+  collection is a follow-up.
 
-**Acceptance**
-- `revenue`, `payments`, `disputes` and `system` metric branches read from
-  `payments`, `disputes`, and runtime telemetry rather than fixed
-  constants.
-- Empty state surfaces zeros (no fabricated values) when collections are
-  empty or Firestore is unavailable.
+Every branch returns zero/empty values when the collection is missing or
+Firestore is unavailable, matching the convention established by task #9.
+
+---
