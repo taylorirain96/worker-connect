@@ -10,8 +10,7 @@ export const dynamic = 'force-dynamic'
  *  - Target city match: +20
  *  - Nearby city (same state): +10
  *  - High urgency: +5
- * NOTE: A future "Premium match (employer uses Mover Mode): +10" bonus is planned
- * once the employer Mover Mode flag is stored on the Job document.
+ *  - Premium match (employer marked job relocationFriendly): +10
  */
 function applyMoverModeScoring(
   jobs: MatchedJob[],
@@ -35,6 +34,11 @@ function applyMoverModeScoring(
       if (job.urgency === 'high' || job.urgency === 'emergency') {
         bonus += 5
         extraReasons.push(`Mover Mode: High urgency +5`)
+      }
+
+      if (job.relocationFriendly) {
+        bonus += 10
+        extraReasons.push('Mover Mode: Premium match (employer relocation-friendly) +10')
       }
 
       return {
