@@ -214,6 +214,14 @@ export interface Job {
   recurringOptOutWorkerIds?: string[]
   /** Optional property linkage for property-manager posted jobs */
   propertyId?: string
+  /**
+   * Employer-set flag indicating this posting is Mover Mode-friendly
+   * (open to relocating workers, FIFO, or out-of-region applicants).
+   * Surfaces the job in Mover Mode opportunity feeds even when the
+   * location string doesn't match a worker's targetRelocationCity,
+   * and grants a +10 "Premium match" bonus in mover scoring.
+   */
+  relocationFriendly?: boolean
 }
 
 export type JobCategory =

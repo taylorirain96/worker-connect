@@ -52,7 +52,7 @@ export async function getMoverOpportunities(targetCity: string): Promise<MoverOp
       .collection('jobs')
       .where('status', '==', 'open')
       .orderBy('createdAt', 'desc')
-      .limit(50)
+      .limit(100)
       .get()
 
     const urgencyRank: Record<string, number> = { emergency: 0, high: 1, medium: 2, low: 3 }
@@ -65,11 +65,14 @@ export async function getMoverOpportunities(targetCity: string): Promise<MoverOp
           budget?: number
           urgency?: 'low' | 'medium' | 'high' | 'emergency'
           featuredListing?: boolean
+          relocationFriendly?: boolean
         }
         const location = (j.location ?? '').toLowerCase()
         const rawUrgency = j.urgency ?? 'medium'
         const normalisedUrgency: MoverOpportunity['urgency'] =
           rawUrgency === 'emergency' ? 'high' : (rawUrgency as MoverOpportunity['urgency'])
+        const relocationFriendly = Boolean(j.relocationFriendly)
+        const locationMatch = location.includes(target)
         return {
           jobId: d.id,
           title: j.title ?? 'Untitled job',
@@ -77,15 +80,28 @@ export async function getMoverOpportunities(targetCity: string): Promise<MoverOp
           budget: Number(j.budget ?? 0),
           urgency: normalisedUrgency,
           distance: 0,
-          premiumMatch: Boolean(j.featuredListing) || rawUrgency === 'high' || rawUrgency === 'emergency',
-          _locationMatch: location.includes(target),
+          premiumMatch:
+            relocationFriendly ||
+            Boolean(j.featuredListing) ||
+            rawUrgency === 'high' ||
+            rawUrgency === 'emergency',
+          // Surface a job if it matches the target city OR the employer
+          // explicitly flagged it relocation-friendly (open to movers).
+          _include: locationMatch || relocationFriendly,
+          // Prefer location matches over generic relocation-friendly posts when sorting.
+          _matchRank: locationMatch ? 0 : 1,
           _urgencyRank: urgencyRank[rawUrgency] ?? 2,
         }
       })
-      .filter((j) => j._locationMatch)
-      .sort((a, b) => a._urgencyRank - b._urgencyRank || b.budget - a.budget)
+      .filter((j) => j._include)
+      .sort(
+        (a, b) =>
+          a._matchRank - b._matchRank ||
+          a._urgencyRank - b._urgencyRank ||
+          b.budget - a.budget
+      )
       .slice(0, 20)
-      .map(({ _locationMatch: _lm, _urgencyRank: _ur, ...rest }) => rest)
+      .map(({ _include: _i, _matchRank: _mr, _urgencyRank: _ur, ...rest }) => rest)
   } catch (err) {
     console.error('getMoverOpportunities error:', err)
     return []
