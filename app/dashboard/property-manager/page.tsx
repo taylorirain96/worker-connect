@@ -82,6 +82,7 @@ export default function PropertyManagerDashboard() {
               {[
                 { label: 'Properties', href: '/dashboard/property-manager' },
                 { label: 'Jobs', href: '/dashboard/homeowner' },
+                { label: 'Schedule', href: '/dashboard/calendar' },
                 { label: 'Invoices', href: '/invoices' },
                 { label: 'Reports', href: '/dashboard/homeowner/spending' },
               ].map(({ label, href }) => (

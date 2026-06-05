@@ -87,7 +87,7 @@ function fromInstant(b: InstantBooking, viewerIsWorker: boolean): CalendarEvent 
   }
 }
 
-function toIcsEvent(ev: CalendarEvent): IcsEvent {
+function toIcsEvent(ev: CalendarEvent, reminderMinutes: number): IcsEvent {
   return {
     id: ev.id,
     title: `${ev.title} (${ev.counterpartyName})`,
@@ -96,11 +96,30 @@ function toIcsEvent(ev: CalendarEvent): IcsEvent {
     durationHours: ev.durationHours,
     location: ev.address,
     description: ev.description,
-    reminderMinutesBefore: 30,
+    reminderMinutesBefore: reminderMinutes,
   }
 }
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+const REMINDER_OPTIONS: Array<{ value: number; label: string }> = [
+  { value: 0,    label: 'Off' },
+  { value: 15,   label: '15 minutes before' },
+  { value: 30,   label: '30 minutes before' },
+  { value: 60,   label: '1 hour before' },
+  { value: 120,  label: '2 hours before' },
+  { value: 240,  label: '4 hours before' },
+  { value: 720,  label: '12 hours before' },
+  { value: 1440, label: '1 day before' },
+  { value: 2880, label: '2 days before' },
+]
+
+const REMINDER_STORAGE_KEY = 'wc:calendar:reminderMinutesBefore'
+
+function describeReminder(min: number): string {
+  const match = REMINDER_OPTIONS.find((o) => o.value === min)
+  return match ? match.label : `${min} minutes before`
+}
 
 export default function UpcomingJobsCalendarPage() {
   const { user, loading } = useAuth()
@@ -113,6 +132,29 @@ export default function UpcomingJobsCalendarPage() {
     return { year: now.getFullYear(), month: now.getMonth() }
   })
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const [reminderMinutes, setReminderMinutes] = useState<number>(30)
+
+  // Load saved reminder lead time from localStorage on mount.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const raw = window.localStorage.getItem(REMINDER_STORAGE_KEY)
+    const parsed = raw === null ? NaN : Number(raw)
+    if (Number.isFinite(parsed) && parsed >= 0) {
+      setReminderMinutes(parsed)
+    }
+  }, [])
+
+  const updateReminderMinutes = (value: number) => {
+    setReminderMinutes(value)
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(REMINDER_STORAGE_KEY, String(value))
+    }
+    toast.success(
+      value === 0
+        ? 'Reminders turned off'
+        : `Reminders set to ${describeReminder(value)}`,
+    )
+  }
 
   const { permission, enable } = useNotificationPermission()
 
@@ -160,18 +202,22 @@ export default function UpcomingJobsCalendarPage() {
       .finally(() => setFetching(false))
   }, [user])
 
-  // Schedule in-page reminder pop-ups 30 minutes before each upcoming event.
+  // Schedule in-page reminder pop-ups using the user's chosen lead time.
   const reminderItems = useMemo(
     () =>
       events.map((ev) => ({
-        id: ev.id,
+        id: `${ev.id}:${reminderMinutes}`,
         startsAt: ev.startsAt,
         title: `Upcoming: ${ev.title}`,
         body: `${ev.time} at ${ev.address}`,
       })),
-    [events],
+    [events, reminderMinutes],
   )
-  useEventReminders(reminderItems, 30, permission === 'granted')
+  useEventReminders(
+    reminderItems,
+    reminderMinutes,
+    permission === 'granted' && reminderMinutes > 0,
+  )
 
   // Group events by date string for grid + list rendering.
   const eventsByDate = useMemo(() => {
@@ -267,30 +313,49 @@ export default function UpcomingJobsCalendarPage() {
               </h1>
               <p className="text-sm text-gray-500 mt-1">
                 Every job you&apos;ve agreed to — addresses, dates and times in one place.
-                Pop-up reminders fire 30 minutes before each job.
+                Choose when reminder pop-ups should fire below.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
+              <label className="inline-flex items-center gap-2 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-2.5 py-1.5">
+                <Bell className="h-3.5 w-3.5 text-primary-500" />
+                <span className="hidden sm:inline">Remind me</span>
+                <select
+                  value={reminderMinutes}
+                  onChange={(e) => updateReminderMinutes(Number(e.target.value))}
+                  className="bg-transparent text-xs font-medium text-gray-700 dark:text-gray-200 focus:outline-none cursor-pointer"
+                  aria-label="Reminder lead time"
+                >
+                  {REMINDER_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </label>
               {permission === 'granted' ? (
                 <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2.5 py-1.5 rounded-lg">
                   <Bell className="h-3.5 w-3.5" />
-                  Reminders on
+                  Pop-ups on
                 </span>
               ) : permission === 'unsupported' ? (
                 <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 bg-gray-100 dark:bg-gray-800 px-2.5 py-1.5 rounded-lg">
                   <BellOff className="h-3.5 w-3.5" />
-                  Reminders not supported
+                  Pop-ups not supported
                 </span>
               ) : (
                 <Button variant="outline" size="sm" onClick={enable}>
                   <Bell className="h-4 w-4" />
-                  Turn on reminders
+                  Turn on pop-ups
                 </Button>
               )}
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => downloadIcs(events.map(toIcsEvent), 'worker-connect-schedule.ics')}
+                onClick={() =>
+                  downloadIcs(
+                    events.map((ev) => toIcsEvent(ev, reminderMinutes)),
+                    'worker-connect-schedule.ics',
+                  )
+                }
                 disabled={events.length === 0}
               >
                 <Download className="h-4 w-4" />
@@ -410,7 +475,7 @@ export default function UpcomingJobsCalendarPage() {
           ) : (
             <div className="space-y-3">
               {visibleList.map((ev) => (
-                <EventRow key={ev.id} event={ev} />
+                <EventRow key={ev.id} event={ev} reminderMinutes={reminderMinutes} />
               ))}
             </div>
           )}
@@ -421,7 +486,7 @@ export default function UpcomingJobsCalendarPage() {
   )
 }
 
-function EventRow({ event }: { event: CalendarEvent }) {
+function EventRow({ event, reminderMinutes }: { event: CalendarEvent; reminderMinutes: number }) {
   const formattedDate = new Date(event.date + 'T12:00:00').toLocaleDateString('en-NZ', {
     weekday: 'short',
     day: 'numeric',
@@ -464,7 +529,7 @@ function EventRow({ event }: { event: CalendarEvent }) {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => downloadIcs([toIcsEvent(event)], `${event.id}.ics`)}
+            onClick={() => downloadIcs([toIcsEvent(event, reminderMinutes)], `${event.id}.ics`)}
           >
             <Plus className="h-4 w-4" />
             Add to calendar
