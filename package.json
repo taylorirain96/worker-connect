@@ -22,7 +22,7 @@
     "@stripe/react-stripe-js": "^6.3.0",
     "@stripe/stripe-js": "^9.5.0",
     "clsx": "^2.1.1",
-    "date-fns": "^4.1.0",
+    "date-fns": "^4.3.0",
     "firebase": "^12.13.0",
     "firebase-admin": "^13.10.0",
     "lucide-react": "^1.16.0",
