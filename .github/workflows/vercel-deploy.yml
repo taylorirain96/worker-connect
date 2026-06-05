@@ -1,0 +1,44 @@
+name: Vercel Production Deploy
+
+# Triggers a Vercel production deploy whenever changes land on `main`,
+# and supports a manual "Run workflow" button in the Actions tab.
+#
+# Setup (one-time):
+# 1. In Vercel: Project Settings -> Git -> Deploy Hooks -> Create Hook
+#    (name: "GitHub main", branch: main). Copy the generated URL.
+# 2. In GitHub: Repo Settings -> Secrets and variables -> Actions ->
+#    New repository secret -> name `VERCEL_DEPLOY_HOOK_URL`, value = the URL.
+#
+# After that, every push to `main` (or manual dispatch) will POST to the
+# hook and Vercel will build & deploy the latest commit to production.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: vercel-production-deploy
+  cancel-in-progress: false
+
+jobs:
+  trigger-deploy:
+    name: Trigger Vercel deploy hook
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check deploy hook secret is configured
+        env:
+          HOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "${HOOK_URL}" ]; then
+            echo "::error::VERCEL_DEPLOY_HOOK_URL secret is not set. See workflow file header for setup steps."
+            exit 1
+          fi
+
+      - name: POST to Vercel deploy hook
+        env:
+          HOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
+        run: |
+          set -euo pipefail
+          response="$(curl -fsS -X POST "${HOOK_URL}")"
+          echo "Vercel deploy hook response: ${response}"
