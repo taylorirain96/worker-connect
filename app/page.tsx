@@ -171,28 +171,6 @@ export default function HomePage() {
                 Pay safely through escrow. Funds are only released when the job is done to your satisfaction. Transparent pricing, no hidden fees.
               </p>
             </div>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {[
-              { label: 'Electricians', href: '/services/electrical' },
-              { label: 'Plumbers', href: '/services/plumbing' },
-              { label: 'Builders', href: '/services/builder' },
-              { label: 'Painters', href: '/services/painting' },
-              { label: 'Landscapers', href: '/services/landscaping-gardening' },
-              { label: 'Roofers', href: '/services/roofing' },
-              { label: 'Tilers', href: '/services/tiling' },
-              { label: 'Cleaners', href: '/services/cleaning' },
-            ].map(({ label, href }) => (
-              <Link
-                key={label}
-                href={href}
-                className="bg-gray-900 border border-gray-800 hover:border-indigo-500/50 rounded-xl p-4 text-center text-gray-300 hover:text-white font-medium transition-all text-sm"
-              >
-                {label} →
-              </Link>
-            ))}
-          </div>
         </div>
       </section>
 
