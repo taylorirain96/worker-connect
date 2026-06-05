@@ -113,21 +113,24 @@ export default function Navbar() {
 
             {user ? (
               <div className="flex items-center space-x-2">
-                <NotificationCenter />
+                {/* Notifications + Messages: hidden on mobile because MobileTabBar shows them */}
+                <div className="hidden md:flex items-center space-x-2">
+                  <NotificationCenter />
 
-                {/* Messages icon with unread badge */}
-                <Link
-                  href="/messages"
-                  className="relative p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                  aria-label={unreadMessages > 0 ? `Messages — ${unreadMessages} unread` : 'Messages'}
-                >
-                  <MessageSquare className="h-5 w-5" />
-                  {unreadMessages > 0 && (
-                    <span className="absolute top-1 right-1 h-4 w-4 bg-red-500 rounded-full text-white text-[10px] font-bold flex items-center justify-center">
-                      {unreadMessages > 9 ? '9+' : unreadMessages}
-                    </span>
-                  )}
-                </Link>
+                  {/* Messages icon with unread badge */}
+                  <Link
+                    href="/messages"
+                    className="relative p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    aria-label={unreadMessages > 0 ? `Messages — ${unreadMessages} unread` : 'Messages'}
+                  >
+                    <MessageSquare className="h-5 w-5" />
+                    {unreadMessages > 0 && (
+                      <span className="absolute top-1 right-1 h-4 w-4 bg-red-500 rounded-full text-white text-[10px] font-bold flex items-center justify-center">
+                        {unreadMessages > 9 ? '9+' : unreadMessages}
+                      </span>
+                    )}
+                  </Link>
+                </div>
 
                 <div className="relative">
                   <button
