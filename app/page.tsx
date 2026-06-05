@@ -196,34 +196,27 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Popular Services Near You */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto w-full">
+      {/* Categories */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
         <div className="text-center mb-10">
-          <h2 className="text-3xl font-bold text-white mb-3">Popular Services Near You</h2>
+          <h2 className="text-3xl font-bold text-white mb-3">
+            Browse by Category
+          </h2>
           <p className="text-slate-400 max-w-xl mx-auto">
-            Find verified tradespeople for the most in-demand services across New Zealand.
+            Find the right skilled professional for any trade work
           </p>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {[
-            { label: 'Plumbing', slug: 'plumbing', icon: '🔧' },
-            { label: 'Electrical', slug: 'electrical', icon: '⚡' },
-            { label: 'Building', slug: 'builder', icon: '🏗️' },
-            { label: 'Heat Pumps & Air Con', slug: 'heat-pumps-air-conditioning', icon: '❄️' },
-            { label: 'Painting', slug: 'painting', icon: '🖌️' },
-            { label: 'Landscaping', slug: 'landscaping-gardening', icon: '🌿' },
-          ].map(({ label, slug, icon }) => (
-            <Link
-              key={slug}
-              href={`/services/${slug}`}
-              className="group flex items-center gap-3 bg-slate-900 border border-slate-800 hover:border-indigo-500/50 rounded-xl p-4 transition-all duration-200"
-            >
-              <span className="text-2xl">{icon}</span>
-              <span className="text-white font-medium group-hover:text-indigo-300 transition-colors">
-                {label}
-              </span>
-              <ArrowRight className="ml-auto h-4 w-4 text-slate-600 group-hover:text-indigo-400 transition-colors" />
-            </Link>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          {JOB_CATEGORIES.map((category) => (
+            <PremiumCategoryCard
+              key={category.id}
+              id={category.id}
+              label={category.label}
+              description={category.description}
+              icon={CATEGORY_ICONS[category.id as CategoryId]}
+              gradient={CATEGORY_GRADIENTS[category.id as CategoryId]}
+              isPremium={PREMIUM_CATEGORIES.includes(category.id as CategoryId)}
+            />
           ))}
         </div>
       </section>
@@ -265,31 +258,6 @@ export default function HomePage() {
           >
             View all guides <ArrowRight className="h-4 w-4" />
           </Link>
-        </div>
-      </section>
-
-      {/* Categories */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
-        <div className="text-center mb-10">
-          <h2 className="text-3xl font-bold text-white mb-3">
-            Browse by Category
-          </h2>
-          <p className="text-slate-400 max-w-xl mx-auto">
-            Find the right skilled professional for any trade work
-          </p>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {JOB_CATEGORIES.map((category) => (
-            <PremiumCategoryCard
-              key={category.id}
-              id={category.id}
-              label={category.label}
-              description={category.description}
-              icon={CATEGORY_ICONS[category.id as CategoryId]}
-              gradient={CATEGORY_GRADIENTS[category.id as CategoryId]}
-              isPremium={PREMIUM_CATEGORIES.includes(category.id as CategoryId)}
-            />
-          ))}
         </div>
       </section>
 
