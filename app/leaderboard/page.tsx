@@ -61,19 +61,19 @@ export default function LeaderboardPage() {
   const rest = filteredEntries.slice(3)
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+    <div className="flex flex-col min-h-screen bg-gradient-to-b from-orange-50/40 via-white to-pink-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       <Navbar />
       <main className="flex-1">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
           {/* Hero section */}
-          <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-3xl mb-8 p-8 text-center shadow-2xl">
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(234,179,8,0.15)_0%,_transparent_70%)] pointer-events-none" />
+          <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-rose-950 to-slate-900 rounded-3xl mb-8 p-8 text-center shadow-2xl">
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(244,114,182,0.18)_0%,_transparent_70%)] pointer-events-none" />
             <div className="relative z-10">
-              <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-to-br from-yellow-400 to-yellow-600 shadow-[0_0_30px_rgba(234,179,8,0.5)] mb-4 mx-auto">
+              <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-to-br from-orange-400 to-pink-500 shadow-[0_0_30px_rgba(244,114,182,0.45)] mb-4 mx-auto">
                 <Trophy className="h-8 w-8 text-white" />
               </div>
-              <h1 className="text-4xl font-black bg-gradient-to-r from-yellow-300 via-yellow-400 to-yellow-500 bg-clip-text text-transparent mb-2">
+              <h1 className="text-4xl font-black bg-gradient-to-r from-orange-300 via-pink-400 to-rose-400 bg-clip-text text-transparent mb-2">
                 Leaderboard
               </h1>
               <p className="text-slate-400 text-sm">Week {weekId} &nbsp;·&nbsp; {weekRange}</p>
@@ -85,7 +85,7 @@ export default function LeaderboardPage() {
             <button
               onClick={handleRefresh}
               disabled={refreshing}
-              className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:border-indigo-300 dark:hover:border-indigo-700 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-900/20 hover:border-rose-300 dark:hover:border-rose-700 hover:text-rose-600 dark:hover:text-rose-400 transition-all disabled:opacity-50"
             >
               <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
               Refresh
@@ -93,7 +93,9 @@ export default function LeaderboardPage() {
           </div>
 
           {/* Reward tier cards */}
-          <div className="grid grid-cols-3 gap-3 mb-8">
+          <div className="relative mb-8">
+            <div className="absolute -top-px left-4 right-4 h-px bg-gradient-to-r from-orange-400/0 via-pink-400/30 to-orange-400/0" />
+            <div className="grid grid-cols-3 gap-3">
             {/* Gold */}
             <div className="rounded-2xl border border-yellow-400/40 bg-gradient-to-b from-yellow-50 to-white dark:from-yellow-900/20 dark:to-slate-900 p-4 text-center shadow-[0_0_20px_rgba(234,179,8,0.15)]">
               <div className="text-2xl mb-1">🥇</div>
@@ -107,10 +109,11 @@ export default function LeaderboardPage() {
               <p className="text-xs text-slate-500">+{RANK_BONUSES[2].bonusPoints} bonus pts</p>
             </div>
             {/* Bronze */}
-            <div className="rounded-2xl border border-orange-400/40 bg-gradient-to-b from-orange-50 to-white dark:from-orange-900/20 dark:to-slate-900 p-4 text-center shadow-[0_0_20px_rgba(251,146,60,0.15)]">
+            <div className="rounded-2xl border border-rose-400/40 bg-gradient-to-b from-rose-50 to-white dark:from-rose-900/20 dark:to-slate-900 p-4 text-center shadow-[0_0_20px_rgba(244,114,182,0.18)]">
               <div className="text-2xl mb-1">🥉</div>
-              <p className="font-bold text-orange-500 dark:text-orange-400 text-sm">Rising Star</p>
+              <p className="font-bold text-rose-500 dark:text-rose-400 text-sm">Rising Star</p>
               <p className="text-xs text-slate-500">+{RANK_BONUSES[3].bonusPoints} bonus pts</p>
+            </div>
             </div>
           </div>
 
@@ -137,7 +140,7 @@ export default function LeaderboardPage() {
           ) : filteredEntries.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center">
-                <Trophy className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                <Trophy className="h-12 w-12 text-rose-300/60 dark:text-rose-700/60 mx-auto mb-3" />
                 <p className="text-gray-500 dark:text-gray-400">
                   {searchQuery ? 'No workers match your search.' : 'No entries yet this week.'}
                 </p>
@@ -149,9 +152,9 @@ export default function LeaderboardPage() {
               {topThree.length > 0 && (
                 <div>
                   <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <span className="flex-1 h-px bg-gradient-to-r from-transparent to-slate-200 dark:to-slate-700" />
+                    <span className="flex-1 h-px bg-gradient-to-r from-transparent via-pink-300/40 to-transparent dark:via-rose-700/40" />
                     Top Performers
-                    <span className="flex-1 h-px bg-gradient-to-l from-transparent to-slate-200 dark:to-slate-700" />
+                    <span className="flex-1 h-px bg-gradient-to-l from-transparent via-pink-300/40 to-transparent dark:via-rose-700/40" />
                   </h2>
                   <div className="space-y-2">
                     {topThree.map((entry) => (
@@ -169,9 +172,9 @@ export default function LeaderboardPage() {
               {rest.length > 0 && (
                 <div>
                   <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <span className="flex-1 h-px bg-gradient-to-r from-transparent to-slate-200 dark:to-slate-700" />
+                    <span className="flex-1 h-px bg-gradient-to-r from-transparent via-pink-300/40 to-transparent dark:via-rose-700/40" />
                     Rankings
-                    <span className="flex-1 h-px bg-gradient-to-l from-transparent to-slate-200 dark:to-slate-700" />
+                    <span className="flex-1 h-px bg-gradient-to-l from-transparent via-pink-300/40 to-transparent dark:via-rose-700/40" />
                   </h2>
                   <div className="space-y-2">
                     {rest.map((entry) => (

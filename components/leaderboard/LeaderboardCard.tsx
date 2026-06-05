@@ -53,10 +53,10 @@ function RankBadge({ rank }: { rank: number }) {
 
 function cardBorderClass(rank: number, isCurrentUser: boolean): string {
   if (isCurrentUser) {
-    return 'ring-2 ring-indigo-500/70 border-indigo-300 dark:border-indigo-500/60 shadow-[0_0_0_3px_rgba(99,102,241,0.15),0_6px_40px_rgba(99,102,241,0.45)]'
+    return 'ring-2 ring-pink-400/80 border-pink-300 dark:border-rose-500/60 bg-gradient-to-r from-orange-50 to-pink-50 dark:from-rose-900/15 dark:to-orange-900/15 shadow-[0_0_0_3px_rgba(244,114,182,0.15),0_6px_40px_rgba(244,114,182,0.45)]'
   }
   if (rank === 1) {
-    return 'ring-2 ring-yellow-400/80 border-yellow-300/80 dark:border-yellow-500/50 shadow-[0_0_0_3px_rgba(234,179,8,0.1),0_6px_40px_rgba(234,179,8,0.5)] dark:shadow-[0_0_0_3px_rgba(234,179,8,0.1),0_6px_40px_rgba(234,179,8,0.4)]'
+    return 'ring-2 ring-yellow-400/80 border-yellow-300/80 dark:border-yellow-500/50 bg-gradient-to-r from-yellow-50 via-orange-50 to-pink-50 dark:bg-none shadow-[0_0_0_3px_rgba(234,179,8,0.1),0_6px_40px_rgba(234,179,8,0.5)] dark:shadow-[0_0_0_3px_rgba(234,179,8,0.1),0_6px_40px_rgba(234,179,8,0.4)]'
   }
   if (rank === 2) {
     return 'ring-2 ring-slate-400/70 border-slate-300/80 dark:border-slate-400/40 shadow-[0_0_0_3px_rgba(148,163,184,0.1),0_6px_40px_rgba(148,163,184,0.45)]'
