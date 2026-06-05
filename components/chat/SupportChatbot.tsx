@@ -1,11 +1,15 @@
 'use client'
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, type PointerEvent as ReactPointerEvent } from 'react'
 import { MessageCircle, X, Send, Bot } from 'lucide-react'
 
 interface Message {
   role: 'user' | 'assistant'
   content: string
 }
+
+const BUTTON_SIZE = 56 // matches w-14 h-14
+const STORAGE_KEY = 'qt_support_chat_pos'
+const DRAG_THRESHOLD = 5 // px before a pointer move is treated as a drag
 
 export default function SupportChatbot() {
   const [open, setOpen] = useState(false)
@@ -16,9 +20,57 @@ export default function SupportChatbot() {
   const [loading, setLoading] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
 
+  // Draggable floating button position. `null` = use default CSS positioning
+  // (above the mobile tab bar on small screens, bottom-right on desktop).
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null)
+  const dragState = useRef<{
+    startX: number
+    startY: number
+    offsetX: number
+    offsetY: number
+    moved: boolean
+    pointerId: number
+  } | null>(null)
+  const buttonRef = useRef<HTMLButtonElement>(null)
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  // Restore saved position
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY)
+      if (!raw) return
+      const parsed = JSON.parse(raw) as { x: number; y: number }
+      if (typeof parsed?.x === 'number' && typeof parsed?.y === 'number') {
+        setPos(clampToViewport(parsed.x, parsed.y))
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [])
+
+  // Keep the button on-screen if the viewport is resized.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const onResize = () => {
+      setPos(prev => (prev ? clampToViewport(prev.x, prev.y) : prev))
+    }
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+
+  function clampToViewport(x: number, y: number) {
+    if (typeof window === 'undefined') return { x, y }
+    const maxX = Math.max(0, window.innerWidth - BUTTON_SIZE - 4)
+    const maxY = Math.max(0, window.innerHeight - BUTTON_SIZE - 4)
+    return {
+      x: Math.min(Math.max(4, x), maxX),
+      y: Math.min(Math.max(4, y), maxY),
+    }
+  }
 
   const send = async () => {
     if (!input.trim() || loading) return
@@ -42,20 +94,100 @@ export default function SupportChatbot() {
     }
   }
 
+  const onPointerDown = (e: ReactPointerEvent<HTMLButtonElement>) => {
+    const rect = buttonRef.current?.getBoundingClientRect()
+    if (!rect) return
+    dragState.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      offsetX: e.clientX - rect.left,
+      offsetY: e.clientY - rect.top,
+      moved: false,
+      pointerId: e.pointerId,
+    }
+    buttonRef.current?.setPointerCapture(e.pointerId)
+  }
+
+  const onPointerMove = (e: ReactPointerEvent<HTMLButtonElement>) => {
+    const state = dragState.current
+    if (!state || state.pointerId !== e.pointerId) return
+    const dx = e.clientX - state.startX
+    const dy = e.clientY - state.startY
+    if (!state.moved && Math.hypot(dx, dy) < DRAG_THRESHOLD) return
+    state.moved = true
+    setPos(clampToViewport(e.clientX - state.offsetX, e.clientY - state.offsetY))
+  }
+
+  const endDrag = (e: ReactPointerEvent<HTMLButtonElement>) => {
+    const state = dragState.current
+    if (!state || state.pointerId !== e.pointerId) return
+    try {
+      buttonRef.current?.releasePointerCapture(e.pointerId)
+    } catch {
+      /* ignore */
+    }
+    const moved = state.moved
+    dragState.current = null
+    if (moved && pos) {
+      try {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(pos))
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
+  const onClick = () => {
+    // Suppress the click that fires at the end of a drag.
+    if (dragState.current?.moved) return
+    setOpen(o => !o)
+  }
+
+  // Button positioning: explicit coords once dragged, otherwise default
+  // anchored bottom-right and lifted above the mobile tab bar (h-16 = 4rem).
+  const buttonStyle = pos
+    ? { left: pos.x, top: pos.y, right: 'auto', bottom: 'auto', touchAction: 'none' as const }
+    : { touchAction: 'none' as const }
+  const buttonPositionClass = pos
+    ? ''
+    : 'bottom-20 right-4 md:bottom-6 md:right-6'
+
+  // Window positioning: anchor to the button if dragged, else default.
+  const windowStyle = pos
+    ? (() => {
+        const desiredWidth = typeof window !== 'undefined' && window.innerWidth < 640 ? 320 : 384
+        const left = Math.max(8, Math.min(pos.x, (typeof window !== 'undefined' ? window.innerWidth : desiredWidth) - desiredWidth - 8))
+        const top = Math.max(8, pos.y - 480 - 8)
+        return { left, top, right: 'auto', bottom: 'auto', maxHeight: '480px' }
+      })()
+    : { maxHeight: '480px' }
+  const windowPositionClass = pos
+    ? ''
+    : 'bottom-[10.5rem] right-4 md:bottom-24 md:right-6'
+
   return (
     <>
-      {/* Floating button */}
+      {/* Floating draggable button */}
       <button
-        onClick={() => setOpen(o => !o)}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 shadow-lg shadow-indigo-500/30 flex items-center justify-center text-white hover:scale-105 transition-transform"
-        aria-label="Open support chat"
+        ref={buttonRef}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+        onClick={onClick}
+        className={`fixed z-50 w-14 h-14 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 shadow-lg shadow-indigo-500/30 flex items-center justify-center text-white hover:scale-105 transition-transform select-none cursor-grab active:cursor-grabbing ${buttonPositionClass}`}
+        style={buttonStyle}
+        aria-label="Open support chat (drag to move)"
       >
         {open ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
       </button>
 
       {/* Chat window */}
       {open && (
-        <div className="fixed bottom-24 right-6 z-50 w-80 sm:w-96 rounded-2xl border border-gray-700 bg-gray-900 shadow-2xl flex flex-col overflow-hidden" style={{ maxHeight: '480px' }}>
+        <div
+          className={`fixed z-50 w-80 sm:w-96 rounded-2xl border border-gray-700 bg-gray-900 shadow-2xl flex flex-col overflow-hidden ${windowPositionClass}`}
+          style={windowStyle}
+        >
           {/* Header */}
           <div className="bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-3 flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
