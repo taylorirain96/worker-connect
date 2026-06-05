@@ -248,6 +248,13 @@ export default function HomeownerDashboardPage() {
                 📅 <span className="hidden sm:inline">Bookings</span>
               </Link>
               <Link
+                href="/dashboard/calendar"
+                className="py-2.5 px-3 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-xl hover:bg-white dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
+                aria-label="My schedule"
+              >
+                🗓️ <span className="hidden sm:inline">Schedule</span>
+              </Link>
+              <Link
                 href="/dashboard/homeowner/favourites"
                 className="py-2.5 px-3 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-xl hover:bg-white dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
                 aria-label="My favourite tradies"
