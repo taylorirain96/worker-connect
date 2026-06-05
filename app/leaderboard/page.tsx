@@ -2,11 +2,11 @@
 import { useState, useEffect, useMemo } from 'react'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
-import { Card, CardContent } from '@/components/ui/Card'
 import LeaderboardCard from '@/components/leaderboard/LeaderboardCard'
 import LeaderboardFilters, { type LeaderboardCategory } from '@/components/leaderboard/LeaderboardFilters'
+import NeonPodium from '@/components/leaderboard/NeonPodium'
 import { getWeeklyLeaderboard } from '@/lib/leaderboard/firebase'
-import { getWeekId, getWeekBounds, RANK_BONUSES } from '@/lib/leaderboard/rankingLogic'
+import { getWeekId, getWeekBounds } from '@/lib/leaderboard/rankingLogic'
 import type { LeaderboardEntry } from '@/lib/leaderboard/rankingLogic'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { Trophy, RefreshCw } from 'lucide-react'
@@ -31,7 +31,7 @@ export default function LeaderboardPage() {
 
   const loadLeaderboard = async (cat: LeaderboardCategory) => {
     setLoading(true)
-    const data = await getWeeklyLeaderboard(cat, 10)
+    const data = await getWeeklyLeaderboard(cat, 50)
     setEntries(data)
     setLoading(false)
   }
@@ -59,137 +59,131 @@ export default function LeaderboardPage() {
 
   const topThree = filteredEntries.slice(0, 3)
   const rest = filteredEntries.slice(3)
+  const currentUserEntry = user
+    ? entries.find((e) => e.userId === user.uid)
+    : undefined
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+    <div className="flex flex-col min-h-screen bg-slate-950">
       <Navbar />
-      <main className="flex-1">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="flex-1 relative overflow-hidden">
+        {/* Animated neon background */}
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute -top-32 -left-32 h-96 w-96 rounded-full bg-cyan-500/20 blur-3xl" />
+          <div className="absolute -top-20 right-0 h-96 w-96 rounded-full bg-fuchsia-500/20 blur-3xl" />
+          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 h-72 w-72 rounded-full bg-emerald-500/10 blur-3xl" />
+        </div>
 
-          {/* Hero section */}
-          <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-3xl mb-8 p-8 text-center shadow-2xl">
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(234,179,8,0.15)_0%,_transparent_70%)] pointer-events-none" />
-            <div className="relative z-10">
-              <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-to-br from-yellow-400 to-yellow-600 shadow-[0_0_30px_rgba(234,179,8,0.5)] mb-4 mx-auto">
-                <Trophy className="h-8 w-8 text-white" />
-              </div>
-              <h1 className="text-4xl font-black bg-gradient-to-r from-yellow-300 via-yellow-400 to-yellow-500 bg-clip-text text-transparent mb-2">
-                Leaderboard
+        <div className="relative max-w-3xl mx-auto px-4 sm:px-6 py-8">
+          {/* Arcade frame */}
+          <div className="relative rounded-3xl border border-emerald-500/30 bg-slate-950/80 backdrop-blur-xl shadow-[0_0_40px_rgba(52,211,153,0.25)] overflow-hidden">
+            {/* Top bar */}
+            <div className="flex items-center justify-between px-5 pt-5">
+              <button
+                aria-label="Info"
+                className="inline-flex items-center justify-center h-7 w-7 rounded text-emerald-300/80 hover:text-emerald-200 hover:bg-emerald-500/10 transition-colors"
+              >
+                <Trophy className="h-4 w-4" />
+              </button>
+              <h1
+                className="text-2xl sm:text-3xl font-black tracking-[0.25em] text-emerald-300"
+                style={{ textShadow: '0 0 12px rgba(52,211,153,0.7), 0 0 22px rgba(52,211,153,0.4)' }}
+              >
+                LEADERBOARD
               </h1>
-              <p className="text-slate-400 text-sm">Week {weekId} &nbsp;·&nbsp; {weekRange}</p>
+              <button
+                onClick={handleRefresh}
+                disabled={refreshing}
+                aria-label="Refresh"
+                className="inline-flex items-center justify-center h-7 w-7 rounded text-emerald-300/80 hover:text-emerald-200 hover:bg-emerald-500/10 transition-colors disabled:opacity-50"
+              >
+                <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+              </button>
             </div>
-          </div>
 
-          {/* Refresh button */}
-          <div className="flex justify-end mb-6">
-            <button
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:border-indigo-300 dark:hover:border-indigo-700 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all disabled:opacity-50"
-            >
-              <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-              Refresh
-            </button>
-          </div>
+            {/* Week meta */}
+            <p className="text-center text-[10px] uppercase tracking-[0.3em] text-emerald-300/50 mt-1">
+              Week {weekId} · {weekRange}
+            </p>
 
-          {/* Reward tier cards */}
-          <div className="grid grid-cols-3 gap-3 mb-8">
-            {/* Gold */}
-            <div className="rounded-2xl border border-yellow-400/40 bg-gradient-to-b from-yellow-50 to-white dark:from-yellow-900/20 dark:to-slate-900 p-4 text-center shadow-[0_0_20px_rgba(234,179,8,0.15)]">
-              <div className="text-2xl mb-1">🥇</div>
-              <p className="font-bold text-yellow-600 dark:text-yellow-400 text-sm">Champion</p>
-              <p className="text-xs text-slate-500">+{RANK_BONUSES[1].bonusPoints} bonus pts</p>
-            </div>
-            {/* Silver */}
-            <div className="rounded-2xl border border-slate-400/40 bg-gradient-to-b from-slate-50 to-white dark:from-slate-700/20 dark:to-slate-900 p-4 text-center shadow-[0_0_20px_rgba(148,163,184,0.2)]">
-              <div className="text-2xl mb-1">🥈</div>
-              <p className="font-bold text-slate-500 dark:text-slate-300 text-sm">Runner-up</p>
-              <p className="text-xs text-slate-500">+{RANK_BONUSES[2].bonusPoints} bonus pts</p>
-            </div>
-            {/* Bronze */}
-            <div className="rounded-2xl border border-orange-400/40 bg-gradient-to-b from-orange-50 to-white dark:from-orange-900/20 dark:to-slate-900 p-4 text-center shadow-[0_0_20px_rgba(251,146,60,0.15)]">
-              <div className="text-2xl mb-1">🥉</div>
-              <p className="font-bold text-orange-500 dark:text-orange-400 text-sm">Rising Star</p>
-              <p className="text-xs text-slate-500">+{RANK_BONUSES[3].bonusPoints} bonus pts</p>
-            </div>
-          </div>
+            {/* Podium */}
+            {loading ? (
+              <div className="h-56 flex items-center justify-center">
+                <div className="text-emerald-300/60 text-xs uppercase tracking-widest animate-pulse">
+                  Loading…
+                </div>
+              </div>
+            ) : (
+              <NeonPodium topThree={topThree} currentUserId={user?.uid} />
+            )}
 
-          {/* Filters */}
-          <div className="mb-6">
-            <LeaderboardFilters
-              searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}
-              selectedCategory={selectedCategory}
-              onCategoryChange={handleCategoryChange}
-            />
-          </div>
-
-          {/* Leaderboard list */}
-          {loading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 10 }).map((_, i) => (
+            {/* You currently rank pill */}
+            {currentUserEntry && (
+              <div className="mx-4 sm:mx-6 mb-4">
                 <div
-                  key={i}
-                  className="h-20 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse"
-                />
-              ))}
-            </div>
-          ) : filteredEntries.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <Trophy className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-                <p className="text-gray-500 dark:text-gray-400">
-                  {searchQuery ? 'No workers match your search.' : 'No entries yet this week.'}
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-6">
-              {/* Podium — top 3 */}
-              {topThree.length > 0 && (
-                <div>
-                  <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <span className="flex-1 h-px bg-gradient-to-r from-transparent to-slate-200 dark:to-slate-700" />
-                    Top Performers
-                    <span className="flex-1 h-px bg-gradient-to-l from-transparent to-slate-200 dark:to-slate-700" />
-                  </h2>
-                  <div className="space-y-2">
-                    {topThree.map((entry) => (
-                      <LeaderboardCard
-                        key={entry.userId}
-                        entry={entry}
-                        isCurrentUser={entry.userId === user?.uid}
-                      />
-                    ))}
-                  </div>
+                  className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-cyan-400/60 bg-gradient-to-r from-cyan-500/20 via-cyan-400/30 to-cyan-500/20 shadow-[0_0_20px_rgba(34,211,238,0.5)]"
+                >
+                  <span className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-100 drop-shadow-[0_0_4px_rgba(34,211,238,0.7)]">
+                    You currently rank
+                  </span>
+                  <span className="font-mono text-lg font-extrabold text-cyan-50 tabular-nums">
+                    {currentUserEntry.rank}
+                  </span>
                 </div>
-              )}
+              </div>
+            )}
 
-              {/* Rest of top 10 */}
-              {rest.length > 0 && (
-                <div>
-                  <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <span className="flex-1 h-px bg-gradient-to-r from-transparent to-slate-200 dark:to-slate-700" />
-                    Rankings
-                    <span className="flex-1 h-px bg-gradient-to-l from-transparent to-slate-200 dark:to-slate-700" />
-                  </h2>
-                  <div className="space-y-2">
-                    {rest.map((entry) => (
+            {/* Filters */}
+            <div className="px-4 sm:px-6 pb-4">
+              <LeaderboardFilters
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                selectedCategory={selectedCategory}
+                onCategoryChange={handleCategoryChange}
+              />
+            </div>
+
+            {/* Ranking list */}
+            <div className="px-4 sm:px-6 pb-6">
+              {loading ? (
+                <div className="space-y-2">
+                  {Array.from({ length: 7 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="h-14 rounded-xl bg-slate-800/60 border border-emerald-500/10 animate-pulse"
+                    />
+                  ))}
+                </div>
+              ) : filteredEntries.length === 0 ? (
+                <div className="py-12 text-center">
+                  <Trophy className="h-10 w-10 text-emerald-500/40 mx-auto mb-3" />
+                  <p className="text-sm uppercase tracking-wider text-emerald-300/60">
+                    {searchQuery ? 'No players match your search.' : 'No entries yet this week.'}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {rest.length === 0 ? (
+                    <p className="text-center text-xs uppercase tracking-widest text-emerald-300/40 py-4">
+                      Only the podium is set so far — keep grinding!
+                    </p>
+                  ) : (
+                    rest.map((entry) => (
                       <LeaderboardCard
                         key={entry.userId}
                         entry={entry}
                         isCurrentUser={entry.userId === user?.uid}
                       />
-                    ))}
-                  </div>
+                    ))
+                  )}
                 </div>
               )}
             </div>
-          )}
+          </div>
 
           {/* Footer note */}
-          <p className="mt-8 text-center text-xs text-gray-400 dark:text-gray-600">
-            Resets every Sunday at midnight · Earn points by completing jobs and receiving reviews
+          <p className="mt-6 text-center text-[10px] uppercase tracking-[0.25em] text-emerald-300/40">
+            Resets every Sunday · Earn points by completing jobs & getting reviews
           </p>
         </div>
       </main>
