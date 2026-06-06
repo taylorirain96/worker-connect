@@ -12,6 +12,7 @@ import Input from '@/components/ui/Input'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import toast from 'react-hot-toast'
 import { User, MapPin, DollarSign, FileText, Video } from 'lucide-react'
+import ProfileHatHeader from '@/components/profiles/ProfileHatHeader'
 
 const profileSchema = z.object({
   displayName: z.string().min(2, 'Name must be at least 2 characters'),
@@ -104,6 +105,7 @@ export default function ProfilePage() {
       <Navbar />
       <main className="flex-1 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <ProfileHatHeader className="mb-6" />
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
               <User className="h-6 w-6 text-primary-600" />

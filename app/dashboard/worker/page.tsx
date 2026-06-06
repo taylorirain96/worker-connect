@@ -25,6 +25,9 @@ import QuoteStats from '@/components/quotes/QuoteStats'
 import JobsForYouFeed from '@/components/jobs/JobsForYouFeed'
 import AvailabilityToggle from '@/components/workers/AvailabilityToggle'
 import WorkerOnboardingChecklist from '@/components/workers/WorkerOnboardingChecklist'
+import CrossHatCTA from '@/components/profiles/CrossHatCTA'
+import WalletSummaryCard from '@/components/profiles/WalletSummaryCard'
+import TrustBadgeNudge from '@/components/profiles/TrustBadgeNudge'
 
 const MAX_DISPLAYED_REVIEWS = 10
 const MS_PER_DAY = 86_400_000
@@ -424,6 +427,15 @@ export default function WorkerDashboardPage() {
 
           {/* Onboarding checklist for new workers */}
           {profile && <WorkerOnboardingChecklist profile={profile} />}
+
+          {/* Ecosystem flow: shared wallet, trust-badge nudge, cross-promo */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+            <WalletSummaryCard />
+            <CrossHatCTA />
+          </div>
+          <div className="mb-6">
+            <TrustBadgeNudge />
+          </div>
 
           {/* Stats */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

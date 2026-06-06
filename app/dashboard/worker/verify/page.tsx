@@ -302,6 +302,15 @@ export default function VerifyIdentityPage() {
             </div>
           </div>
 
+          {/* Optional-paperwork reassurance */}
+          <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20 p-3 text-sm text-blue-800 dark:text-blue-200">
+            <p>
+              <span className="font-semibold">Only ID is required.</span> Insurance, background checks and
+              certifications are optional — you can post and accept jobs without them, and add them later when
+              you&apos;re ready to earn extra trust badges.
+            </p>
+          </div>
+
           {/* Progress steps */}
           <div className="flex items-center gap-2 mb-6">
             {STEP_ORDER.map((step, i) => {

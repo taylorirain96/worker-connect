@@ -99,6 +99,33 @@ export default function MessagesPage() {
                 const unread = conv.unreadCount?.[user.uid] ?? 0
                 const chatHref = conv.jobId ? `/messages/${conv.jobId}` : `/messages/${conv.id}`
 
+                // Unified inbox context label: when we know who posted the
+                // job, show "Hiring you for …" if the other person posted
+                // the job, or "Applying for your …" if the signed-in user
+                // posted it. Falls back to the existing "Re: …" line for
+                // older conversations missing jobEmployerId.
+                let contextLabel: string | null = null
+                let contextTone: 'tradie' | 'client' | 'neutral' = 'neutral'
+                if (conv.jobTitle && conv.jobEmployerId) {
+                  if (conv.jobEmployerId === user.uid) {
+                    contextLabel = `Applying for your: ${conv.jobTitle}`
+                    contextTone = 'client'
+                  } else if (conv.jobEmployerId === otherId) {
+                    contextLabel = `Hiring you for: ${conv.jobTitle}`
+                    contextTone = 'tradie'
+                  } else {
+                    contextLabel = `Re: ${conv.jobTitle}`
+                  }
+                } else if (conv.jobTitle) {
+                  contextLabel = `Re: ${conv.jobTitle}`
+                }
+                const contextClasses =
+                  contextTone === 'tradie'
+                    ? 'text-indigo-600 dark:text-indigo-400'
+                    : contextTone === 'client'
+                    ? 'text-violet-600 dark:text-violet-400'
+                    : 'text-primary-500'
+
                 return (
                   <Link
                     key={conv.id}
@@ -144,9 +171,9 @@ export default function MessagesPage() {
                           </span>
                         )}
                       </div>
-                      {conv.jobTitle && (
-                        <p className="text-xs text-primary-500 truncate mt-0.5">
-                          Re: {conv.jobTitle}
+                      {contextLabel && (
+                        <p className={`text-xs truncate mt-0.5 ${contextClasses}`}>
+                          {contextLabel}
                         </p>
                       )}
                       {conv.lastMessage && (
