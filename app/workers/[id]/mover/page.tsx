@@ -8,7 +8,7 @@ import Footer from '@/components/layout/Footer'
 import MoverModeSettings from '@/components/mover/MoverModeSettings'
 import MoverLeaderboard from '@/components/mover/MoverLeaderboard'
 import { useAuth } from '@/components/providers/AuthProvider'
-import type { MoverSettings, MoverLeaderboardEntry, MoverOpportunity } from '@/types/reputation'
+import type { MoverSettings, MoverLeaderboardEntry, MoverOpportunity, MoverStats } from '@/types/reputation'
 
 export default function MoverModePage(props: { params: Promise<{ id: string }> }) {
   const params = use(props.params);
@@ -16,6 +16,7 @@ export default function MoverModePage(props: { params: Promise<{ id: string }> }
   const [settings, setSettings] = useState<MoverSettings | null>(null)
   const [leaderboard, setLeaderboard] = useState<MoverLeaderboardEntry[]>([])
   const [opportunities, setOpportunities] = useState<MoverOpportunity[]>([])
+  const [stats, setStats] = useState<MoverStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -43,7 +44,8 @@ export default function MoverModePage(props: { params: Promise<{ id: string }> }
         }
 
         if (statsRes.status === 'fulfilled' && statsRes.value.ok) {
-          // stats available for future use
+          const statsData = (await statsRes.value.json()) as MoverStats
+          setStats(statsData)
         }
 
         const lbRes = await fetch('/api/reputation/leaderboard?limit=5')
@@ -143,9 +145,9 @@ export default function MoverModePage(props: { params: Promise<{ id: string }> }
 
             {/* Opportunities */}
             <div className="space-y-4">
-              {opportunities.length > 0 && (
-                <div className="bg-white rounded-xl shadow p-6 space-y-4">
-                  <h2 className="text-lg font-semibold text-gray-900">Relocation Opportunities</h2>
+              <div className="bg-white rounded-xl shadow p-6 space-y-4">
+                <h2 className="text-lg font-semibold text-gray-900">Relocation Opportunities</h2>
+                {opportunities.length > 0 ? (
                   <ul className="divide-y divide-gray-100">
                     {opportunities.map(opp => (
                       <li key={opp.jobId} className="py-3 space-y-1">
@@ -165,6 +167,50 @@ export default function MoverModePage(props: { params: Promise<{ id: string }> }
                       </li>
                     ))}
                   </ul>
+                ) : (
+                  <p className="text-sm text-gray-500">
+                    {settings?.targetRelocationCity
+                      ? `No open jobs match ${settings.targetRelocationCity} yet. Check back soon.`
+                      : 'Set a target relocation city to see opportunities.'}
+                  </p>
+                )}
+              </div>
+
+              {stats && (
+                <div className="bg-white rounded-xl shadow p-6 space-y-3">
+                  <h2 className="text-lg font-semibold text-gray-900">Network Stats</h2>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <div className="text-2xl font-semibold text-gray-900">{stats.totalMoverWorkers}</div>
+                      <div className="text-xs text-gray-500">Active movers</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-semibold text-gray-900">{stats.avgRelocationSuccessRate}%</div>
+                      <div className="text-xs text-gray-500">Avg relocation success</div>
+                    </div>
+                  </div>
+                  {stats.topCities.length > 0 && (
+                    <div>
+                      <div className="text-xs font-medium text-gray-700 mb-1">Top target cities</div>
+                      <div className="flex flex-wrap gap-1">
+                        {stats.topCities.map((city) => (
+                          <span key={city} className="text-xs px-2 py-0.5 bg-gray-100 text-gray-700 rounded-full">{city}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {stats.monthlyStats.some((m) => m.placements > 0) && (
+                    <div>
+                      <div className="text-xs font-medium text-gray-700 mb-1">Recent placements</div>
+                      <div className="flex gap-3 text-xs text-gray-600">
+                        {stats.monthlyStats.map((m) => (
+                          <div key={m.month}>
+                            <span className="font-medium">{m.month}</span>: {m.placements}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

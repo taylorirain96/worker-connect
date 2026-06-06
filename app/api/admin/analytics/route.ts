@@ -20,20 +20,6 @@ function setCached<T>(key: string, data: T, ttlMs = 5 * 60 * 1000): void {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function buildDayLabels(days: number): string[] {
-  return Array.from({ length: days }, (_, i) => {
-    const d = new Date()
-    d.setDate(d.getDate() - (days - 1 - i))
-    return d.toLocaleDateString('en-NZ', { day: 'numeric', month: 'short' })
-  })
-}
-
-/** Deterministic pseudo-random value (0..1) seeded on integers */
-function det(seed: number): number {
-  const x = Math.sin(seed * 9301 + 49297) * 233280
-  return x - Math.floor(x)
-}
-
 // ─── Dashboard data aggregation ───────────────────────────────────────────────
 
 interface DashboardResult {
@@ -53,7 +39,7 @@ interface DashboardResult {
   recentActivity: { id: string; type: string; userName: string; description: string; createdAt: string }[]
   topWorkers: { rank: number; name: string; jobsCompleted: number; earnings: number; rating: number }[]
   topCities: { rank: number; city: string; jobsPosted: number }[]
-  adminAnalytics?: {
+  adminAnalytics: {
     totalRevenue: number
     monthlyRevenue: number
     revenueGrowth: number
@@ -82,7 +68,7 @@ interface DashboardResult {
   }
 }
 
-type AdminAnalyticsTopWorker = NonNullable<DashboardResult['adminAnalytics']>['topWorkers'][number]
+type AdminAnalyticsTopWorker = DashboardResult['adminAnalytics']['topWorkers'][number]
 
 const CATEGORY_COLORS = [
   '#6366f1', '#22d3ee', '#f59e0b', '#10b981', '#ef4444',
@@ -129,7 +115,7 @@ async function buildDashboardData(): Promise<DashboardResult> {
   const now = new Date()
   const DAYS = 30
 
-  // ── Try Firestore; fall back to deterministic mock data ───────────────────
+  // ── Try Firestore; fall back to empty/zero values ─────────────────────────
   let totalUsers = 0
   let homeownerCount = 0
   let workerCount = 0
@@ -147,7 +133,6 @@ async function buildDashboardData(): Promise<DashboardResult> {
   let completedJobs = 0
   let disputeCount = 0
   let resolvedDisputeCount = 0
-  let hasLiveAdminAnalytics = false
 
   const dailySignups: { date: string; homeowners: number; workers: number }[] = []
   const dailyJobs: { date: string; jobs: number }[] = []
@@ -167,6 +152,47 @@ async function buildDashboardData(): Promise<DashboardResult> {
   const categoryCounts: Record<string, number> = {}
   const cityCounts: Record<string, number> = {}
 
+  // Day-bucket scaffolding for last DAYS days (yyyy-mm-dd keys, localised labels).
+  const dayStart = new Date(now)
+  dayStart.setDate(dayStart.getDate() - (DAYS - 1))
+  dayStart.setHours(0, 0, 0, 0)
+  const dayBuckets: { key: string; label: string }[] = []
+  for (let i = 0; i < DAYS; i++) {
+    const d = new Date(dayStart)
+    d.setDate(dayStart.getDate() + i)
+    dayBuckets.push({
+      key: d.toISOString().slice(0, 10),
+      label: d.toLocaleDateString('en-NZ', { day: 'numeric', month: 'short' }),
+    })
+  }
+  const dayKeySet = new Set(dayBuckets.map((b) => b.key))
+  const signupsByDay = new Map<string, { homeowners: number; workers: number }>()
+  const jobsCountByDay = new Map<string, number>()
+  const revenueByDay = new Map<string, number>()
+
+  function dayKey(value: unknown): string | null {
+    if (typeof value === 'string') {
+      // ISO string starts with yyyy-mm-dd
+      const k = value.slice(0, 10)
+      return dayKeySet.has(k) ? k : null
+    }
+    if (value instanceof Date && !Number.isNaN(value.getTime())) {
+      const k = value.toISOString().slice(0, 10)
+      return dayKeySet.has(k) ? k : null
+    }
+    if (typeof value === 'object' && value !== null) {
+      const maybeToDate = (value as { toDate?: () => Date }).toDate
+      if (typeof maybeToDate === 'function') {
+        const d = maybeToDate()
+        if (!Number.isNaN(d.getTime())) {
+          const k = d.toISOString().slice(0, 10)
+          return dayKeySet.has(k) ? k : null
+        }
+      }
+    }
+    return null
+  }
+
   try {
     // Real Firestore aggregation
     const usersSnap = await adminDb.collection('users').get()
@@ -181,6 +207,13 @@ async function buildDashboardData(): Promise<DashboardResult> {
       if (createdAt) {
         if (createdAt >= monthStart) newUsersThisMonth++
         else if (createdAt >= lastMonthStart && createdAt < monthStart) newUsersLastMonth++
+        const k = dayKey(createdAt)
+        if (k) {
+          const bucket = signupsByDay.get(k) ?? { homeowners: 0, workers: 0 }
+          if (role === 'homeowner') bucket.homeowners++
+          else if (role === 'worker' || role === 'tradie') bucket.workers++
+          signupsByDay.set(k, bucket)
+        }
       }
     })
 
@@ -210,6 +243,8 @@ async function buildDashboardData(): Promise<DashboardResult> {
         current.jobs += 1
         monthlyRevenueMap.set(jobMonth, current)
       }
+      const k = dayKey(d.createdAt)
+      if (k) jobsCountByDay.set(k, (jobsCountByDay.get(k) ?? 0) + 1)
       if (d.assignedAt && d.createdAt) {
         const diff = (new Date(d.assignedAt).getTime() - new Date(d.createdAt).getTime()) / 3600000
         if (diff > 0 && diff < 720) { hireTimeTotal += diff; hireTimeCount++ }
@@ -234,6 +269,8 @@ async function buildDashboardData(): Promise<DashboardResult> {
           current.revenue += amt
           monthlyRevenueMap.set(paymentMonth, current)
         }
+        const k = dayKey(d.createdAt)
+        if (k) revenueByDay.set(k, (revenueByDay.get(k) ?? 0) + amt)
       })
     } catch { /* payments not available */ }
 
@@ -267,14 +304,6 @@ async function buildDashboardData(): Promise<DashboardResult> {
         .map(([city, jobsPosted], i) => ({ rank: i + 1, city, jobsPosted }))
     )
 
-    // Daily series (approximation from Firestore)
-    const dayLabels = buildDayLabels(DAYS)
-    for (let i = 0; i < DAYS; i++) {
-      dailySignups.push({ date: dayLabels[i], homeowners: Math.round(det(i * 3 + 1) * 8 + 1), workers: Math.round(det(i * 3 + 2) * 6 + 1) })
-      dailyJobs.push({ date: dayLabels[i], jobs: Math.round(det(i * 5 + 3) * 15 + 2) })
-      dailyRevenue.push({ date: dayLabels[i], revenue: Math.round(det(i * 7 + 4) * 2000 + 500) })
-    }
-
     // Top workers
     const workersSnap = await adminDb.collection('users')
       .where('role', 'in', ['worker', 'tradie'])
@@ -301,7 +330,6 @@ async function buildDashboardData(): Promise<DashboardResult> {
         category: Array.isArray(d.skills) && d.skills.length > 0 ? String(d.skills[0]) : 'General',
       })
     })
-    hasLiveAdminAnalytics = true
 
     // Recent activity
     const recentJobs = await adminDb.collection('jobs').orderBy('createdAt', 'desc').limit(10).get()
@@ -330,88 +358,16 @@ async function buildDashboardData(): Promise<DashboardResult> {
     recentActivity.splice(20)
 
   } catch {
-    // ── Deterministic mock data (Firestore not configured) ─────────────────
-    totalUsers = 1284
-    homeownerCount = 521
-    workerCount = 612
-    newUsersThisMonth = 87
-    newUsersLastMonth = 74
-    totalJobsThisMonth = 318
-    totalJobsLastMonth = 274
-    revenueThisMonth = 9820
-    revenueLastMonth = 8450
-    activeJobs = 87
-    avgJobValue = 285
-    avgTimeToHire = 6
+    // Firestore unavailable — return empty/zero values rather than fabricated data.
+  }
 
-    const dayLabels = buildDayLabels(DAYS)
-    for (let i = 0; i < DAYS; i++) {
-      dailySignups.push({ date: dayLabels[i], homeowners: Math.round(det(i * 3 + 1) * 10 + 3), workers: Math.round(det(i * 3 + 2) * 8 + 2) })
-      dailyJobs.push({ date: dayLabels[i], jobs: Math.round(det(i * 5 + 3) * 18 + 4) })
-      dailyRevenue.push({ date: dayLabels[i], revenue: Math.round(det(i * 7 + 4) * 800 + 200) })
-    }
-
-    jobsByCategory.push(
-      { name: 'Plumbing', value: 142 },
-      { name: 'Electrical', value: 128 },
-      { name: 'Cleaning', value: 115 },
-      { name: 'Carpentry', value: 98 },
-      { name: 'Landscaping', value: 87 },
-      { name: 'Painting', value: 74 },
-      { name: 'Roofing', value: 52 },
-      { name: 'HVAC', value: 43 },
-      { name: 'Flooring', value: 38 },
-      { name: 'Moving', value: 31 },
-    )
-
-    jobsByCity.push(
-      { name: 'Auckland', value: 312 },
-      { name: 'Wellington', value: 187 },
-      { name: 'Christchurch', value: 143 },
-      { name: 'Hamilton', value: 89 },
-      { name: 'Tauranga', value: 67 },
-      { name: 'Dunedin', value: 54 },
-      { name: 'Palmerston North', value: 41 },
-      { name: 'Napier', value: 33 },
-      { name: 'Nelson', value: 28 },
-      { name: 'Rotorua', value: 22 },
-    )
-
-    const workerNames = ['James Tane', 'Aroha Williams', 'Mike Chen', 'Liam O\'Brien', 'Sophie Patel',
-      'Hemi Walker', 'Anna Schmidt', 'Raj Kumar', 'Daniel Ngata', 'Lucy Faʻalogo']
-    for (let i = 0; i < 10; i++) {
-      topWorkers.push({
-        rank: i + 1,
-        name: workerNames[i],
-        jobsCompleted: Math.round(det(i * 11 + 5) * 80 + 20 - i * 5),
-        earnings: Math.round(det(i * 13 + 6) * 15000 + 5000 - i * 400),
-        rating: parseFloat((5 - det(i * 7 + 7) * 1.5).toFixed(1)),
-      })
-    }
-
-    jobsByCity.forEach((c, i) => {
-      topCities.push({ rank: i + 1, city: c.name, jobsPosted: c.value })
-    })
-
-    const eventTypes = ['new_signup', 'job_posted', 'job_completed', 'dispute_raised', 'payment_released']
-    const userNames = ['James Tane', 'Aroha Williams', 'Mike Chen', 'Liam O\'Brien', 'Sophie Patel',
-      'Emma Wilson', 'Noah Smith', 'Olivia Johnson', 'William Brown', 'Isabella Davis',
-      'Elijah Anderson', 'Charlotte Thomas', 'James Jackson', 'Amelia White', 'Benjamin Harris',
-      'Mia Martin', 'Lucas Thompson', 'Harper Garcia', 'Mason Martinez', 'Evelyn Robinson']
-    const descriptions: Record<string, string> = {
-      new_signup: 'Signed up as homeowner',
-      job_posted: 'Posted a plumbing job',
-      job_completed: 'Completed electrical work',
-      dispute_raised: 'Raised dispute on job #482',
-      payment_released: 'Payment of $340 released',
-    }
-    for (let i = 0; i < 20; i++) {
-      const type = eventTypes[i % eventTypes.length]
-      const hoursAgo = Math.round(det(i * 17 + 8) * 48)
-      const ts = new Date(Date.now() - hoursAgo * 3600000).toISOString()
-      recentActivity.push({ id: `act-${i}`, type, userName: userNames[i], description: descriptions[type], createdAt: ts })
-    }
-    recentActivity.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+  // Daily series — bucketed from real Firestore createdAt timestamps (zeros
+  // where no events occurred or Firestore was unavailable).
+  for (const b of dayBuckets) {
+    const signups = signupsByDay.get(b.key) ?? { homeowners: 0, workers: 0 }
+    dailySignups.push({ date: b.label, homeowners: signups.homeowners, workers: signups.workers })
+    dailyJobs.push({ date: b.label, jobs: jobsCountByDay.get(b.key) ?? 0 })
+    dailyRevenue.push({ date: b.label, revenue: revenueByDay.get(b.key) ?? 0 })
   }
 
   const userGrowthPct = newUsersLastMonth > 0
@@ -469,26 +425,24 @@ async function buildDashboardData(): Promise<DashboardResult> {
     recentActivity,
     topWorkers,
     topCities,
-    adminAnalytics: hasLiveAdminAnalytics
-      ? {
-          totalRevenue,
-          monthlyRevenue: revenueThisMonth,
-          revenueGrowth: revenueGrowthPct,
-          totalUsers,
-          newUsersThisMonth,
-          userGrowthRate: userGrowthPct,
-          totalJobs,
-          completedJobs,
-          activeJobs,
-          jobCompletionRate,
-          disputeCount,
-          disputeResolutionRate,
-          topWorkers: adminTopWorkers,
-          monthlyRevenueChart,
-          categoryStats,
-          dailyStats,
-        }
-      : undefined,
+    adminAnalytics: {
+      totalRevenue,
+      monthlyRevenue: revenueThisMonth,
+      revenueGrowth: revenueGrowthPct,
+      totalUsers,
+      newUsersThisMonth,
+      userGrowthRate: userGrowthPct,
+      totalJobs,
+      completedJobs,
+      activeJobs,
+      jobCompletionRate,
+      disputeCount,
+      disputeResolutionRate,
+      topWorkers: adminTopWorkers,
+      monthlyRevenueChart,
+      categoryStats,
+      dailyStats,
+    },
   }
 
   setCached('dashboard', result)
@@ -517,27 +471,127 @@ export async function GET(request: NextRequest) {
 
     const start = new Date(startDate)
     const end = new Date(endDate)
-    const daysDiff = Math.ceil((end.getTime() - start.getTime()) / 86400000)
+    const startMs = start.getTime()
+    const endMs = end.getTime()
+    if (Number.isNaN(startMs) || Number.isNaN(endMs) || endMs < startMs) {
+      return NextResponse.json(
+        { error: 'Invalid date range: startDate and endDate must be valid dates and endDate must be on or after startDate' },
+        { status: 400 },
+      )
+    }
+    const MS_PER_HOUR = 3_600_000
+    const MS_PER_DAY = 86_400_000
+    const daysDiff = Math.max(1, Math.ceil((endMs - startMs) / MS_PER_DAY))
+    const periodMs = Math.max(1, endMs - startMs)
 
-    // In production: aggregate from Firestore using admin SDK
+    // Classify a payment status into the high-level buckets the admin UI
+    // reports. Centralised so the `revenue` and `payments` branches stay in
+    // sync if Stripe webhook statuses ever change.
+    function paymentBucket(status: string): 'succeeded' | 'failed' | 'pending' | 'refunded' | 'other' {
+      if (status === 'completed' || status === 'released') return 'succeeded'
+      if (status === 'failed') return 'failed'
+      if (status === 'pending' || status === 'processing') return 'pending'
+      if (status === 'refunded') return 'refunded'
+      return 'other'
+    }
+
+    // Parse a Firestore value that may be an ISO string, Date, or Timestamp-like
+    // ({toDate(): Date}); return ms since epoch or null if unparseable.
+    function toMs(value: unknown): number | null {
+      if (typeof value === 'string') {
+        const t = Date.parse(value)
+        return Number.isNaN(t) ? null : t
+      }
+      if (value instanceof Date) {
+        const t = value.getTime()
+        return Number.isNaN(t) ? null : t
+      }
+      if (typeof value === 'object' && value !== null) {
+        const maybeToDate = (value as { toDate?: () => Date }).toDate
+        if (typeof maybeToDate === 'function') {
+          const d = maybeToDate()
+          if (d instanceof Date) {
+            const t = d.getTime()
+            return Number.isNaN(t) ? null : t
+          }
+        }
+      }
+      return null
+    }
 
     if (metric === 'revenue') {
-      const dailyRevenue = Array.from({ length: Math.min(daysDiff, 90) }, (_, i) => {
-        const d = new Date(start)
-        d.setDate(d.getDate() + i)
-        // Use deterministic variation based on index to avoid Math.random() in production paths
-        const variation = Math.abs(Math.sin(i * 1.7 + 3.14) * 1000)
-        const revenue = Math.round(5000 + Math.sin(i * 0.5) * 2000 + variation)
-        return {
-          date: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-          revenue,
-          transactions: Math.round(revenue / 185),
-          commission: Math.round(revenue * 0.1),
-        }
-      })
+      // Day-bucket scaffolding across the requested range (cap chart at 90 days)
+      const chartDays = Math.min(daysDiff, 90)
+      const chartStart = new Date(end)
+      chartStart.setHours(0, 0, 0, 0)
+      chartStart.setDate(chartStart.getDate() - (chartDays - 1))
+      const dailyKeys: string[] = []
+      const dailyLabels: string[] = []
+      for (let i = 0; i < chartDays; i++) {
+        const d = new Date(chartStart)
+        d.setDate(chartStart.getDate() + i)
+        dailyKeys.push(d.toISOString().slice(0, 10))
+        dailyLabels.push(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }))
+      }
+      const dailyKeySet = new Set(dailyKeys)
+      const revenueByDay = new Map<string, number>()
+      const commissionByDay = new Map<string, number>()
+      const txByDay = new Map<string, number>()
 
-      const totalRevenue = dailyRevenue.reduce((s, d) => s + d.revenue, 0)
-      const prevRevenue = Math.round(totalRevenue * 0.91)
+      let totalGross = 0
+      let totalCommission = 0
+      let transactionCount = 0
+      let succeededCount = 0
+      let prevPeriodGross = 0
+      const prevStartMs = startMs - periodMs
+
+      try {
+        const paymentsSnap = await adminDb.collection('payments').get()
+        paymentsSnap.forEach((doc) => {
+          const d = doc.data() as Record<string, unknown>
+          const createdMs = toMs(d.createdAt)
+          if (createdMs === null) return
+          const amount = Number(d.amount ?? 0) || 0
+          const commission = Number(d.commission ?? d.platformFee ?? 0) || 0
+          const status = String(d.status ?? '')
+
+          if (createdMs >= startMs && createdMs <= endMs) {
+            totalGross += amount
+            totalCommission += commission
+            transactionCount++
+            if (paymentBucket(status) === 'succeeded') succeededCount++
+
+            const k = new Date(createdMs).toISOString().slice(0, 10)
+            if (dailyKeySet.has(k)) {
+              revenueByDay.set(k, (revenueByDay.get(k) ?? 0) + amount)
+              commissionByDay.set(k, (commissionByDay.get(k) ?? 0) + commission)
+              txByDay.set(k, (txByDay.get(k) ?? 0) + 1)
+            }
+          } else if (createdMs >= prevStartMs && createdMs < startMs) {
+            prevPeriodGross += amount
+          }
+        })
+      } catch {
+        // Firestore unavailable — fall through to zero-filled response
+      }
+
+      const daily = dailyKeys.map((k, i) => ({
+        date: dailyLabels[i] ?? k,
+        revenue: Math.round(revenueByDay.get(k) ?? 0),
+        transactions: txByDay.get(k) ?? 0,
+        commission: Math.round(commissionByDay.get(k) ?? 0),
+      }))
+
+      const workerEarnings = Math.max(0, Math.round(totalGross - totalCommission))
+      const averageTransactionValue = transactionCount > 0
+        ? Math.round(totalGross / transactionCount)
+        : 0
+      const successRate = transactionCount > 0
+        ? parseFloat(((succeededCount / transactionCount) * 100).toFixed(1))
+        : 0
+      const revenueGrowth = prevPeriodGross > 0
+        ? parseFloat((((totalGross - prevPeriodGross) / prevPeriodGross) * 100).toFixed(1))
+        : 0
 
       return NextResponse.json({
         metric: 'revenue',
@@ -545,74 +599,161 @@ export async function GET(request: NextRequest) {
         startDate,
         endDate,
         data: {
-          totalRevenue,
-          platformCommission: Math.round(totalRevenue * 0.1),
-          workerEarnings: Math.round(totalRevenue * 0.78),
-          employerSpent: totalRevenue,
-          averageTransactionValue: 185,
-          transactionCount: dailyRevenue.reduce((s, d) => s + d.transactions, 0),
-          successRate: 97.8,
-          previousPeriodRevenue: prevRevenue,
-          revenueGrowth: parseFloat((((totalRevenue - prevRevenue) / prevRevenue) * 100).toFixed(1)),
-          daily: dailyRevenue,
+          totalRevenue: Math.round(totalGross),
+          platformCommission: Math.round(totalCommission),
+          workerEarnings,
+          employerSpent: Math.round(totalGross),
+          averageTransactionValue,
+          transactionCount,
+          successRate,
+          previousPeriodRevenue: Math.round(prevPeriodGross),
+          revenueGrowth,
+          daily,
         },
       })
     }
 
     if (metric === 'payments') {
+      let total = 0
+      let succeeded = 0
+      let failed = 0
+      let pending = 0
+      let refunded = 0
+      let totalAmount = 0
+      const methodCounts = new Map<string, { count: number; amount: number }>()
+
+      try {
+        const paymentsSnap = await adminDb.collection('payments').get()
+        paymentsSnap.forEach((doc) => {
+          const d = doc.data() as Record<string, unknown>
+          const createdMs = toMs(d.createdAt)
+          if (createdMs === null || createdMs < startMs || createdMs > endMs) return
+
+          const amount = Number(d.amount ?? 0) || 0
+          const status = String(d.status ?? '')
+          const method = String(d.paymentMethod ?? d.method ?? 'unknown') || 'unknown'
+
+          total++
+          totalAmount += amount
+          const bucket = paymentBucket(status)
+          if (bucket === 'succeeded') succeeded++
+          else if (bucket === 'failed') failed++
+          else if (bucket === 'pending') pending++
+          else if (bucket === 'refunded') refunded++
+
+          const methodBucket = methodCounts.get(method) ?? { count: 0, amount: 0 }
+          methodBucket.count++
+          methodBucket.amount += amount
+          methodCounts.set(method, methodBucket)
+        })
+      } catch {
+        // Firestore unavailable — fall through to zero response
+      }
+
+      const byMethod = Array.from(methodCounts.entries())
+        .map(([method, { count, amount }]) => ({
+          method,
+          count,
+          amount: Math.round(amount),
+          percentage: total > 0 ? parseFloat(((count / total) * 100).toFixed(1)) : 0,
+        }))
+        .sort((a, b) => b.count - a.count)
+
+      const averageValue = total > 0 ? Math.round(totalAmount / total) : 0
+
       return NextResponse.json({
         metric: 'payments',
         granularity,
         startDate,
         endDate,
         data: {
-          total: 14823,
-          succeeded: 14511,
-          failed: 312,
-          pending: 87,
-          byMethod: [
-            { method: 'card', count: 10240, amount: 1892440, percentage: 69.1 },
-            { method: 'bank_transfer', count: 3480, amount: 642800, percentage: 23.5 },
-            { method: 'apple_pay', count: 840, amount: 155400, percentage: 5.7 },
-            { method: 'google_pay', count: 263, amount: 48655, percentage: 1.7 },
-          ],
-          averageValue: 185,
+          total,
+          succeeded,
+          failed,
+          pending,
+          refunded,
+          byMethod,
+          averageValue,
         },
       })
     }
 
     if (metric === 'disputes') {
+      let total = 0
+      let open = 0
+      let resolved = 0
+      let resolutionTimeTotalHours = 0
+      let resolutionTimeCount = 0
+      const reasonCounts = new Map<string, number>()
+
+      try {
+        const disputesSnap = await adminDb.collection('disputes').get()
+        disputesSnap.forEach((doc) => {
+          const d = doc.data() as Record<string, unknown>
+          const createdMs = toMs(d.createdAt)
+          if (createdMs === null || createdMs < startMs || createdMs > endMs) return
+
+          const status = String(d.status ?? '')
+          total++
+          if (status === 'resolved' || status === 'closed' || status === 'refunded') resolved++
+          else open++
+
+          const resolvedMs = toMs(d.resolvedAt)
+          if (resolvedMs !== null && resolvedMs >= createdMs) {
+            resolutionTimeTotalHours += (resolvedMs - createdMs) / MS_PER_HOUR
+            resolutionTimeCount++
+          }
+
+          const reason = String(d.reason ?? 'other') || 'other'
+          reasonCounts.set(reason, (reasonCounts.get(reason) ?? 0) + 1)
+        })
+      } catch {
+        // Firestore unavailable — fall through to zero response
+      }
+
+      const averageResolutionTime = resolutionTimeCount > 0
+        ? parseFloat((resolutionTimeTotalHours / resolutionTimeCount).toFixed(1))
+        : 0
+      const resolutionSuccessRate = total > 0
+        ? parseFloat(((resolved / total) * 100).toFixed(1))
+        : 0
+      const topReasons = Array.from(reasonCounts.entries())
+        .map(([reason, count]) => ({
+          reason,
+          count,
+          percentage: total > 0 ? parseFloat(((count / total) * 100).toFixed(1)) : 0,
+        }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5)
+
       return NextResponse.json({
         metric: 'disputes',
         granularity,
         startDate,
         endDate,
         data: {
-          total: 47,
-          open: 12,
-          resolved: 35,
-          averageResolutionTime: 28.4,
-          resolutionSuccessRate: 91.5,
-          topReasons: [
-            { reason: 'Quality Issues', count: 18, percentage: 38.3 },
-            { reason: 'Non-delivery', count: 11, percentage: 23.4 },
-            { reason: 'Overcharge', count: 8, percentage: 17.0 },
-            { reason: 'Misrepresentation', count: 6, percentage: 12.8 },
-            { reason: 'Other', count: 4, percentage: 8.5 },
-          ],
+          total,
+          open,
+          resolved,
+          averageResolutionTime,
+          resolutionSuccessRate,
+          topReasons,
         },
       })
     }
 
     if (metric === 'system') {
+      // No runtime telemetry collection exists yet; surface zeros rather than
+      // fabricated values so the admin UI clearly reflects the absence of data.
+      // Wire this to Sentry / a metrics collection in a follow-up.
       return NextResponse.json({
         metric: 'system',
         data: {
-          apiResponseTime: { avg: 142, p95: 380, p99: 620 },
-          errorRate: 0.23,
-          uptime: 99.94,
-          activeUsers: 1243,
-          concurrentSessions: 387,
+          apiResponseTime: { avg: 0, p95: 0, p99: 0 },
+          errorRate: 0,
+          uptime: 0,
+          activeUsers: 0,
+          concurrentSessions: 0,
         },
       })
     }

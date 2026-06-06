@@ -11,7 +11,7 @@ import Link from 'next/link'
 import {
   Briefcase, DollarSign, Users,
   Plus, Clock, CheckCircle, Eye, Building2, Shield, Award, Trophy, Star,
-  Camera, Filter, Settings, FileText,
+  Camera, Filter, Settings, FileText, Calendar,
 } from 'lucide-react'
 import { formatCurrency, formatRelativeDate, STATUS_LABELS } from '@/lib/utils'
 import { collection, query, where, orderBy, getDocs, type DocumentData } from 'firebase/firestore'
@@ -189,6 +189,12 @@ export default function EmployerDashboardPage() {
               <Button className="flex items-center gap-2">
                 <Plus className="h-4 w-4" />
                 Post a Job
+              </Button>
+            </Link>
+            <Link href="/dashboard/calendar">
+              <Button variant="outline" className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                My Schedule
               </Button>
             </Link>
             <Link href="/settings/profile">

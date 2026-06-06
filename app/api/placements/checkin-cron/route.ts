@@ -12,15 +12,17 @@ function getAppBaseUrl(): string {
 }
 
 /**
- * POST /api/placements/checkin-cron
+ * GET /api/placements/checkin-cron
  *
- * Called daily by Vercel cron (see vercel.json).
+ * Called daily by Vercel cron (see vercel.json). Vercel cron jobs always
+ * invoke the configured path with GET, so this handler must be GET.
+ *
  * Checks all active placements for pending 30/60/90-day check-ins and sends
  * emails to both the worker and employer.
  *
  * Secured with CRON_SECRET header to prevent unauthorised calls.
  */
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
   const secret = request.headers.get('authorization')
   const cronSecret = process.env.CRON_SECRET
 

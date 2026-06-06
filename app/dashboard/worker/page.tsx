@@ -25,6 +25,9 @@ import QuoteStats from '@/components/quotes/QuoteStats'
 import JobsForYouFeed from '@/components/jobs/JobsForYouFeed'
 import AvailabilityToggle from '@/components/workers/AvailabilityToggle'
 import WorkerOnboardingChecklist from '@/components/workers/WorkerOnboardingChecklist'
+import CrossHatCTA from '@/components/profiles/CrossHatCTA'
+import WalletSummaryCard from '@/components/profiles/WalletSummaryCard'
+import TrustBadgeNudge from '@/components/profiles/TrustBadgeNudge'
 
 const MAX_DISPLAYED_REVIEWS = 10
 const MS_PER_DAY = 86_400_000
@@ -425,6 +428,15 @@ export default function WorkerDashboardPage() {
           {/* Onboarding checklist for new workers */}
           {profile && <WorkerOnboardingChecklist profile={profile} />}
 
+          {/* Ecosystem flow: shared wallet, trust-badge nudge, cross-promo */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+            <WalletSummaryCard />
+            <CrossHatCTA />
+          </div>
+          <div className="mb-6">
+            <TrustBadgeNudge />
+          </div>
+
           {/* Stats */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             {stats.map(({ label, value, icon: Icon, color, bg }) => (
@@ -794,6 +806,17 @@ export default function WorkerDashboardPage() {
                   <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                     <CalendarCheck className="h-4 w-4 text-indigo-500" />
                     Booking Requests
+                  </div>
+                  <span className="text-xs text-primary-600">→</span>
+                </div>
+              </Link>
+
+              {/* My Schedule (calendar) link */}
+              <Link href="/dashboard/calendar">
+                <div className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer">
+                  <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <Calendar className="h-4 w-4 text-indigo-500" />
+                    My Schedule
                   </div>
                   <span className="text-xs text-primary-600">→</span>
                 </div>

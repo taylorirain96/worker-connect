@@ -1,5 +1,5 @@
 export type VerificationType = 'government_id' | 'background_check' | 'insurance' | 'certification' | 'bbb_rating'
-export type VerificationStatus = 'pending' | 'verified' | 'failed' | 'expired'
+export type VerificationStatus = 'pending' | 'verified' | 'failed' | 'expired' | 'skipped'
 
 export interface VerificationItem {
   id: string

@@ -69,7 +69,8 @@ export async function getOrCreateConversation(
   participantNames: Record<string, string>,
   participantAvatars?: Record<string, string>,
   jobId?: string,
-  jobTitle?: string
+  jobTitle?: string,
+  jobEmployerId?: string,
 ): Promise<string> {
   if (!db) throw new Error('Firestore is not initialized')
 
@@ -94,6 +95,7 @@ export async function getOrCreateConversation(
     unreadCount,
     ...(jobId && { jobId }),
     ...(jobTitle && { jobTitle }),
+    ...(jobEmployerId && { jobEmployerId }),
     createdAt: new Date().toISOString(),
   }
 
