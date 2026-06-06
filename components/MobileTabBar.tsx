@@ -18,12 +18,12 @@ const tabs = [
 export default function MobileTabBar() {
   const pathname = usePathname()
   const { user } = useAuth()
-  const { isWorker } = useRole()
+  const { activeHat } = useRole()
 
   // Only render when a user is signed in
   if (!user) return null
 
-  const profileHref = isWorker ? '/dashboard/worker' : '/dashboard/homeowner'
+  const profileHref = activeHat === 'tradie' ? '/dashboard/worker' : '/dashboard/employer'
 
   return (
     <nav

@@ -277,6 +277,12 @@ export interface Conversation {
   unreadCount?: Record<string, number>
   jobId?: string
   jobTitle?: string
+  /**
+   * The user id of the employer/poster on the related job, when known.
+   * Used to label conversations in the unified inbox as "Hiring you" vs
+   * "Applying for your …" without splitting the inbox by role.
+   */
+  jobEmployerId?: string
   createdAt: string
 }
 
