@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
     // Create Stripe payout via Connect if configured and worker has a connected account
     if (process.env.STRIPE_SECRET_KEY && workerStripeAccountId) {
       const Stripe = (await import('stripe')).default
-      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2026-04-22.dahlia' })
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2026-05-27.dahlia' })
       const payout = await stripe.payouts.create(
         {
           amount: Math.round(netAmount * 100),

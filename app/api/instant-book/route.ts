@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     const depositAmount = Math.round(pkg.price * depositPercent / 100 * 100) / 100
 
     const Stripe = (await import('stripe')).default
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2026-04-22.dahlia' })
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2026-05-27.dahlia' })
 
     const userSnap = await adminDb.collection('users').doc(homeownerId).get()
     const userData = userSnap.data() ?? {}

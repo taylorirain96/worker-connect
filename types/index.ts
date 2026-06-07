@@ -237,6 +237,7 @@ export type JobCategory =
   | 'flooring'
   | 'cleaning'
   | 'moving'
+  | 'jib_stopping'
   | 'general'
   | 'apprenticeship'
   | 'training'

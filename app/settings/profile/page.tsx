@@ -42,8 +42,9 @@ const employerSchema = z.object({
   website: z.string().url('Please enter a valid URL').optional().or(z.literal('')),
 })
 
-type WorkerFormData = z.infer<typeof workerSchema>
-type EmployerFormData = z.infer<typeof employerSchema>
+type WorkerFormData = z.output<typeof workerSchema>
+type WorkerFormInput = z.input<typeof workerSchema>
+type EmployerFormData = z.output<typeof employerSchema>
 
 function SkillTag({ label, onRemove }: { label: string; onRemove: () => void }) {
   return (
@@ -91,7 +92,7 @@ export default function EditProfilePage() {
   }, [profile])
 
   // ── Worker form ──────────────────────────────────────────────────────────────
-  const workerForm = useForm<WorkerFormData>({
+  const workerForm = useForm<WorkerFormInput, unknown, WorkerFormData>({
     resolver: zodResolver(workerSchema),
     defaultValues: {
       displayName: profile?.displayName || user?.displayName || '',

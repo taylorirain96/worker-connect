@@ -10,6 +10,7 @@ const STATUS_CONFIG: Record<VerificationStatus, { label: string; color: string }
   pending: { label: 'In Progress', color: 'text-yellow-600' },
   verified: { label: 'Passed', color: 'text-green-600' },
   failed: { label: 'Failed', color: 'text-red-600' },
+  skipped: { label: 'Skipped', color: 'text-gray-500' },
   expired: { label: 'Expired', color: 'text-gray-500' },
 }
 
