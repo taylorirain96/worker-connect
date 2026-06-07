@@ -9,7 +9,7 @@ export default function MarketingNavbar() {
           <Link href="/" className="flex items-center gap-2">
             <Image
               src="/icons/icon-192.png"
-              alt=""
+              alt="QuickTrade home"
               width={32}
               height={32}
               sizes="32px"
@@ -27,7 +27,7 @@ export default function MarketingNavbar() {
             <Link href="/workers" className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
               Find Workers
             </Link>
-            <Link href="/jobs/create" className="inline-flex items-center bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-all shadow-sm shadow-indigo-500/30">
+            <Link href="/jobs/create" className="inline-flex items-center bg-gradient-to-r from-indigo-700 to-violet-700 hover:from-indigo-600 hover:to-violet-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-all shadow-sm shadow-indigo-500/30">
               Post a Job
             </Link>
           </div>
