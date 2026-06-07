@@ -154,27 +154,6 @@ test.describe('revenue path', () => {
       }
       const db = admin.firestore();
       const nowIso = new Date().toISOString();
-      const commissionRate = 0.1;
-      const commissionAmount = Math.round(quoteAmount * commissionRate * 100) / 100;
-      const workerAmount = Math.round((quoteAmount - commissionAmount) * 100) / 100;
-
-      await db.collection('escrows').add({
-        jobId,
-        quoteId,
-        employerId: HOMEOWNER_FIXTURE.uid,
-        workerId: WORKER_FIXTURE.uid,
-        amount: quoteAmount,
-        workerAmount,
-        commissionAmount,
-        commissionRate,
-        currency: 'nzd',
-        status: 'held',
-        // Prefix triggers the mock-mode branch in /api/jobs/[jobId]/complete
-        // so it skips the real Stripe capture/transfer calls.
-        stripePaymentIntentId: `pi_mock_${Date.now()}`,
-        createdAt: nowIso,
-        updatedAt: nowIso,
-      });
 
       await db.collection('jobs').doc(jobId).update({
         status: 'in_progress',
@@ -183,21 +162,24 @@ test.describe('revenue path', () => {
         updatedAt: nowIso,
       });
 
-      // ── 7. Homeowner releases escrow + marks job complete ────────────────
-      const completeResp = await postJSON(homeowner, `/api/jobs/${jobId}/complete`, {
-        completedBy: HOMEOWNER_FIXTURE.uid,
+      // ── 7. Homeowner releases escrow ──────────────────────────────────────
+      const releaseResp = await postJSON(homeowner, '/api/payments/escrow/release', {
+        escrowId: escrowBody.escrowId,
+        releasedBy: HOMEOWNER_FIXTURE.uid,
       });
-      expect(completeResp.status(), await completeResp.text()).toBe(200);
-      const completeBody = (await completeResp.json()) as {
+      expect(releaseResp.status(), await releaseResp.text()).toBe(200);
+      const releaseBody = (await releaseResp.json()) as {
         success: boolean;
-        status: string;
-        escrowReleased: boolean;
+        jobId: string;
         workerAmount: number;
+        commissionAmount: number;
+        commissionRate: number;
       };
-      expect(completeBody.success).toBe(true);
-      expect(completeBody.status).toBe('completed');
-      expect(completeBody.escrowReleased).toBe(true);
-      expect(completeBody.workerAmount).toBeCloseTo(workerAmount, 2);
+      expect(releaseBody.success).toBe(true);
+      expect(releaseBody.jobId).toBe(jobId);
+      expect(releaseBody.workerAmount).toBeCloseTo(escrowBody.workerAmount, 2);
+      expect(releaseBody.commissionAmount).toBeCloseTo(escrowBody.commissionAmount, 2);
+      expect(releaseBody.commissionRate).toBe(escrowBody.commissionRate);
 
       // The job document itself is now completed + escrow released
       const jobSnap = await db.collection('jobs').doc(jobId).get();
