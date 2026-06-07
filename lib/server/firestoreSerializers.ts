@@ -1,6 +1,8 @@
 import { Timestamp } from 'firebase-admin/firestore'
 import type { Subscription, SubscriptionPlan } from '@/types/payment'
 
+const DEFAULT_CURRENCY = 'nzd'
+
 export function toIsoTimestamp(value: unknown): string | undefined {
   if (value instanceof Timestamp) return value.toDate().toISOString()
   if (typeof value === 'string') return value
@@ -27,7 +29,7 @@ export function serializeSubscription(
     cancelAtPeriodEnd: Boolean(data.cancelAtPeriodEnd),
     billingInterval: data.billingInterval === 'year' ? 'year' : 'month',
     amount: typeof data.amount === 'number' ? data.amount : 0,
-    currency: typeof data.currency === 'string' ? data.currency : 'nzd',
+    currency: typeof data.currency === 'string' ? data.currency : DEFAULT_CURRENCY,
     createdAt: toIsoTimestamp(data.createdAt) ?? nowIso,
     updatedAt: toIsoTimestamp(data.updatedAt) ?? nowIso,
     canceledAt: toIsoTimestamp(data.canceledAt),

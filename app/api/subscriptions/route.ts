@@ -28,8 +28,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Missing userId' }, { status: 400 })
     }
 
-    let docs
-      : FirebaseFirestore.QueryDocumentSnapshot<FirebaseFirestore.DocumentData>[]
+    let docs: FirebaseFirestore.QueryDocumentSnapshot<FirebaseFirestore.DocumentData>[]
 
     try {
       const orderedSnapshot = await adminDb
@@ -95,7 +94,7 @@ export async function POST(req: NextRequest) {
 
     if (plan !== 'free') {
       return NextResponse.json(
-        { error: 'Paid subscriptions require live billing and cannot be created from placeholder data.' },
+        { error: 'Paid subscriptions require Stripe integration. Only free plans can be created directly.' },
         { status: 501 },
       )
     }

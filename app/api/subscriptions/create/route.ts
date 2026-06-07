@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
 
     if (plan !== 'free') {
       return NextResponse.json(
-        { error: 'Paid subscription checkout is not wired yet. Mock subscriptions have been removed.' },
+        { error: 'Paid subscriptions are not yet available. Please select the free plan.' },
         { status: 501 },
       )
     }

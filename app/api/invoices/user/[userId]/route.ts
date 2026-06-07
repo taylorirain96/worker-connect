@@ -37,7 +37,7 @@ export async function GET(
         return (await q.get()).docs
       } catch (error) {
         console.warn(
-          `Falling back to unordered invoice query for ${field}; likely missing createdAt index.`,
+          `Falling back to unordered invoice query for ${field}; likely missing createdAt index. Results will be sorted in memory after fetch.`,
           error,
         )
         let q = adminDb.collection('invoices').where(field, '==', userId).limit(pageSize)
