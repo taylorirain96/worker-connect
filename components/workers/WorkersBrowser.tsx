@@ -8,117 +8,6 @@ import { Users } from 'lucide-react'
 import { getWorkers } from '@/lib/services/workerService'
 import type { UserProfile } from '@/types'
 
-const MOCK_WORKERS: UserProfile[] = [
-  {
-    uid: 'w1',
-    email: 'mike@example.com',
-    displayName: 'Mike Johnson',
-    photoURL: null,
-    role: 'worker',
-    createdAt: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString(),
-    profileComplete: true,
-    bio: 'Master plumber with 15 years of experience. Specialised in residential and commercial plumbing, pipe repair, and water heater installation.',
-    location: 'Auckland',
-    skills: ['Plumbing', 'Pipe Repair', 'Water Heater', 'Drain Cleaning', 'Fixture Installation'],
-    hourlyRate: 85,
-    availability: 'available',
-    rating: 4.9,
-    reviewCount: 87,
-    completedJobs: 87,
-    verified: true,
-  },
-  {
-    uid: 'w2',
-    email: 'sarah@example.com',
-    displayName: 'Sarah Chen',
-    photoURL: null,
-    role: 'worker',
-    createdAt: new Date(Date.now() - 200 * 24 * 60 * 60 * 1000).toISOString(),
-    profileComplete: true,
-    bio: 'Licensed electrician specialising in residential wiring, panel upgrades, and smart home installations.',
-    location: 'Wellington',
-    skills: ['Electrical', 'Panel Upgrades', 'Smart Home', 'Rewiring', 'EV Chargers'],
-    hourlyRate: 95,
-    availability: 'available',
-    rating: 4.8,
-    reviewCount: 124,
-    completedJobs: 124,
-    verified: true,
-  },
-  {
-    uid: 'w3',
-    email: 'carlos@example.com',
-    displayName: 'Carlos Rivera',
-    photoURL: null,
-    role: 'worker',
-    createdAt: new Date(Date.now() - 150 * 24 * 60 * 60 * 1000).toISOString(),
-    profileComplete: true,
-    bio: 'HVAC technician certified in all major brands. Available for installation, maintenance, and emergency repairs.',
-    location: 'Christchurch',
-    skills: ['HVAC', 'Air Conditioning', 'Heating Systems', 'Ductwork', 'Refrigerant'],
-    hourlyRate: 75,
-    availability: 'busy',
-    rating: 5.0,
-    reviewCount: 56,
-    completedJobs: 56,
-    verified: true,
-  },
-  {
-    uid: 'w4',
-    email: 'emily@example.com',
-    displayName: 'Emily Parker',
-    photoURL: null,
-    role: 'worker',
-    createdAt: new Date(Date.now() - 500 * 24 * 60 * 60 * 1000).toISOString(),
-    profileComplete: true,
-    bio: 'Custom furniture builder and finish carpenter with an eye for detail. Kitchen cabinets, decks, and trim work specialist.',
-    location: 'Hamilton',
-    skills: ['Carpentry', 'Custom Furniture', 'Deck Building', 'Trim Work', 'Cabinet Making'],
-    hourlyRate: 70,
-    availability: 'available',
-    rating: 4.7,
-    reviewCount: 203,
-    completedJobs: 203,
-    verified: true,
-  },
-  {
-    uid: 'w5',
-    email: 'james@example.com',
-    displayName: 'James Wilson',
-    photoURL: null,
-    role: 'worker',
-    createdAt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(),
-    profileComplete: true,
-    bio: 'Licensed roofer specialising in asphalt shingles, metal roofing, and flat roof systems. Emergency repairs available.',
-    location: 'Nelson',
-    skills: ['Roofing', 'Shingle Installation', 'Metal Roofing', 'Flat Roofs', 'Gutters'],
-    hourlyRate: 80,
-    availability: 'available',
-    rating: 4.6,
-    reviewCount: 42,
-    completedJobs: 42,
-    verified: false,
-  },
-  {
-    uid: 'w6',
-    email: 'anna@example.com',
-    displayName: 'Anna Martinez',
-    photoURL: null,
-    role: 'worker',
-    createdAt: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString(),
-    profileComplete: true,
-    bio: 'Professional interior and exterior painter. Meticulous prep work, clean finish. Residential specialist.',
-    location: 'Tauranga',
-    skills: ['Painting', 'Interior Painting', 'Exterior Painting', 'Drywall Repair', 'Colour Consultation'],
-    hourlyRate: 55,
-    availability: 'available',
-    rating: 4.9,
-    reviewCount: 78,
-    completedJobs: 78,
-    verified: true,
-  },
-]
-
 const EMPTY_FILTERS = {
   search: '',
   location: '',
@@ -162,9 +51,9 @@ function WorkersListContent() {
       setLoading(true)
       try {
         const fetched = await getWorkers()
-        setWorkers(fetched.length > 0 ? fetched : MOCK_WORKERS)
+        setWorkers(fetched)
       } catch {
-        setWorkers(MOCK_WORKERS)
+        setWorkers([])
       } finally {
         setLoading(false)
       }

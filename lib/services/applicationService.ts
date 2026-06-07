@@ -32,28 +32,6 @@ function docToApplication(id: string, data: Record<string, unknown>): JobApplica
   } as JobApplication
 }
 
-// ─── Mock data fallback ───────────────────────────────────────────────────────
-
-const MOCK_APPLICATIONS: JobApplication[] = [
-  {
-    id: 'app_mock_1',
-    workerId: 'worker_demo',
-    jobId: 'mock_job_1',
-    status: 'pending',
-    coverLetter: 'I have 5 years of plumbing experience and can start immediately.',
-    appliedAt: new Date(Date.now() - 86400000).toISOString(),
-  },
-  {
-    id: 'app_mock_2',
-    workerId: 'worker_demo',
-    jobId: 'mock_job_2',
-    status: 'accepted',
-    coverLetter: 'Certified electrician with residential experience.',
-    appliedAt: new Date(Date.now() - 2 * 86400000).toISOString(),
-    respondedAt: new Date(Date.now() - 86400000).toISOString(),
-  },
-]
-
 // ─── Application CRUD ─────────────────────────────────────────────────────────
 
 /**
@@ -66,8 +44,7 @@ export async function createApplication(
   coverLetter?: string
 ): Promise<string> {
   if (!db) {
-    // Return mock ID
-    return `app_${Date.now()}`
+    throw new Error('Applications are unavailable')
   }
 
   // Prevent duplicate applications
@@ -105,10 +82,7 @@ export async function getWorkerApplications(
   workerId: string,
   status?: 'pending' | 'accepted' | 'rejected' | 'withdrawn'
 ): Promise<JobApplication[]> {
-  if (!db) {
-    const apps = MOCK_APPLICATIONS.filter((a) => a.workerId === workerId)
-    return status ? apps.filter((a) => a.status === status) : apps
-  }
+  if (!db) return []
 
   try {
     let q = query(
@@ -137,9 +111,7 @@ export async function getWorkerApplications(
  * Get all applications for a specific job.
  */
 export async function getJobApplications(jobId: string): Promise<JobApplication[]> {
-  if (!db) {
-    return MOCK_APPLICATIONS.filter((a) => a.jobId === jobId)
-  }
+  if (!db) return []
 
   try {
     const q = query(
@@ -209,9 +181,7 @@ export async function withdrawApplication(applicationId: string): Promise<void> 
 export async function getApplicationById(
   applicationId: string
 ): Promise<JobApplication | null> {
-  if (!db) {
-    return MOCK_APPLICATIONS.find((a) => a.id === applicationId) ?? null
-  }
+  if (!db) return null
 
   try {
     const appRef = doc(db, 'applications', applicationId)

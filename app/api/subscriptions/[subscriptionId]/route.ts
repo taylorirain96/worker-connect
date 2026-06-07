@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import type { SubscriptionPlan } from '@/types/payment'
+import { serializeSubscription } from '@/lib/server/firestoreSerializers'
 
 /**
  * GET    /api/subscriptions/[subscriptionId]  — get subscription details
@@ -8,7 +10,7 @@ import type { NextRequest } from 'next/server'
  */
 export async function GET(
   _req: NextRequest,
-  context: { params: Promise<{ subscriptionId: string }> }
+  context: { params: Promise<{ subscriptionId: string }> },
 ) {
   const params = await context.params
   try {
@@ -18,27 +20,15 @@ export async function GET(
       return NextResponse.json({ error: 'Missing subscription id' }, { status: 400 })
     }
 
-    // In production: fetch from Firestore or Stripe
-    // const snap = await getDoc(doc(db, 'subscriptions', subscriptionId))
-    // if (!snap.exists()) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-
-    const mockSub = {
-      id: subscriptionId,
-      userId: 'user_1',
-      plan: 'pro',
-      status: 'active',
-      billingInterval: 'month',
-      amount: 29,
-      currency: 'usd',
-      stripeSubscriptionId: `sub_stripe_${subscriptionId}`,
-      currentPeriodStart: new Date(Date.now() - 10 * 86400000).toISOString(),
-      currentPeriodEnd: new Date(Date.now() + 20 * 86400000).toISOString(),
-      cancelAtPeriodEnd: false,
-      createdAt: new Date(Date.now() - 40 * 86400000).toISOString(),
-      updatedAt: new Date().toISOString(),
+    const { adminDb } = await import('@/lib/firebase-admin')
+    const snap = await adminDb.collection('subscriptions').doc(subscriptionId).get()
+    if (!snap.exists) {
+      return NextResponse.json({ error: 'Subscription not found' }, { status: 404 })
     }
 
-    return NextResponse.json({ subscription: mockSub })
+    return NextResponse.json({
+      subscription: serializeSubscription(snap.id, snap.data() as Record<string, unknown>),
+    })
   } catch (error) {
     console.error('GET /api/subscriptions/[subscriptionId] error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -47,13 +37,13 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  context: { params: Promise<{ subscriptionId: string }> }
+  context: { params: Promise<{ subscriptionId: string }> },
 ) {
   const params = await context.params
   try {
     const { subscriptionId } = params
     const body = await req.json() as {
-      plan?: string
+      plan?: SubscriptionPlan
       billingInterval?: 'month' | 'year'
       cancelAtPeriodEnd?: boolean
     }
@@ -62,19 +52,50 @@ export async function PUT(
       return NextResponse.json({ error: 'Missing subscription id' }, { status: 400 })
     }
 
-    // In production:
-    // const stripe = getStripe()
-    // const updates: Stripe.SubscriptionUpdateParams = {}
-    // if (body.plan) updates.items = [{ price: PLAN_PRICE_IDS[body.plan][body.billingInterval ?? 'month'] }]
-    // if (body.cancelAtPeriodEnd !== undefined) updates.cancel_at_period_end = body.cancelAtPeriodEnd
-    // const sub = await stripe.subscriptions.update(stripeSubId, updates)
-    // Update Firestore record
+    const { adminDb } = await import('@/lib/firebase-admin')
+    const ref = adminDb.collection('subscriptions').doc(subscriptionId)
+    const snap = await ref.get()
+    if (!snap.exists) {
+      return NextResponse.json({ error: 'Subscription not found' }, { status: 404 })
+    }
 
-    return NextResponse.json({
-      id: subscriptionId,
-      ...body,
+    const updates: Record<string, unknown> = {
       updatedAt: new Date().toISOString(),
-    })
+    }
+
+    if (body.plan) {
+      updates.plan = body.plan
+      if (body.plan !== 'free') {
+        return NextResponse.json(
+          { error: 'Paid subscription updates require live billing integration.' },
+          { status: 501 },
+        )
+      }
+      updates.amount = 0
+      updates.currency = 'nzd'
+      updates.status = 'active'
+    }
+
+    if (body.billingInterval) {
+      updates.billingInterval = body.billingInterval
+    }
+
+    if (typeof body.cancelAtPeriodEnd === 'boolean') {
+      updates.cancelAtPeriodEnd = body.cancelAtPeriodEnd
+      if (!body.cancelAtPeriodEnd) {
+        updates.status = 'active'
+        updates.canceledAt = null
+      }
+    }
+
+    await ref.update(updates)
+
+    return NextResponse.json(
+      serializeSubscription(subscriptionId, {
+        ...(snap.data() as Record<string, unknown>),
+        ...updates,
+      }),
+    )
   } catch (error) {
     console.error('PUT /api/subscriptions/[subscriptionId] error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -83,7 +104,7 @@ export async function PUT(
 
 export async function DELETE(
   _req: NextRequest,
-  context: { params: Promise<{ subscriptionId: string }> }
+  context: { params: Promise<{ subscriptionId: string }> },
 ) {
   const params = await context.params
   try {
@@ -93,17 +114,29 @@ export async function DELETE(
       return NextResponse.json({ error: 'Missing subscription id' }, { status: 400 })
     }
 
-    // In production:
-    // const stripe = getStripe()
-    // await stripe.subscriptions.update(stripeSubId, { cancel_at_period_end: true })
-    // Update Firestore: { cancelAtPeriodEnd: true, status: 'canceled' }
+    const { adminDb } = await import('@/lib/firebase-admin')
+    const ref = adminDb.collection('subscriptions').doc(subscriptionId)
+    const snap = await ref.get()
+    if (!snap.exists) {
+      return NextResponse.json({ error: 'Subscription not found' }, { status: 404 })
+    }
 
-    return NextResponse.json({
-      id: subscriptionId,
+    const canceledAt = new Date().toISOString()
+    const updates = {
       status: 'canceled',
       cancelAtPeriodEnd: true,
-      updatedAt: new Date().toISOString(),
-    })
+      canceledAt,
+      updatedAt: canceledAt,
+    }
+
+    await ref.update(updates)
+
+    return NextResponse.json(
+      serializeSubscription(subscriptionId, {
+        ...(snap.data() as Record<string, unknown>),
+        ...updates,
+      }),
+    )
   } catch (error) {
     console.error('DELETE /api/subscriptions/[subscriptionId] error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
