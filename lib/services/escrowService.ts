@@ -21,6 +21,7 @@ import type {
   EscrowPayment,
   EscrowStatus,
   JobPostingPayment,
+  Job,
   WorkerEarningsSummary,
   EscrowEarningsTransaction,
   CommissionTier,
@@ -29,6 +30,22 @@ import { COMMISSION_TIERS as TIERS, JOB_POSTING_FEES } from '@/types'
 
 const ESCROW_COL = 'escrowPayments'
 const JOB_POSTING_COL = 'jobPostingPayments'
+
+export type EscrowWorkflowStage =
+  | 'posted'
+  | 'accepted'
+  | 'deposit_secure'
+  | 'job_in_progress'
+  | 'sign_off_pending'
+  | 'completed'
+  | 'funds_released'
+
+export interface EscrowWorkflowMilestone {
+  key: 'deposit_secure' | 'job_in_progress' | 'sign_off_pending'
+  label: 'Deposit Secure' | 'Job In Progress' | 'Sign-Off Pending'
+  status: 'pending' | 'completed'
+  completedAt?: string
+}
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -61,6 +78,62 @@ function toJobPosting(id: string, data: Record<string, unknown>): JobPostingPaym
     updatedAt: toISO(data.updatedAt as Timestamp | string | undefined),
     completedAt: data.completedAt ? toISO(data.completedAt as Timestamp | string | undefined) : undefined,
   } as JobPostingPayment
+}
+
+export function getCurrencyDisplay(currency: string | undefined): {
+  code: 'nzd' | 'aud'
+  label: 'NZ$' | 'A$'
+} {
+  const code = currency === 'aud' ? 'aud' : 'nzd'
+  return {
+    code,
+    label: code === 'aud' ? 'A$' : 'NZ$',
+  }
+}
+
+export function buildEscrowWorkflowMilestones(
+  job: Partial<Job> | null | undefined,
+  escrow: Partial<EscrowPayment> | null | undefined
+): EscrowWorkflowMilestone[] {
+  if (!job && !escrow) {
+    return [
+      { key: 'deposit_secure', label: 'Deposit Secure', status: 'pending' },
+      { key: 'job_in_progress', label: 'Job In Progress', status: 'pending' },
+      { key: 'sign_off_pending', label: 'Sign-Off Pending', status: 'pending' },
+    ]
+  }
+
+  const DEPOSIT_SECURE_REACHED_STATUSES: ReadonlyArray<EscrowStatus> = ['held', 'in_escrow', 'released']
+  const JOB_IN_PROGRESS_REACHED_STATUSES: ReadonlyArray<NonNullable<Job['status']>> = ['in_progress', 'completed']
+
+  const escrowStatus = escrow?.status
+  const jobStatus = job?.status
+  const completionRequestedAt = job?.completionRequestedAt
+
+  const depositComplete = Boolean(escrowStatus && DEPOSIT_SECURE_REACHED_STATUSES.includes(escrowStatus))
+  const inProgressComplete = Boolean(jobStatus && JOB_IN_PROGRESS_REACHED_STATUSES.includes(jobStatus))
+  const signOffPendingComplete = Boolean(completionRequestedAt)
+
+  return [
+    {
+      key: 'deposit_secure',
+      label: 'Deposit Secure',
+      status: depositComplete ? 'completed' : 'pending',
+      ...(depositComplete ? { completedAt: escrow?.updatedAt } : {}),
+    },
+    {
+      key: 'job_in_progress',
+      label: 'Job In Progress',
+      status: inProgressComplete ? 'completed' : 'pending',
+      ...(inProgressComplete ? { completedAt: job?.updatedAt } : {}),
+    },
+    {
+      key: 'sign_off_pending',
+      label: 'Sign-Off Pending',
+      status: signOffPendingComplete ? 'completed' : 'pending',
+      ...(signOffPendingComplete ? { completedAt: completionRequestedAt ?? job?.completedAt } : {}),
+    },
+  ]
 }
 
 // ─── Commission Calculation ──────────────────────────────────────────────────

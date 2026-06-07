@@ -9,7 +9,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { getStripe, isStripeConfigured, toCents } from '@/lib/stripe'
-import { getEscrowById, updateEscrowStatus } from '@/lib/services/escrowService'
+import { getCurrencyDisplay, getEscrowById, updateEscrowStatus } from '@/lib/services/escrowService'
 import { adminDb } from '@/lib/firebase-admin'
 import { sendNotification } from '@/lib/notificationService'
 import { sendPaymentReleasedEmail } from '@/lib/email/transactional'
@@ -61,6 +61,7 @@ export async function POST(request: NextRequest) {
     }
 
     const releasedAt = new Date().toISOString()
+    const { code: currencyCode, label: currencyLabel } = getCurrencyDisplay(escrow.currency)
     let stripeTransferId: string | undefined
 
     if (isStripeConfigured() && escrow.stripePaymentIntentId && !escrow.stripePaymentIntentId.startsWith('pi_mock_')) {
@@ -80,13 +81,15 @@ export async function POST(request: NextRequest) {
       if (workerStripeAccountId) {
         const transfer = await stripe.transfers.create({
           amount: toCents(escrow.workerAmount),
-          currency: 'nzd',
+          currency: currencyCode,
           destination: workerStripeAccountId,
           transfer_group: escrow.jobId,
           metadata: {
             escrowId,
             jobId: escrow.jobId,
             workerId: escrow.workerId,
+            releasedBy,
+            releaseTrigger: 'homeowner_signoff',
           },
         })
         stripeTransferId = transfer.id
@@ -97,6 +100,9 @@ export async function POST(request: NextRequest) {
     await updateEscrowStatus(escrowId, 'released', {
       releasedAt,
       stripeTransferId,
+      releasedBy,
+      releaseAuthorizedAt: releasedAt,
+      releaseTrigger: 'homeowner_signoff',
     })
 
     // Update job status in Firestore
@@ -104,6 +110,7 @@ export async function POST(request: NextRequest) {
       await adminDb.collection('jobs').doc(escrow.jobId).update({
         escrowStatus: 'released',
         status: 'completed',
+        workflowStage: 'funds_released',
         completedAt: releasedAt,
         updatedAt: releasedAt,
       })
@@ -114,7 +121,7 @@ export async function POST(request: NextRequest) {
       userId: escrow.workerId,
       type: 'payment_received',
       title: 'Payment Released! 🎉',
-      message: `You've received NZ$${escrow.workerAmount.toFixed(2)} for job #${escrow.jobId}. QuickTrade fee (${(escrow.commissionRate * 100).toFixed(0)}%): NZ$${escrow.commissionAmount.toFixed(2)}.`,
+      message: `You've received ${currencyLabel}${escrow.workerAmount.toFixed(2)} for job #${escrow.jobId}. QuickTrade fee (${(escrow.commissionRate * 100).toFixed(0)}%): ${currencyLabel}${escrow.commissionAmount.toFixed(2)}.`,
       metadata: {
         escrowId,
         jobId: escrow.jobId,

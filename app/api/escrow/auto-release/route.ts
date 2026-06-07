@@ -87,6 +87,8 @@ export async function POST(request: NextRequest) {
             await escrowDoc.ref.update({
               status: 'released',
               releasedAt,
+              releaseTrigger: 'auto_release',
+              releaseAuthorizedAt: releasedAt,
               autoReleased: true,
               updatedAt: releasedAt,
             })
@@ -96,6 +98,7 @@ export async function POST(request: NextRequest) {
         // Mark the job as escrow-released
         await adminDb.collection('jobs').doc(jobId).update({
           escrowStatus: 'released',
+          workflowStage: 'funds_released',
           autoReleasedAt: releasedAt,
           updatedAt: releasedAt,
         })

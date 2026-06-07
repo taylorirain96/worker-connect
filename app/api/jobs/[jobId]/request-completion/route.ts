@@ -82,6 +82,7 @@ export async function POST(request: NextRequest, props: { params: Promise<{ jobI
       completionRequestedAt: requestedAt,
       completionRequestedBy: requestedBy,
       adminNotifyAfter,
+      workflowStage: 'sign_off_pending',
       updatedAt: requestedAt,
     })
 

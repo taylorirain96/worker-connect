@@ -68,6 +68,7 @@ export async function POST(request: NextRequest) {
         await adminDb.collection('jobs').doc(jobId).update({
           escrowId,
           escrowStatus: 'held',
+          workflowStage: 'deposit_secure',
           updatedAt: new Date().toISOString(),
         })
         await adminDb.collection('quotes').doc(quoteId).update({
@@ -129,6 +130,7 @@ export async function POST(request: NextRequest) {
       await adminDb.collection('jobs').doc(jobId).update({
         escrowId,
         escrowStatus: 'pending',
+        workflowStage: 'accepted',
         updatedAt: new Date().toISOString(),
       })
       await adminDb.collection('quotes').doc(quoteId).update({

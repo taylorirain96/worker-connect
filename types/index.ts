@@ -197,9 +197,17 @@ export interface Job {
   /** ID of the current escrow payment record */
   escrowId?: string
   /** Current escrow status */
-  escrowStatus?: 'pending' | 'held' | 'released' | 'disputed' | 'refunded'
+  escrowStatus?: 'pending' | 'pending_deposit' | 'held' | 'in_escrow' | 'released' | 'disputed' | 'refunded'
+  /** Workflow stage for escrow-backed jobs */
+  workflowStage?: 'posted' | 'accepted' | 'deposit_secure' | 'job_in_progress' | 'sign_off_pending' | 'completed' | 'funds_released'
   /** ISO timestamp when the job was marked as completed */
   completedAt?: string
+  /** ISO timestamp when the worker asked the homeowner to sign off completion */
+  completionRequestedAt?: string
+  /** UID of the worker who requested completion sign-off */
+  completionRequestedBy?: string
+  /** ISO timestamp after which admin can be alerted for no homeowner response */
+  adminNotifyAfter?: string
   /** ISO deadline (completedAt + 24h) within which the worker may dispute completion */
   workerDisputeDeadline?: string
   /** Country the job is located in */
@@ -1989,6 +1997,12 @@ export interface EscrowPayment {
   workerAmount: number
   /** Stripe Connect transfer ID after release */
   stripeTransferId?: string
+  /** UID that authorized release (typically homeowner sign-off) */
+  releasedBy?: string
+  /** ISO timestamp release was explicitly authorized */
+  releaseAuthorizedAt?: string
+  /** Source of release authorization */
+  releaseTrigger?: 'homeowner_signoff' | 'admin_release' | 'auto_release'
   /** Reason for dispute */
   disputeReason?: string
   createdAt: string

@@ -90,6 +90,11 @@ export async function POST(req: NextRequest, props: { params: Promise<{ jobId: s
       .collection('progressUpdates')
       .add(data)
 
+    await adminDb.collection('jobs').doc(jobId).update({
+      workflowStage: 'job_in_progress',
+      updatedAt: now,
+    })
+
     // Notify the employer
     await sendNotification({
       userId: job.employerId as string,
