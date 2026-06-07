@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     const result = await initializeStripeConnect(
       resolvedWorkerId,
       email,
-      country ?? 'US'
+      country ?? 'NZ'
     )
 
     console.info(`[stripe-connect] initialized for worker=${resolvedWorkerId} account=${result.accountId}`)

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
+import { z } from 'zod'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import OnboardingStep from '@/components/onboarding/OnboardingStep'
@@ -9,9 +10,20 @@ import OnboardingProgress from '@/components/onboarding/OnboardingProgress'
 import StripeConnectButton from '@/components/onboarding/StripeConnectButton'
 import VerificationUpload from '@/components/onboarding/VerificationUpload'
 import ProfilePhotoUpload from '@/components/onboarding/ProfilePhotoUpload'
+import LocationSelector from '@/components/global/LocationSelector'
 import Button from '@/components/ui/Button'
 import { CheckCircle, Sparkles } from 'lucide-react'
-import type { OnboardingChecklistItem } from '@/types'
+import {
+  formatLocalizedMobile,
+  getMobilePlaceholder,
+  isValidRegion,
+  normalizeLocalizedMobile,
+} from '@/lib/locationOptions'
+import {
+  localizedProfileFields,
+  toLocalizedProfileMetadata,
+} from '@/lib/validation/localizedProfile'
+import type { Country, OnboardingChecklistItem } from '@/types'
 import { useAuth } from '@/components/providers/AuthProvider'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 
@@ -31,19 +43,45 @@ type StepId = typeof STEPS[number]['id']
 interface FormData {
   name: string
   bio: string
+  country: Country
   phone: string
-  location: string
+  region: string
+  city: string
   skills: string
   hourlyRate: string
   profilePhoto: string
   verificationId: string
 }
 
+const onboardingProfileSchema = z.object({
+  name: z.string().trim().min(2, 'Full name must be at least 2 characters'),
+  bio: z.string().trim().min(20, 'Bio must be at least 20 characters'),
+  ...localizedProfileFields,
+}).superRefine((data, ctx) => {
+  if (!isValidRegion(data.country, data.region)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['region'],
+      message: data.country === 'AU' ? 'Please select a valid state or territory' : 'Please select a valid region',
+    })
+  }
+
+  if (!normalizeLocalizedMobile(data.phone, data.country)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['phone'],
+      message: data.country === 'AU'
+        ? 'Enter a valid Australian mobile number starting with +61 or 04'
+        : 'Enter a valid New Zealand mobile number starting with +64 or 02',
+    })
+  }
+})
+
 // ─── Inner component (uses useSearchParams) ──────────────────────────────────
 function OnboardingContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const { user, loading: authLoading } = useAuth()
+  const { user, profile, loading: authLoading } = useAuth()
 
   // Use authenticated user UID, falling back to query param only for admin pre-fills
   const workerId = user?.uid ?? searchParams.get('workerId')
@@ -64,15 +102,35 @@ function OnboardingContent() {
   const [form, setForm] = useState<FormData>({
     name: '',
     bio: '',
+    country: 'NZ',
     phone: '',
-    location: '',
+    region: '',
+    city: '',
     skills: '',
     hourlyRate: '',
     profilePhoto: '',
     verificationId: '',
   })
+  const [formErrors, setFormErrors] = useState<Partial<Record<keyof FormData, string>>>({})
 
   const currentStep = STEPS[currentStepIndex]
+
+  useEffect(() => {
+    if (!profile) return
+
+    setForm((prev) => ({
+      ...prev,
+      name: prev.name || profile.displayName || '',
+      bio: prev.bio || profile.bio || '',
+      country: profile.country ?? prev.country,
+      phone: prev.phone || (profile.phone ? formatLocalizedMobile(profile.phone, profile.country ?? 'NZ') : ''),
+      region: prev.region || profile.region || '',
+      city: prev.city || profile.city || '',
+      skills: prev.skills || (profile.skills?.join(', ') ?? ''),
+      hourlyRate: prev.hourlyRate || (profile.hourlyRate ? String(profile.hourlyRate) : ''),
+      profilePhoto: prev.profilePhoto || profile.photoURL || '',
+    }))
+  }, [profile])
 
   // Load progress & checklist on mount
   useEffect(() => {
@@ -131,11 +189,29 @@ function OnboardingContent() {
       const step = currentStep.id
 
       if (step === 'profile_info') {
+        const parsed = onboardingProfileSchema.safeParse(form)
+        if (!parsed.success) {
+          const nextErrors: Partial<Record<keyof FormData, string>> = {}
+          for (const issue of parsed.error.issues) {
+            const field = issue.path[0] as keyof FormData | undefined
+            if (field && !nextErrors[field]) {
+              nextErrors[field] = issue.message
+            }
+          }
+          setFormErrors(nextErrors)
+          return
+        }
+
+        setFormErrors({})
+        const profileMetadata = toLocalizedProfileMetadata(parsed.data)
         await saveStep('profile_info', {
-          name: form.name || undefined,
-          bio: form.bio || undefined,
-          phone: form.phone || undefined,
-          location: form.location || undefined,
+          name: parsed.data.name.trim(),
+          bio: parsed.data.bio.trim(),
+          phone: profileMetadata.phone,
+          location: profileMetadata.location,
+          country: profileMetadata.country,
+          region: profileMetadata.region,
+          city: profileMetadata.city,
         })
       } else if (step === 'skills') {
         const skillsArray = form.skills.split(',').map((s) => s.trim()).filter(Boolean)
@@ -164,9 +240,32 @@ function OnboardingContent() {
     setCurrentStepIndex((i) => Math.max(0, i - 1))
   }
 
-  function update(field: keyof FormData) {
-    return (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-      setForm((prev) => ({ ...prev, [field]: e.target.value }))
+  function clearFieldError(field: keyof FormData) {
+    setFormErrors((prev) => {
+      if (!prev[field]) return prev
+      const next = { ...prev }
+      delete next[field]
+      return next
+    })
+  }
+
+  function updateTextField(field: keyof FormData) {
+    return (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      clearFieldError(field)
+      setForm((prev) => ({ ...prev, [field]: event.target.value }))
+    }
+  }
+
+  function handleCountryChange(country: Country) {
+    clearFieldError('country')
+    clearFieldError('region')
+    clearFieldError('phone')
+    setForm((prev) => ({
+      ...prev,
+      country,
+      region: '',
+      phone: prev.phone ? formatLocalizedMobile(prev.phone, country) : '',
+    }))
   }
 
   // ─── Success screen ────────────────────────────────────────────────────────
@@ -237,6 +336,7 @@ function OnboardingContent() {
             <StripeConnectButton
               workerId={workerId!}
               email={user?.email ?? ''}
+              country={form.country}
               onSuccess={() => setCurrentStepIndex((i) => i + 1)}
             />
           </div>
@@ -306,10 +406,11 @@ function OnboardingContent() {
                 id="name"
                 type="text"
                 value={form.name}
-                onChange={update('name')}
+                onChange={updateTextField('name')}
                 placeholder="e.g., Sam Wilson"
                 className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
               />
+              {formErrors.name && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{formErrors.name}</p>}
             </div>
             <div>
               <label
@@ -321,45 +422,56 @@ function OnboardingContent() {
               <textarea
                 id="bio"
                 value={form.bio}
-                onChange={update('bio')}
+                onChange={updateTextField('bio')}
                 rows={3}
                 placeholder="Tell clients about your experience and expertise…"
                 className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
               />
+              {formErrors.bio && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{formErrors.bio}</p>}
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label
-                  htmlFor="phone"
-                  className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >
-                  Phone
-                </label>
-                <input
-                  id="phone"
-                  type="tel"
-                  value={form.phone}
-                  onChange={update('phone')}
-                  placeholder="+64 21 000 0000"
-                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="location"
-                  className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >
-                  Location
-                </label>
-                <input
-                  id="location"
-                  type="text"
-                  value={form.location}
-                  onChange={update('location')}
-                  placeholder="e.g., Blenheim, Marlborough"
-                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                />
-              </div>
+            <LocationSelector
+              country={form.country}
+              region={form.region}
+              city={form.city}
+              onCountryChange={handleCountryChange}
+              onRegionChange={(region) => {
+                clearFieldError('region')
+                setForm((prev) => ({ ...prev, region }))
+              }}
+              onCityChange={(city) => {
+                clearFieldError('city')
+                setForm((prev) => ({ ...prev, city }))
+              }}
+              errors={{
+                country: formErrors.country,
+                region: formErrors.region,
+                city: formErrors.city,
+              }}
+            />
+            <div>
+              <label
+                htmlFor="phone"
+                className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Mobile number
+              </label>
+              <input
+                id="phone"
+                type="tel"
+                inputMode="tel"
+                value={form.phone}
+                onChange={(event) => {
+                  clearFieldError('phone')
+                  setForm((prev) => ({ ...prev, phone: event.target.value }))
+                }}
+                onBlur={(event) => setForm((prev) => ({ ...prev, phone: formatLocalizedMobile(event.target.value, prev.country) }))}
+                placeholder={getMobilePlaceholder(form.country)}
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+              />
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                {form.country === 'AU' ? 'Use +61 or 04 for Australian mobiles.' : 'Use +64 or 02 for New Zealand mobiles.'}
+              </p>
+              {formErrors.phone && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{formErrors.phone}</p>}
             </div>
           </div>
         )
@@ -378,7 +490,7 @@ function OnboardingContent() {
                 id="skills"
                 type="text"
                 value={form.skills}
-                onChange={update('skills')}
+                onChange={updateTextField('skills')}
                 placeholder="Plumbing, Electrical, HVAC"
                 className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
               />
@@ -388,7 +500,7 @@ function OnboardingContent() {
                 htmlFor="hourlyRate"
                 className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
-                Hourly Rate (NZD)
+                Hourly Rate ({form.country === 'AU' ? 'AUD' : 'NZD'})
               </label>
               <input
                 id="hourlyRate"
@@ -396,7 +508,7 @@ function OnboardingContent() {
                 min="0"
                 step="5"
                 value={form.hourlyRate}
-                onChange={update('hourlyRate')}
+                onChange={updateTextField('hourlyRate')}
                 placeholder="65"
                 className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
               />
