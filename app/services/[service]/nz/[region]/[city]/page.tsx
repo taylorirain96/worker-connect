@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import Script from 'next/script'
-import Navbar from '@/components/layout/Navbar'
+import MarketingNavbar from '@/components/layout/MarketingNavbar'
 import Footer from '@/components/layout/Footer'
+import JsonLdScript from '@/components/seo/JsonLdScript'
 import {
   SERVICES,
   LOCATIONS,
@@ -164,33 +164,17 @@ export default async function ServiceCityPage({ params }: Props) {
 
   return (
     <div className="flex flex-col min-h-screen luxury-bg">
-      <Script
-        id="jsonld-service"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceJsonLd) }}
-      />
-      <Script
-        id="jsonld-breadcrumb"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
-      />
+      <JsonLdScript id="jsonld-service" data={serviceJsonLd} />
+      <JsonLdScript id="jsonld-breadcrumb" data={breadcrumbJsonLd} />
       {aggregateRatingJsonLd && (
-        <Script
-          id="jsonld-aggregate-rating"
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(aggregateRatingJsonLd) }}
-        />
+        <JsonLdScript id="jsonld-aggregate-rating" data={aggregateRatingJsonLd} />
       )}
       {faqJsonLd && (
-        <Script
-          id="jsonld-faq"
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
-        />
+        <JsonLdScript id="jsonld-faq" data={faqJsonLd} />
       )}
 
 
-      <Navbar />
+      <MarketingNavbar />
 
       <main className="flex-1">
         {/* Hero */}
