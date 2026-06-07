@@ -57,4 +57,5 @@ const sentryBuildOptions = {
   tunnelRoute: '/monitoring',
 }
 
+// Force fresh Vercel build – 2026-06-07
 module.exports = withSentryConfig(withMDX(nextConfig), sentryBuildOptions)
