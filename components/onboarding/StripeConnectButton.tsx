@@ -16,7 +16,7 @@ interface StripeConnectButtonProps {
 export default function StripeConnectButton({
   workerId,
   email,
-  country = 'US',
+  country = 'NZ',
   onSuccess,
   className,
 }: StripeConnectButtonProps) {

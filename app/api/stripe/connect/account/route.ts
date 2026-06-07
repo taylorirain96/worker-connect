@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     const stripe = new Stripe(stripeSecretKey)
     const account = await stripe.accounts.create({
       type: 'express',
-      country: body.country ?? 'US',
+      country: body.country ?? 'NZ',
       email: body.email,
       capabilities: {
         card_payments: { requested: true },

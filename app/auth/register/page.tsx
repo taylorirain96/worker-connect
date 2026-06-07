@@ -9,8 +9,19 @@ import toast from 'react-hot-toast'
 import { Mail, Lock, User, Eye, EyeOff } from 'lucide-react'
 import { Suspense } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
+import LocationSelector from '@/components/global/LocationSelector'
 import { getDashboardPath } from '@/lib/auth/redirects'
 import { trackEvent } from '@/lib/analytics'
+import {
+  formatLocalizedMobile,
+  getMobilePlaceholder,
+  isValidRegion,
+  normalizeLocalizedMobile,
+} from '@/lib/locationOptions'
+import {
+  localizedProfileFields,
+  toLocalizedProfileMetadata,
+} from '@/lib/validation/localizedProfile'
 
 const registerSchema = z
   .object({
@@ -19,6 +30,26 @@ const registerSchema = z
     password: z.string().min(8, 'Password must be at least 8 characters'),
     confirmPassword: z.string(),
     role: z.enum(['worker', 'employer', 'homeowner', 'jobseeker']),
+    ...localizedProfileFields,
+  })
+  .superRefine((data, ctx) => {
+    if (!isValidRegion(data.country, data.region)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['region'],
+        message: data.country === 'AU' ? 'Please select a valid state or territory' : 'Please select a valid region',
+      })
+    }
+
+    if (!normalizeLocalizedMobile(data.phone, data.country)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['phone'],
+        message: data.country === 'AU'
+          ? 'Enter a valid Australian mobile number starting with +61 or 04'
+          : 'Enter a valid New Zealand mobile number starting with +64 or 02',
+      })
+    }
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Passwords do not match',
@@ -49,15 +80,33 @@ function RegisterForm() {
     handleSubmit,
     watch,
     setValue,
+    getValues,
+    trigger,
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { role: defaultRole },
+    defaultValues: { role: defaultRole, country: 'NZ' },
   })
 
   const selectedRole = watch('role')
+  const selectedCountry = watch('country')
+  const selectedPhone = watch('phone')
+  const selectedRegion = watch('region')
+  const selectedCity = watch('city')
 
-  const createUserProfile = async (uid: string, email: string | null, displayName: string, role: 'worker' | 'employer' | 'homeowner' | 'jobseeker', phone?: string) => {
+  useEffect(() => {
+    if (selectedRegion && !isValidRegion(selectedCountry, selectedRegion)) {
+      setValue('region', '', { shouldValidate: true })
+    }
+  }, [selectedCountry, selectedRegion, setValue])
+
+  const createUserProfile = async (
+    uid: string,
+    email: string | null,
+    displayName: string,
+    role: 'worker' | 'employer' | 'homeowner' | 'jobseeker',
+    metadata: ReturnType<typeof toLocalizedProfileMetadata>
+  ) => {
     const { doc, setDoc, serverTimestamp } = await import('firebase/firestore')
     const { db } = await import('@/lib/firebase')
     if (!db) {
@@ -77,7 +126,11 @@ function RegisterForm() {
         updatedAt: now,
         profileComplete: true,
         verified: false,
-        ...(phone ? { phone } : {}),
+        country: metadata.country,
+        phone: metadata.phone,
+        region: metadata.region,
+        city: metadata.city,
+        location: metadata.location,
       })
       return
     }
@@ -95,10 +148,13 @@ function RegisterForm() {
         verified: false,
         skills: [],
         bio: '',
-        location: '',
+        location: metadata.location,
+        country: metadata.country,
+        phone: metadata.phone,
+        region: metadata.region,
+        city: metadata.city,
         availabilityStatus: 'available',
         desiredWorkType: [],
-        ...(phone ? { phone } : {}),
       })
       return
     }
@@ -112,13 +168,17 @@ function RegisterForm() {
       updatedAt: now,
       profileComplete: false,
       verified: false,
+      country: metadata.country,
+      phone: metadata.phone,
+      region: metadata.region,
+      city: metadata.city,
+      location: metadata.location,
     }
     const workerFields = role === 'worker'
       ? {
           availability: 'available' as const,
           skills: [],
           bio: '',
-          location: '',
           rating: 0,
           reviewCount: 0,
           completedJobs: 0,
@@ -151,9 +211,10 @@ function RegisterForm() {
         toast.error('Authentication service not available. Please configure Firebase.')
         return
       }
+      const profileMetadata = toLocalizedProfileMetadata(data)
       const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password)
       await updateProfile(userCredential.user, { displayName: data.displayName })
-      await createUserProfile(userCredential.user.uid, data.email, data.displayName, data.role)
+      await createUserProfile(userCredential.user.uid, data.email, data.displayName, data.role, profileMetadata)
       // Record referral if user arrived via a referral link (non-blocking)
       attributeReferral(userCredential.user.uid, data.email, data.displayName)
       // Fire welcome email (non-blocking)
@@ -184,6 +245,18 @@ function RegisterForm() {
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true)
     try {
+      const isValid = await trigger(['country', 'phone', 'region', 'city'])
+      if (!isValid) {
+        toast.error('Enter your country, mobile number, and location before continuing with Google.')
+        return
+      }
+
+      const profileMetadata = toLocalizedProfileMetadata({
+        country: getValues('country'),
+        phone: getValues('phone'),
+        region: getValues('region'),
+        city: getValues('city'),
+      })
       const { signInWithPopup, GoogleAuthProvider } = await import('firebase/auth')
       const { auth } = await import('@/lib/firebase')
       if (!auth) {
@@ -197,7 +270,8 @@ function RegisterForm() {
         user.uid,
         user.email,
         user.displayName || 'User',
-        selectedRole
+        selectedRole,
+        profileMetadata
       )
       // Record referral if user arrived via a referral link (non-blocking)
       attributeReferral(user.uid, user.email ?? '', user.displayName || 'User')
@@ -357,6 +431,40 @@ function RegisterForm() {
                 />
               </div>
               {errors.email && <p className="mt-1 text-sm text-red-400">{errors.email.message}</p>}
+            </div>
+
+            <LocationSelector
+              country={selectedCountry}
+              region={selectedRegion || ''}
+              city={selectedCity || ''}
+              onCountryChange={(country) => setValue('country', country, { shouldValidate: true })}
+              onRegionChange={(region) => setValue('region', region, { shouldValidate: true })}
+              onCityChange={(city) => setValue('city', city, { shouldValidate: true })}
+              errors={{
+                country: errors.country?.message,
+                region: errors.region?.message,
+                city: errors.city?.message,
+              }}
+            />
+
+            <div>
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-300 mb-1">
+                Mobile number
+              </label>
+              <input
+                id="phone"
+                type="tel"
+                inputMode="tel"
+                value={selectedPhone || ''}
+                onChange={(event) => setValue('phone', event.target.value, { shouldValidate: true })}
+                onBlur={(event) => setValue('phone', formatLocalizedMobile(event.target.value, selectedCountry), { shouldValidate: true })}
+                placeholder={getMobilePlaceholder(selectedCountry)}
+                className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 text-white placeholder:text-gray-500 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                {selectedCountry === 'AU' ? 'Australian mobiles use +61 or 04.' : 'New Zealand mobiles use +64 or 02.'}
+              </p>
+              {errors.phone && <p className="mt-1 text-sm text-red-400">{errors.phone.message}</p>}
             </div>
 
             <div>

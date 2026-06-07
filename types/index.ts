@@ -12,6 +12,8 @@ export interface UserProfile {
   bio?: string
   location?: string
   phone?: string
+  region?: string
+  city?: string
   website?: string
   skills?: string[]
   hourlyRate?: number
