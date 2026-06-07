@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
   if (rateLimit(req, { max: 20, windowMs: 60_000 })) {
     return NextResponse.json(
       { error: 'Too many requests. Please wait a moment before trying again.' },
-      { status: 429 }
+      { status: 429 },
     )
   }
 
@@ -23,60 +23,30 @@ export async function POST(req: NextRequest) {
       paymentMethodId?: string
     }
 
-    const { userId, plan, billingInterval = 'month', paymentMethodId } = body
+    const { userId, plan, billingInterval = 'month' } = body
 
     if (!userId || !plan) {
       return NextResponse.json({ error: 'Missing required fields: userId, plan' }, { status: 400 })
     }
 
-    const validPlans: SubscriptionPlan[] = ['free', 'pro', 'enterprise']
-    if (!validPlans.includes(plan)) {
-      return NextResponse.json({ error: 'Invalid plan' }, { status: 400 })
+    if (plan !== 'free') {
+      return NextResponse.json(
+        { error: 'Paid subscription checkout is not wired yet. Mock subscriptions have been removed.' },
+        { status: 501 },
+      )
     }
 
-    const stripeSecretKey = process.env.STRIPE_SECRET_KEY
-    if (!stripeSecretKey && plan !== 'free') {
-      return NextResponse.json({ error: 'Stripe not configured' }, { status: 500 })
-    }
-
-    // In production:
-    // const stripe = getStripe()
-    // 1. Create or retrieve Stripe customer for userId
-    // 2. Attach paymentMethodId to customer
-    // 3. Create Stripe subscription with the correct price ID
-    // 4. Persist subscription record in Firestore
-    void paymentMethodId
-
-    const PLAN_AMOUNTS: Record<SubscriptionPlan, Record<string, number>> = {
-      free: { month: 0, year: 0 },
-      pro: { month: 29, year: 26 },
-      enterprise: { month: 99, year: 89 },
-    }
-
-    const amount = PLAN_AMOUNTS[plan][billingInterval] ?? 0
-    const now = new Date()
-    const periodEnd = new Date(
-      now.getTime() + (billingInterval === 'year' ? 365 : 30) * 86400000
-    )
-
-    return NextResponse.json(
-      {
-        id: `sub_${Date.now()}`,
-        userId,
-        plan,
-        status: 'active',
-        billingInterval,
-        amount,
-        currency: 'usd',
-        stripeSubscriptionId: `sub_stripe_mock_${Date.now()}`,
-        currentPeriodStart: now.toISOString(),
-        currentPeriodEnd: periodEnd.toISOString(),
-        cancelAtPeriodEnd: false,
-        createdAt: now.toISOString(),
-        updatedAt: now.toISOString(),
+    const forward = await fetch(new URL('/api/subscriptions', req.url), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
-      { status: 201 }
-    )
+      body: JSON.stringify({ userId, plan, billingInterval }),
+      cache: 'no-store',
+    })
+
+    const payload = await forward.json()
+    return NextResponse.json(payload, { status: forward.status })
   } catch (error) {
     console.error('POST /api/subscriptions/create error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

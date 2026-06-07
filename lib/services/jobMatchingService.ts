@@ -294,119 +294,6 @@ export function calculateMatchScore(
   return { score: Math.min(100, total), reasons }
 }
 
-// ─── Mock data for fallback ───────────────────────────────────────────────────
-
-export const MOCK_JOBS: JobWithCoordinates[] = [
-  {
-    id: 'mock_job_1',
-    title: 'Bathroom Plumbing Repair',
-    description: 'Fix leaking pipes and replace bathroom fixtures in a 3-bedroom home.',
-    category: 'plumbing',
-    employerId: 'emp_001',
-    employerName: 'HomeOwner John',
-    location: 'Austin, TX',
-    budget: 450,
-    budgetType: 'fixed',
-    urgency: 'high',
-    status: 'open',
-    skills: ['plumbing', 'pipe fitting'],
-    applicantsCount: 3,
-    createdAt: new Date(Date.now() - 2 * 86400000).toISOString(),
-    updatedAt: new Date(Date.now() - 2 * 86400000).toISOString(),
-    coordinates: [30.2672, -97.7431],
-    remote: false,
-  },
-  {
-    id: 'mock_job_2',
-    title: 'Kitchen Electrical Upgrade',
-    description: 'Upgrade kitchen outlets to GFCI and add new lighting circuit.',
-    category: 'electrical',
-    employerId: 'emp_002',
-    employerName: 'Renovate Co',
-    location: 'Austin, TX',
-    budget: 75,
-    budgetType: 'hourly',
-    urgency: 'medium',
-    status: 'open',
-    skills: ['electrical', 'wiring'],
-    applicantsCount: 5,
-    createdAt: new Date(Date.now() - 5 * 86400000).toISOString(),
-    updatedAt: new Date(Date.now() - 5 * 86400000).toISOString(),
-    coordinates: [30.2799, -97.7392],
-    remote: false,
-  },
-  {
-    id: 'mock_job_3',
-    title: 'Deck Construction',
-    description: 'Build a 12x16 foot wooden deck attached to the back of the house.',
-    category: 'carpentry',
-    employerId: 'emp_003',
-    employerName: 'Backyard Dreams LLC',
-    location: 'San Antonio, TX',
-    budget: 3200,
-    budgetType: 'fixed',
-    urgency: 'low',
-    status: 'open',
-    skills: ['carpentry', 'framing'],
-    applicantsCount: 2,
-    createdAt: new Date(Date.now() - 3 * 86400000).toISOString(),
-    updatedAt: new Date(Date.now() - 3 * 86400000).toISOString(),
-    coordinates: [29.4241, -98.4936],
-    remote: false,
-  },
-  {
-    id: 'mock_job_4',
-    title: 'Remote Home Inspection Consultation',
-    description: 'Virtual consultation for home inspection report review and recommendations.',
-    category: 'general',
-    employerId: 'emp_004',
-    employerName: 'PropTech Solutions',
-    location: 'Remote',
-    budget: 120,
-    budgetType: 'fixed',
-    urgency: 'medium',
-    status: 'open',
-    skills: ['general', 'inspection'],
-    applicantsCount: 8,
-    createdAt: new Date(Date.now() - 1 * 86400000).toISOString(),
-    updatedAt: new Date(Date.now() - 1 * 86400000).toISOString(),
-    remote: true,
-  },
-  {
-    id: 'mock_job_5',
-    title: 'Lawn Care & Landscaping',
-    description: 'Weekly lawn mowing, edging, and seasonal flower bed maintenance.',
-    category: 'landscaping',
-    employerId: 'emp_005',
-    employerName: 'Green Acres HOA',
-    location: 'Austin, TX',
-    budget: 55,
-    budgetType: 'hourly',
-    urgency: 'low',
-    status: 'open',
-    skills: ['landscaping', 'lawn'],
-    applicantsCount: 1,
-    createdAt: new Date(Date.now() - 7 * 86400000).toISOString(),
-    updatedAt: new Date(Date.now() - 7 * 86400000).toISOString(),
-    coordinates: [30.3078, -97.8936],
-    remote: false,
-  },
-]
-
-export const MOCK_WORKER_PROFILE: WorkerMatchProfile = {
-  workerId: 'worker_demo',
-  skills: ['plumbing', 'general', 'electrical'],
-  hourlyRate: 65,
-  reputation: 78,
-  completionRate: 0.91,
-  location: {
-    city: 'Austin',
-    state: 'TX',
-    coordinates: [30.2672, -97.7431],
-  },
-  availability: 'full_time',
-}
-
 // ─── Main matching function ───────────────────────────────────────────────────
 
 export interface MatchFilters {
@@ -446,13 +333,11 @@ export async function matchJobsForWorker(
         }
       }
     } catch {
-      // fall through to mock data
+      return []
     }
   }
 
-  if (!worker) {
-    worker = { ...MOCK_WORKER_PROFILE, workerId }
-  }
+  if (!worker) return []
 
   // Fetch available jobs
   let jobs: JobWithCoordinates[] = []
@@ -475,13 +360,11 @@ export async function matchJobsForWorker(
         } as JobWithCoordinates
       })
     } catch {
-      // fall through to mock data
+      return []
     }
   }
 
-  if (!jobs.length) {
-    jobs = MOCK_JOBS
-  }
+  if (!jobs.length) return []
 
   // Apply optional skill filter
   const workerSkills = filters?.skills ?? worker.skills
@@ -576,9 +459,7 @@ export async function matchWorkersForJob(
     }
   }
 
-  if (!job) {
-    job = MOCK_JOBS[0]
-  }
+  if (!job) return []
 
   // Fetch workers
   let workers: WorkerMatchProfile[] = []
@@ -608,9 +489,7 @@ export async function matchWorkersForJob(
     }
   }
 
-  if (!workers.length) {
-    workers = [MOCK_WORKER_PROFILE]
-  }
+  if (!workers.length) return []
 
   const scored: WorkerWithScore[] = workers.map((w) => {
     const { score, reasons } = calculateMatchScore(w, job!)

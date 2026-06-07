@@ -1,13 +1,22 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { Timestamp } from 'firebase-admin/firestore'
+import { getStripe, confirmPaymentIntent } from '@/lib/stripe'
+import { adminDb } from '@/lib/firebase-admin'
+
+function toIso(value: unknown): string {
+  if (value instanceof Timestamp) return value.toDate().toISOString()
+  if (typeof value === 'string') return value
+  return new Date().toISOString()
+}
 
 /**
  * GET  /api/payments/[paymentId]  — fetch a single payment
- * POST /api/payments/[paymentId]  — confirm / capture the payment
+ * POST /api/payments/[paymentId]  — confirm / refund the payment
  */
 export async function GET(
   _req: NextRequest,
-  context: { params: Promise<{ paymentId: string }> }
+  context: { params: Promise<{ paymentId: string }> },
 ) {
   const params = await context.params
   try {
@@ -17,22 +26,20 @@ export async function GET(
       return NextResponse.json({ error: 'Missing payment id' }, { status: 400 })
     }
 
-    // In production: fetch from Firestore via paymentService.getPayment(paymentId)
-    const mockPayment = {
-      id: paymentId,
-      jobId: 'job_1',
-      jobTitle: 'Plumbing Repair — Kitchen Sink',
-      employerId: 'emp_1',
-      workerId: 'worker_1',
-      amount: 320,
-      currency: 'usd',
-      status: 'completed',
-      stripePaymentIntentId: `pi_${paymentId}`,
-      createdAt: new Date(Date.now() - 8 * 86400000).toISOString(),
-      updatedAt: new Date(Date.now() - 8 * 86400000).toISOString(),
+    const snap = await adminDb.collection('payments').doc(paymentId).get()
+    if (!snap.exists) {
+      return NextResponse.json({ error: 'Payment not found' }, { status: 404 })
     }
 
-    return NextResponse.json({ payment: mockPayment })
+    const data = snap.data() as Record<string, unknown>
+    return NextResponse.json({
+      payment: {
+        id: snap.id,
+        ...data,
+        createdAt: toIso(data.createdAt),
+        updatedAt: toIso(data.updatedAt),
+      },
+    })
   } catch (error) {
     console.error('GET /api/payments/[paymentId] error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -41,44 +48,59 @@ export async function GET(
 
 export async function POST(
   req: NextRequest,
-  context: { params: Promise<{ paymentId: string }> }
+  context: { params: Promise<{ paymentId: string }> },
 ) {
   const params = await context.params
   try {
     const { paymentId } = params
     const body = await req.json() as { action?: string; paymentMethodId?: string }
-    const { action = 'confirm', paymentMethodId: _paymentMethodId } = body
+    const { action = 'confirm', paymentMethodId } = body
 
     if (!paymentId) {
       return NextResponse.json({ error: 'Missing payment id' }, { status: 400 })
     }
 
-    const stripeSecretKey = process.env.STRIPE_SECRET_KEY
-    if (!stripeSecretKey) {
+    if (!process.env.STRIPE_SECRET_KEY) {
       return NextResponse.json({ error: 'Stripe not configured' }, { status: 500 })
     }
 
-    if (action === 'confirm') {
-      // In production:
-      // const { getStripe } = await import('@/lib/payments/stripe')
-      // const stripe = getStripe()
-      // const paymentIntent = await stripe.paymentIntents.confirm(paymentId, {
-      //   payment_method: _paymentMethodId,
-      // })
-      // await updatePaymentStatus(paymentIntent.metadata.paymentId, 'completed')
-      // return NextResponse.json({ status: paymentIntent.status })
+    const ref = adminDb.collection('payments').doc(paymentId)
+    const snap = await ref.get()
+    if (!snap.exists) {
+      return NextResponse.json({ error: 'Payment not found' }, { status: 404 })
+    }
+    const payment = snap.data() as { stripePaymentIntentId?: string }
+    if (!payment.stripePaymentIntentId) {
+      return NextResponse.json({ error: 'Payment is missing stripePaymentIntentId' }, { status: 409 })
+    }
 
-      // _paymentMethodId will be passed to stripe.paymentIntents.confirm() in production
-      return NextResponse.json({ status: 'succeeded', paymentIntentId: paymentId })
+    if (action === 'confirm') {
+      if (!paymentMethodId) {
+        return NextResponse.json({ error: 'paymentMethodId is required' }, { status: 400 })
+      }
+
+      const result = await confirmPaymentIntent(payment.stripePaymentIntentId, paymentMethodId)
+      if (result.status === 'succeeded') {
+        await ref.update({ status: 'completed', updatedAt: new Date().toISOString() })
+      }
+
+      return NextResponse.json({ status: result.status, paymentIntentId: result.paymentIntentId })
     }
 
     if (action === 'refund') {
-      // In production:
-      // const stripe = getStripe()
-      // const refund = await stripe.refunds.create({ payment_intent: paymentId })
-      // await updatePaymentStatus(paymentId, 'refunded')
-
-      return NextResponse.json({ status: 'refunded', paymentIntentId: paymentId })
+      const stripe = getStripe()
+      const refund = await stripe.refunds.create({
+        payment_intent: payment.stripePaymentIntentId,
+      })
+      await ref.update({
+        status: refund.status === 'succeeded' ? 'refunded' : 'failed',
+        updatedAt: new Date().toISOString(),
+      })
+      return NextResponse.json({
+        status: refund.status,
+        paymentIntentId: payment.stripePaymentIntentId,
+        refundId: refund.id,
+      })
     }
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 })

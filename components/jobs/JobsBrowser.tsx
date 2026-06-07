@@ -12,117 +12,6 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import { getJobs } from '@/lib/services/jobService'
 import type { Job } from '@/types'
 
-const MOCK_JOBS: Job[] = [
-  {
-    id: '1',
-    title: 'Fix Leaking Bathroom Pipe',
-    description: 'I have a leaking pipe under the bathroom sink. Water is dripping consistently and needs to be fixed ASAP. The pipe appears to be cracked near the joint.',
-    category: 'plumbing',
-    employerId: 'emp1',
-    employerName: 'John Smith',
-    location: 'Blenheim/Marlborough',
-    budget: 150,
-    budgetType: 'fixed',
-    urgency: 'high',
-    status: 'open',
-    jobType: 'gig',
-    skills: ['Plumbing', 'Pipe Repair', 'Fixture Installation'],
-    applicantsCount: 4,
-    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    title: 'Install New Electrical Panel',
-    description: 'Need to upgrade the electrical panel from 100A to 200A service. Must be licensed electrician. Permit pulling required.',
-    category: 'electrical',
-    employerId: 'emp2',
-    employerName: 'Sarah Johnson',
-    location: 'Nelson',
-    budget: 2500,
-    budgetType: 'fixed',
-    urgency: 'medium',
-    status: 'open',
-    jobType: 'gig',
-    skills: ['Electrical', 'Panel Upgrade', 'Licensed Electrician'],
-    applicantsCount: 7,
-    createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: '3',
-    title: 'HVAC System Maintenance',
-    description: 'Annual HVAC maintenance for a 3-bedroom house. Need tune-up, filter replacement, and system inspection for both heating and cooling units.',
-    category: 'hvac',
-    employerId: 'emp3',
-    employerName: 'Mike Williams',
-    location: 'Wellington',
-    budget: 200,
-    budgetType: 'fixed',
-    urgency: 'low',
-    status: 'open',
-    jobType: 'gig',
-    skills: ['HVAC', 'Air Conditioning', 'Heating Systems'],
-    applicantsCount: 2,
-    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: '4',
-    title: 'Deck Construction - 400 sq ft',
-    description: 'Build a new pressure-treated wood deck off the back of the house. 20x20 feet, with stairs and railing. Permits required.',
-    category: 'carpentry',
-    employerId: 'emp4',
-    employerName: 'Lisa Brown',
-    location: 'Christchurch',
-    budget: 8500,
-    budgetType: 'fixed',
-    urgency: 'low',
-    status: 'open',
-    jobType: 'gig',
-    skills: ['Carpentry', 'Deck Building', 'Framing'],
-    applicantsCount: 12,
-    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: '5',
-    title: 'Emergency Roof Leak Repair',
-    description: 'Water coming in through the roof during rain. Need immediate inspection and patch. Single-story home, asphalt shingles.',
-    category: 'roofing',
-    employerId: 'emp5',
-    employerName: 'David Garcia',
-    location: 'Auckland',
-    budget: 500,
-    budgetType: 'fixed',
-    urgency: 'emergency',
-    status: 'open',
-    jobType: 'gig',
-    skills: ['Roofing', 'Shingle Repair', 'Waterproofing'],
-    applicantsCount: 3,
-    createdAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: '6',
-    title: 'Interior House Painting',
-    description: 'Paint the interior of a 2000 sq ft home - 4 bedrooms, 2 bathrooms, living room, kitchen. Customer will provide paint. Need primer + 2 coats.',
-    category: 'painting',
-    employerId: 'emp6',
-    employerName: 'Amanda Lee',
-    location: 'Hamilton',
-    budget: 65,
-    budgetType: 'hourly',
-    urgency: 'low',
-    status: 'open',
-    jobType: 'gig',
-    skills: ['Painting', 'Interior Painting', 'Primer Application'],
-    applicantsCount: 9,
-    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-]
-
 const EMPTY_FILTERS = {
   search: '',
   category: '',
@@ -169,9 +58,9 @@ function JobsListContent() {
       setLoading(true)
       try {
         const fetched = await getJobs()
-        setJobs(fetched.length > 0 ? fetched : MOCK_JOBS)
+        setJobs(fetched)
       } catch {
-        setJobs(MOCK_JOBS)
+        setJobs([])
       } finally {
         setLoading(false)
       }
@@ -207,7 +96,8 @@ function JobsListContent() {
         return a.budget - b.budget
       case 'urgency':
       default:
-        return urgencyOrder[a.urgency] - urgencyOrder[b.urgency]
+        return urgencyOrder[a.urgency as keyof typeof urgencyOrder]
+          - urgencyOrder[b.urgency as keyof typeof urgencyOrder]
     }
   })
 

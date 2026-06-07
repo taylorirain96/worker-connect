@@ -1,7 +1,51 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import type { SubscriptionPlan } from '@/types/payment'
+import { Timestamp } from 'firebase-admin/firestore'
+import type { Subscription, SubscriptionPlan } from '@/types/payment'
 import { rateLimit } from '@/lib/rateLimit'
+import { adminDb } from '@/lib/firebase-admin'
+
+function toIso(value: unknown): string {
+  if (value instanceof Timestamp) return value.toDate().toISOString()
+  if (typeof value === 'string') return value
+  return new Date().toISOString()
+}
+
+function serializeSubscription(
+  id: string,
+  data: Record<string, unknown>,
+): Subscription {
+  return {
+    id,
+    userId: typeof data.userId === 'string' ? data.userId : '',
+    plan: (data.plan as SubscriptionPlan) ?? 'free',
+    status: (data.status as Subscription['status']) ?? 'active',
+    stripeSubscriptionId:
+      typeof data.stripeSubscriptionId === 'string' ? data.stripeSubscriptionId : undefined,
+    stripeCustomerId:
+      typeof data.stripeCustomerId === 'string' ? data.stripeCustomerId : undefined,
+    currentPeriodStart: toIso(data.currentPeriodStart),
+    currentPeriodEnd: toIso(data.currentPeriodEnd),
+    cancelAtPeriodEnd: Boolean(data.cancelAtPeriodEnd),
+    billingInterval: data.billingInterval === 'year' ? 'year' : 'month',
+    amount: typeof data.amount === 'number' ? data.amount : 0,
+    currency: typeof data.currency === 'string' ? data.currency : 'nzd',
+    createdAt: toIso(data.createdAt),
+    updatedAt: toIso(data.updatedAt),
+    canceledAt: data.canceledAt ? toIso(data.canceledAt) : undefined,
+    trialEnd: data.trialEnd ? toIso(data.trialEnd) : undefined,
+  }
+}
+
+function planAmount(plan: SubscriptionPlan, billingInterval: 'month' | 'year'): number {
+  const amounts: Record<SubscriptionPlan, Record<'month' | 'year', number>> = {
+    free: { month: 0, year: 0 },
+    pro: { month: 49, year: 39 },
+    enterprise: { month: 89, year: 71 },
+  }
+
+  return amounts[plan][billingInterval]
+}
 
 /**
  * GET  /api/subscriptions?userId=xxx  — get user's current subscription
@@ -16,27 +60,25 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Missing userId' }, { status: 400 })
     }
 
-    // In production: fetch from Firestore
-    // const snap = await getDocs(query(collection(db, 'subscriptions'), where('userId', '==', userId), limit(1)))
-    // if (snap.empty) return NextResponse.json({ subscription: null })
-    // return NextResponse.json({ subscription: snap.docs[0].data() })
+    const snapshot = await adminDb
+      .collection('subscriptions')
+      .where('userId', '==', userId)
+      .limit(10)
+      .get()
 
-    const mockSubscription = {
-      id: `sub_mock_${userId}`,
-      userId,
-      plan: 'free' as SubscriptionPlan,
-      status: 'active',
-      billingInterval: 'month',
-      amount: 0,
-      currency: 'nzd',
-      currentPeriodStart: new Date(Date.now() - 15 * 86400000).toISOString(),
-      currentPeriodEnd: new Date(Date.now() + 15 * 86400000).toISOString(),
-      cancelAtPeriodEnd: false,
-      createdAt: new Date(Date.now() - 30 * 86400000).toISOString(),
-      updatedAt: new Date().toISOString(),
+    if (snapshot.empty) {
+      return NextResponse.json({ subscription: null })
     }
 
-    return NextResponse.json({ subscription: mockSubscription })
+    const doc = snapshot.docs
+      .sort((a, b) => {
+        const aUpdated = toIso((a.data() as Record<string, unknown>).updatedAt)
+        const bUpdated = toIso((b.data() as Record<string, unknown>).updatedAt)
+        return bUpdated.localeCompare(aUpdated)
+      })[0]
+    return NextResponse.json({
+      subscription: serializeSubscription(doc.id, doc.data() as Record<string, unknown>),
+    })
   } catch (error) {
     console.error('GET /api/subscriptions error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -47,7 +89,7 @@ export async function POST(req: NextRequest) {
   if (rateLimit(req, { max: 20, windowMs: 60_000 })) {
     return NextResponse.json(
       { error: 'Too many requests. Please wait a moment before trying again.' },
-      { status: 429 }
+      { status: 429 },
     )
   }
 
@@ -59,7 +101,7 @@ export async function POST(req: NextRequest) {
       paymentMethodId?: string
     }
 
-    const { userId, plan, billingInterval = 'month', paymentMethodId } = body
+    const { userId, plan, billingInterval = 'month' } = body
 
     if (!userId || !plan) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -70,52 +112,48 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid plan' }, { status: 400 })
     }
 
-    const stripeSecretKey = process.env.STRIPE_SECRET_KEY
-    if (!stripeSecretKey && plan !== 'free') {
-      return NextResponse.json({ error: 'Stripe not configured' }, { status: 500 })
+    if (plan !== 'free') {
+      return NextResponse.json(
+        { error: 'Paid subscriptions require live billing and cannot be created from placeholder data.' },
+        { status: 501 },
+      )
     }
 
-    // In production:
-    // const stripe = getStripe()
-    // const priceId = PLAN_PRICE_IDS[plan][billingInterval]
-    // const subscription = await stripe.subscriptions.create({
-    //   customer: stripeCustomerId,
-    //   items: [{ price: priceId }],
-    //   default_payment_method: paymentMethodId,
-    //   expand: ['latest_invoice.payment_intent'],
-    // })
-    // Store subscription in Firestore
-
-    // paymentMethodId will be attached to the Stripe customer in production
-    void paymentMethodId
-
-    const PLAN_AMOUNTS: Record<SubscriptionPlan, Record<string, number>> = {
-      free: { month: 0, year: 0 },
-      pro: { month: 49, year: 39 },
-      enterprise: { month: 89, year: 71 },
+    const now = new Date()
+    const payload = {
+      userId,
+      plan,
+      status: 'active',
+      billingInterval,
+      amount: planAmount(plan, billingInterval),
+      currency: 'nzd',
+      currentPeriodStart: now.toISOString(),
+      currentPeriodEnd: now.toISOString(),
+      cancelAtPeriodEnd: false,
+      updatedAt: now.toISOString(),
+      createdAt: now.toISOString(),
     }
 
-    const amount = PLAN_AMOUNTS[plan][billingInterval] ?? 0
+    const existing = await adminDb
+      .collection('subscriptions')
+      .where('userId', '==', userId)
+      .limit(1)
+      .get()
 
-    return NextResponse.json(
-      {
-        id: `sub_mock_${Date.now()}`,
-        userId,
-        plan,
-        status: 'active',
-        billingInterval,
-        amount,
-        currency: 'nzd',
-        currentPeriodStart: new Date().toISOString(),
-        currentPeriodEnd: new Date(
-          Date.now() + (billingInterval === 'year' ? 365 : 30) * 86400000
-        ).toISOString(),
-        cancelAtPeriodEnd: false,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-      { status: 201 }
-    )
+    if (!existing.empty) {
+      const doc = existing.docs[0]
+      await doc.ref.update(payload)
+      return NextResponse.json(
+        serializeSubscription(doc.id, {
+          ...(doc.data() as Record<string, unknown>),
+          ...payload,
+        }),
+        { status: 200 },
+      )
+    }
+
+    const ref = await adminDb.collection('subscriptions').add(payload)
+    return NextResponse.json(serializeSubscription(ref.id, payload), { status: 201 })
   } catch (error) {
     console.error('POST /api/subscriptions error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
