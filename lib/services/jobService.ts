@@ -14,10 +14,15 @@ import {
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import type { Job, JobCategory } from '@/types'
-import { normalizeJobCountry } from '@/lib/services/jobCountryService'
 
 type SaveJobInput = Omit<Job, 'id' | 'createdAt' | 'updatedAt' | 'applicantsCount'> & {
   country?: Job['country']
+}
+
+function normalizeJobCountry(value: unknown): Job['country'] | null {
+  if (typeof value !== 'string') return null
+  const upper = value.toUpperCase()
+  return upper === 'NZ' || upper === 'AU' ? (upper as Job['country']) : null
 }
 
 function docToJob(id: string, data: DocumentData): Job {
