@@ -92,3 +92,4 @@ npm run web
 - Do not bypass lint or TypeScript checks in production builds.
 - Keep public pages crawlable only when they are useful landing pages.
 - Ensure structured data, canonical URLs, and sitemap coverage stay in sync when adding public routes.
+.
