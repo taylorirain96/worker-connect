@@ -11,6 +11,7 @@ import { getStripe, isStripeConfigured, toCents } from '@/lib/stripe'
 import { createEscrowRecord, calculateCommission } from '@/lib/services/escrowService'
 import { adminDb } from '@/lib/firebase-admin'
 import { rateLimit } from '@/lib/rateLimit'
+import { getCurrencyForJobCountry, getJobCountryById } from '@/lib/services/jobCountryService'
 
 export async function POST(request: NextRequest) {
   if (rateLimit(request, { max: 20, windowMs: 60_000 })) {
@@ -44,6 +45,8 @@ export async function POST(request: NextRequest) {
     }
 
     const { commissionRate, commissionAmount, workerAmount } = calculateCommission(amount, completedJobs)
+    const jobCountry = await getJobCountryById(jobId)
+    const currency = getCurrencyForJobCountry(jobCountry)
 
     if (!isStripeConfigured()) {
       // Mock mode — create record directly as 'held'
@@ -53,7 +56,7 @@ export async function POST(request: NextRequest) {
         employerId,
         workerId,
         amount,
-        currency: 'nzd',
+        currency,
         status: 'held',
         stripePaymentIntentId: `pi_mock_${Date.now()}`,
         commissionRate,
@@ -82,7 +85,7 @@ export async function POST(request: NextRequest) {
         commissionRate,
         commissionAmount,
         workerAmount,
-        currency: 'nzd',
+        currency,
         mockMode: true,
       })
     }
@@ -91,7 +94,7 @@ export async function POST(request: NextRequest) {
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount: toCents(amount),
-      currency: 'nzd',
+      currency,
       capture_method: 'manual',   // hold funds without capturing until release
       description: `QuickTrade Escrow — Job ${jobId}`,
       metadata: {
@@ -103,6 +106,7 @@ export async function POST(request: NextRequest) {
         commissionRate: String(commissionRate),
         commissionAmount: String(commissionAmount),
         workerAmount: String(workerAmount),
+        country: jobCountry ?? 'NZ',
       },
     })
 
@@ -112,7 +116,7 @@ export async function POST(request: NextRequest) {
       employerId,
       workerId,
       amount,
-      currency: 'nzd',
+      currency,
       status: 'pending',
       stripePaymentIntentId: paymentIntent.id,
       commissionRate,
@@ -142,7 +146,7 @@ export async function POST(request: NextRequest) {
       commissionRate,
       commissionAmount,
       workerAmount,
-      currency: 'nzd',
+      currency,
     })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'

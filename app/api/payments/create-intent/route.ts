@@ -6,6 +6,7 @@ import { getPostingFee } from '@/types'
 import type { BundleType } from '@/types/payment'
 import Stripe from 'stripe'
 import { rateLimit } from '@/lib/rateLimit'
+import { getCurrencyForJobCountry, getJobCountryById } from '@/lib/services/jobCountryService'
 
 /**
  * POST /api/payments/create-intent
@@ -56,6 +57,10 @@ export async function POST(req: NextRequest) {
       estimatedBudget,
     } = body
 
+    const normalizeCurrency = (value?: string): string | undefined => value?.trim().toLowerCase()
+    const jobCountry = jobId ? await getJobCountryById(jobId) : null
+    const fallbackCurrency = getCurrencyForJobCountry(jobCountry)
+
     void paymentMethod
 
     if (estimatedBudget !== undefined) {
@@ -63,9 +68,10 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Missing required fields: jobId, employerId, estimatedBudget' }, { status: 400 })
       }
       const feeInfo = getPostingFee(estimatedBudget)
+      const postingCurrency = fallbackCurrency
       const result = await createPaymentIntent({
         amount: feeInfo.fee,
-        currency: 'nzd',
+        currency: postingCurrency,
         description: `QuickTrade job posting fee — ${feeInfo.label}`,
         metadata: {
           type: 'posting_fee',
@@ -73,9 +79,10 @@ export async function POST(req: NextRequest) {
           employerId,
           feeSize: feeInfo.size,
           estimatedBudget: String(estimatedBudget),
+          country: jobCountry ?? 'NZ',
         },
       })
-      return NextResponse.json({ ...result, feeInfo, currency: 'nzd' })
+      return NextResponse.json({ ...result, feeInfo, currency: postingCurrency })
     }
 
     if (!jobId || !employerId || !workerId) {
@@ -110,7 +117,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Stripe not configured' }, { status: 500 })
       }
       const stripe = new Stripe(stripeSecretKey)
-      const resolvedCurrency = currency ?? 'nzd'
+      const resolvedCurrency = normalizeCurrency(currency) ?? fallbackCurrency
       const amountCents = Math.round(amount * 100)
       const platformFeeCents = Math.round(amountCents * PLATFORM_FEE_RATE)
 
@@ -136,12 +143,13 @@ export async function POST(req: NextRequest) {
 
     const result = await createPaymentIntent({
       amount,
-      currency: currency ?? 'nzd',
+      currency: normalizeCurrency(currency) ?? fallbackCurrency,
       description,
       metadata: {
         jobId,
         employerId,
         workerId,
+        country: jobCountry ?? 'NZ',
         bundleType: bundleType ?? 'single',
         bundleJobCount: String(bundleJobCount),
         savingsPercent: String(savingsPercent),

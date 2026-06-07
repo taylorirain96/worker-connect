@@ -4,12 +4,17 @@ import { categoriseJob } from '@/lib/ai/categorise-job'
 import { adminDb } from '@/lib/firebase-admin'
 import { sendJobMatchesEmail } from '@/lib/email/transactional'
 import { sendAdminNotification } from '@/lib/notifications/admin'
+import {
+  getCurrencyLabelForJobCountry,
+  normalizeJobCountry,
+} from '@/lib/services/jobCountryService'
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const category = searchParams.get('category')
     const location = searchParams.get('location')
+    const country = normalizeJobCountry(searchParams.get('country'))
     const status = searchParams.get('status') || 'open'
     const urgency = searchParams.get('urgency')
     const employerIdParam = searchParams.get('employerId')
@@ -24,7 +29,7 @@ export async function GET(request: NextRequest) {
         total: 0,
         page,
         limit,
-        filters: { category, location, status, urgency, employerId },
+        filters: { category, location, country, status, urgency, employerId },
       })
     }
 
@@ -50,6 +55,9 @@ export async function GET(request: NextRequest) {
       const loc = location.toLowerCase()
       jobs = jobs.filter((j) => String(j.location ?? '').toLowerCase().includes(loc))
     }
+    if (country) {
+      jobs = jobs.filter((j) => String(j.country ?? '').toUpperCase() === country)
+    }
     if (urgency) {
       jobs = jobs.filter((j) => String(j.urgency ?? '') === urgency)
     }
@@ -63,7 +71,7 @@ export async function GET(request: NextRequest) {
       total,
       page,
       limit,
-      filters: { category, location, status, urgency, employerId },
+      filters: { category, location, country, status, urgency, employerId },
     })
   } catch (error) {
     console.error('Get jobs error:', error)
@@ -79,6 +87,7 @@ export async function POST(request: NextRequest) {
       title,
       description,
       category,
+      country,
       location,
       budget,
       budgetType,
@@ -89,7 +98,9 @@ export async function POST(request: NextRequest) {
     } = body
     const employerId: string | undefined = body.employerId ?? headerUserId ?? undefined
 
-    if (!title || !description || !category || !location || !budget || !employerId) {
+    const normalizedCountry = normalizeJobCountry(country)
+
+    if (!title || !description || !category || !normalizedCountry || !location || !budget || !employerId) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
@@ -98,6 +109,7 @@ export async function POST(request: NextRequest) {
       title,
       description,
       category,
+      country: normalizedCountry,
       location,
       budget: parseFloat(budget),
       budgetType: budgetType || 'fixed',
@@ -163,6 +175,7 @@ export async function POST(request: NextRequest) {
               jobLocationPrefix.length > 0 &&
               workerLocation.toLowerCase().includes(jobLocationPrefix)
 
+            const currencyLabel = getCurrencyLabelForJobCountry(normalizedCountry)
             if (categoryMatch || locationMatch) {
               const workerName = (workerData?.displayName ?? workerData?.name ?? 'there') as string
               const workerId = workerDoc.id
@@ -181,7 +194,7 @@ export async function POST(request: NextRequest) {
                 sendAdminNotification({
                   userId: workerId,
                   title: '🔔 New job matching your skills',
-                  body: `"${title}" in ${location} — NZ$${parseFloat(budget).toFixed(0)} budget.`,
+                  body: `"${title}" in ${location} — ${currencyLabel}${parseFloat(budget).toFixed(0)} budget.`,
                   type: 'new_job',
                   link: `/jobs/${jobId}`,
                 })

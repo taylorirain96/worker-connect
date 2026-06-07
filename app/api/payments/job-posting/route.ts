@@ -13,6 +13,11 @@ import { createJobPostingPaymentRecord } from '@/lib/services/escrowService'
 import { getJobPostingFee } from '@/lib/services/escrowService'
 import { adminDb } from '@/lib/firebase-admin'
 import { rateLimit } from '@/lib/rateLimit'
+import {
+  getCurrencyForJobCountry,
+  getCurrencyLabelForJobCountry,
+  getJobCountryById,
+} from '@/lib/services/jobCountryService'
 
 export async function POST(request: NextRequest) {
   if (rateLimit(request, { max: 20, windowMs: 60_000 })) {
@@ -38,6 +43,9 @@ export async function POST(request: NextRequest) {
     }
 
     const feeConfig = getJobPostingFee(estimatedValue)
+    const jobCountry = await getJobCountryById(jobId)
+    const currency = getCurrencyForJobCountry(jobCountry)
+    const currencyLabel = getCurrencyLabelForJobCountry(jobCountry)
     let totalFee = feeConfig.fee
     if (featuredListing) totalFee += 9.99
     if (urgentBadge) totalFee += 4.99
@@ -50,7 +58,7 @@ export async function POST(request: NextRequest) {
       employerId,
       tier: feeConfig.tier,
       amount: totalFee,
-      currency: 'nzd',
+      currency,
       status: 'pending',
       featuredListing,
       urgentBadge,
@@ -79,6 +87,7 @@ export async function POST(request: NextRequest) {
         mockMode: true,
         recordId,
         amount: totalFee,
+        currency,
         tier: feeConfig.tier,
       })
     }
@@ -88,10 +97,10 @@ export async function POST(request: NextRequest) {
     const lineItems: NonNullable<import('stripe').Stripe.Checkout.SessionCreateParams['line_items']> = [
       {
         price_data: {
-          currency: 'nzd',
+          currency,
           product_data: {
             name: `QuickTrade Job Posting — ${feeConfig.label}`,
-            description: `Post a ${feeConfig.label.toLowerCase()} job (estimated value: NZ$${estimatedValue.toLocaleString()})`,
+            description: `Post a ${feeConfig.label.toLowerCase()} job (estimated value: ${currencyLabel}${estimatedValue.toLocaleString()})`,
           },
           unit_amount: Math.round(feeConfig.fee * 100),
         },
@@ -102,7 +111,7 @@ export async function POST(request: NextRequest) {
     if (featuredListing) {
       lineItems.push({
         price_data: {
-          currency: 'nzd',
+          currency,
           product_data: { name: 'Featured Job Listing', description: 'Your job appears at the top of search results' },
           unit_amount: 999,
         },
@@ -113,7 +122,7 @@ export async function POST(request: NextRequest) {
     if (urgentBadge) {
       lineItems.push({
         price_data: {
-          currency: 'nzd',
+          currency,
           product_data: { name: 'Urgent Job Badge', description: 'Highlights your job as urgent to attract faster responses' },
           unit_amount: 499,
         },
@@ -133,6 +142,7 @@ export async function POST(request: NextRequest) {
         tier: feeConfig.tier,
         featuredListing: String(featuredListing),
         urgentBadge: String(urgentBadge),
+        country: jobCountry ?? 'NZ',
       },
       payment_intent_data: {
         metadata: {
@@ -140,6 +150,7 @@ export async function POST(request: NextRequest) {
           employerId,
           recordId,
           type: 'job_posting',
+          country: jobCountry ?? 'NZ',
         },
       },
     })
@@ -157,6 +168,7 @@ export async function POST(request: NextRequest) {
       url: session.url,
       recordId,
       amount: totalFee,
+      currency,
       tier: feeConfig.tier,
     })
   } catch (err) {

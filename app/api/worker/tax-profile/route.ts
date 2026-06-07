@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { db } from '@/lib/firebase'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
 import type { WorkerTaxProfile } from '@/types/global'
+import { normalizeJobCountry } from '@/lib/services/jobCountryService'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,17 +27,23 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json() as Partial<WorkerTaxProfile>
+  const countryCode = normalizeJobCountry(body.countryCode) ?? 'NZ'
+  const acceptedTerms = body.acceptedTerms ?? {}
 
   const profile: WorkerTaxProfile = {
     id: userId,
     workerId: userId,
-    countryCode: body.countryCode ?? 'US',
+    countryCode,
     taxId: body.taxId ?? '',
     residencyStatus: body.residencyStatus ?? 'resident',
     classification: body.classification ?? 'contractor',
     taxYear: body.taxYear ?? new Date().getFullYear(),
-    currency: body.currency ?? 'USD',
-    acceptedTerms: body.acceptedTerms ?? {},
+    currency: body.currency ?? (countryCode === 'AU' ? 'AUD' : 'NZD'),
+    acceptedTerms: {
+      gdprConsent: acceptedTerms.gdprConsent ?? false,
+      privacyActConsent: acceptedTerms.privacyActConsent ?? false,
+      acceptedAt: acceptedTerms.acceptedAt ?? new Date().toISOString(),
+    },
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   }

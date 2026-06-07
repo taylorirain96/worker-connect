@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
 import { rateLimit } from '@/lib/rateLimit'
 import type { ServicePackage, InstantBooking } from '@/types'
+import { getCountryFromPackageData, getCurrencyForJobCountry } from '@/lib/services/jobCountryService'
 
 export const dynamic = 'force-dynamic'
 
@@ -35,6 +36,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Package not found' }, { status: 404 })
     }
     const pkg = pkgSnap.data() as ServicePackage
+    const packageCountry = getCountryFromPackageData(pkgSnap.data() as Record<string, unknown> | undefined)
+    const currency = getCurrencyForJobCountry(packageCountry)
 
     if (!pkg.instantBook) {
       return NextResponse.json({ error: 'Package does not support instant booking' }, { status: 400 })
@@ -51,8 +54,13 @@ export async function POST(request: NextRequest) {
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(depositAmount * 100),
-      currency: 'nzd',
-      metadata: { type: 'instant_book_deposit', packageId, homeownerId },
+      currency,
+      metadata: {
+        type: 'instant_book_deposit',
+        packageId,
+        homeownerId,
+        country: packageCountry ?? 'NZ',
+      },
     })
 
     const now = new Date().toISOString()

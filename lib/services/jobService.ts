@@ -14,6 +14,11 @@ import {
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import type { Job, JobCategory } from '@/types'
+import { normalizeJobCountry } from '@/lib/services/jobCountryService'
+
+type SaveJobInput = Omit<Job, 'id' | 'createdAt' | 'updatedAt' | 'applicantsCount'> & {
+  country?: Job['country']
+}
 
 function docToJob(id: string, data: DocumentData): Job {
   return {
@@ -31,12 +36,14 @@ function docToJob(id: string, data: DocumentData): Job {
 }
 
 export async function saveJob(
-  jobData: Omit<Job, 'id' | 'createdAt' | 'updatedAt' | 'applicantsCount'>
+  jobData: SaveJobInput
 ): Promise<string> {
   if (!db) throw new Error('Firestore is not initialized')
   const jobsRef = collection(db, 'jobs')
+  const country = normalizeJobCountry(jobData.country) ?? 'NZ'
   const docRef = await addDoc(jobsRef, {
     ...jobData,
+    country,
     applicantsCount: 0,
     status: jobData.status ?? 'open',
     createdAt: serverTimestamp(),
