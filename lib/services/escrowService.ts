@@ -103,16 +103,16 @@ export function buildEscrowWorkflowMilestones(
     ]
   }
 
-  const DEPOSIT_COMPLETE_STATUSES: ReadonlyArray<EscrowStatus> = ['held', 'in_escrow', 'released']
-  const JOB_IN_PROGRESS_COMPLETE_STATUSES: ReadonlyArray<NonNullable<Job['status']>> = ['in_progress', 'completed']
+  const DEPOSIT_SECURE_REACHED_STATUSES: ReadonlyArray<EscrowStatus> = ['held', 'in_escrow', 'released']
+  const JOB_IN_PROGRESS_REACHED_STATUSES: ReadonlyArray<NonNullable<Job['status']>> = ['in_progress', 'completed']
 
   const escrowStatus = escrow?.status
   const jobStatus = job?.status
   const completionRequestedAt = job?.completionRequestedAt
 
-  const depositComplete = Boolean(escrowStatus && DEPOSIT_COMPLETE_STATUSES.includes(escrowStatus))
-  const inProgressComplete = Boolean(jobStatus && JOB_IN_PROGRESS_COMPLETE_STATUSES.includes(jobStatus))
-  const signOffPendingComplete = Boolean(completionRequestedAt) || jobStatus === 'completed'
+  const depositComplete = Boolean(escrowStatus && DEPOSIT_SECURE_REACHED_STATUSES.includes(escrowStatus))
+  const inProgressComplete = Boolean(jobStatus && JOB_IN_PROGRESS_REACHED_STATUSES.includes(jobStatus))
+  const signOffPendingComplete = Boolean(completionRequestedAt)
 
   return [
     {

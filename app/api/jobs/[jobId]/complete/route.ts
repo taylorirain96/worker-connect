@@ -121,8 +121,8 @@ export async function POST(request: NextRequest, props: { params: Promise<{ jobI
         workerAmount = (escrow.workerReceives ?? escrow.workerAmount ?? escrow.amount) as number
         commissionAmount = (escrow.commission ?? escrow.commissionAmount ?? 0) as number
         commissionRate = (escrow.commissionRate ?? 0) as number
-        const { code: payoutCurrencyCode, label: payoutCurrencyLabel } = getCurrencyDisplay(escrow.currency as string | undefined)
-        paymentCurrencyLabel = payoutCurrencyLabel
+        const { code: payoutCurrencyCode, label: paymentLabel } = getCurrencyDisplay(escrow.currency as string | undefined)
+        paymentCurrencyLabel = paymentLabel
 
         // Real Stripe flow when keys are configured and PI is not a mock
         if (
