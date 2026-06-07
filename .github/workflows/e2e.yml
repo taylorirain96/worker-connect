@@ -85,10 +85,9 @@ jobs:
           NEXT_PUBLIC_FIREBASE_PROJECT_ID: quicktrade-e2e
           NEXT_PUBLIC_USE_FIREBASE_EMULATOR: '1'
           AUTH_SESSION_SECRET: e2e-test-secret-do-not-use-in-production
-          # Webhook secret is set so the stripe/webhook route's startup
-          # validation does not error. The revenue-path spec does not
-          # currently drive the webhook (see file-level comment in
-          # e2e/revenue-path.spec.ts).
+          STRIPE_MODE: mock
+          STRIPE_SECRET_KEY: sk_test_mock_e2e
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_mock_e2e
           STRIPE_WEBHOOK_SECRET: whsec_e2e_test
 
       - name: Upload Playwright report

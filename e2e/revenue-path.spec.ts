@@ -15,17 +15,9 @@ import {
  * via `npm run test:e2e:emulators`, or the dedicated `revenue-path` CI job
  * in `.github/workflows/e2e.yml`.
  *
- * Where the spec deviates from the original plan:
- *
- *   The production escrow PaymentIntent route (`/api/payments/escrow/create`)
- *   reads/writes via `lib/services/escrowService.ts`, which uses the *client*
- *   Firebase SDK and so cannot reach the Firestore emulator from server-side
- *   code. The eventual release path used by job completion
- *   (`/api/jobs/[jobId]/complete`) reads the legacy `escrows` collection via
- *   the **admin** SDK, so we seed the escrow document directly through
- *   `firebase-admin` and assert end-to-end release + completion + review work.
- *   Tracking ticket: refactor `escrowService` onto `adminDb`, then drive the
- *   create step + Stripe webhook through the spec via stripe-mock.
+ * Stripe is forced into mock mode during emulator runs (`STRIPE_MODE=mock` in
+ * Playwright config + CI), so no live endpoint is hit while this spec still
+ * exercises escrow create + release transitions.
  */
 
 const SESSION_COOKIE = 'auth-session';
@@ -131,9 +123,29 @@ test.describe('revenue path', () => {
       });
       expect(acceptResp.status(), await acceptResp.text()).toBe(200);
 
-      // ── 5. Seed escrow + transition job to in_progress ───────────────────
-      // See file-level comment: production escrow create route can't reach
-      // the emulator yet, so we plant the document the release path reads.
+      // ── 5. Create escrow payment intent (mock Stripe) ─────────────────────
+      const escrowResp = await postJSON(homeowner, '/api/payments/escrow/create', {
+        jobId,
+        quoteId,
+        employerId: HOMEOWNER_FIXTURE.uid,
+        workerId: WORKER_FIXTURE.uid,
+        amount: quoteAmount,
+        completedJobs: 0,
+      });
+      expect(escrowResp.status(), await escrowResp.text()).toBe(200);
+      const escrowBody = (await escrowResp.json()) as {
+        escrowId: string;
+        paymentIntentId: string;
+        mockMode?: boolean;
+        workerAmount: number;
+        commissionAmount: number;
+        commissionRate: number;
+      };
+      expect(escrowBody.escrowId).toBeTruthy();
+      expect(escrowBody.paymentIntentId).toContain('pi_mock_');
+      expect(escrowBody.mockMode).toBe(true);
+
+      // ── 6. Transition job to in_progress ───────────────────────────────────
       const admin = await import('firebase-admin');
       if (!admin.apps.length) {
         admin.initializeApp({
@@ -171,7 +183,7 @@ test.describe('revenue path', () => {
         updatedAt: nowIso,
       });
 
-      // ── 6. Homeowner releases escrow + marks job complete ────────────────
+      // ── 7. Homeowner releases escrow + marks job complete ────────────────
       const completeResp = await postJSON(homeowner, `/api/jobs/${jobId}/complete`, {
         completedBy: HOMEOWNER_FIXTURE.uid,
       });
@@ -193,7 +205,7 @@ test.describe('revenue path', () => {
       expect(jobAfter.status).toBe('completed');
       expect(jobAfter.escrowStatus).toBe('released');
 
-      // ── 7. Homeowner leaves a review ─────────────────────────────────────
+      // ── 8. Homeowner leaves a review ─────────────────────────────────────
       const reviewResp = await postJSON(homeowner, '/api/reviews', {
         jobId,
         reviewerId: HOMEOWNER_FIXTURE.uid,
@@ -208,7 +220,7 @@ test.describe('revenue path', () => {
       expect(review.id).toBeTruthy();
       expect(review.rating).toBe(5);
 
-      // ── 8. Review is queryable for the worker ────────────────────────────
+      // ── 9. Review is queryable for the worker ────────────────────────────
       const listResp = await homeowner.get(`/api/reviews?workerId=${WORKER_FIXTURE.uid}`);
       expect(listResp.status()).toBe(200);
       const list = (await listResp.json()) as { reviews: Array<{ jobId: string }> };
