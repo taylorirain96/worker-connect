@@ -63,7 +63,6 @@ export async function GET(req: NextRequest) {
     const snapshot = await adminDb
       .collection('subscriptions')
       .where('userId', '==', userId)
-      .limit(10)
       .get()
 
     if (snapshot.empty) {

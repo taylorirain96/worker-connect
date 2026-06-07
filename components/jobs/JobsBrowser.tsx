@@ -96,8 +96,7 @@ function JobsListContent() {
         return a.budget - b.budget
       case 'urgency':
       default:
-        return urgencyOrder[a.urgency as keyof typeof urgencyOrder]
-          - urgencyOrder[b.urgency as keyof typeof urgencyOrder]
+        return urgencyOrder[a.urgency as keyof typeof urgencyOrder] - urgencyOrder[b.urgency as keyof typeof urgencyOrder]
     }
   })
 
