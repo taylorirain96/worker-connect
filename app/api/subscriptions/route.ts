@@ -1,41 +1,9 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { Timestamp } from 'firebase-admin/firestore'
-import type { Subscription, SubscriptionPlan } from '@/types/payment'
+import type { SubscriptionPlan } from '@/types/payment'
 import { rateLimit } from '@/lib/rateLimit'
 import { adminDb } from '@/lib/firebase-admin'
-
-function toIso(value: unknown): string {
-  if (value instanceof Timestamp) return value.toDate().toISOString()
-  if (typeof value === 'string') return value
-  return new Date().toISOString()
-}
-
-function serializeSubscription(
-  id: string,
-  data: Record<string, unknown>,
-): Subscription {
-  return {
-    id,
-    userId: typeof data.userId === 'string' ? data.userId : '',
-    plan: (data.plan as SubscriptionPlan) ?? 'free',
-    status: (data.status as Subscription['status']) ?? 'active',
-    stripeSubscriptionId:
-      typeof data.stripeSubscriptionId === 'string' ? data.stripeSubscriptionId : undefined,
-    stripeCustomerId:
-      typeof data.stripeCustomerId === 'string' ? data.stripeCustomerId : undefined,
-    currentPeriodStart: toIso(data.currentPeriodStart),
-    currentPeriodEnd: toIso(data.currentPeriodEnd),
-    cancelAtPeriodEnd: Boolean(data.cancelAtPeriodEnd),
-    billingInterval: data.billingInterval === 'year' ? 'year' : 'month',
-    amount: typeof data.amount === 'number' ? data.amount : 0,
-    currency: typeof data.currency === 'string' ? data.currency : 'nzd',
-    createdAt: toIso(data.createdAt),
-    updatedAt: toIso(data.updatedAt),
-    canceledAt: data.canceledAt ? toIso(data.canceledAt) : undefined,
-    trialEnd: data.trialEnd ? toIso(data.trialEnd) : undefined,
-  }
-}
+import { serializeSubscription, toIsoTimestamp } from '@/lib/server/firestoreSerializers'
 
 function planAmount(plan: SubscriptionPlan, billingInterval: 'month' | 'year'): number {
   const amounts: Record<SubscriptionPlan, Record<'month' | 'year', number>> = {
@@ -71,8 +39,8 @@ export async function GET(req: NextRequest) {
 
     const doc = snapshot.docs
       .sort((a, b) => {
-        const aUpdated = toIso((a.data() as Record<string, unknown>).updatedAt)
-        const bUpdated = toIso((b.data() as Record<string, unknown>).updatedAt)
+        const aUpdated = toIsoTimestamp((a.data() as Record<string, unknown>).updatedAt) ?? ''
+        const bUpdated = toIsoTimestamp((b.data() as Record<string, unknown>).updatedAt) ?? ''
         return bUpdated.localeCompare(aUpdated)
       })[0]
     return NextResponse.json({
@@ -119,6 +87,9 @@ export async function POST(req: NextRequest) {
     }
 
     const now = new Date()
+    const periodEnd = new Date(
+      now.getTime() + (billingInterval === 'year' ? 365 : 30) * 24 * 60 * 60 * 1000,
+    )
     const payload = {
       userId,
       plan,
@@ -127,7 +98,7 @@ export async function POST(req: NextRequest) {
       amount: planAmount(plan, billingInterval),
       currency: 'nzd',
       currentPeriodStart: now.toISOString(),
-      currentPeriodEnd: now.toISOString(),
+      currentPeriodEnd: periodEnd.toISOString(),
       cancelAtPeriodEnd: false,
       updatedAt: now.toISOString(),
       createdAt: now.toISOString(),

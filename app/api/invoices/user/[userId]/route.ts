@@ -1,15 +1,9 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { Timestamp } from 'firebase-admin/firestore'
 import { adminDb } from '@/lib/firebase-admin'
+import { toIsoTimestamp } from '@/lib/server/firestoreSerializers'
 
 export const dynamic = 'force-dynamic'
-
-function toIso(value: unknown): string | undefined {
-  if (value instanceof Timestamp) return value.toDate().toISOString()
-  if (typeof value === 'string') return value
-  return undefined
-}
 
 /**
  * GET /api/invoices/user/[userId]
@@ -40,7 +34,11 @@ export async function GET(
           q = q.where('status', '==', status)
         }
         return (await q.get()).docs
-      } catch {
+      } catch (error) {
+        console.warn(
+          `Falling back to unordered invoice query for ${field}; likely missing createdAt index.`,
+          error,
+        )
         let q = adminDb.collection('invoices').where(field, '==', userId)
         if (status) {
           q = q.where('status', '==', status)
@@ -60,9 +58,9 @@ export async function GET(
       map.set(d.id, {
         id: d.id,
         ...data,
-        createdAt: toIso(data.createdAt),
-        updatedAt: toIso(data.updatedAt),
-        paidAt: toIso(data.paidAt),
+        createdAt: toIsoTimestamp(data.createdAt),
+        updatedAt: toIsoTimestamp(data.updatedAt),
+        paidAt: toIsoTimestamp(data.paidAt),
       })
     })
 

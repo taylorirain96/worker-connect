@@ -1,36 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { Timestamp } from 'firebase-admin/firestore'
-import type { Subscription, SubscriptionPlan } from '@/types/payment'
-
-function toIso(value: unknown): string {
-  if (value instanceof Timestamp) return value.toDate().toISOString()
-  if (typeof value === 'string') return value
-  return new Date().toISOString()
-}
-
-function serializeSubscription(id: string, data: Record<string, unknown>): Subscription {
-  return {
-    id,
-    userId: typeof data.userId === 'string' ? data.userId : '',
-    plan: (data.plan as SubscriptionPlan) ?? 'free',
-    status: (data.status as Subscription['status']) ?? 'active',
-    stripeSubscriptionId:
-      typeof data.stripeSubscriptionId === 'string' ? data.stripeSubscriptionId : undefined,
-    stripeCustomerId:
-      typeof data.stripeCustomerId === 'string' ? data.stripeCustomerId : undefined,
-    currentPeriodStart: toIso(data.currentPeriodStart),
-    currentPeriodEnd: toIso(data.currentPeriodEnd),
-    cancelAtPeriodEnd: Boolean(data.cancelAtPeriodEnd),
-    billingInterval: data.billingInterval === 'year' ? 'year' : 'month',
-    amount: typeof data.amount === 'number' ? data.amount : 0,
-    currency: typeof data.currency === 'string' ? data.currency : 'nzd',
-    createdAt: toIso(data.createdAt),
-    updatedAt: toIso(data.updatedAt),
-    canceledAt: data.canceledAt ? toIso(data.canceledAt) : undefined,
-    trialEnd: data.trialEnd ? toIso(data.trialEnd) : undefined,
-  }
-}
+import type { SubscriptionPlan } from '@/types/payment'
+import { serializeSubscription } from '@/lib/server/firestoreSerializers'
 
 /**
  * GET    /api/subscriptions/[subscriptionId]  — get subscription details

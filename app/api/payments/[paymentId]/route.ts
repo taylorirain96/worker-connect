@@ -1,14 +1,8 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { Timestamp } from 'firebase-admin/firestore'
 import { getStripe, confirmPaymentIntent } from '@/lib/stripe'
 import { adminDb } from '@/lib/firebase-admin'
-
-function toIso(value: unknown): string {
-  if (value instanceof Timestamp) return value.toDate().toISOString()
-  if (typeof value === 'string') return value
-  return new Date().toISOString()
-}
+import { toIsoTimestamp } from '@/lib/server/firestoreSerializers'
 
 /**
  * GET  /api/payments/[paymentId]  — fetch a single payment
@@ -36,8 +30,8 @@ export async function GET(
       payment: {
         id: snap.id,
         ...data,
-        createdAt: toIso(data.createdAt),
-        updatedAt: toIso(data.updatedAt),
+        createdAt: toIsoTimestamp(data.createdAt) ?? new Date().toISOString(),
+        updatedAt: toIsoTimestamp(data.updatedAt) ?? new Date().toISOString(),
       },
     })
   } catch (error) {
