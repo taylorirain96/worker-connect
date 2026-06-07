@@ -20,10 +20,6 @@
     {
       "path": "/api/cron/re-engagement",
       "schedule": "0 11 * * 1"
-    },
-    {
-      "path": "/api/cron/instant-book-timeout",
-      "schedule": "0 * * * *"
     }
   ]
 }
