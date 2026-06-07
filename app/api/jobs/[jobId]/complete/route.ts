@@ -86,7 +86,7 @@ export async function POST(request: NextRequest, props: { params: Promise<{ jobI
     // ── Update job status ────────────────────────────────────────────────────
     await adminDb.collection('jobs').doc(jobId).update({
       status: 'completed',
-      workflowStage: 'sign_off_pending',
+      workflowStage: 'completed',
       completedAt,
       workerDisputeDeadline,
       updatedAt: completedAt,
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest, props: { params: Promise<{ jobI
     let commissionAmount: number | undefined
     let commissionRate: number | undefined
     let stripeTransferId: string | undefined
-    let paymentCurrencyLabel: 'NZ$' | 'A$' = 'NZ$'
+    let paymentCurrencyLabel: 'NZ$' | 'A$' = getCurrencyDisplay(undefined).label
     const assignedWorkerId: string = jobData.assignedWorkerId as string ?? ''
 
     if (!escrowSnap.empty) {

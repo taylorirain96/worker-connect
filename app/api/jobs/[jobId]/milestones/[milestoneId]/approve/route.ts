@@ -81,7 +81,7 @@ export async function POST(
 
     // ── APPROVE + PARTIAL PAYMENT ──────────────────────────────────────────────
     let stripeTransferId: string | undefined
-    let currencyLabel: 'NZ$' | 'A$' = 'NZ$'
+    let currencyLabel: 'NZ$' | 'A$' = getCurrencyDisplay(undefined).label
 
     if (assignedWorkerId && isStripeConfigured()) {
       try {

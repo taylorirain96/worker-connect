@@ -197,7 +197,7 @@ export interface Job {
   /** Current escrow status */
   escrowStatus?: 'pending' | 'pending_deposit' | 'held' | 'in_escrow' | 'released' | 'disputed' | 'refunded'
   /** Workflow stage for escrow-backed jobs */
-  workflowStage?: 'posted' | 'accepted' | 'deposit_secure' | 'job_in_progress' | 'sign_off_pending' | 'funds_released'
+  workflowStage?: 'posted' | 'accepted' | 'deposit_secure' | 'job_in_progress' | 'sign_off_pending' | 'completed' | 'funds_released'
   /** ISO timestamp when the job was marked as completed */
   completedAt?: string
   /** ISO timestamp when the worker asked the homeowner to sign off completion */

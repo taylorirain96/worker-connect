@@ -53,6 +53,14 @@ export async function POST(req: NextRequest) {
 
   console.log(`Stripe webhook received: ${event.type} (${event.id})`)
 
+  const markJobDepositSecure = async (jobId: string) => {
+    await adminDb.collection('jobs').doc(jobId).update({
+      escrowStatus: 'held',
+      workflowStage: 'deposit_secure',
+      updatedAt: new Date().toISOString(),
+    })
+  }
+
   try {
     switch (event.type) {
       // ── Job Posting: Checkout Session completed ────────────────────────────
@@ -144,11 +152,7 @@ export async function POST(req: NextRequest) {
             await updateEscrowStatus(escrow.id, 'held')
             const { label: currencyLabel } = getCurrencyDisplay(escrow.currency)
             if (adminDb) {
-              await adminDb.collection('jobs').doc(escrow.jobId).update({
-                escrowStatus: 'held',
-                workflowStage: 'deposit_secure',
-                updatedAt: new Date().toISOString(),
-              })
+              await markJobDepositSecure(escrow.jobId)
               if ('quoteId' in escrow && escrow.quoteId) {
                 await adminDb.collection('quotes').doc(escrow.quoteId).update({
                   escrowStatus: 'held',
@@ -187,11 +191,7 @@ export async function POST(req: NextRequest) {
               })
             }
 
-            await adminDb.collection('jobs').doc(jobId).update({
-              escrowStatus: 'held',
-              workflowStage: 'deposit_secure',
-              updatedAt: new Date().toISOString(),
-            })
+            await markJobDepositSecure(jobId)
 
             await sendNotification({
               userId: workerId,

@@ -37,6 +37,7 @@ export type EscrowWorkflowStage =
   | 'deposit_secure'
   | 'job_in_progress'
   | 'sign_off_pending'
+  | 'completed'
   | 'funds_released'
 
 export interface EscrowWorkflowMilestone {
@@ -94,13 +95,23 @@ export function buildEscrowWorkflowMilestones(
   job: Partial<Job> | null | undefined,
   escrow: Partial<EscrowPayment> | null | undefined
 ): EscrowWorkflowMilestone[] {
+  if (!job && !escrow) {
+    return [
+      { key: 'deposit_secure', label: 'Deposit Secure', status: 'pending' },
+      { key: 'job_in_progress', label: 'Job In Progress', status: 'pending' },
+      { key: 'sign_off_pending', label: 'Sign-Off Pending', status: 'pending' },
+    ]
+  }
+
+  const DEPOSIT_COMPLETE_STATUSES: ReadonlyArray<EscrowStatus> = ['held', 'in_escrow', 'released']
+  const JOB_IN_PROGRESS_COMPLETE_STATUSES: ReadonlyArray<NonNullable<Job['status']>> = ['in_progress', 'completed']
+
   const escrowStatus = escrow?.status
   const jobStatus = job?.status
   const completionRequestedAt = job?.completionRequestedAt
 
-  const depositComplete =
-    escrowStatus === 'held' || escrowStatus === 'in_escrow' || escrowStatus === 'released'
-  const inProgressComplete = jobStatus === 'in_progress' || jobStatus === 'completed'
+  const depositComplete = Boolean(escrowStatus && DEPOSIT_COMPLETE_STATUSES.includes(escrowStatus))
+  const inProgressComplete = Boolean(jobStatus && JOB_IN_PROGRESS_COMPLETE_STATUSES.includes(jobStatus))
   const signOffPendingComplete = Boolean(completionRequestedAt) || jobStatus === 'completed'
 
   return [
