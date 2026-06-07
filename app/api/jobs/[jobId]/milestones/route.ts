@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
 import type { JobMilestone } from '@/types'
+import { buildEscrowWorkflowMilestones, getJobEscrow } from '@/lib/services/escrowService'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,6 +20,12 @@ export async function GET(_req: NextRequest, props: { params: Promise<{ jobId: s
   }
 
   try {
+    const jobSnap = await adminDb.collection('jobs').doc(jobId).get()
+    if (!jobSnap.exists) {
+      return NextResponse.json({ error: 'Job not found' }, { status: 404 })
+    }
+    const job = jobSnap.data()
+
     const snap = await adminDb
       .collection('jobs')
       .doc(jobId)
@@ -31,7 +38,10 @@ export async function GET(_req: NextRequest, props: { params: Promise<{ jobId: s
       ...(d.data() as Omit<JobMilestone, 'id'>),
     } as JobMilestone))
 
-    return NextResponse.json({ milestones })
+    const escrow = await getJobEscrow(jobId)
+    const workflowMilestones = buildEscrowWorkflowMilestones(job, escrow)
+
+    return NextResponse.json({ milestones, workflowMilestones })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     return NextResponse.json({ error: message }, { status: 500 })

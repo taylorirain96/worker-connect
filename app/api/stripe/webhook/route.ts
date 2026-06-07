@@ -21,6 +21,7 @@ import {
   updateEscrowStatus,
   getJobPostingPaymentBySession,
   updateJobPostingPayment,
+  getCurrencyDisplay,
 } from '@/lib/services/escrowService'
 import { REFERRAL_CREDIT_REWARD } from '@/lib/referrals/constants'
 
@@ -141,9 +142,11 @@ export async function POST(req: NextRequest) {
           const escrow = await getEscrowByPaymentIntent(pi.id)
           if (escrow && (escrow.status === 'pending' || escrow.status === 'pending_deposit')) {
             await updateEscrowStatus(escrow.id, 'held')
+            const { label: currencyLabel } = getCurrencyDisplay(escrow.currency)
             if (adminDb) {
               await adminDb.collection('jobs').doc(escrow.jobId).update({
                 escrowStatus: 'held',
+                workflowStage: 'deposit_secure',
                 updatedAt: new Date().toISOString(),
               })
               if ('quoteId' in escrow && escrow.quoteId) {
@@ -157,14 +160,14 @@ export async function POST(req: NextRequest) {
               userId: escrow.employerId,
               type: 'payment_received',
               title: 'Payment Held in Escrow',
-              message: `NZ$${escrow.amount.toFixed(2)} is safely held in escrow for job #${escrow.jobId}. Release payment once the work is complete.`,
+              message: `${currencyLabel}${escrow.amount.toFixed(2)} is safely held in escrow for job #${escrow.jobId}. Release payment once the work is complete.`,
               metadata: { escrowId: escrow.id, jobId: escrow.jobId },
             })
             await sendNotification({
               userId: escrow.workerId,
               type: 'payment_received',
               title: "Escrow Funded — You're Protected",
-              message: `The employer has placed NZ$${escrow.amount.toFixed(2)} in escrow for job #${escrow.jobId}. Your payment is secured and will be released when the job is complete.`,
+              message: `The employer has placed ${currencyLabel}${escrow.amount.toFixed(2)} in escrow for job #${escrow.jobId}. Your payment is secured and will be released when the job is complete.`,
               metadata: { escrowId: escrow.id, jobId: escrow.jobId },
             })
           } else if (workerId) {
@@ -183,6 +186,12 @@ export async function POST(req: NextRequest) {
                 updatedAt: new Date().toISOString(),
               })
             }
+
+            await adminDb.collection('jobs').doc(jobId).update({
+              escrowStatus: 'held',
+              workflowStage: 'deposit_secure',
+              updatedAt: new Date().toISOString(),
+            })
 
             await sendNotification({
               userId: workerId,
@@ -352,6 +361,7 @@ export async function POST(req: NextRequest) {
 
           await adminDb.collection('jobs').doc(jobId).update({
             status: 'completed',
+            workflowStage: 'funds_released',
             paymentReleasedAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
           })

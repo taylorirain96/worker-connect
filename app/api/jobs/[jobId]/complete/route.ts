@@ -20,6 +20,7 @@ import {
 } from '@/lib/email/transactional'
 import { sendSMS as sendTwilioSMS } from '@/lib/sms'
 import { buildSMSMessage } from '@/lib/notifications/sms'
+import { getCurrencyDisplay } from '@/lib/services/escrowService'
 
 export const dynamic = 'force-dynamic'
 
@@ -85,6 +86,7 @@ export async function POST(request: NextRequest, props: { params: Promise<{ jobI
     // ── Update job status ────────────────────────────────────────────────────
     await adminDb.collection('jobs').doc(jobId).update({
       status: 'completed',
+      workflowStage: 'sign_off_pending',
       completedAt,
       workerDisputeDeadline,
       updatedAt: completedAt,
@@ -102,6 +104,7 @@ export async function POST(request: NextRequest, props: { params: Promise<{ jobI
     let commissionAmount: number | undefined
     let commissionRate: number | undefined
     let stripeTransferId: string | undefined
+    let paymentCurrencyLabel: 'NZ$' | 'A$' = 'NZ$'
     const assignedWorkerId: string = jobData.assignedWorkerId as string ?? ''
 
     if (!escrowSnap.empty) {
@@ -118,6 +121,8 @@ export async function POST(request: NextRequest, props: { params: Promise<{ jobI
         workerAmount = (escrow.workerReceives ?? escrow.workerAmount ?? escrow.amount) as number
         commissionAmount = (escrow.commission ?? escrow.commissionAmount ?? 0) as number
         commissionRate = (escrow.commissionRate ?? 0) as number
+        const { code: payoutCurrencyCode, label: payoutCurrencyLabel } = getCurrencyDisplay(escrow.currency as string | undefined)
+        paymentCurrencyLabel = payoutCurrencyLabel
 
         // Real Stripe flow when keys are configured and PI is not a mock
         if (
@@ -138,13 +143,15 @@ export async function POST(request: NextRequest, props: { params: Promise<{ jobI
             if (workerStripeAccountId) {
               const transfer = await stripe.transfers.create({
                 amount: toCents(workerAmount),
-                currency: (escrow.currency as string | undefined) ?? 'nzd',
+                currency: payoutCurrencyCode,
                 destination: workerStripeAccountId,
                 transfer_group: jobId,
                 metadata: {
                   escrowId: escrowDoc.id,
                   jobId,
                   workerId: escrowWorkerId,
+                  releasedBy: completedBy,
+                  releaseTrigger: 'homeowner_signoff',
                 },
               })
               stripeTransferId = transfer.id
@@ -172,6 +179,8 @@ export async function POST(request: NextRequest, props: { params: Promise<{ jobI
           status: 'released',
           releasedAt: completedAt,
           releasedBy: completedBy,
+          releaseAuthorizedAt: completedAt,
+          releaseTrigger: 'homeowner_signoff',
           ...(stripeTransferId ? { stripeTransferId } : {}),
           updatedAt: completedAt,
         })
@@ -179,6 +188,7 @@ export async function POST(request: NextRequest, props: { params: Promise<{ jobI
         // Reflect escrow release on the job document too
         await adminDb.collection('jobs').doc(jobId).update({
           escrowStatus: 'released',
+          workflowStage: 'funds_released',
         })
 
         escrowReleased = true
@@ -188,6 +198,7 @@ export async function POST(request: NextRequest, props: { params: Promise<{ jobI
         workerAmount = (escrow.workerReceives ?? escrow.workerAmount ?? escrow.amount) as number
         commissionAmount = (escrow.commission ?? escrow.commissionAmount ?? 0) as number
         commissionRate = (escrow.commissionRate ?? 0) as number
+        paymentCurrencyLabel = getCurrencyDisplay(escrow.currency as string | undefined).label
       }
     }
 
@@ -197,7 +208,7 @@ export async function POST(request: NextRequest, props: { params: Promise<{ jobI
     if (workerIdToNotify) {
       const paymentMsg =
         escrowReleased && workerAmount !== undefined
-          ? ` Your payment of NZ$${workerAmount.toFixed(2)} has been released.`
+          ? ` Your payment of ${paymentCurrencyLabel}${workerAmount.toFixed(2)} has been released.`
           : ''
       await sendNotification({
         userId: workerIdToNotify,

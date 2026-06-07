@@ -62,6 +62,13 @@ export async function PUT(
 
     // If accepted, auto-create invoice
     if (status === 'accepted') {
+      if (adminDb) {
+        await adminDb.collection('jobs').doc(quote.jobId).set({
+          workflowStage: 'accepted',
+          updatedAt: new Date().toISOString(),
+        }, { merge: true })
+      }
+
       try {
         const { createFullInvoice } = await import('@/lib/services/paymentService')
 

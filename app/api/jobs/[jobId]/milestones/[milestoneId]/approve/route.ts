@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
 import { sendNotification } from '@/lib/notificationService'
 import { getStripe, isStripeConfigured, toCents } from '@/lib/stripe'
+import { getCurrencyDisplay } from '@/lib/services/escrowService'
 import type { JobMilestone } from '@/types'
 
 export const dynamic = 'force-dynamic'
@@ -80,6 +81,7 @@ export async function POST(
 
     // ── APPROVE + PARTIAL PAYMENT ──────────────────────────────────────────────
     let stripeTransferId: string | undefined
+    let currencyLabel: 'NZ$' | 'A$' = 'NZ$'
 
     if (assignedWorkerId && isStripeConfigured()) {
       try {
@@ -96,6 +98,7 @@ export async function POST(
 
         if (workerStripeAccountId && !escrowSnap.empty) {
           const escrow = escrowSnap.docs[0].data()
+          currencyLabel = getCurrencyDisplay(escrow.currency as string | undefined).label
           const stripePaymentIntentId = escrow.stripePaymentIntentId as string | undefined
 
           // Only proceed if this is a real (non-mock) payment intent
@@ -140,7 +143,7 @@ export async function POST(
       await sendNotification({
         userId: assignedWorkerId,
         type: 'payment_received',
-        title: `Milestone Approved — NZ$${milestone.amount.toFixed(2)} Released 🎉`,
+        title: `Milestone Approved — ${currencyLabel}${milestone.amount.toFixed(2)} Released 🎉`,
         message: `"${milestone.title}" on job "${job.title as string}" was approved.${paymentNote}`,
         metadata: { jobId, milestoneId, amount: milestone.amount },
         actionUrl: `/dashboard/worker/jobs/${jobId}/milestones`,
