@@ -26,7 +26,8 @@ const profileSchema = z.object({
   availability: z.enum(['available', 'busy', 'unavailable']).optional(),
 })
 
-type ProfileFormData = z.infer<typeof profileSchema>
+type ProfileFormData = z.output<typeof profileSchema>
+type ProfileFormInput = z.input<typeof profileSchema>
 
 export default function ProfilePage() {
   const { user, profile } = useAuth()
@@ -37,7 +38,7 @@ export default function ProfilePage() {
     register,
     handleSubmit,
     formState: { errors, isDirty },
-  } = useForm<ProfileFormData>({
+  } = useForm<ProfileFormInput, unknown, ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       displayName: user?.displayName || '',

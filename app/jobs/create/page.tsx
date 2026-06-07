@@ -36,7 +36,8 @@ const jobSchema = z.object({
   path: ['budgetMax'],
 })
 
-type JobFormData = z.infer<typeof jobSchema>
+type JobFormData = z.output<typeof jobSchema>
+type JobFormInput = z.input<typeof jobSchema>
 
 const URGENCY_OPTIONS = [
   { value: 'low',       label: '⬇️ Low',       sub: 'No rush',           ring: 'ring-gray-400',   bg: 'bg-gray-100 dark:bg-gray-700',   text: 'text-gray-700 dark:text-gray-200' },
@@ -63,7 +64,7 @@ function CreateJobPage() {
     watch,
     setValue,
     formState: { errors, isSubmitting },
-  } = useForm<JobFormData>({
+  } = useForm<JobFormInput, unknown, JobFormData>({
     resolver: zodResolver(jobSchema),
     defaultValues: { budgetType: 'fixed', urgency: 'medium', budgetMin: 0, country: 'NZ' },
   })

@@ -10,7 +10,7 @@ import toast from 'react-hot-toast'
 
 const schema = z.object({
   amount: z
-    .number({ invalid_type_error: 'Amount must be a number' })
+    .number()
     .min(STRIPE_CONNECT_CONFIG.minPayoutAmount, `Minimum payout is $${STRIPE_CONNECT_CONFIG.minPayoutAmount}`)
     .max(10000, 'Maximum single payout is $10,000'),
   stripeConnectAccountId: z.string().min(1, 'Stripe Connect account is required'),
