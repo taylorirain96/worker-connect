@@ -6,6 +6,7 @@ import Footer from '@/components/layout/Footer'
 import { SERVICES, getServiceBySlug, getServiceDetails } from '@/lib/seo/servicesData'
 import { AU_CITIES } from '@/lib/utils'
 import { SITE_URL } from '@/lib/seo/config'
+import JsonLdScript from '@/components/seo/JsonLdScript'
 
 interface Props {
   params: Promise<{ service: string; city: string }>
@@ -74,7 +75,7 @@ export default async function AUServiceCityPage({ params }: Props) {
 
   return (
     <div className="flex flex-col min-h-screen luxury-bg">
-      <script id="jsonld-au-service" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceJsonLd) }} />
+      <JsonLdScript id="jsonld-au-service" data={serviceJsonLd} />
       <MarketingNavbar />
 
       <main className="flex-1">

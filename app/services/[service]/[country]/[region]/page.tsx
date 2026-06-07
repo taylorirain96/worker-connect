@@ -7,6 +7,7 @@ import { SERVICES, getService } from '@/lib/seo/services'
 import { NZ_REGIONS, getNZRegion, COUNTRY_NAMES } from '@/lib/seo/regions'
 import { buildServiceLocationJsonLd } from '@/lib/seo/jsonld'
 import { SITE_URL } from '@/lib/seo/config'
+import JsonLdScript from '@/components/seo/JsonLdScript'
 
 interface Props {
   params: Promise<{ service: string; country: string; region: string }>
@@ -64,11 +65,7 @@ export default async function ServiceLocationPage({ params }: Props) {
 
   return (
     <div className="flex flex-col min-h-screen luxury-bg">
-      <script
-        id="jsonld-service-location"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <JsonLdScript id="jsonld-service-location" data={jsonLd} />
 
       <MarketingNavbar />
 

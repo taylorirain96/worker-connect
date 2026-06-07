@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import MarketingNavbar from '@/components/layout/MarketingNavbar'
 import Footer from '@/components/layout/Footer'
+import JsonLdScript from '@/components/seo/JsonLdScript'
 import {
   SERVICES,
   LOCATIONS,
@@ -163,29 +164,13 @@ export default async function ServiceCityPage({ params }: Props) {
 
   return (
     <div className="flex flex-col min-h-screen luxury-bg">
-      <script
-        id="jsonld-service"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceJsonLd) }}
-      />
-      <script
-        id="jsonld-breadcrumb"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
-      />
+      <JsonLdScript id="jsonld-service" data={serviceJsonLd} />
+      <JsonLdScript id="jsonld-breadcrumb" data={breadcrumbJsonLd} />
       {aggregateRatingJsonLd && (
-        <script
-          id="jsonld-aggregate-rating"
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(aggregateRatingJsonLd) }}
-        />
+        <JsonLdScript id="jsonld-aggregate-rating" data={aggregateRatingJsonLd} />
       )}
       {faqJsonLd && (
-        <script
-          id="jsonld-faq"
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
-        />
+        <JsonLdScript id="jsonld-faq" data={faqJsonLd} />
       )}
 
 

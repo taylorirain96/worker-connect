@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import MarketingNavbar from '@/components/layout/MarketingNavbar'
 import Footer from '@/components/layout/Footer'
+import JsonLdScript from '@/components/seo/JsonLdScript'
 import { SERVICES } from '@/lib/seo/servicesData'
 import { SITE_URL } from '@/lib/seo/config'
 import { Shield, Star, CheckCircle, Clock, BadgeCheck } from 'lucide-react'
@@ -110,21 +111,9 @@ const SERVICES_FAQS = [
 export default function ServicesPage() {
   return (
     <div className="flex flex-col min-h-screen luxury-bg">
-      <script
-        id="jsonld-itemlist"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }}
-      />
-      <script
-        id="jsonld-services-breadcrumb"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
-      />
-      <script
-        id="jsonld-services-faq"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
-      />
+      <JsonLdScript id="jsonld-itemlist" data={itemListJsonLd} />
+      <JsonLdScript id="jsonld-services-breadcrumb" data={breadcrumbJsonLd} />
+      <JsonLdScript id="jsonld-services-faq" data={faqJsonLd} />
 
       <MarketingNavbar />
 

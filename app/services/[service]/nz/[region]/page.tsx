@@ -10,6 +10,7 @@ import {
   getServiceDetails,
 } from '@/lib/seo/servicesData'
 import { SITE_URL } from '@/lib/seo/config'
+import JsonLdScript from '@/components/seo/JsonLdScript'
 
 interface Props {
   params: Promise<{ service: string; region: string }>
@@ -122,16 +123,8 @@ export default async function ServiceRegionPage({ params }: Props) {
 
   return (
     <div className="flex flex-col min-h-screen luxury-bg">
-      <script
-        id="jsonld-service"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceJsonLd) }}
-      />
-      <script
-        id="jsonld-breadcrumb"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
-      />
+      <JsonLdScript id="jsonld-service" data={serviceJsonLd} />
+      <JsonLdScript id="jsonld-breadcrumb" data={breadcrumbJsonLd} />
 
       <MarketingNavbar />
 
