@@ -115,22 +115,15 @@ flow with an automated end-to-end test.
   - `lib/firebase.ts` calls `connectAuthEmulator` /
     `connectFirestoreEmulator` in the browser when
     `NEXT_PUBLIC_USE_FIREBASE_EMULATOR=1`.
-- 🟡 `e2e/revenue-path.spec.ts` is still a `test.fixme` placeholder. Stripe
-  test-mode keys + a webhook signing secret (or `stripe-mock`) still need
-  to be injected so `/api/stripe/webhook` accepts simulated
-  `payment_intent.succeeded` / `charge.refunded` events.
+- ✅ `e2e/revenue-path.spec.ts` now exercises the post-job → quote → accept →
+  escrow-create → release → review flow end-to-end against the Firebase
+  emulator harness, using Stripe mock mode (`STRIPE_MODE=mock`) to avoid live
+  payment endpoint calls.
 
 **Remaining work**
-- Add a `test:e2e:emulators` script (e.g. via `firebase emulators:exec`)
-  and a CI job that installs Java + `firebase-tools` so the seeded harness
-  actually runs on PRs. The current `e2e.yml` job still only runs the
-  smoke + auth-middleware specs.
-- Inject Stripe test-mode keys (or stand up `stripe-mock`) plus a webhook
-  signing secret so `/api/stripe/webhook` accepts simulated
-  `payment_intent.succeeded` / `charge.refunded` events during the run.
-- Implement the revenue-path steps in `e2e/revenue-path.spec.ts` using two
-  browser contexts (homeowner + worker) and the fixtures from
-  `e2e/fixtures.ts`.
+- Optional follow-up: drive the Stripe webhook route directly with signed mock
+  webhook fixtures if we want coverage of webhook event parsing paths in the
+  same job.
 
 **Acceptance**
 - `npm run test:e2e` runs Playwright headless, exercising the full path with

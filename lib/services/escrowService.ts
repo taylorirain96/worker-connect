@@ -16,6 +16,7 @@ import {
   Timestamp,
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
+import { adminDb } from '@/lib/firebase-admin'
 import type {
   EscrowPayment,
   EscrowStatus,
@@ -33,6 +34,9 @@ const JOB_POSTING_COL = 'jobPostingPayments'
 
 function toISO(ts: Timestamp | string | undefined): string {
   if (!ts) return new Date().toISOString()
+  if (typeof ts === 'object' && ts !== null && 'toDate' in ts && typeof (ts as { toDate?: unknown }).toDate === 'function') {
+    return (ts as { toDate: () => Date }).toDate().toISOString()
+  }
   if (ts instanceof Timestamp) return ts.toDate().toISOString()
   return ts
 }
@@ -108,77 +112,128 @@ export function getJobPostingFee(estimatedValue: number): typeof JOB_POSTING_FEE
 export async function createEscrowRecord(
   data: Omit<EscrowPayment, 'id' | 'createdAt' | 'updatedAt'>
 ): Promise<string> {
-  if (!db) throw new Error('Firestore not available')
-  const ref = await addDoc(collection(db, ESCROW_COL), {
+  if (db) {
+    const ref = await addDoc(collection(db, ESCROW_COL), {
+      ...data,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    })
+    return ref.id
+  }
+  if (!adminDb) throw new Error('Firestore not available')
+  const now = new Date().toISOString()
+  const ref = await adminDb.collection(ESCROW_COL).add({
     ...data,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
+    createdAt: now,
+    updatedAt: now,
   })
   return ref.id
 }
 
 /** Fetch a single escrow record by ID. */
 export async function getEscrowById(id: string): Promise<EscrowPayment | null> {
-  if (!db) return null
-  const snap = await getDoc(doc(db, ESCROW_COL, id))
-  if (!snap.exists()) return null
+  if (db) {
+    const snap = await getDoc(doc(db, ESCROW_COL, id))
+    if (!snap.exists()) return null
+    return toEscrow(snap.id, snap.data() as Record<string, unknown>)
+  }
+  if (!adminDb) return null
+  const snap = await adminDb.collection(ESCROW_COL).doc(id).get()
+  if (!snap.exists) return null
   return toEscrow(snap.id, snap.data() as Record<string, unknown>)
 }
 
 /** Fetch escrow record by Stripe PaymentIntent ID. */
 export async function getEscrowByPaymentIntent(paymentIntentId: string): Promise<EscrowPayment | null> {
-  if (!db) return null
-  const snap = await getDocs(
-    query(
-      collection(db, ESCROW_COL),
-      where('stripePaymentIntentId', '==', paymentIntentId),
-      limit(1)
+  if (db) {
+    const snap = await getDocs(
+      query(
+        collection(db, ESCROW_COL),
+        where('stripePaymentIntentId', '==', paymentIntentId),
+        limit(1)
+      )
     )
-  )
+    if (snap.empty) return null
+    return toEscrow(snap.docs[0].id, snap.docs[0].data() as Record<string, unknown>)
+  }
+  if (!adminDb) return null
+  const snap = await adminDb
+    .collection(ESCROW_COL)
+    .where('stripePaymentIntentId', '==', paymentIntentId)
+    .limit(1)
+    .get()
   if (snap.empty) return null
   return toEscrow(snap.docs[0].id, snap.docs[0].data() as Record<string, unknown>)
 }
 
 /** Fetch escrow records for a job. */
 export async function getJobEscrow(jobId: string): Promise<EscrowPayment | null> {
-  if (!db) return null
-  const snap = await getDocs(
-    query(
-      collection(db, ESCROW_COL),
-      where('jobId', '==', jobId),
-      orderBy('createdAt', 'desc'),
-      limit(1)
+  if (db) {
+    const snap = await getDocs(
+      query(
+        collection(db, ESCROW_COL),
+        where('jobId', '==', jobId),
+        orderBy('createdAt', 'desc'),
+        limit(1)
+      )
     )
-  )
+    if (snap.empty) return null
+    return toEscrow(snap.docs[0].id, snap.docs[0].data() as Record<string, unknown>)
+  }
+  if (!adminDb) return null
+  const snap = await adminDb
+    .collection(ESCROW_COL)
+    .where('jobId', '==', jobId)
+    .orderBy('createdAt', 'desc')
+    .limit(1)
+    .get()
   if (snap.empty) return null
   return toEscrow(snap.docs[0].id, snap.docs[0].data() as Record<string, unknown>)
 }
 
 /** Fetch all escrow records for a worker, newest first. */
 export async function getWorkerEscrows(workerId: string, pageSize = 50): Promise<EscrowPayment[]> {
-  if (!db) return []
-  const snap = await getDocs(
-    query(
-      collection(db, ESCROW_COL),
-      where('workerId', '==', workerId),
-      orderBy('createdAt', 'desc'),
-      limit(pageSize)
+  if (db) {
+    const snap = await getDocs(
+      query(
+        collection(db, ESCROW_COL),
+        where('workerId', '==', workerId),
+        orderBy('createdAt', 'desc'),
+        limit(pageSize)
+      )
     )
-  )
+    return snap.docs.map((d) => toEscrow(d.id, d.data() as Record<string, unknown>))
+  }
+  if (!adminDb) return []
+  const snap = await adminDb
+    .collection(ESCROW_COL)
+    .where('workerId', '==', workerId)
+    .orderBy('createdAt', 'desc')
+    .limit(pageSize)
+    .get()
   return snap.docs.map((d) => toEscrow(d.id, d.data() as Record<string, unknown>))
 }
 
 /** Fetch all escrow records for an employer, newest first. */
 export async function getEmployerEscrows(employerId: string, pageSize = 50): Promise<EscrowPayment[]> {
-  if (!db) return []
-  const snap = await getDocs(
-    query(
-      collection(db, ESCROW_COL),
-      where('employerId', '==', employerId),
-      orderBy('createdAt', 'desc'),
-      limit(pageSize)
+  if (db) {
+    const snap = await getDocs(
+      query(
+        collection(db, ESCROW_COL),
+        where('employerId', '==', employerId),
+        orderBy('createdAt', 'desc'),
+        limit(pageSize)
+      )
     )
-  )
+    return snap.docs.map((d) => toEscrow(d.id, d.data() as Record<string, unknown>))
+  }
+  if (!adminDb) return []
+  const snap = await adminDb
+    .collection(ESCROW_COL)
+    .where('employerId', '==', employerId)
+    .orderBy('createdAt', 'desc')
+    .limit(pageSize)
+    .get()
   return snap.docs.map((d) => toEscrow(d.id, d.data() as Record<string, unknown>))
 }
 
@@ -188,11 +243,19 @@ export async function updateEscrowStatus(
   status: EscrowStatus,
   extra?: Partial<EscrowPayment>
 ): Promise<void> {
-  if (!db) return
-  await updateDoc(doc(db, ESCROW_COL, escrowId), {
+  if (db) {
+    await updateDoc(doc(db, ESCROW_COL, escrowId), {
+      status,
+      ...extra,
+      updatedAt: serverTimestamp(),
+    })
+    return
+  }
+  if (!adminDb) return
+  await adminDb.collection(ESCROW_COL).doc(escrowId).update({
     status,
     ...extra,
-    updatedAt: serverTimestamp(),
+    updatedAt: new Date().toISOString(),
   })
 }
 

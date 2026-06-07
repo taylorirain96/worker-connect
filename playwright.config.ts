@@ -32,6 +32,11 @@ if (process.env.FIRESTORE_EMULATOR_HOST || process.env.FIREBASE_AUTH_EMULATOR_HO
   process.env.GOOGLE_CLOUD_PROJECT = process.env.GOOGLE_CLOUD_PROJECT ?? 'quicktrade-e2e';
   process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATOR =
     process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATOR ?? '1';
+  process.env.STRIPE_MODE = process.env.STRIPE_MODE ?? 'mock';
+  process.env.STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY ?? 'sk_test_mock_e2e';
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY =
+    process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? 'pk_test_mock_e2e';
+  process.env.STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET ?? 'whsec_e2e_test';
 }
 
 export default defineConfig({
@@ -95,6 +100,13 @@ export default defineConfig({
             : {}),
           ...(process.env.STRIPE_WEBHOOK_SECRET
             ? { STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET }
+            : {}),
+          ...(process.env.STRIPE_MODE ? { STRIPE_MODE: process.env.STRIPE_MODE } : {}),
+          ...(process.env.STRIPE_SECRET_KEY
+            ? { STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY }
+            : {}),
+          ...(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+            ? { NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }
             : {}),
         },
       },

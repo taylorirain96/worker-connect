@@ -20,5 +20,8 @@ export function getStripe(): Stripe {
 
 /** Returns true when the Stripe secret key is configured. */
 export function isStripeConfigured(): boolean {
+  if ((process.env.STRIPE_MODE ?? '').toLowerCase() === 'mock') {
+    return false
+  }
   return Boolean(process.env.STRIPE_SECRET_KEY)
 }
