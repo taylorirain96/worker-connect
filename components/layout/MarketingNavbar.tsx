@@ -9,7 +9,7 @@ export default function MarketingNavbar() {
           <Link href="/" className="flex items-center gap-2">
             <Image
               src="/icons/icon-192.png"
-              alt="QuickTrade home"
+              alt="QuickTrade logo"
               width={32}
               height={32}
               sizes="32px"

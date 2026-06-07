@@ -8,6 +8,7 @@ function serializeJsonLd(data: unknown) {
     .replace(/</g, '\\u003c')
     .replace(/>/g, '\\u003e')
     .replace(/&/g, '\\u0026')
+    .replace(/\//g, '\\/')
 }
 
 export default function JsonLdScript({ id, data }: JsonLdScriptProps) {
