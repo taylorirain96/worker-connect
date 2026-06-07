@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
         tax,
         total,
         taxRate,
-        currency: 'usd',
+        currency: 'nzd',
         status: 'draft',
         dueDate: new Date(Date.now() + dueInDays * 86400000).toISOString(),
         createdAt: new Date().toISOString(),

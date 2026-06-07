@@ -1,9 +1,9 @@
 import type { SupportedCountry, TaxRules } from '@/types/global'
 
 const SUPPORTED_COUNTRIES: SupportedCountry[] = [
-  { code: 'US', name: 'United States', flag: '🇺🇸', currency: 'USD', supported: true, tier: 'full' },
   { code: 'NZ', name: 'New Zealand', flag: '🇳🇿', currency: 'NZD', supported: true, tier: 'full' },
   { code: 'AU', name: 'Australia', flag: '🇦🇺', currency: 'AUD', supported: true, tier: 'full' },
+  { code: 'US', name: 'United States', flag: '🇺🇸', currency: 'USD', supported: false, tier: 'partial' },
   { code: 'GB', name: 'United Kingdom', flag: '🇬🇧', currency: 'GBP', supported: true, tier: 'full' },
   { code: 'CA', name: 'Canada', flag: '🇨🇦', currency: 'CAD', supported: true, tier: 'full' },
   { code: 'DE', name: 'Germany', flag: '🇩🇪', currency: 'EUR', supported: true, tier: 'full' },
@@ -46,26 +46,6 @@ const SUPPORTED_COUNTRIES: SupportedCountry[] = [
 ]
 
 const TAX_RULES: Record<string, TaxRules> = {
-  US: {
-    id: 'us-2024',
-    countryCode: 'US',
-    countryName: 'United States',
-    taxYear: 2024,
-    federalTaxBrackets: [
-      { minIncome: 0, maxIncome: 11600, rate: 0.10 },
-      { minIncome: 11600, maxIncome: 47150, rate: 0.12 },
-      { minIncome: 47150, maxIncome: 100525, rate: 0.22 },
-      { minIncome: 100525, maxIncome: 191950, rate: 0.24 },
-      { minIncome: 191950, maxIncome: 243725, rate: 0.32 },
-      { minIncome: 243725, maxIncome: 609350, rate: 0.35 },
-      { minIncome: 609350, maxIncome: null, rate: 0.37 },
-    ],
-    selfEmploymentTaxRate: 0.1530,
-    standardDeduction: 14600,
-    filingDeadline: 'April 15',
-    currency: 'USD',
-    forms: ['1040', 'Schedule C', 'Schedule SE', 'W-2', '1099-NEC'],
-  },
   NZ: {
     id: 'nz-2024',
     countryCode: 'NZ',

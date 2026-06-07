@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import admin, { adminDb } from '@/lib/firebase-admin'
 import { FieldValue } from 'firebase-admin/firestore'
+import { normalizeJobCountry } from '@/lib/services/jobCountryService'
 
 export const dynamic = 'force-dynamic'
 
@@ -47,6 +48,7 @@ export async function POST(req: NextRequest) {
       title?: string
       description?: string
       category?: string
+      country?: string
       location?: string
       budgetMin?: number
       budgetMax?: number
@@ -68,6 +70,7 @@ export async function POST(req: NextRequest) {
       title: String(title).trim().slice(0, 100),
       description: String(description).trim().slice(0, 2000),
       category: String(category),
+      country: normalizeJobCountry(body.country) ?? 'NZ',
       location: typeof body.location === 'string' ? body.location.trim() : '',
       budgetMin: typeof body.budgetMin === 'number' ? body.budgetMin : 0,
       budgetMax: typeof body.budgetMax === 'number' ? body.budgetMax : 0,

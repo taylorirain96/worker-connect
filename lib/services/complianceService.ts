@@ -2,35 +2,6 @@ import type { ComplianceRequirement, ComplianceAuditResult } from '@/types/globa
 import { getUserConsents } from './gdprService'
 
 const COUNTRY_REQUIREMENTS: Record<string, ComplianceRequirement> = {
-  US: {
-    countryCode: 'US',
-    countryName: 'United States',
-    requirements: [
-      {
-        id: 'us-ccpa',
-        title: 'CCPA Compliance',
-        description: 'California Consumer Privacy Act consent required for California residents',
-        mandatory: true,
-        category: 'privacy',
-      },
-      {
-        id: 'us-1099',
-        title: '1099-NEC Filing',
-        description: 'Contractors earning $600+ must receive a 1099-NEC form',
-        mandatory: true,
-        category: 'tax',
-        deadline: 'January 31',
-      },
-      {
-        id: 'us-w9',
-        title: 'W-9 Form',
-        description: 'Taxpayer identification number certification',
-        mandatory: true,
-        category: 'tax',
-      },
-    ],
-    lastUpdated: '2024-01-01',
-  },
   EU: {
     countryCode: 'EU',
     countryName: 'European Union',
@@ -245,7 +216,6 @@ export async function auditUserCompliance(
     if (req.category === 'privacy') {
       const hasConsent =
         (req.id.includes('gdpr') && consents?.gdprConsent) ||
-        (req.id.includes('ccpa') && consents?.ccpaConsent) ||
         (req.id.includes('pipeda') && consents?.pipedeaConsent) ||
         (req.id.includes('nz-privacy') && consents?.privacyActNZ) ||
         (req.id.includes('au-privacy') && consents?.privacyActAU)
@@ -272,7 +242,7 @@ export async function auditUserCompliance(
 export async function generateComplianceReport(
   userId: string
 ): Promise<{ passed: boolean; countries: ComplianceAuditResult[] }> {
-  const countryCodes = ['US', 'NZ', 'AU', 'GB', 'CA']
+  const countryCodes = ['NZ', 'AU', 'GB', 'CA', 'EU']
   const results = await Promise.all(
     countryCodes.map(code => auditUserCompliance(userId, code))
   )

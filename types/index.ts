@@ -1973,16 +1973,16 @@ export interface EscrowPayment {
   quoteId: string
   employerId: string
   workerId: string
-  /** Total amount held in escrow (NZD) */
+  /** Total amount held in escrow (NZD/AUD) */
   amount: number
-  currency: 'nzd'
+  currency: 'nzd' | 'aud'
   status: EscrowStatus
   stripePaymentIntentId?: string
   /** Platform commission percentage applied on release */
   commissionRate: number
-  /** Commission amount (NZD) */
+  /** Commission amount (NZD/AUD) */
   commissionAmount: number
-  /** Amount worker will receive (NZD) */
+  /** Amount worker will receive (NZD/AUD) */
   workerAmount: number
   /** Stripe Connect transfer ID after release */
   stripeTransferId?: string
@@ -2002,7 +2002,7 @@ export interface JobPostingPayment {
   employerId: string
   tier: JobPostingFeeTier
   amount: number
-  currency: 'nzd'
+  currency: 'nzd' | 'aud'
   status: 'pending' | 'completed' | 'failed'
   stripeCheckoutSessionId?: string
   stripePaymentIntentId?: string

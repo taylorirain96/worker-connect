@@ -14,7 +14,7 @@ function calculateProgressiveTax(income: number, brackets: TaxBracket[]): number
 }
 
 export function calculateTaxes(input: TaxCalculationInput): TaxCalculationResult {
-  const { countryCode, grossIncome, classification, state, taxYear: _taxYear } = input
+  const { countryCode, grossIncome, classification, taxYear: _taxYear } = input
   const rules = getTaxRules(countryCode)
 
   if (!rules) {
@@ -33,30 +33,10 @@ export function calculateTaxes(input: TaxCalculationInput): TaxCalculationResult
   const breakdown: Array<{ label: string; amount: number }> = []
   let federalTax = 0
   let stateTax = 0
-  let selfEmploymentTax = 0
   let gst = 0
 
-  const taxableIncome =
-    countryCode === 'US' && rules.standardDeduction
-      ? Math.max(0, grossIncome - rules.standardDeduction)
-      : grossIncome
-
-  federalTax = calculateProgressiveTax(taxableIncome, rules.federalTaxBrackets)
+  federalTax = calculateProgressiveTax(grossIncome, rules.federalTaxBrackets)
   breakdown.push({ label: 'Federal Income Tax', amount: federalTax })
-
-  if (countryCode === 'US') {
-    if (classification === 'self_employed' || classification === 'contractor') {
-      selfEmploymentTax = grossIncome * (rules.selfEmploymentTaxRate ?? 0.153)
-      breakdown.push({ label: 'Self-Employment Tax', amount: selfEmploymentTax })
-    }
-    if (state && rules.stateTaxBrackets) {
-      const stateRule = rules.stateTaxBrackets.find(s => s.state === state)
-      if (stateRule) {
-        stateTax = calculateProgressiveTax(taxableIncome, stateRule.brackets)
-        breakdown.push({ label: `${state} State Tax`, amount: stateTax })
-      }
-    }
-  }
 
   if (countryCode === 'GB') {
     // UK NI Class 1 rates for 2024/25: primary threshold £12,570, upper threshold £50,270
@@ -83,7 +63,7 @@ export function calculateTaxes(input: TaxCalculationInput): TaxCalculationResult
     }
   }
 
-  const totalTax = federalTax + stateTax + selfEmploymentTax + gst
+  const totalTax = federalTax + stateTax + gst
   const effectiveRate = grossIncome > 0 ? totalTax / grossIncome : 0
   const netIncome = grossIncome - totalTax
 
@@ -92,7 +72,6 @@ export function calculateTaxes(input: TaxCalculationInput): TaxCalculationResult
     grossIncome,
     federalTax,
     stateTax: stateTax > 0 ? stateTax : undefined,
-    selfEmploymentTax: selfEmploymentTax > 0 ? selfEmploymentTax : undefined,
     gst: gst > 0 ? gst : undefined,
     totalTax,
     effectiveRate,

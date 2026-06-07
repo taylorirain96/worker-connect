@@ -15,6 +15,16 @@ import {
 import { db } from '@/lib/firebase'
 import type { Job, JobCategory } from '@/types'
 
+type SaveJobInput = Omit<Job, 'id' | 'createdAt' | 'updatedAt' | 'applicantsCount'> & {
+  country?: Job['country']
+}
+
+function normalizeJobCountry(value: unknown): Job['country'] | null {
+  if (typeof value !== 'string') return null
+  const upper = value.toUpperCase()
+  return upper === 'NZ' || upper === 'AU' ? (upper as Job['country']) : null
+}
+
 function docToJob(id: string, data: DocumentData): Job {
   return {
     ...data,
@@ -31,12 +41,14 @@ function docToJob(id: string, data: DocumentData): Job {
 }
 
 export async function saveJob(
-  jobData: Omit<Job, 'id' | 'createdAt' | 'updatedAt' | 'applicantsCount'>
+  jobData: SaveJobInput
 ): Promise<string> {
   if (!db) throw new Error('Firestore is not initialized')
   const jobsRef = collection(db, 'jobs')
+  const country = normalizeJobCountry(jobData.country) ?? 'NZ'
   const docRef = await addDoc(jobsRef, {
     ...jobData,
+    country,
     applicantsCount: 0,
     status: jobData.status ?? 'open',
     createdAt: serverTimestamp(),

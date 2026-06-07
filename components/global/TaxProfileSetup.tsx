@@ -18,19 +18,17 @@ interface FormData {
   classification: EmploymentClassification
   currency: string
   gdprConsent: boolean
-  ccpaConsent: boolean
   privacyActConsent: boolean
 }
 
 export default function TaxProfileSetup({ workerId, onComplete }: TaxProfileSetupProps) {
   const [step, setStep] = useState(1)
   const [form, setForm] = useState<FormData>({
-    countryCode: '',
+    countryCode: 'NZ',
     taxId: '',
     classification: 'contractor',
-    currency: 'USD',
+    currency: 'NZD',
     gdprConsent: false,
-    ccpaConsent: false,
     privacyActConsent: false,
   })
   const [taxIdStatus, setTaxIdStatus] = useState<{ valid: boolean; message: string } | null>(null)
@@ -55,6 +53,14 @@ export default function TaxProfileSetup({ workerId, onComplete }: TaxProfileSetu
     }
   }
 
+  const handleCountryChange = (countryCode: string) => {
+    setForm((f) => ({
+      ...f,
+      countryCode,
+      currency: countryCode === 'AU' ? 'AUD' : 'NZD',
+    }))
+  }
+
   const handleSubmit = async () => {
     setLoading(true)
     setError('')
@@ -72,7 +78,6 @@ export default function TaxProfileSetup({ workerId, onComplete }: TaxProfileSetu
           currency: form.currency,
           acceptedTerms: {
             gdprConsent: form.gdprConsent,
-            ccpaConsent: form.ccpaConsent,
             privacyActConsent: form.privacyActConsent,
             acceptedAt: new Date().toISOString(),
           },
@@ -115,7 +120,7 @@ export default function TaxProfileSetup({ workerId, onComplete }: TaxProfileSetu
           {step === 1 && (
             <CountrySelector
               value={form.countryCode}
-              onChange={v => setForm(f => ({ ...f, countryCode: v }))}
+              onChange={handleCountryChange}
               label="Your Country"
             />
           )}
@@ -124,7 +129,7 @@ export default function TaxProfileSetup({ workerId, onComplete }: TaxProfileSetu
             <div className="space-y-3">
               <div className="flex flex-col gap-1">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Tax ID / SSN / IRD Number
+                  IRD (NZ) / TFN (AU) Number
                 </label>
                 <div className="flex gap-2">
                   <input
@@ -134,7 +139,7 @@ export default function TaxProfileSetup({ workerId, onComplete }: TaxProfileSetu
                       setForm(f => ({ ...f, taxId: e.target.value }))
                       setTaxIdStatus(null)
                     }}
-                    placeholder="Enter your tax ID"
+                    placeholder={form.countryCode === 'AU' ? 'Enter your TFN' : 'Enter your IRD number'}
                     className="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
                   <Button variant="outline" onClick={verifyTaxId} loading={loading} size="sm">
@@ -191,7 +196,6 @@ export default function TaxProfileSetup({ workerId, onComplete }: TaxProfileSetu
               </p>
               {[
                 { key: 'gdprConsent', label: 'GDPR - General Data Protection Regulation' },
-                { key: 'ccpaConsent', label: 'CCPA - California Consumer Privacy Act' },
                 { key: 'privacyActConsent', label: 'Privacy Act (NZ/AU)' },
               ].map(({ key, label }) => (
                 <label key={key} className="flex items-start gap-3 cursor-pointer">

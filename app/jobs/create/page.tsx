@@ -16,11 +16,13 @@ import { hasEmployerAI } from '@/lib/subscriptions'
 import AIUpgradePrompt from '@/components/ui/AIUpgradePrompt'
 import { trackEvent } from '@/lib/analytics'
 import Link from 'next/link'
+import type { Country } from '@/types'
 
 const jobSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters').max(100),
   description: z.string().min(20, 'Description must be at least 20 characters').max(2000),
   category: z.string().min(1, 'Please select a category'),
+  country: z.enum(['NZ', 'AU']),
   location: z.string().min(3, 'Please enter a location'),
   budgetMin: z.coerce.number().min(0, 'Min budget must be 0 or more'),
   budgetMax: z.coerce.number().min(1, 'Max budget must be greater than 0'),
@@ -63,7 +65,7 @@ function CreateJobPage() {
     formState: { errors, isSubmitting },
   } = useForm<JobFormData>({
     resolver: zodResolver(jobSchema),
-    defaultValues: { budgetType: 'fixed', urgency: 'medium', budgetMin: 0 },
+    defaultValues: { budgetType: 'fixed', urgency: 'medium', budgetMin: 0, country: 'NZ' },
   })
 
   // Pre-fill form from URL params when loading from a saved template
@@ -76,6 +78,8 @@ function CreateJobPage() {
       const val = searchParams.get(f)
       if (val) setValue(f, val)
     })
+    const country = searchParams.get('country')
+    if (country === 'NZ' || country === 'AU') setValue('country', country)
 
     const budgetType = searchParams.get('budgetType')
     if (budgetType === 'fixed' || budgetType === 'hourly') setValue('budgetType', budgetType)
@@ -146,6 +150,7 @@ function CreateJobPage() {
         title: data.title,
         description: data.description,
         category: data.category as import('@/types').JobCategory,
+        country: data.country as Country,
         location: data.location,
         budget: data.budgetMax,
         budgetType: data.budgetType,
@@ -170,6 +175,7 @@ function CreateJobPage() {
             title: data.title,
             location: data.location,
             category: data.category,
+            country: data.country,
             urgency: data.urgency,
             budget: data.budgetMax,
           }),
@@ -191,6 +197,7 @@ function CreateJobPage() {
               title: data.title,
               description: data.description,
               category: data.category,
+              country: data.country,
               location: data.location,
               budgetMin: data.budgetMin,
               budgetMax: data.budgetMax,
@@ -378,14 +385,28 @@ function CreateJobPage() {
                   {errors.category && <p className="mt-1 text-sm text-red-600">{errors.category.message}</p>}
                 </div>
 
-                <Input
-                  label="Location"
-                  placeholder="e.g., Blenheim, Marlborough"
-                  error={errors.location?.message}
-                  required
-                  {...register('location')}
-                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Country <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    className={`w-full px-4 py-2.5 text-sm border ${errors.country ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500`}
+                    {...register('country')}
+                  >
+                    <option value="NZ">New Zealand</option>
+                    <option value="AU">Australia</option>
+                  </select>
+                  {errors.country && <p className="mt-1 text-sm text-red-600">{errors.country.message}</p>}
+                </div>
               </div>
+
+              <Input
+                label="City / Region"
+                placeholder="e.g., Blenheim, Marlborough"
+                error={errors.location?.message}
+                required
+                {...register('location')}
+              />
 
               <Input
                 label="Required Skills (comma-separated)"

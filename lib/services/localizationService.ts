@@ -166,10 +166,10 @@ export async function setUserLanguage(userId: string, languageCode: string): Pro
 }
 
 export async function getUserLanguage(userId: string): Promise<string> {
-  if (!db) return 'en-US'
+  if (!db) return 'en-NZ'
 
   const snap = await getDoc(doc(db, 'userLanguagePreferences', userId))
-  if (!snap.exists()) return 'en-US'
+  if (!snap.exists()) return 'en-NZ'
 
-  return (snap.data().languageCode as string) ?? 'en-US'
+  return (snap.data().languageCode as string) ?? 'en-NZ'
 }
