@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import Script from 'next/script'
-import Navbar from '@/components/layout/Navbar'
+import MarketingNavbar from '@/components/layout/MarketingNavbar'
 import Footer from '@/components/layout/Footer'
 import { SERVICES } from '@/lib/seo/servicesData'
 import { SITE_URL } from '@/lib/seo/config'
@@ -111,23 +110,23 @@ const SERVICES_FAQS = [
 export default function ServicesPage() {
   return (
     <div className="flex flex-col min-h-screen luxury-bg">
-      <Script
+      <script
         id="jsonld-itemlist"
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }}
       />
-      <Script
+      <script
         id="jsonld-services-breadcrumb"
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
-      <Script
+      <script
         id="jsonld-services-faq"
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
 
-      <Navbar />
+      <MarketingNavbar />
 
       <main className="flex-1">
         {/* Hero */}
@@ -291,4 +290,3 @@ export default function ServicesPage() {
     </div>
   )
 }
-
