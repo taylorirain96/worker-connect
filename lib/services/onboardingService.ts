@@ -324,6 +324,9 @@ export async function completeOnboardingStep(
   if (data.name) profileUpdate.displayName = data.name
   if (data.email) profileUpdate.email = data.email
   if (data.phone) profileUpdate.phone = data.phone
+  if (data.country) profileUpdate.country = data.country
+  if (data.region) profileUpdate.region = data.region
+  if (data.city) profileUpdate.city = data.city
   if (data.location) profileUpdate.location = data.location
   if (data.skills) profileUpdate.skills = data.skills
   if (data.hourlyRate) profileUpdate.hourlyRate = data.hourlyRate
