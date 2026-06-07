@@ -30,6 +30,7 @@ export async function GET(
           .collection('invoices')
           .where(field, '==', userId)
           .orderBy('createdAt', 'desc')
+          .limit(pageSize)
         if (status) {
           q = q.where('status', '==', status)
         }
@@ -39,7 +40,7 @@ export async function GET(
           `Falling back to unordered invoice query for ${field}; likely missing createdAt index.`,
           error,
         )
-        let q = adminDb.collection('invoices').where(field, '==', userId)
+        let q = adminDb.collection('invoices').where(field, '==', userId).limit(pageSize)
         if (status) {
           q = q.where('status', '==', status)
         }

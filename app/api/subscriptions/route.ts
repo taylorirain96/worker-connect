@@ -28,21 +28,35 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Missing userId' }, { status: 400 })
     }
 
-    const snapshot = await adminDb
-      .collection('subscriptions')
-      .where('userId', '==', userId)
-      .get()
+    let docs
+      : FirebaseFirestore.QueryDocumentSnapshot<FirebaseFirestore.DocumentData>[]
 
-    if (snapshot.empty) {
-      return NextResponse.json({ subscription: null })
-    }
-
-    const doc = snapshot.docs
-      .sort((a, b) => {
+    try {
+      const orderedSnapshot = await adminDb
+        .collection('subscriptions')
+        .where('userId', '==', userId)
+        .orderBy('updatedAt', 'desc')
+        .limit(1)
+        .get()
+      docs = orderedSnapshot.docs
+    } catch (error) {
+      console.warn('Falling back to unordered subscription query; likely missing updatedAt index.', error)
+      const fallbackSnapshot = await adminDb
+        .collection('subscriptions')
+        .where('userId', '==', userId)
+        .get()
+      docs = fallbackSnapshot.docs.sort((a, b) => {
         const aUpdated = toIsoTimestamp((a.data() as Record<string, unknown>).updatedAt) ?? ''
         const bUpdated = toIsoTimestamp((b.data() as Record<string, unknown>).updatedAt) ?? ''
         return bUpdated.localeCompare(aUpdated)
-      })[0]
+      })
+    }
+
+    if (docs.length === 0) {
+      return NextResponse.json({ subscription: null })
+    }
+
+    const doc = docs[0]
     return NextResponse.json({
       subscription: serializeSubscription(doc.id, doc.data() as Record<string, unknown>),
     })
