@@ -1,4 +1,3 @@
-'use client'
 import type { Referral } from '@/types'
 import { getReferralStatusLabel, getNextReferralBonus, REFERRAL_BONUSES } from '@/lib/referrals/referralLogic'
 import { formatCurrency, formatRelativeDate } from '@/lib/utils'

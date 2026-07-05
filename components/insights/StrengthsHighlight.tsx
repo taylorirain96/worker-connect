@@ -1,4 +1,3 @@
-'use client'
 import { Star, Award } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 

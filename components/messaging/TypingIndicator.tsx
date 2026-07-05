@@ -1,4 +1,3 @@
-'use client'
 import { cn } from '@/lib/utils'
 
 // Animation delays for the three bouncing dots

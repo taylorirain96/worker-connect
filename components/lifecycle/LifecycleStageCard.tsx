@@ -1,4 +1,3 @@
-'use client'
 import { CheckCircle, Circle, ArrowRight } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import type { LifecycleStage } from '@/types'
