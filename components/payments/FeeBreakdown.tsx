@@ -1,5 +1,3 @@
-'use client'
-
 /**
  * FeeBreakdown — transparent payment fee breakdown for QuickTrade.
  *

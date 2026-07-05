@@ -1,9 +1,47 @@
-/**
- * TypeScript interfaces for the messaging system.
- * Core Message and Conversation types live in types/index.ts;
- * this file adds messaging-specific request/response shapes.
- */
-export type { Message, Conversation } from '@/types'
+export interface Message {
+  id: string
+  conversationId: string
+  senderId: string
+  senderName: string
+  senderAvatar?: string
+  content: string
+  type: 'text' | 'image' | 'file'
+  imageUrls?: string[]
+  read: boolean
+  createdAt: string
+}
+
+export interface Conversation {
+  id: string
+  participants: string[]
+  participantNames: Record<string, string>
+  participantAvatars?: Record<string, string>
+  lastMessage?: string
+  lastMessageAt?: string
+  unreadCount?: Record<string, number>
+  jobId?: string
+  jobTitle?: string
+  /**
+   * The user id of the employer/poster on the related job, when known.
+   * Used to label conversations in the unified inbox as "Hiring you" vs
+   * "Applying for your …" without splitting the inbox by role.
+   */
+  jobEmployerId?: string
+  createdAt: string
+}
+
+export interface ChatConversation {
+  id: string
+  participants: Record<string, true>
+  participantNames: Record<string, string>
+  participantAvatars?: Record<string, string | null>
+  lastMessage?: string
+  lastMessageAt?: number
+  jobId?: string
+  jobTitle?: string
+  unreadCount?: Record<string, number>
+  createdAt: number
+}
 
 /** Payload for POST /api/messages/send */
 export interface SendMessagePayload {
@@ -26,14 +64,14 @@ export interface StartConversationPayload {
 
 /** Response from GET /api/messages/conversations */
 export interface ConversationsResponse {
-  conversations: import('@/types').Conversation[]
+  conversations: Conversation[]
   total: number
 }
 
 /** Response from GET /api/messages/[conversationId] */
 export interface ConversationMessagesResponse {
-  conversation: import('@/types').Conversation | null
-  messages: import('@/types').Message[]
+  conversation: Conversation | null
+  messages: Message[]
   total: number
 }
 
@@ -45,10 +83,8 @@ export interface TypingIndicatorPayload {
   isTyping: boolean
 }
 
-import type { Message as BaseMessage } from '@/types'
-
 /** Message with extra read-receipt metadata */
-export interface MessageWithReceipt extends BaseMessage {
+export interface MessageWithReceipt extends Message {
   deliveredAt?: string
   readAt?: string
 }

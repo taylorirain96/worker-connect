@@ -1,4 +1,4 @@
-import type { QueryDocumentSnapshot } from 'firebase-admin/firestore'
+import type { DocumentData, QueryDocumentSnapshot } from 'firebase-admin/firestore'
 import { NextRequest, NextResponse } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
 
@@ -70,8 +70,6 @@ interface DashboardResult {
 }
 
 type AdminAnalyticsTopWorker = DashboardResult['adminAnalytics']['topWorkers'][number]
-type FirestoreDoc = QueryDocumentSnapshot
-
 const CATEGORY_COLORS = [
   '#6366f1', '#22d3ee', '#f59e0b', '#10b981', '#ef4444',
   '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#3b82f6', '#84cc16',
@@ -201,7 +199,7 @@ async function buildDashboardData(): Promise<DashboardResult> {
     totalUsers = usersSnap.size
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
     const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString()
-    usersSnap.forEach((doc: FirestoreDoc) => {
+    usersSnap.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
       const role = doc.data().role as string
       const createdAt = doc.data().createdAt as string | undefined
       if (role === 'homeowner') homeownerCount++
@@ -226,7 +224,7 @@ async function buildDashboardData(): Promise<DashboardResult> {
     let hireTimeTotal = 0
     let hireTimeCount = 0
 
-    jobsSnap.forEach((doc: FirestoreDoc) => {
+    jobsSnap.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
       const d = doc.data()
       if (d.createdAt >= monthStart) totalJobsThisMonth++
       else if (d.createdAt >= lastMonthStart && d.createdAt < monthStart) totalJobsLastMonth++
@@ -259,7 +257,7 @@ async function buildDashboardData(): Promise<DashboardResult> {
     // Revenue from payments
     try {
       const paymentsSnap = await adminDb.collection('payments').get()
-      paymentsSnap.forEach((doc: FirestoreDoc) => {
+      paymentsSnap.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
         const d = doc.data()
         const amt = (d.commission ?? d.platformFee ?? 0) as number
         totalRevenue += amt
@@ -279,7 +277,7 @@ async function buildDashboardData(): Promise<DashboardResult> {
     try {
       const disputesSnap = await adminDb.collection('disputes').get()
       disputeCount = disputesSnap.size
-      disputesSnap.forEach((doc: FirestoreDoc) => {
+      disputesSnap.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
         const status = String(doc.data().status ?? '')
         if (status === 'resolved' || status === 'closed') {
           resolvedDisputeCount++
@@ -312,7 +310,7 @@ async function buildDashboardData(): Promise<DashboardResult> {
       .orderBy('completedJobs', 'desc')
       .limit(10)
       .get()
-    workersSnap.docs.forEach((doc: FirestoreDoc, i: number) => {
+    workersSnap.docs.forEach((doc: QueryDocumentSnapshot<DocumentData>, i: number) => {
       const d = doc.data()
       topWorkers.push({
         rank: i + 1,
@@ -335,7 +333,7 @@ async function buildDashboardData(): Promise<DashboardResult> {
 
     // Recent activity
     const recentJobs = await adminDb.collection('jobs').orderBy('createdAt', 'desc').limit(10).get()
-    recentJobs.docs.forEach((doc: FirestoreDoc) => {
+    recentJobs.docs.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
       const d = doc.data()
       recentActivity.push({
         id: doc.id,
@@ -346,7 +344,7 @@ async function buildDashboardData(): Promise<DashboardResult> {
       })
     })
     const recentUsers = await adminDb.collection('users').orderBy('createdAt', 'desc').limit(10).get()
-    recentUsers.docs.forEach((doc: FirestoreDoc) => {
+    recentUsers.docs.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
       const d = doc.data()
       recentActivity.push({
         id: doc.id,
@@ -549,7 +547,7 @@ export async function GET(request: NextRequest) {
 
       try {
         const paymentsSnap = await adminDb.collection('payments').get()
-        paymentsSnap.forEach((doc: FirestoreDoc) => {
+        paymentsSnap.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
           const d = doc.data() as Record<string, unknown>
           const createdMs = toMs(d.createdAt)
           if (createdMs === null) return
@@ -626,7 +624,7 @@ export async function GET(request: NextRequest) {
 
       try {
         const paymentsSnap = await adminDb.collection('payments').get()
-        paymentsSnap.forEach((doc: FirestoreDoc) => {
+        paymentsSnap.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
           const d = doc.data() as Record<string, unknown>
           const createdMs = toMs(d.createdAt)
           if (createdMs === null || createdMs < startMs || createdMs > endMs) return
@@ -690,7 +688,7 @@ export async function GET(request: NextRequest) {
 
       try {
         const disputesSnap = await adminDb.collection('disputes').get()
-        disputesSnap.forEach((doc: FirestoreDoc) => {
+        disputesSnap.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
           const d = doc.data() as Record<string, unknown>
           const createdMs = toMs(d.createdAt)
           if (createdMs === null || createdMs < startMs || createdMs > endMs) return

@@ -1,4 +1,3 @@
-'use client'
 import { cn } from '@/lib/utils'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import type { ReactNode } from 'react'

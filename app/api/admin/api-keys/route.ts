@@ -1,4 +1,4 @@
-import type { QueryDocumentSnapshot } from 'firebase-admin/firestore'
+import type { DocumentData, QueryDocumentSnapshot } from 'firebase-admin/firestore'
 import { NextRequest, NextResponse } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
 import { randomBytes } from 'crypto'
@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const snapshot = await adminDb.collection('apiKeys').orderBy('createdAt', 'desc').get()
-    const keys = snapshot.docs.map((d: QueryDocumentSnapshot) => {
+    const keys = snapshot.docs.map((d: QueryDocumentSnapshot<DocumentData>) => {
       const data = d.data()
       return {
         key: d.id,

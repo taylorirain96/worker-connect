@@ -1,5 +1,3 @@
-'use client'
-
 import { Shield, CheckCircle, TrendingDown, Info } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {

@@ -1,5 +1,3 @@
-'use client'
-
 import type { Agreement } from '@/types'
 
 interface AgreementPreviewProps {

@@ -1,5 +1,3 @@
-'use client'
-
 interface MilestoneProgressBarProps {
   label: string
   current: number

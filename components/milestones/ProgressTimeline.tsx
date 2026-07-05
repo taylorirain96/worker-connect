@@ -1,4 +1,3 @@
-'use client'
 import { Camera, MessageSquare } from 'lucide-react'
 import { formatRelativeDate } from '@/lib/utils'
 import type { JobProgressUpdate } from '@/types'

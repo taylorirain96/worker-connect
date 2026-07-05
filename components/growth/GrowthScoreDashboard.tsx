@@ -1,4 +1,3 @@
-'use client'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import type { GrowthScore } from '@/types'
