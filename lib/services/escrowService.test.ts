@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const collectionMock = vi.fn()
+const { collectionMock } = vi.hoisted(() => ({
+  collectionMock: vi.fn(),
+}))
 
 vi.mock('@/lib/firebase', () => ({
   db: null,

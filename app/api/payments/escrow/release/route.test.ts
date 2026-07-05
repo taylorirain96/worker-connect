@@ -1,29 +1,52 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { NextRequest } from 'next/server'
 
-const getEscrowByIdMock = vi.fn()
-const updateEscrowStatusMock = vi.fn()
-const isStripeConfiguredMock = vi.fn()
-const captureMock = vi.fn()
-const transferCreateMock = vi.fn()
-const getStripeMock = vi.fn()
-const toCentsMock = vi.fn((value: number) => Math.round(value * 100))
-const sendNotificationMock = vi.fn().mockResolvedValue(undefined)
-const sendPaymentReleasedEmailMock = vi.fn().mockResolvedValue(undefined)
-const rateLimitMock = vi.fn().mockReturnValue(false)
-const usersById: Record<string, Record<string, unknown> | undefined> = {}
-const jobsById: Record<string, Record<string, unknown> | undefined> = {}
-const jobUpdateMock = vi.fn().mockResolvedValue(undefined)
+const {
+  getEscrowByIdMock,
+  updateEscrowStatusMock,
+  isStripeConfiguredMock,
+  captureMock,
+  transferCreateMock,
+  getStripeMock,
+  toCentsMock,
+  sendNotificationMock,
+  sendPaymentReleasedEmailMock,
+  rateLimitMock,
+  usersById,
+  jobsById,
+  jobUpdateMock,
+  userDocGetMock,
+  jobDocGetMock,
+} = vi.hoisted(() => {
+  const usersById: Record<string, Record<string, unknown> | undefined> = {}
+  const jobsById: Record<string, Record<string, unknown> | undefined> = {}
+  const userDocGetMock = vi.fn(async (id: string) => ({
+    exists: Boolean(usersById[id]),
+    data: () => usersById[id],
+  }))
+  const jobDocGetMock = vi.fn(async (id: string) => ({
+    exists: Boolean(jobsById[id]),
+    data: () => jobsById[id],
+  }))
 
-const userDocGetMock = vi.fn(async (id: string) => ({
-  exists: Boolean(usersById[id]),
-  data: () => usersById[id],
-}))
-
-const jobDocGetMock = vi.fn(async (id: string) => ({
-  exists: Boolean(jobsById[id]),
-  data: () => jobsById[id],
-}))
+  return {
+    getEscrowByIdMock: vi.fn(),
+    updateEscrowStatusMock: vi.fn(),
+    isStripeConfiguredMock: vi.fn(),
+    captureMock: vi.fn(),
+    transferCreateMock: vi.fn(),
+    getStripeMock: vi.fn(),
+    toCentsMock: vi.fn((value: number) => Math.round(value * 100)),
+    sendNotificationMock: vi.fn().mockResolvedValue(undefined),
+    sendPaymentReleasedEmailMock: vi.fn().mockResolvedValue(undefined),
+    rateLimitMock: vi.fn().mockReturnValue(false),
+    usersById,
+    jobsById,
+    jobUpdateMock: vi.fn().mockResolvedValue(undefined),
+    userDocGetMock,
+    jobDocGetMock,
+  }
+})
 
 vi.mock('@/lib/services/escrowService', () => ({
   getCurrencyDisplay: vi.fn(() => ({ code: 'nzd', label: 'NZ$' })),
@@ -183,7 +206,7 @@ describe('POST /api/payments/escrow/release', () => {
     )
     expect(json).toEqual(expect.objectContaining({
       success: true,
-      stripeTransferId: undefined,
     }))
+    expect('stripeTransferId' in json).toBe(false)
   })
 })
