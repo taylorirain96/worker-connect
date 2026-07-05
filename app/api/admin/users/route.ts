@@ -1,3 +1,4 @@
+import type { QueryDocumentSnapshot } from 'firebase-admin/firestore'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest) {
 
     const snap = await q.get()
     type UserRow = { id: string; name: string; email: string; role: string; createdAt: string }
-    let users: UserRow[] = snap.docs.map((doc) => {
+    let users: UserRow[] = snap.docs.map((doc: QueryDocumentSnapshot) => {
       const d = doc.data()
       return {
         id: doc.id,

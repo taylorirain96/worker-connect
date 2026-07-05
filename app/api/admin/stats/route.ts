@@ -1,3 +1,4 @@
+import type { QueryDocumentSnapshot } from 'firebase-admin/firestore'
 import { NextResponse } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
 
@@ -12,12 +13,12 @@ export async function GET() {
       adminDb.collection('disputes').where('status', '==', 'open').get(),
     ])
 
-    const users = usersSnap.docs.map((d) => d.data() as { role?: string })
+    const users = usersSnap.docs.map((d: QueryDocumentSnapshot) => d.data() as { role?: string })
     const totalUsers = users.length
     const totalWorkers = users.filter((u) => u.role === 'worker').length
     const totalEmployers = users.filter((u) => u.role === 'employer').length
 
-    const jobs = jobsSnap.docs.map((d) => d.data() as { status?: string })
+    const jobs = jobsSnap.docs.map((d: QueryDocumentSnapshot) => d.data() as { status?: string })
     const totalJobs = jobs.length
     const openJobs = jobs.filter((j) => j.status === 'open').length
     const completedJobs = jobs.filter((j) => j.status === 'completed').length
