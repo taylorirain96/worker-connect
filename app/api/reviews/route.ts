@@ -49,9 +49,8 @@ export async function POST(request: NextRequest) {
     if (bodyReviewType !== undefined && !VALID_REVIEW_TYPES.includes(bodyReviewType as ReviewTypeValue)) {
       return NextResponse.json({ error: 'Invalid reviewType' }, { status: 400 })
     }
-    const reviewType: ReviewTypeValue = VALID_REVIEW_TYPES.includes(bodyReviewType as ReviewTypeValue)
-      ? (bodyReviewType as ReviewTypeValue)
-      : 'worker_review'
+    // Default to worker_review when omitted; bodyReviewType is guaranteed valid at this point
+    const reviewType: ReviewTypeValue = (bodyReviewType as ReviewTypeValue) ?? 'worker_review'
 
     if (!jobId || !reviewerId || !revieweeId || !rating || !comment) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -91,6 +90,10 @@ export async function POST(request: NextRequest) {
     // Build review document
     const reviewData: Record<string, unknown> = {
       jobId,
+      // Legacy fields kept for backwards compatibility with existing queries.
+      // For worker_review: workerId = reviewee (the worker), homeownerId = reviewer (the employer/homeowner).
+      // For employer_review: workerId = reviewer (the worker), homeownerId = reviewee (the employer).
+      // Prefer reviewerId/revieweeId + reviewType for new logic.
       workerId: reviewType === 'employer_review' ? reviewerId : revieweeId,
       homeownerId: reviewType === 'employer_review' ? revieweeId : reviewerId,
       reviewerId,
