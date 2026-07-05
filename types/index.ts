@@ -2358,6 +2358,10 @@ export interface JobTemplate {
   title: string
   description: string
   category: string
+  /** ISO country code for the job location */
+  country?: string
+  /** Region or state within the country */
+  region?: string
   location: string
   budgetMin: number
   budgetMax: number
