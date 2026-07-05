@@ -40,7 +40,7 @@ export async function GET(request: Request) {
     ])
 
     const candidateDocs = new Map<string, QueryDocumentSnapshot>(
-      completedAtSnap.docs.map((doc: QueryDocumentSnapshot) => [doc.id, doc])
+      completedAtSnap.docs.map((doc) => [doc.id, doc])
     )
     for (const doc of updatedAtSnap.docs) {
       if (candidateDocs.has(doc.id)) continue
