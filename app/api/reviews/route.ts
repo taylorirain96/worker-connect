@@ -44,7 +44,14 @@ export async function POST(request: NextRequest) {
       reviewType: bodyReviewType,
     } = body
 
-    const reviewType: string = bodyReviewType === 'employer_review' ? 'employer_review' : 'worker_review'
+    const VALID_REVIEW_TYPES = ['worker_review', 'employer_review', 'enterprise_review'] as const
+    type ReviewTypeValue = typeof VALID_REVIEW_TYPES[number]
+    if (bodyReviewType !== undefined && !VALID_REVIEW_TYPES.includes(bodyReviewType as ReviewTypeValue)) {
+      return NextResponse.json({ error: 'Invalid reviewType' }, { status: 400 })
+    }
+    const reviewType: ReviewTypeValue = VALID_REVIEW_TYPES.includes(bodyReviewType as ReviewTypeValue)
+      ? (bodyReviewType as ReviewTypeValue)
+      : 'worker_review'
 
     if (!jobId || !reviewerId || !revieweeId || !rating || !comment) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -173,7 +180,7 @@ export async function POST(request: NextRequest) {
             title: `New ${rating}-star review ⭐`,
             body: `${reviewerName} left you a review: "${snippet}"`,
             type: 'new_review',
-            link: reviewType === 'employer_review' ? `/dashboard/homeowner` : `/workers/${revieweeId}`,
+            link: reviewType === 'employer_review' ? `/profile/${revieweeId}` : `/workers/${revieweeId}`,
           })
         } catch (emailErr) {
           console.error('Failed to send review-received email:', emailErr)

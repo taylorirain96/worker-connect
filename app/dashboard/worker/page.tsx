@@ -197,12 +197,14 @@ export default function WorkerDashboardPage() {
   // Fetch completed jobs where worker hasn't reviewed the employer yet
   useEffect(() => {
     if (!user?.uid || !db) return
+    const firestore = db
+    const workerId = user.uid
     async function fetchReviewableJobs() {
       try {
-        const jobsRef = collection(db!, 'jobs')
+        const jobsRef = collection(firestore, 'jobs')
         const q = query(
           jobsRef,
-          where('assignedWorkerId', '==', user!.uid),
+          where('assignedWorkerId', '==', workerId),
           where('status', '==', 'completed'),
           orderBy('completedAt', 'desc')
         )
