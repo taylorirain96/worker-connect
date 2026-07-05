@@ -18,6 +18,7 @@ export type NotificationType =
   | 'payout_processed'
   | 'payment_failed'
   | 'dispute_opened'
+  | 'dispute_resolved'
   // Review alerts
   | 'review_received'
   | 'review_response_needed'

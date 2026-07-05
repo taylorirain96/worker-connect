@@ -20,6 +20,7 @@ import { adminDb } from '@/lib/firebase-admin'
 import type {
   EscrowPayment,
   EscrowStatus,
+  EscrowDisputeResolution,
   JobPostingPayment,
   Job,
   WorkerEarningsSummary,
@@ -37,6 +38,7 @@ export type EscrowWorkflowStage =
   | 'deposit_secure'
   | 'job_in_progress'
   | 'sign_off_pending'
+  | 'in_dispute'
   | 'completed'
   | 'funds_released'
 
@@ -330,6 +332,119 @@ export async function updateEscrowStatus(
     ...extra,
     updatedAt: new Date().toISOString(),
   })
+}
+
+// ─── Dispute State Transitions ───────────────────────────────────────────────
+
+/**
+ * Open a dispute on an escrow payment, freezing automated fund release.
+ * Can be called by either the worker or the employer.
+ *
+ * Updates:
+ *  - escrow status → 'disputed'
+ *  - job status    → 'disputed'
+ *  - job workflowStage → 'in_dispute'
+ */
+export async function openDispute(
+  escrowId: string,
+  jobId: string,
+  openedBy: string,
+  reason: string
+): Promise<void> {
+  const now = new Date().toISOString()
+  const escrowUpdate = {
+    status: 'disputed' as EscrowStatus,
+    disputeReason: reason,
+    disputedBy: openedBy,
+    disputedAt: now,
+  }
+  const jobUpdate = {
+    status: 'disputed',
+    workflowStage: 'in_dispute' as EscrowWorkflowStage,
+    updatedAt: now,
+  }
+
+  if (adminDb) {
+    await adminDb.collection('escrowPayments').doc(escrowId).update({
+      ...escrowUpdate,
+      updatedAt: now,
+    })
+    await adminDb.collection('jobs').doc(jobId).update(jobUpdate)
+    return
+  }
+
+  if (db) {
+    await updateDoc(doc(db, 'escrowPayments', escrowId), {
+      ...escrowUpdate,
+      updatedAt: serverTimestamp(),
+    })
+    await updateDoc(doc(db, 'jobs', jobId), {
+      ...jobUpdate,
+      updatedAt: serverTimestamp(),
+    })
+    return
+  }
+
+  throw new Error('Firestore not available')
+}
+
+/**
+ * Resolve a dispute as an admin, choosing to release funds to the worker
+ * or refund the employer.
+ *
+ * Updates escrow status to 'released' or 'refunded', records resolution
+ * metadata, and restores the job status/workflowStage accordingly.
+ */
+export async function resolveDispute(
+  escrowId: string,
+  jobId: string,
+  resolution: EscrowDisputeResolution,
+  resolvedBy: string
+): Promise<void> {
+  const now = new Date().toISOString()
+
+  const newEscrowStatus: EscrowStatus =
+    resolution === 'release_to_worker' ? 'released' : 'refunded'
+
+  const newJobStatus = resolution === 'release_to_worker' ? 'completed' : 'cancelled'
+  const newWorkflowStage: EscrowWorkflowStage =
+    resolution === 'release_to_worker' ? 'funds_released' : 'posted'
+
+  const escrowUpdate: Record<string, unknown> = {
+    status: newEscrowStatus,
+    disputeResolution: resolution,
+    disputeResolvedAt: now,
+    disputeResolvedBy: resolvedBy,
+    updatedAt: now,
+    ...(resolution === 'release_to_worker' ? { releasedAt: now, releaseTrigger: 'admin_release' } : { refundedAt: now }),
+  }
+
+  const jobUpdate: Record<string, unknown> = {
+    status: newJobStatus,
+    workflowStage: newWorkflowStage,
+    escrowStatus: newEscrowStatus,
+    updatedAt: now,
+  }
+
+  if (adminDb) {
+    await adminDb.collection('escrowPayments').doc(escrowId).update(escrowUpdate)
+    await adminDb.collection('jobs').doc(jobId).update(jobUpdate)
+    return
+  }
+
+  if (db) {
+    await updateDoc(doc(db, 'escrowPayments', escrowId), {
+      ...escrowUpdate,
+      updatedAt: serverTimestamp(),
+    })
+    await updateDoc(doc(db, 'jobs', jobId), {
+      ...jobUpdate,
+      updatedAt: serverTimestamp(),
+    })
+    return
+  }
+
+  throw new Error('Firestore not available')
 }
 
 // ─── Job Posting Payment CRUD ─────────────────────────────────────────────────
