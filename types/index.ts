@@ -21,6 +21,10 @@ export interface UserProfile {
   availabilityUpdatedAt?: string
   rating?: number
   reviewCount?: number
+  /** Average rating received as an employer/homeowner from workers (employer_review type) */
+  employerRating?: number
+  /** Number of reviews received as an employer/homeowner from workers */
+  employerReviewCount?: number
   completedJobs?: number
   completionRate?: number // 0–1 fraction of accepted jobs completed (used for Mover Mode ranking)
   totalEarnings?: number
@@ -224,6 +228,10 @@ export interface Job {
   recurringOptOutWorkerIds?: string[]
   /** Optional property linkage for property-manager posted jobs */
   propertyId?: string
+  /** Whether the employer/homeowner has already left a review for the worker on this job */
+  reviewLeft?: boolean
+  /** Whether the assigned worker has already left a review for the employer on this job */
+  workerReviewLeft?: boolean
   /**
    * Employer-set flag indicating this posting is Mover Mode-friendly
    * (open to relocating workers, FIFO, or out-of-region applicants).
@@ -325,7 +333,7 @@ export interface Review {
 
 // ─── Rating & Reviews System ──────────────────────────────────────────────────
 
-export type ReviewType = 'worker_review' | 'enterprise_review'
+export type ReviewType = 'worker_review' | 'enterprise_review' | 'employer_review'
 export type ReviewModerationStatus = 'pending' | 'approved' | 'flagged' | 'removed'
 
 export interface CategoryRatings {
