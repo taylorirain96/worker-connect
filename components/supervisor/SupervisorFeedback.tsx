@@ -1,5 +1,3 @@
-'use client'
-
 interface SupervisorFeedbackProps {
   feedback: string
   supervisorName?: string

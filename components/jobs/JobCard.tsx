@@ -1,4 +1,3 @@
-'use client'
 import Link from 'next/link'
 import { MapPin, Clock, DollarSign, Users, Wrench } from 'lucide-react'
 import type { Job } from '@/types'

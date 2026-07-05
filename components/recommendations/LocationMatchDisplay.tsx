@@ -1,4 +1,3 @@
-'use client'
 import { MapPin, CheckCircle } from 'lucide-react'
 
 interface Props { location: string; workerLocation?: string; matchScore: number }

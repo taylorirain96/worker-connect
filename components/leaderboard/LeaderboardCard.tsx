@@ -1,4 +1,3 @@
-'use client'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ChevronUp, ChevronDown, Minus, Star } from 'lucide-react'

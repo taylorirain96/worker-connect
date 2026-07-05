@@ -1,5 +1,3 @@
-'use client'
-
 import type { ChatMessage } from '@/types'
 
 interface MessageListProps {
