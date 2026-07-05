@@ -18,7 +18,7 @@
     "@mdx-js/react": "^3.1.1",
     "@next/mdx": "^16.2.9",
     "@next/third-parties": "^16.2.9",
-    "@sentry/nextjs": "^10.53.1",
+    "@sentry/nextjs": "^10.63.0",
     "@stripe/react-stripe-js": "^6.3.0",
     "@stripe/stripe-js": "^9.8.0",
     "clsx": "^2.1.1",
