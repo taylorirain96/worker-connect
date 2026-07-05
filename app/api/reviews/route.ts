@@ -41,7 +41,10 @@ export async function POST(request: NextRequest) {
       tags,
       reviewerName: bodyReviewerName,
       reviewerAvatar,
+      reviewType: bodyReviewType,
     } = body
+
+    const reviewType: string = bodyReviewType === 'employer_review' ? 'employer_review' : 'worker_review'
 
     if (!jobId || !reviewerId || !revieweeId || !rating || !comment) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -81,10 +84,11 @@ export async function POST(request: NextRequest) {
     // Build review document
     const reviewData: Record<string, unknown> = {
       jobId,
-      workerId: revieweeId,
-      homeownerId: reviewerId,
+      workerId: reviewType === 'employer_review' ? reviewerId : revieweeId,
+      homeownerId: reviewType === 'employer_review' ? revieweeId : reviewerId,
       reviewerId,
       revieweeId,
+      reviewType,
       rating,
       review: trimmedComment,
       comment: trimmedComment,
@@ -101,18 +105,20 @@ export async function POST(request: NextRequest) {
       const docRef = await adminDb.collection('reviews').add(reviewData)
       reviewId = docRef.id
 
-      // Mark the job as having a review left
+      // Mark the job as having a review left (employer→worker or worker→employer)
       try {
-        await adminDb.collection('jobs').doc(jobId).update({ reviewLeft: true })
+        const jobUpdateField = reviewType === 'employer_review' ? 'workerReviewLeft' : 'reviewLeft'
+        await adminDb.collection('jobs').doc(jobId).update({ [jobUpdateField]: true })
       } catch {
         // Non-fatal
       }
 
-      // Recalculate the worker's aggregate rating
+      // Recalculate the reviewee's aggregate rating (works for both worker and employer reviews)
       try {
         const reviewsSnap = await adminDb
           .collection('reviews')
           .where('revieweeId', '==', revieweeId)
+          .where('reviewType', '==', reviewType)
           .get()
         const count = reviewsSnap.size
         let ratingSum = 0
@@ -120,14 +126,19 @@ export async function POST(request: NextRequest) {
           const r = d.data().rating
           if (typeof r === 'number') ratingSum += r
         }
-        const sum = ratingSum
-        const avg = count > 0 ? Math.round((sum / count) * 10) / 10 : 0
-        await adminDb.collection('users').doc(revieweeId).update({
-          rating: avg,
-          reviewCount: count,
-          averageRating: avg,
+        const avg = count > 0 ? Math.round((ratingSum / count) * 10) / 10 : 0
+        // Use separate fields to avoid mixing worker/employer ratings
+        const ratingField = reviewType === 'employer_review' ? 'employerRating' : 'rating'
+        const countField = reviewType === 'employer_review' ? 'employerReviewCount' : 'reviewCount'
+        const updatePayload: Record<string, unknown> = {
+          [ratingField]: avg,
+          [countField]: count,
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        })
+        }
+        if (reviewType !== 'employer_review') {
+          updatePayload.averageRating = avg
+        }
+        await adminDb.collection('users').doc(revieweeId).update(updatePayload)
       } catch {
         // Non-fatal: aggregate update failure should not block review submission
       }
@@ -162,7 +173,7 @@ export async function POST(request: NextRequest) {
             title: `New ${rating}-star review ⭐`,
             body: `${reviewerName} left you a review: "${snippet}"`,
             type: 'new_review',
-            link: `/workers/${revieweeId}`,
+            link: reviewType === 'employer_review' ? `/dashboard/homeowner` : `/workers/${revieweeId}`,
           })
         } catch (emailErr) {
           console.error('Failed to send review-received email:', emailErr)

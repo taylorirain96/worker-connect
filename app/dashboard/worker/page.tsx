@@ -66,6 +66,12 @@ interface AwaitingPaymentJob {
   updatedAt: string
 }
 
+interface ReviewableJob {
+  id: string
+  title: string
+  completedAt: string
+}
+
 export default function WorkerDashboardPage() {
   const { user, profile, loading } = useAuth()
   const router = useRouter()
@@ -82,6 +88,7 @@ export default function WorkerDashboardPage() {
   const [confirmingPlacement, setConfirmingPlacement] = useState(false)
   const [disputedJobs, setDisputedJobs] = useState<DisputedWorkerJob[]>([])
   const [awaitingPaymentJobs, setAwaitingPaymentJobs] = useState<AwaitingPaymentJob[]>([])
+  const [reviewableJobs, setReviewableJobs] = useState<ReviewableJob[]>([])
 
   useEffect(() => {
     if (!loading && !user) {
@@ -185,6 +192,35 @@ export default function WorkerDashboardPage() {
       .then((fetched) => setReviews(fetched.slice(0, MAX_DISPLAYED_REVIEWS)))
       .catch(() => setReviews([]))
       .finally(() => setLoadingReviews(false))
+  }, [user])
+
+  // Fetch completed jobs where worker hasn't reviewed the employer yet
+  useEffect(() => {
+    if (!user?.uid || !db) return
+    async function fetchReviewableJobs() {
+      try {
+        const jobsRef = collection(db!, 'jobs')
+        const q = query(
+          jobsRef,
+          where('assignedWorkerId', '==', user!.uid),
+          where('status', '==', 'completed'),
+          orderBy('completedAt', 'desc')
+        )
+        const snapshot = await getDocs(q)
+        setReviewableJobs(
+          snapshot.docs
+            .filter((d) => !d.data().workerReviewLeft)
+            .map((d) => ({
+              id: d.id,
+              title: d.data().title ?? 'Untitled job',
+              completedAt: toISO(d.data().completedAt ?? d.data().updatedAt ?? d.data().createdAt),
+            }))
+        )
+      } catch {
+        setReviewableJobs([])
+      }
+    }
+    fetchReviewableJobs()
   }, [user])
 
   // Fetch active placement for this worker
@@ -575,6 +611,41 @@ export default function WorkerDashboardPage() {
 
               {/* Quote Performance Stats */}
               {user && <QuoteStats workerId={user.uid} />}
+
+              {/* Review Employer Prompt */}
+              {reviewableJobs.length > 0 && (
+                <Card className="border-yellow-200 dark:border-yellow-800">
+                  <CardHeader>
+                    <div className="flex items-center gap-2">
+                      <Star className="h-4 w-4 text-yellow-500 fill-yellow-400" />
+                      <CardTitle>Review an Employer</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                      Share your experience with employers on jobs you&apos;ve completed.
+                    </p>
+                    <div className="space-y-2">
+                      {reviewableJobs.slice(0, 3).map((job) => (
+                        <Link
+                          key={job.id}
+                          href={`/jobs/${job.id}/employer-review`}
+                          className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{job.title}</p>
+                            <p className="text-xs text-gray-500">Completed {formatRelativeDate(job.completedAt)}</p>
+                          </div>
+                          <Star className="h-3.5 w-3.5 text-yellow-400 flex-shrink-0 ml-2" />
+                        </Link>
+                      ))}
+                      {reviewableJobs.length > 3 && (
+                        <p className="text-xs text-gray-500 text-center pt-1">+{reviewableJobs.length - 3} more</p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Reviews Received */}
               <Card>
