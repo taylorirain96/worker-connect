@@ -4,7 +4,7 @@ import { getReviewsForEntity } from '@/lib/reviews/firebase'
 import { adminDb } from '@/lib/firebase-admin'
 import { sendReviewReceivedEmail } from '@/lib/email/transactional'
 import { sendAdminNotification } from '@/lib/notifications/admin'
-import admin from '@/lib/firebase-admin'
+import { FieldValue } from 'firebase-admin/firestore'
 
 export const dynamic = 'force-dynamic'
 
@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
         const updatePayload: Record<string, unknown> = {
           [ratingField]: avg,
           [countField]: count,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
         }
         if (reviewType !== 'employer_review') {
           updatePayload.averageRating = avg

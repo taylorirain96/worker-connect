@@ -11,6 +11,7 @@ import {
   serverTimestamp,
   Timestamp,
   type DocumentData,
+  type Query,
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import type { LearningJob, SupervisorReport } from '@/types'
@@ -54,7 +55,7 @@ export async function createLearningJob(
 export async function getLearningJobs(skill?: string): Promise<LearningJob[]> {
   if (!db) throw new Error('Firestore not initialised')
   const ref = collection(db, 'learningJobs')
-  let q
+  let q: Query<DocumentData>
   if (skill) {
     q = query(
       ref,

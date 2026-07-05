@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
-import admin from '@/lib/firebase-admin'
+import { FieldValue } from 'firebase-admin/firestore'
 
 export const dynamic = 'force-dynamic'
 
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
     }
 
     await adminDb.collection('users').doc(userId).update({
-      favourites: admin.firestore.FieldValue.arrayUnion(workerId),
+      favourites: FieldValue.arrayUnion(workerId),
       updatedAt: new Date().toISOString(),
     })
 
@@ -86,7 +86,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     await adminDb.collection('users').doc(userId).update({
-      favourites: admin.firestore.FieldValue.arrayRemove(workerId),
+      favourites: FieldValue.arrayRemove(workerId),
       updatedAt: new Date().toISOString(),
     })
 

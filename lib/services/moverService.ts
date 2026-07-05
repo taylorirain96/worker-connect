@@ -143,7 +143,7 @@ export async function getMoverStats(): Promise<MoverStats> {
       .collection('moverSettings')
       .where('isActive', '==', true)
       .get()
-    const active = moverSnap.docs.map((d) => d.data() as MoverSettings)
+    const active: MoverSettings[] = moverSnap.docs.map((d) => d.data() as MoverSettings)
     const totalMoverWorkers = active.length
     const avgRelocationSuccessRate = totalMoverWorkers
       ? Math.round(
@@ -176,7 +176,7 @@ export async function getMoverStats(): Promise<MoverStats> {
       }
     })
 
-    const activeById = new Map(active.map((s) => [s.workerId, s]))
+    const activeById = new Map<string, MoverSettings>(active.map((s) => [s.workerId, s]))
     if (activeById.size > 0) {
       // Fetch recent completed jobs without a composite index requirement; filter in-memory.
       const jobsSnap = await adminDb
