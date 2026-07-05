@@ -1,5 +1,3 @@
-'use client'
-
 import Link from 'next/link'
 import { TrendingUp, TrendingDown, AlertTriangle, Award } from 'lucide-react'
 
