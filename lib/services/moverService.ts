@@ -176,8 +176,8 @@ export async function getMoverStats(): Promise<MoverStats> {
       }
     })
 
-    const activeById = new Map<string, MoverSettings>(active.map((s) => [s.workerId, s]))
-    if (activeById.size > 0) {
+    const activeByWorkerId = new Map<string, MoverSettings>(active.map((s) => [s.workerId, s]))
+    if (activeByWorkerId.size > 0) {
       // Fetch recent completed jobs without a composite index requirement; filter in-memory.
       const jobsSnap = await adminDb
         .collection('jobs')
@@ -192,7 +192,7 @@ export async function getMoverStats(): Promise<MoverStats> {
           completedAt?: string | { toDate?: () => Date }
         }
         const workerId = j.assignedWorkerId
-        const setting = workerId ? activeById.get(workerId) : undefined
+        const setting = workerId ? activeByWorkerId.get(workerId) : undefined
         if (!setting || !j.completedAt) continue
         const dt =
           typeof j.completedAt === 'object' && typeof j.completedAt.toDate === 'function'
