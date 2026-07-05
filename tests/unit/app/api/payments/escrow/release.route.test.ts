@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { beforeEach, describe, it, mock } from 'node:test'
+import { before, beforeEach, describe, it, mock } from 'node:test'
 
 const captureCalls: string[] = []
 const transferCalls: Array<Record<string, unknown>> = []
@@ -98,7 +98,12 @@ mock.module('@/lib/rateLimit', {
   },
 })
 
-const { POST } = await import('@/app/api/payments/escrow/release/route')
+let POST: (request: unknown) => Promise<{ status: number; body: unknown }>
+
+before(async () => {
+  const mod = await import('@/app/api/payments/escrow/release/route')
+  POST = mod.POST as typeof POST
+})
 
 beforeEach(() => {
   captureCalls.length = 0

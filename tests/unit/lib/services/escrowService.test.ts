@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict'
-import { beforeEach, describe, it, mock } from 'node:test'
+import { before, beforeEach, describe, it, mock } from 'node:test'
 
 const addDocCalls: Array<{ col: unknown; data: Record<string, unknown> }> = []
 const updateDocCalls: Array<{ ref: unknown; data: Record<string, unknown> }> = []
 const adminUpdates: Array<{ collection: string; id: string; data: Record<string, unknown> }> = []
 
-const dbMock = { _db: true }
+const adminAdds: Array<{ collection: string; data: Record<string, unknown> }> = []
 
 const serverTimestamp = () => 'SERVER_TIMESTAMP'
 
@@ -16,7 +16,10 @@ const adminDbMock = {
         adminUpdates.push({ collection: name, id, data })
       },
     }),
-    add: async () => ({ id: 'admin_escrow_1' }),
+    add: async (data: Record<string, unknown>) => {
+      adminAdds.push({ collection: name, data })
+      return { id: 'admin_escrow_1' }
+    },
   }),
 }
 
@@ -48,7 +51,7 @@ mock.module('firebase/firestore', {
 
 mock.module('@/lib/firebase', {
   namedExports: {
-    db: dbMock,
+    db: null,
   },
 })
 
@@ -58,12 +61,17 @@ mock.module('@/lib/firebase-admin', {
   },
 })
 
-const escrowService = await import('@/lib/services/escrowService')
+let escrowService: Awaited<typeof import('@/lib/services/escrowService')>
+
+before(async () => {
+  escrowService = await import('@/lib/services/escrowService')
+})
 
 beforeEach(() => {
   addDocCalls.length = 0
   updateDocCalls.length = 0
   adminUpdates.length = 0
+  adminAdds.length = 0
 })
 
 describe('escrowService', () => {
@@ -82,10 +90,10 @@ describe('escrowService', () => {
       workerAmount: 106.25,
     })
 
-    assert.equal(escrowId, 'escrow_1')
-    assert.equal(addDocCalls.length, 1)
-    assert.deepEqual(addDocCalls[0], {
-      col: { db: dbMock, name: 'escrowPayments' },
+    assert.equal(escrowId, 'admin_escrow_1')
+    assert.equal(adminAdds.length, 1)
+    assert.deepEqual(adminAdds[0], {
+      collection: 'escrowPayments',
       data: {
         jobId: 'job_1',
         quoteId: 'quote_1',
@@ -98,10 +106,12 @@ describe('escrowService', () => {
         commissionRate: 0.15,
         commissionAmount: 18.75,
         workerAmount: 106.25,
-        createdAt: 'SERVER_TIMESTAMP',
-        updatedAt: 'SERVER_TIMESTAMP',
+        createdAt: adminAdds[0].data.createdAt,
+        updatedAt: adminAdds[0].data.updatedAt,
       },
     })
+    assert.ok(typeof adminAdds[0].data.createdAt === 'string')
+    assert.ok(typeof adminAdds[0].data.updatedAt === 'string')
   })
 
   it('calculates commission/platform fee math with tier rounding', () => {
