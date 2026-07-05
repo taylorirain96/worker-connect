@@ -644,6 +644,7 @@ export type NotificationType =
   | 'payout_processed'
   | 'payment_failed'
   | 'dispute_opened'
+  | 'dispute_resolved'
   // Review alerts
   | 'review_received'
   | 'review_response_needed'
@@ -1936,6 +1937,9 @@ export type EscrowStatus =
   | 'disputed'
   | 'refunded'
 
+/** How an admin resolves a dispute — either release funds to worker or refund to employer */
+export type EscrowDisputeResolution = 'release_to_worker' | 'refund_to_employer'
+
 /** Worker commission tier based on completed jobs */
 export type CommissionTier = 'new' | 'established' | 'pro' | 'elite'
 
@@ -2005,6 +2009,14 @@ export interface EscrowPayment {
   releaseTrigger?: 'homeowner_signoff' | 'admin_release' | 'auto_release'
   /** Reason for dispute */
   disputeReason?: string
+  /** UID of the party (worker or employer) who opened the dispute */
+  disputedBy?: string
+  /** Admin-chosen resolution once the dispute is reviewed */
+  disputeResolution?: EscrowDisputeResolution
+  /** ISO timestamp when an admin resolved the dispute */
+  disputeResolvedAt?: string
+  /** UID of the admin who resolved the dispute */
+  disputeResolvedBy?: string
   createdAt: string
   updatedAt: string
   releasedAt?: string
