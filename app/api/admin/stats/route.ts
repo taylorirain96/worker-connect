@@ -25,7 +25,7 @@ export async function GET() {
     const pendingApplications = jobs.filter((j) => j.status === 'pending').length
 
     const totalRevenue = revenueSnap.docs.reduce((sum: number, d: QueryDocumentSnapshot<{ amount?: number }>) => {
-      const amount = (d.data() as { amount?: number }).amount ?? 0
+      const amount = d.data().amount ?? 0
       return sum + amount
     }, 0)
 
