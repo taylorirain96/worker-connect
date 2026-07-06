@@ -1,4 +1,3 @@
-'use client'
 import { AlertTriangle, ArrowUp, Info } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 

@@ -413,7 +413,7 @@ export default function EmployerDashboardPage() {
                         {reviewableJobs.slice(0, 3).map((job) => (
                           <Link
                             key={job.id}
-                            href={`/jobs/${job.id}#review`}
+                            href={`/jobs/${job.id}/review`}
                             className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                           >
                             <div className="min-w-0">

@@ -1,5 +1,3 @@
-'use client'
-
 import type { CareerPath } from '@/types'
 
 interface CareerTransitionGuideProps {

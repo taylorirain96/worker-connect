@@ -1,4 +1,3 @@
-'use client'
 import type { JobRecommendation } from '@/types'
 
 interface Props { breakdown: JobRecommendation['breakdown'] }

@@ -1,4 +1,3 @@
-'use client'
 import type { MonthlyEarnings } from '@/types'
 import { formatCurrency } from '@/lib/utils'
 

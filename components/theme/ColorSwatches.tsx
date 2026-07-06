@@ -1,5 +1,3 @@
-'use client'
-
 import { WORKER_THEME } from '@/lib/themes/worker'
 import { EMPLOYER_THEME } from '@/lib/themes/employer'
 import type { RoleTheme } from '@/lib/themes'

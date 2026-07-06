@@ -1,5 +1,3 @@
-'use client'
-
 import { Star, MessageSquare, BarChart2 } from 'lucide-react'
 import RatingStars from './RatingStars'
 import { formatRating, getRatingLabel, getRatingColor } from '@/lib/reviews/service'

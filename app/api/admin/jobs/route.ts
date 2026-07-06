@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
     }
 
     const snap = await query.get()
-    const jobs = snap.docs.map((doc) => ({
+    const jobs = snap.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => ({
       id: doc.id,
       title: doc.data().title ?? '',
       category: doc.data().category ?? '',

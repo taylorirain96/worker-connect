@@ -1,4 +1,3 @@
-'use client'
 import { Lightbulb } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import type { RateBenchmark } from '@/types'

@@ -1,5 +1,3 @@
-'use client'
-
 import GDPRConsentForm from './GDPRConsentForm'
 import DataExportRequest from './DataExportRequest'
 
