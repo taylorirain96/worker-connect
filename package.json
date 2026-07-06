@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
+    "test:unit": "vitest run",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:emulators": "firebase emulators:exec --only auth,firestore --project quicktrade-e2e \"npm run test:e2e\"",
@@ -55,6 +56,7 @@
     "postcss": "^8",
     "tailwindcss": "^4.3.1",
     "tsx": "^4.23.0",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9"
   }
 }
