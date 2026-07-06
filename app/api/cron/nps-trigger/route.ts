@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
+import type { QueryDocumentSnapshot } from 'firebase-admin/firestore'
 
 export const dynamic = 'force-dynamic'
 
@@ -38,7 +39,9 @@ export async function GET(request: Request) {
         .get(),
     ])
 
-    const candidateDocs = new Map(completedAtSnap.docs.map((doc) => [doc.id, doc]))
+    const candidateDocs = new Map<string, QueryDocumentSnapshot>(
+      completedAtSnap.docs.map((doc) => [doc.id, doc])
+    )
     for (const doc of updatedAtSnap.docs) {
       if (candidateDocs.has(doc.id)) continue
       const data = doc.data()

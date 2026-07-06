@@ -17,13 +17,20 @@ import AIUpgradePrompt from '@/components/ui/AIUpgradePrompt'
 import { trackEvent } from '@/lib/analytics'
 import Link from 'next/link'
 import type { Country } from '@/types'
+import {
+  REGISTRATION_COUNTRY_OPTIONS,
+  getLocationOptions,
+  getRegionLabel,
+  buildLocationLabel,
+} from '@/lib/locationOptions'
 
 const jobSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters').max(100),
   description: z.string().min(20, 'Description must be at least 20 characters').max(2000),
   category: z.string().min(1, 'Please select a category'),
   country: z.enum(['NZ', 'AU']),
-  location: z.string().min(3, 'Please enter a location'),
+  region: z.string().min(1, 'Please select a region'),
+  city: z.string().min(2, 'Please enter a city or suburb').max(80),
   budgetMin: z.coerce.number().min(0, 'Min budget must be 0 or more'),
   budgetMax: z.coerce.number().min(1, 'Max budget must be greater than 0'),
   budgetType: z.enum(['fixed', 'hourly']),
@@ -66,7 +73,7 @@ function CreateJobPage() {
     formState: { errors, isSubmitting },
   } = useForm<JobFormInput, unknown, JobFormData>({
     resolver: zodResolver(jobSchema),
-    defaultValues: { budgetType: 'fixed', urgency: 'medium', budgetMin: 0, country: 'NZ' },
+    defaultValues: { budgetType: 'fixed', urgency: 'medium', budgetMin: 0, country: 'NZ', region: '', city: '' },
   })
 
   // Pre-fill form from URL params when loading from a saved template
@@ -74,13 +81,16 @@ function CreateJobPage() {
     const title = searchParams.get('title')
     if (!title) return
 
-    const stringFields = ['title', 'description', 'category', 'location', 'skills'] as const
+    const stringFields = ['title', 'description', 'category', 'city', 'skills'] as const
     stringFields.forEach((f) => {
       const val = searchParams.get(f)
       if (val) setValue(f, val)
     })
     const country = searchParams.get('country')
     if (country === 'NZ' || country === 'AU') setValue('country', country)
+
+    const region = searchParams.get('region')
+    if (region) setValue('region', region)
 
     const budgetType = searchParams.get('budgetType')
     if (budgetType === 'fixed' || budgetType === 'hourly') setValue('budgetType', budgetType)
@@ -99,6 +109,16 @@ function CreateJobPage() {
   const budgetType = watch('budgetType')
   const selectedCategory = watch('category')
   const selectedUrgency = watch('urgency')
+  const selectedCountry = watch('country') as Country
+
+  // Reset region when country changes
+  useEffect(() => {
+    setValue('region', '')
+  }, [selectedCountry, setValue])
+
+  const regionOptions = getLocationOptions(selectedCountry)
+  const regionLabel = getRegionLabel(selectedCountry)
+  const currencySymbol = selectedCountry === 'AU' ? 'AU$' : 'NZ$'
 
   const handleAIJobPost = async () => {
     if (!user || !aiInputs.task.trim()) return
@@ -145,6 +165,8 @@ function CreateJobPage() {
       return
     }
 
+    const location = buildLocationLabel(data.city, data.region)
+
     try {
       const { saveJob } = await import('@/lib/services/jobService')
       const jobId = await saveJob({
@@ -152,7 +174,7 @@ function CreateJobPage() {
         description: data.description,
         category: data.category as import('@/types').JobCategory,
         country: data.country as Country,
-        location: data.location,
+        location,
         budget: data.budgetMax,
         budgetType: data.budgetType,
         urgency: data.urgency,
@@ -174,7 +196,7 @@ function CreateJobPage() {
           body: JSON.stringify({
             jobId,
             title: data.title,
-            location: data.location,
+            location,
             category: data.category,
             country: data.country,
             urgency: data.urgency,
@@ -199,7 +221,8 @@ function CreateJobPage() {
               description: data.description,
               category: data.category,
               country: data.country,
-              location: data.location,
+              region: data.region,
+              location,
               budgetMin: data.budgetMin,
               budgetMax: data.budgetMax,
               budgetType: data.budgetType,
@@ -394,20 +417,39 @@ function CreateJobPage() {
                     className={`w-full px-4 py-2.5 text-sm border ${errors.country ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500`}
                     {...register('country')}
                   >
-                    <option value="NZ">New Zealand</option>
-                    <option value="AU">Australia</option>
+                    {REGISTRATION_COUNTRY_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
                   </select>
                   {errors.country && <p className="mt-1 text-sm text-red-600">{errors.country.message}</p>}
                 </div>
               </div>
 
-              <Input
-                label="City / Region"
-                placeholder="e.g., Blenheim, Marlborough"
-                error={errors.location?.message}
-                required
-                {...register('location')}
-              />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    {regionLabel} <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    className={`w-full px-4 py-2.5 text-sm border ${errors.region ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500`}
+                    {...register('region')}
+                  >
+                    <option value="">Select a {regionLabel.toLowerCase()}</option>
+                    {regionOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                  {errors.region && <p className="mt-1 text-sm text-red-600">{errors.region.message}</p>}
+                </div>
+
+                <Input
+                  label={selectedCountry === 'AU' ? 'City / Suburb' : 'Town / Suburb'}
+                  placeholder={selectedCountry === 'AU' ? 'e.g., Bondi, Surry Hills' : 'e.g., Blenheim, Havelock North'}
+                  error={errors.city?.message}
+                  required
+                  {...register('city')}
+                />
+              </div>
 
               <Input
                 label="Required Skills (comma-separated)"
@@ -455,7 +497,7 @@ function CreateJobPage() {
                 {/* Budget range */}
                 <div className="sm:col-span-1 grid grid-cols-2 gap-2">
                   <Input
-                    label={budgetType === 'hourly' ? 'Min ($/hr)' : 'Min ($)'}
+                    label={budgetType === 'hourly' ? `Min (${currencySymbol}/hr)` : `Min (${currencySymbol})`}
                     type="number"
                     min="0"
                     placeholder="0"
@@ -463,7 +505,7 @@ function CreateJobPage() {
                     {...register('budgetMin')}
                   />
                   <Input
-                    label={budgetType === 'hourly' ? 'Max ($/hr)' : 'Max ($)'}
+                    label={budgetType === 'hourly' ? `Max (${currencySymbol}/hr)` : `Max (${currencySymbol})`}
                     type="number"
                     min="1"
                     placeholder="0"

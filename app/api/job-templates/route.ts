@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import admin, { adminDb } from '@/lib/firebase-admin'
-import { FieldValue } from 'firebase-admin/firestore'
+import { adminDb } from '@/lib/firebase-admin'
+import { FieldValue, type QueryDocumentSnapshot } from 'firebase-admin/firestore'
 import { normalizeJobCountry } from '@/lib/services/jobCountryService'
 
 export const dynamic = 'force-dynamic'
@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
       .orderBy('createdAt', 'desc')
       .get()
 
-    const templates = snap.docs.map((d: admin.firestore.QueryDocumentSnapshot) => ({ id: d.id, ...d.data() }))
+    const templates = snap.docs.map((d: QueryDocumentSnapshot) => ({ id: d.id, ...d.data() }))
     return NextResponse.json({ templates })
   } catch (err) {
     console.error('GET /api/job-templates error:', err)
@@ -49,6 +49,7 @@ export async function POST(req: NextRequest) {
       description?: string
       category?: string
       country?: string
+      region?: string
       location?: string
       budgetMin?: number
       budgetMax?: number
@@ -71,6 +72,7 @@ export async function POST(req: NextRequest) {
       description: String(description).trim().slice(0, 2000),
       category: String(category),
       country: normalizeJobCountry(body.country) ?? 'NZ',
+      region: typeof body.region === 'string' ? body.region.trim() : '',
       location: typeof body.location === 'string' ? body.location.trim() : '',
       budgetMin: typeof body.budgetMin === 'number' ? body.budgetMin : 0,
       budgetMax: typeof body.budgetMax === 'number' ? body.budgetMax : 0,

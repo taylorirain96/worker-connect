@@ -75,13 +75,14 @@ export default function JobTemplatesPage() {
       title: t.title,
       description: t.description,
       category: t.category,
-      location: t.location,
       budgetMin: String(t.budgetMin),
       budgetMax: String(t.budgetMax),
       budgetType: t.budgetType,
       urgency: t.urgency,
       skills: t.skills,
     })
+    if (t.country) params.set('country', t.country)
+    if (t.region) params.set('region', t.region)
     router.push(`/jobs/create?${params.toString()}`)
   }
 

@@ -15,7 +15,9 @@
  */
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import admin, { adminDb } from '@/lib/firebase-admin'
+import { adminDb } from '@/lib/firebase-admin'
+import { FieldValue } from 'firebase-admin/firestore'
+import { getMessaging } from 'firebase-admin/messaging'
 
 export const dynamic = 'force-dynamic'
 
@@ -58,7 +60,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Send to each token (sendEachForMulticast is more efficient but available in admin v11+)
-    const messaging = admin.messaging()
+    const messaging = getMessaging()
     const results: { token: string; success: boolean; error?: string }[] = []
 
     await Promise.all(
@@ -109,7 +111,7 @@ export async function POST(request: NextRequest) {
               .collection('users')
               .doc(userId)
               .update({
-                fcmTokens: admin.firestore.FieldValue.arrayRemove(token),
+                fcmTokens: FieldValue.arrayRemove(token),
               })
               .catch(() => {})
           }

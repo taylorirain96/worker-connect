@@ -10,7 +10,9 @@
  * - Sends FCM push notifications to all registered device tokens
  * - Cleans up invalid FCM tokens automatically
  */
-import admin, { adminDb } from '@/lib/firebase-admin'
+import { adminDb } from '@/lib/firebase-admin'
+import { FieldValue } from 'firebase-admin/firestore'
+import { getMessaging } from 'firebase-admin/messaging'
 
 export interface AdminNotificationOptions {
   userId: string
@@ -43,7 +45,7 @@ export async function sendAdminNotification(opts: AdminNotificationOptions): Pro
       read: false,
       channel: 'in_app',
       actionUrl: link ?? null,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     })
   } catch (err) {
     console.error('[notifications/admin] Failed to create notification doc:', err)
@@ -57,7 +59,7 @@ export async function sendAdminNotification(opts: AdminNotificationOptions): Pro
     const tokens: string[] = userDoc.data()?.fcmTokens ?? []
     if (tokens.length === 0) return
 
-    const messaging = admin.messaging()
+    const messaging = getMessaging()
     const messageData: Record<string, string> = {
       ...(data ?? {}),
       ...(link ? { actionUrl: link, link } : {}),
@@ -90,7 +92,7 @@ export async function sendAdminNotification(opts: AdminNotificationOptions): Pro
             adminDb
               .collection('users')
               .doc(userId)
-              .update({ fcmTokens: admin.firestore.FieldValue.arrayRemove(token) })
+              .update({ fcmTokens: FieldValue.arrayRemove(token) })
               .catch(() => {})
           }
         }

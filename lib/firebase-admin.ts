@@ -1,6 +1,9 @@
-import * as admin from 'firebase-admin'
+import { initializeApp, getApps, applicationDefault, cert } from 'firebase-admin/app'
+import { getFirestore } from 'firebase-admin/firestore'
+import { getAuth } from 'firebase-admin/auth'
+import { getDatabase } from 'firebase-admin/database'
 
-if (!admin.apps.length) {
+if (!getApps().length) {
   const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_KEY
     ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY)
     : {
@@ -24,21 +27,20 @@ if (!admin.apps.length) {
     process.env.GOOGLE_CLOUD_PROJECT
 
   if (usingEmulator) {
-    admin.initializeApp({
+    initializeApp({
       projectId,
       databaseURL: `https://${projectId ?? 'placeholder'}-default-rtdb.firebaseio.com`,
     })
   } else {
-    admin.initializeApp({
+    initializeApp({
       credential: serviceAccount.private_key
-        ? admin.credential.cert(serviceAccount)
-        : admin.credential.applicationDefault(),
+        ? cert(serviceAccount)
+        : applicationDefault(),
       databaseURL: `https://${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}-default-rtdb.firebaseio.com`,
     })
   }
 }
 
-export const adminDb = admin.firestore()
-export const adminAuth = admin.auth()
-export const adminRtdb = admin.database()
-export default admin
+export const adminDb = getFirestore()
+export const adminAuth = getAuth()
+export const adminRtdb = getDatabase()

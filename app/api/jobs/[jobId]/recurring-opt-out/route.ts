@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
 import { rateLimit } from '@/lib/rateLimit'
-import * as admin from 'firebase-admin'
+import { FieldValue } from 'firebase-admin/firestore'
 
 export const dynamic = 'force-dynamic'
 
@@ -59,7 +59,7 @@ export async function POST(
 
     const nowIso = new Date().toISOString()
     await jobRef.update({
-      recurringOptOutWorkerIds: admin.firestore.FieldValue.arrayUnion(userId),
+      recurringOptOutWorkerIds: FieldValue.arrayUnion(userId),
       updatedAt: nowIso,
     })
 
@@ -71,7 +71,7 @@ export async function POST(
       const parentSnap = await parentRef.get()
       if (parentSnap.exists) {
         await parentRef.update({
-          recurringOptOutWorkerIds: admin.firestore.FieldValue.arrayUnion(userId),
+          recurringOptOutWorkerIds: FieldValue.arrayUnion(userId),
           updatedAt: nowIso,
         })
       }
