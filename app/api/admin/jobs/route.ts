@@ -1,3 +1,4 @@
+import type { QueryDocumentSnapshot } from 'firebase-admin/firestore'
 import { NextRequest, NextResponse } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
 
@@ -15,7 +16,7 @@ export async function GET(req: NextRequest) {
     }
 
     const snap = await query.get()
-    const jobs = snap.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => ({
+    const jobs = snap.docs.map((doc: QueryDocumentSnapshot) => ({
       id: doc.id,
       title: doc.data().title ?? '',
       category: doc.data().category ?? '',

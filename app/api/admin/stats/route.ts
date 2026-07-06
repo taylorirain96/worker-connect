@@ -1,3 +1,4 @@
+import type { QueryDocumentSnapshot } from 'firebase-admin/firestore'
 import { NextResponse } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
 
@@ -12,18 +13,25 @@ export async function GET() {
       adminDb.collection('disputes').where('status', '==', 'open').get(),
     ])
 
-    const users = usersSnap.docs.map((d) => d.data() as { role?: string })
+    type UserSummary = { role?: string }
+    type JobSummary = { status?: string }
+
+    const users: UserSummary[] = usersSnap.docs.map(
+      (d: QueryDocumentSnapshot) => d.data() as UserSummary
+    )
     const totalUsers = users.length
     const totalWorkers = users.filter((u) => u.role === 'worker').length
     const totalEmployers = users.filter((u) => u.role === 'employer').length
 
-    const jobs = jobsSnap.docs.map((d) => d.data() as { status?: string })
+    const jobs: JobSummary[] = jobsSnap.docs.map(
+      (d: QueryDocumentSnapshot) => d.data() as JobSummary
+    )
     const totalJobs = jobs.length
     const openJobs = jobs.filter((j) => j.status === 'open').length
     const completedJobs = jobs.filter((j) => j.status === 'completed').length
     const pendingApplications = jobs.filter((j) => j.status === 'pending').length
 
-    const totalRevenue = revenueSnap.docs.reduce((sum, d) => {
+    const totalRevenue = revenueSnap.docs.reduce((sum: number, d: QueryDocumentSnapshot) => {
       const amount = (d.data() as { amount?: number }).amount ?? 0
       return sum + amount
     }, 0)
@@ -31,7 +39,7 @@ export async function GET() {
     // Monthly revenue: sum of escrow payments released in the current month
     const now = new Date()
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
-    const monthlyRevenue = revenueSnap.docs.reduce((sum, d) => {
+    const monthlyRevenue = revenueSnap.docs.reduce((sum: number, d: QueryDocumentSnapshot) => {
       const data = d.data() as { amount?: number; releasedAt?: string }
       if (data.releasedAt && data.releasedAt >= startOfMonth) {
         return sum + (data.amount ?? 0)

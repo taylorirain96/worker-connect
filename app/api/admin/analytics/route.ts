@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
 import type { DocumentData, QueryDocumentSnapshot } from 'firebase-admin/firestore'
+import { NextRequest, NextResponse } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
 
 export const dynamic = 'force-dynamic'
@@ -70,7 +70,6 @@ interface DashboardResult {
 }
 
 type AdminAnalyticsTopWorker = DashboardResult['adminAnalytics']['topWorkers'][number]
-
 const CATEGORY_COLORS = [
   '#6366f1', '#22d3ee', '#f59e0b', '#10b981', '#ef4444',
   '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#3b82f6', '#84cc16',

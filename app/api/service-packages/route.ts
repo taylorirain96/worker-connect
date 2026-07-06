@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import admin, { adminDb } from '@/lib/firebase-admin'
+import { adminDb } from '@/lib/firebase-admin'
+import type { Query, QueryDocumentSnapshot } from 'firebase-admin/firestore'
 import { rateLimit } from '@/lib/rateLimit'
 
 export const dynamic = 'force-dynamic'
@@ -24,7 +25,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Build a filtered query using the Admin SDK's CollectionReference
-    let filteredQ: admin.firestore.Query = adminDb.collection('servicePackages')
+    let filteredQ: Query = adminDb.collection('servicePackages')
 
     if (workerId) filteredQ = filteredQ.where('workerId', '==', workerId)
     if (category) filteredQ = filteredQ.where('category', '==', category)
@@ -34,7 +35,7 @@ export async function GET(req: NextRequest) {
     filteredQ = filteredQ.orderBy('createdAt', 'desc').limit(pageLimit)
 
     const snap = await filteredQ.get()
-    const packages = snap.docs.map((d: admin.firestore.QueryDocumentSnapshot) => ({ id: d.id, ...d.data() }))
+    const packages = snap.docs.map((d: QueryDocumentSnapshot) => ({ id: d.id, ...d.data() }))
 
     return NextResponse.json({ packages })
   } catch (err) {

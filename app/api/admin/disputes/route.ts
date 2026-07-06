@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
-import { FieldValue } from 'firebase-admin/firestore'
+import { FieldValue, type QueryDocumentSnapshot } from 'firebase-admin/firestore'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     q = q.orderBy(sortBy, order)
 
     const snap = await q.get()
-    const items = snap.docs.map((doc) => {
+    const items = snap.docs.map((doc: QueryDocumentSnapshot) => {
       const d = doc.data()
       return {
         id: doc.id,

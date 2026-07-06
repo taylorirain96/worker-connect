@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
 import type { DocumentData, QueryDocumentSnapshot } from 'firebase-admin/firestore'
+import { NextRequest, NextResponse } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
 import { randomBytes } from 'crypto'
 

@@ -1,3 +1,4 @@
+import type { QueryDocumentSnapshot } from 'firebase-admin/firestore'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest) {
       .where('revoked', '==', false)
       .get()
 
-    const keys = snap.docs.map((d) => {
+    const keys = snap.docs.map((d: QueryDocumentSnapshot) => {
       const data = d.data()
       return {
         id: d.id,
