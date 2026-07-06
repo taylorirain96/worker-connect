@@ -49,6 +49,7 @@ export async function POST(req: NextRequest) {
       description?: string
       category?: string
       country?: string
+      region?: string
       location?: string
       budgetMin?: number
       budgetMax?: number
@@ -71,6 +72,7 @@ export async function POST(req: NextRequest) {
       description: String(description).trim().slice(0, 2000),
       category: String(category),
       country: normalizeJobCountry(body.country) ?? 'NZ',
+      region: typeof body.region === 'string' ? body.region.trim() : '',
       location: typeof body.location === 'string' ? body.location.trim() : '',
       budgetMin: typeof body.budgetMin === 'number' ? body.budgetMin : 0,
       budgetMax: typeof body.budgetMax === 'number' ? body.budgetMax : 0,
