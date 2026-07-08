@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
   if (stripeAccountId && process.env.STRIPE_SECRET_KEY) {
     try {
       const Stripe = (await import('stripe')).default
-      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2026-05-27.dahlia' })
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2026-06-24.dahlia' })
       const transfer = await stripe.transfers.create({
         amount: Math.round(affiliateBalance * 100),
         currency: 'nzd',

@@ -94,7 +94,7 @@ export async function POST(request: Request) {
 
     if (isStripeConfigured()) {
       const key = process.env.STRIPE_SECRET_KEY!
-      const stripe = new Stripe(key, { apiVersion: '2026-05-27.dahlia' })
+      const stripe = new Stripe(key, { apiVersion: '2026-06-24.dahlia' })
 
       // Capture the held funds
       await stripe.paymentIntents.capture(paymentIntentId, {
