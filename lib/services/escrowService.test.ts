@@ -33,7 +33,7 @@ vi.mock('firebase/firestore', () => ({
   serverTimestamp: vi.fn(),
 }))
 
-import { calculateCommission, createEscrowRecord, resolveDispute } from '@/lib/services/escrowService'
+import { calculateCommission, createEscrowRecord, openDispute, resolveDispute, updateEscrowStatus } from '@/lib/services/escrowService'
 
 describe('escrowService', () => {
   beforeEach(() => {
