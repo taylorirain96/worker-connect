@@ -1,6 +1,7 @@
 import type { ServiceDetails } from '../servicesData'
 
-export const tilingDetails: ServiceDetails = {
+export const tilingDetails: Record<string, ServiceDetails> = {
+  tiling: {
     priceFrom: 60,
     priceTo: 140,
     priceUnit: 'per m²',
@@ -46,4 +47,5 @@ export const tilingDetails: ServiceDetails = {
       'Clean, precise workmanship',
       'Grout colour matching service',
     ],
+  },
 }

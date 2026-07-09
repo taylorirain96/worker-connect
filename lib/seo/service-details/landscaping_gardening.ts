@@ -1,6 +1,7 @@
 import type { ServiceDetails } from '../servicesData'
 
-export const landscapingGardeningDetails: ServiceDetails = {
+export const landscapingGardeningDetails: Record<string, ServiceDetails> = {
+  'landscaping-gardening': {
     priceFrom: 45,
     priceTo: 90,
     priceUnit: 'per hour',
@@ -46,4 +47,5 @@ export const landscapingGardeningDetails: ServiceDetails = {
       'NZ plant species knowledge',
       'Regular maintenance programmes',
     ],
+  },
 }

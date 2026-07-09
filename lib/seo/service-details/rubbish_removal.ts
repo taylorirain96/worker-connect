@@ -1,6 +1,7 @@
 import type { ServiceDetails } from '../servicesData'
 
-export const rubbishRemovalDetails: ServiceDetails = {
+export const rubbishRemovalDetails: Record<string, ServiceDetails> = {
+  'rubbish-removal': {
     priceFrom: 150,
     priceTo: 600,
     priceUnit: 'per load',
@@ -46,4 +47,5 @@ export const rubbishRemovalDetails: ServiceDetails = {
       'Insured & covered',
       'On-time service guaranteed',
     ],
+  },
 }

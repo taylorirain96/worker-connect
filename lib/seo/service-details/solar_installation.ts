@@ -1,6 +1,7 @@
 import type { ServiceDetails } from '../servicesData'
 
-export const solarInstallationDetails: ServiceDetails = {
+export const solarInstallationDetails: Record<string, ServiceDetails> = {
+  'solar-installation': {
     priceFrom: 8000,
     priceTo: 25000,
     priceUnit: 'per system installed',
@@ -46,4 +47,5 @@ export const solarInstallationDetails: ServiceDetails = {
       'Manufacturer warranty preserved',
       '25-year panel performance warranty',
     ],
+  },
 }

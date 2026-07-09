@@ -1,6 +1,7 @@
 import type { ServiceDetails } from '../servicesData'
 
-export const locksmithDetails: ServiceDetails = {
+export const locksmithDetails: Record<string, ServiceDetails> = {
+  locksmith: {
     priceFrom: 80,
     priceTo: 200,
     priceUnit: 'per job',
@@ -46,4 +47,5 @@ export const locksmithDetails: ServiceDetails = {
       'No call-out damage guarantee',
       '24/7 emergency availability',
     ],
+  },
 }

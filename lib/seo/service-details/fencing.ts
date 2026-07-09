@@ -1,6 +1,7 @@
 import type { ServiceDetails } from '../servicesData'
 
-export const fencingDetails: ServiceDetails = {
+export const fencingDetails: Record<string, ServiceDetails> = {
+  fencing: {
     priceFrom: 80,
     priceTo: 200,
     priceUnit: 'per metre',
@@ -46,4 +47,5 @@ export const fencingDetails: ServiceDetails = {
       'Wind-rated post installation',
       'Written quote & warranty',
     ],
+  },
 }

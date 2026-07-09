@@ -1,6 +1,7 @@
 import type { ServiceDetails } from '../servicesData'
 
-export const pestControlDetails: ServiceDetails = {
+export const pestControlDetails: Record<string, ServiceDetails> = {
+  'pest-control': {
     priceFrom: 150,
     priceTo: 450,
     priceUnit: 'per treatment',
@@ -46,4 +47,5 @@ export const pestControlDetails: ServiceDetails = {
       'Child & pet safe protocols',
       'Eradication guarantee',
     ],
+  },
 }

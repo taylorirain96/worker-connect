@@ -1,6 +1,7 @@
 import type { ServiceDetails } from '../servicesData'
 
-export const heatPumpsAirConditioningDetails: ServiceDetails = {
+export const heatPumpsAirConditioningDetails: Record<string, ServiceDetails> = {
+  'heat-pumps-air-conditioning': {
     priceFrom: 1200,
     priceTo: 4500,
     priceUnit: 'per unit installed',
@@ -46,4 +47,5 @@ export const heatPumpsAirConditioningDetails: ServiceDetails = {
       'Certified refrigerant handling',
       'Energy efficiency advice included',
     ],
+  },
 }

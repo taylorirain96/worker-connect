@@ -1,6 +1,7 @@
 import type { ServiceDetails } from '../servicesData'
 
-export const insulationDetails: ServiceDetails = {
+export const insulationDetails: Record<string, ServiceDetails> = {
+  insulation: {
     priceFrom: 1500,
     priceTo: 6000,
     priceUnit: 'per home',
@@ -46,4 +47,5 @@ export const insulationDetails: ServiceDetails = {
       'Certified R-value documentation',
       'Subsidy assistance available',
     ],
+  },
 }

@@ -1,6 +1,7 @@
 import type { ServiceDetails } from '../servicesData'
 
-export const plumbingDetails: ServiceDetails = {
+export const plumbingDetails: Record<string, ServiceDetails> = {
+  plumbing: {
     priceFrom: 90,
     priceTo: 250,
     priceUnit: 'per hour',
@@ -46,4 +47,5 @@ export const plumbingDetails: ServiceDetails = {
       'Real verified reviews',
       'Secure payments via QuickTrade',
     ],
+  },
 }

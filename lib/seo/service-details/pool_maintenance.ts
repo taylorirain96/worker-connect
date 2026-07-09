@@ -1,6 +1,7 @@
 import type { ServiceDetails } from '../servicesData'
 
-export const poolMaintenanceDetails: ServiceDetails = {
+export const poolMaintenanceDetails: Record<string, ServiceDetails> = {
+  'pool-maintenance': {
     priceFrom: 100,
     priceTo: 300,
     priceUnit: 'per visit',
@@ -46,4 +47,5 @@ export const poolMaintenanceDetails: ServiceDetails = {
       'Fully insured service',
       'Equipment fault diagnosis included',
     ],
+  },
 }

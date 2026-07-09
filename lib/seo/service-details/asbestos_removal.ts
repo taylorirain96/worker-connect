@@ -1,6 +1,7 @@
 import type { ServiceDetails } from '../servicesData'
 
-export const asbestosRemovalDetails: ServiceDetails = {
+export const asbestosRemovalDetails: Record<string, ServiceDetails> = {
+  'asbestos-removal': {
     priceFrom: 500,
     priceTo: 5000,
     priceUnit: 'per job',
@@ -46,4 +47,5 @@ export const asbestosRemovalDetails: ServiceDetails = {
       'Accredited air monitoring',
       'Fully insured asbestos specialists',
     ],
+  },
 }

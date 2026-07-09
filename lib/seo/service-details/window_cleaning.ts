@@ -1,6 +1,7 @@
 import type { ServiceDetails } from '../servicesData'
 
-export const windowCleaningDetails: ServiceDetails = {
+export const windowCleaningDetails: Record<string, ServiceDetails> = {
+  'window-cleaning': {
     priceFrom: 80,
     priceTo: 300,
     priceUnit: 'per visit',
@@ -46,4 +47,5 @@ export const windowCleaningDetails: ServiceDetails = {
       'Purified water systems used',
       'Streak-free guarantee',
     ],
+  },
 }

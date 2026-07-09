@@ -1,6 +1,7 @@
 import type { ServiceDetails } from '../servicesData'
 
-export const builderDetails: ServiceDetails = {
+export const builderDetails: Record<string, ServiceDetails> = {
+  builder: {
     priceFrom: 80,
     priceTo: 160,
     priceUnit: 'per hour',
@@ -46,4 +47,5 @@ export const builderDetails: ServiceDetails = {
       'Full project insurance',
       'Building consent expertise',
     ],
+  },
 }
