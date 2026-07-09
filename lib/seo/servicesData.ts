@@ -404,9 +404,3 @@ export function getNearbyLocations(regionSlug: string, citySlug: string): Locati
 }
 
 export * from './serviceDetails'
-import { SERVICE_DETAILS } from './serviceDetails'
-
-/** Get service details by slug */
-export function getServiceDetails(slug: string): ServiceDetails | undefined {
-  return SERVICE_DETAILS[slug]
-}

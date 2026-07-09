@@ -56,3 +56,8 @@ export const SERVICE_DETAILS: Record<string, ServiceDetails> = {
   ...windowCleaningDetails,
   ...poolMaintenanceDetails,
 }
+
+/** Get service details by slug */
+export function getServiceDetails(slug: string): ServiceDetails | undefined {
+  return SERVICE_DETAILS[slug]
+}
