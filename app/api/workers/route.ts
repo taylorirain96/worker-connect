@@ -4,8 +4,12 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
 import type { UserProfile } from '@/types'
+import { rateLimit } from '@/lib/rateLimit'
 
 export async function GET(request: NextRequest) {
+  if (rateLimit(request, { max: 30, windowMs: 60_000, key: 'search' })) {
+    return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 })
+  }
   try {
     const { searchParams } = new URL(request.url)
     const category = searchParams.get('category')

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { adminAuth, adminDb } from '@/lib/firebase-admin'
 import { isAllowedRole, type AllowedRole } from '@/lib/auth/roles'
 import { createSessionToken } from '@/lib/auth/sessionToken'
+import { rateLimit } from '@/lib/rateLimit'
 
 export const runtime = 'nodejs'
 
@@ -33,6 +34,13 @@ async function lookupRole(uid: string): Promise<AllowedRole | null> {
 }
 
 export async function POST(request: Request) {
+  if (rateLimit(request, { max: 5, windowMs: 60_000, key: 'auth' })) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please wait a moment before trying again.' },
+      { status: 429 }
+    )
+  }
+
   let body: { idToken?: unknown }
   try {
     body = (await request.json()) as { idToken?: unknown }

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { rateLimit } from '@/lib/rateLimit'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,6 +10,9 @@ export const dynamic = 'force-dynamic'
  * Clients can also use the Firestore SDK listener for real-time updates.
  */
 export async function GET(request: NextRequest) {
+  if (rateLimit(request, { max: 30, windowMs: 60_000, key: 'messages' })) {
+    return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 })
+  }
   try {
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId') ?? request.headers.get('x-user-id')

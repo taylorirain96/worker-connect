@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getConversation } from '@/lib/services/messagingService'
+import { rateLimit } from '@/lib/rateLimit'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,6 +15,9 @@ interface RouteParams {
  * via the real-time Firestore listener (subscribeToMessages).
  */
 export async function GET(request: NextRequest, context: RouteParams) {
+  if (rateLimit(request, { max: 30, windowMs: 60_000, key: 'messages' })) {
+    return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 })
+  }
   const params = await context.params
   try {
     const userId = request.headers.get('x-user-id')

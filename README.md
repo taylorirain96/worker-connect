@@ -87,6 +87,26 @@ npm run web
 - If that variable is missing, the fallback public URL is `https://quicktrade-pi.vercel.app`.
 - Keep public metadata, sitemap entries, robots rules, and hard-coded marketing links aligned to the same base URL.
 
+## Rate limiting
+
+API routes are protected by an in-memory sliding-window rate limiter (`lib/rateLimit.ts`).
+Counters are tracked **per client IP and per route category**.
+
+> ⚠️ The in-memory store is single-process only. On a multi-instance deployment
+> (e.g. Vercel with multiple serverless function instances) the effective limit
+> is `max × number-of-instances`. Replace the store with
+> [Upstash Redis](https://upstash.com/) or Vercel KV before scaling.
+
+| Category | Routes | Limit |
+|---|---|---|
+| **Auth** | `POST /api/auth/login`, `POST /api/auth/session`, `POST /api/auth/register` | 5–10 req / min |
+| **Contact** | `POST /api/contact` | 5 req / min |
+| **Payment / escrow** | `/api/payments/*`, `/api/stripe/create-escrow`, `/api/stripe/release-payment`, `/api/payouts/*`, `/api/earnings/withdraw`, `/api/subscriptions/*` | 10–20 req / min |
+| **Messaging** | `GET+POST /api/messages`, `GET /api/messages/list`, `GET /api/messages/conversations`, `GET /api/messages/[conversationId]`, `POST /api/messages/send` | 30 req / min |
+| **Search / browse** | `GET /api/search`, `GET /api/search/jobs`, `GET /api/search/workers`, `GET /api/search/suggestions`, `GET /api/workers` | 30 req / min |
+
+Webhook routes (`/api/stripe/webhook`, `/api/webhooks/stripe`) are intentionally **not** rate-limited because they originate from trusted external services (Stripe).
+
 ## Production quality expectations
 
 - Do not bypass lint or TypeScript checks in production builds.
