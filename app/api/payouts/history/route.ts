@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     }
 
     const Stripe = (await import('stripe')).default
-    const stripe = new Stripe(stripeKey, { apiVersion: '2026-05-27.dahlia' })
+    const stripe = new Stripe(stripeKey, { apiVersion: '2026-06-24.dahlia' })
 
     const { data: stripePayouts } = await stripe.payouts.list(
       { limit: 50 },

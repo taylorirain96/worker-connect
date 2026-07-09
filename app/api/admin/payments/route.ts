@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ items: [], total: 0, hasMore: false, message: 'Stripe not configured' })
     }
 
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2026-05-27.dahlia' })
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2026-06-24.dahlia' })
 
     const params: Stripe.ChargeListParams = { limit }
     if (startingAfter) params.starting_after = startingAfter
