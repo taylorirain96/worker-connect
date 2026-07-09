@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { rateLimit } from '@/lib/rateLimit'
 
 function isValidEmail(email: string) {
   const trimmed = email.trim()
@@ -24,6 +25,12 @@ function isValidEmail(email: string) {
  * Falls back to logging the message when not configured.
  */
 export async function POST(req: NextRequest) {
+  if (rateLimit(req, { max: 5, windowMs: 60_000, key: 'contact' })) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please wait a moment before trying again.' },
+      { status: 429 }
+    )
+  }
   let body: { name?: string; email?: string; message?: string }
   try {
     body = await req.json()

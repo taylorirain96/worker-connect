@@ -2,10 +2,14 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { searchAll, searchWorkers, searchJobs, logSearchAnalytics } from '@/lib/searchService'
 import type { SearchFilters, SearchQuery } from '@/types/search'
+import { rateLimit } from '@/lib/rateLimit'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
+  if (rateLimit(request, { max: 30, windowMs: 60_000, key: 'search' })) {
+    return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 })
+  }
   try {
     const { searchParams } = request.nextUrl
     const q = searchParams.get('q') ?? ''

@@ -4,6 +4,7 @@ import { adminDb } from '@/lib/firebase-admin'
 import { sendEmail } from '@/lib/email/sendEmail'
 import { newMessageTemplate } from '@/lib/email/templates/newMessage'
 import { createUnsubscribeToken } from '@/lib/email/unsubscribeToken'
+import { rateLimit } from '@/lib/rateLimit'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,6 +29,9 @@ function parseTimestampMs(value: unknown): number {
 }
 
 export async function GET(request: NextRequest) {
+  if (rateLimit(request, { max: 30, windowMs: 60_000, key: 'messages' })) {
+    return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 })
+  }
   try {
     const { searchParams } = new URL(request.url)
     const conversationId = searchParams.get('conversationId')
@@ -47,6 +51,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  if (rateLimit(request, { max: 30, windowMs: 60_000, key: 'messages' })) {
+    return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 })
+  }
   try {
     const body = await request.json()
     const { conversationId, senderId, senderName, recipientId, content, type } = body
