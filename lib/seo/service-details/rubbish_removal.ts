@@ -1,6 +1,6 @@
 import type { ServiceDetails } from '../servicesData'
 
-export const rubbish_removalDetails: ServiceDetails = {
+export const rubbishRemovalDetails: ServiceDetails = {
     priceFrom: 150,
     priceTo: 600,
     priceUnit: 'per load',

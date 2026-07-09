@@ -1,6 +1,6 @@
 import type { ServiceDetails } from '../servicesData'
 
-export const landscaping_gardeningDetails: ServiceDetails = {
+export const landscapingGardeningDetails: ServiceDetails = {
     priceFrom: 45,
     priceTo: 90,
     priceUnit: 'per hour',

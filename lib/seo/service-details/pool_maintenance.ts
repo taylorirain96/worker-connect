@@ -1,6 +1,6 @@
 import type { ServiceDetails } from '../servicesData'
 
-export const pool_maintenanceDetails: ServiceDetails = {
+export const poolMaintenanceDetails: ServiceDetails = {
     priceFrom: 100,
     priceTo: 300,
     priceUnit: 'per visit',

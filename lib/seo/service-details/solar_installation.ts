@@ -1,6 +1,6 @@
 import type { ServiceDetails } from '../servicesData'
 
-export const solar_installationDetails: ServiceDetails = {
+export const solarInstallationDetails: ServiceDetails = {
     priceFrom: 8000,
     priceTo: 25000,
     priceUnit: 'per system installed',

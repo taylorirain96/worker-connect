@@ -1,6 +1,6 @@
 import type { ServiceDetails } from '../servicesData'
 
-export const heat_pumps_air_conditioningDetails: ServiceDetails = {
+export const heatPumpsAirConditioningDetails: ServiceDetails = {
     priceFrom: 1200,
     priceTo: 4500,
     priceUnit: 'per unit installed',

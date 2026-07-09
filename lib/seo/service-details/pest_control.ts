@@ -1,6 +1,6 @@
 import type { ServiceDetails } from '../servicesData'
 
-export const pest_controlDetails: ServiceDetails = {
+export const pestControlDetails: ServiceDetails = {
     priceFrom: 150,
     priceTo: 450,
     priceUnit: 'per treatment',

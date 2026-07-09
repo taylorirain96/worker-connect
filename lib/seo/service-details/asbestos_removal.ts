@@ -1,6 +1,6 @@
 import type { ServiceDetails } from '../servicesData'
 
-export const asbestos_removalDetails: ServiceDetails = {
+export const asbestosRemovalDetails: ServiceDetails = {
     priceFrom: 500,
     priceTo: 5000,
     priceUnit: 'per job',

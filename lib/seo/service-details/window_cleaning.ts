@@ -1,6 +1,6 @@
 import type { ServiceDetails } from '../servicesData'
 
-export const window_cleaningDetails: ServiceDetails = {
+export const windowCleaningDetails: ServiceDetails = {
     priceFrom: 80,
     priceTo: 300,
     priceUnit: 'per visit',

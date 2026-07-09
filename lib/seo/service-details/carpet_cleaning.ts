@@ -1,6 +1,6 @@
 import type { ServiceDetails } from '../servicesData'
 
-export const carpet_cleaningDetails: ServiceDetails = {
+export const carpetCleaningDetails: ServiceDetails = {
     priceFrom: 50,
     priceTo: 100,
     priceUnit: 'per room',
