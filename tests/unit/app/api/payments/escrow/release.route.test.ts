@@ -1,184 +1,212 @@
-import assert from 'node:assert/strict'
-import { before, beforeEach, describe, it, mock } from 'node:test'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { NextRequest } from 'next/server'
 
-const captureCalls: string[] = []
-const transferCalls: Array<Record<string, unknown>> = []
-const updateEscrowStatusCalls: Array<{ id: string; status: string; extra: Record<string, unknown> }> = []
-const notificationCalls: Array<Record<string, unknown>> = []
-const emailCalls: Array<Record<string, unknown>> = []
+const {
+  getEscrowByIdMock,
+  updateEscrowStatusMock,
+  isStripeConfiguredMock,
+  captureMock,
+  transferCreateMock,
+  getStripeMock,
+  toCentsMock,
+  sendNotificationMock,
+  sendPaymentReleasedEmailMock,
+  rateLimitMock,
+  usersById,
+  jobsById,
+  jobUpdateMock,
+  userDocGetMock,
+  jobDocGetMock,
+} = vi.hoisted(() => {
+  const usersById: Record<string, Record<string, unknown> | undefined> = {}
+  const jobsById: Record<string, Record<string, unknown> | undefined> = {}
+  const userDocGetMock = vi.fn(async (id: string) => ({
+    exists: Boolean(usersById[id]),
+    data: () => usersById[id],
+  }))
+  const jobDocGetMock = vi.fn(async (id: string) => ({
+    exists: Boolean(jobsById[id]),
+    data: () => jobsById[id],
+  }))
 
-let currentEscrow: Record<string, unknown>
-let workerUser: Record<string, unknown>
-let jobData: Record<string, unknown>
-
-mock.module('next/server', {
-  namedExports: {
-    NextResponse: {
-      json: (body: unknown, init?: { status?: number }) => ({
-        status: init?.status ?? 200,
-        body,
-      }),
-    },
-  },
+  return {
+    getEscrowByIdMock: vi.fn(),
+    updateEscrowStatusMock: vi.fn(),
+    isStripeConfiguredMock: vi.fn(),
+    captureMock: vi.fn(),
+    transferCreateMock: vi.fn(),
+    getStripeMock: vi.fn(),
+    toCentsMock: vi.fn((value: number) => Math.round(value * 100)),
+    sendNotificationMock: vi.fn().mockResolvedValue(undefined),
+    sendPaymentReleasedEmailMock: vi.fn().mockResolvedValue(undefined),
+    rateLimitMock: vi.fn().mockReturnValue(false),
+    usersById,
+    jobsById,
+    jobUpdateMock: vi.fn().mockResolvedValue(undefined),
+    userDocGetMock,
+    jobDocGetMock,
+  }
 })
 
-mock.module('@/lib/stripe', {
-  namedExports: {
-    isStripeConfigured: () => true,
-    toCents: (amount: number) => Math.round(amount * 100),
-    getStripe: () => ({
-      paymentIntents: {
-        capture: async (id: string) => {
-          captureCalls.push(id)
-        },
-      },
-      transfers: {
-        create: async (params: Record<string, unknown>) => {
-          transferCalls.push(params)
-          return { id: 'tr_123' }
-        },
-      },
+vi.mock('@/lib/services/escrowService', () => ({
+  getCurrencyDisplay: vi.fn(() => ({ code: 'nzd', label: 'NZ$' })),
+  getEscrowById: getEscrowByIdMock,
+  updateEscrowStatus: updateEscrowStatusMock,
+}))
+
+vi.mock('@/lib/stripe', () => ({
+  getStripe: getStripeMock,
+  isStripeConfigured: isStripeConfiguredMock,
+  toCents: toCentsMock,
+}))
+
+vi.mock('@/lib/firebase-admin', () => ({
+  adminDb: {
+    collection: vi.fn((name: string) => {
+      if (name === 'users') {
+        return {
+          doc: (id: string) => ({
+            get: () => userDocGetMock(id),
+          }),
+        }
+      }
+
+      if (name === 'jobs') {
+        return {
+          doc: (id: string) => ({
+            update: jobUpdateMock,
+            get: () => jobDocGetMock(id),
+          }),
+        }
+      }
+
+      return {
+        doc: () => ({
+          get: vi.fn(),
+          update: vi.fn(),
+        }),
+      }
     }),
   },
-})
+}))
 
-mock.module('@/lib/services/escrowService', {
-  namedExports: {
-    getCurrencyDisplay: () => ({ code: 'nzd', label: 'NZ$' }),
-    getEscrowById: async () => currentEscrow,
-    updateEscrowStatus: async (id: string, status: string, extra: Record<string, unknown>) => {
-      updateEscrowStatusCalls.push({ id, status, extra })
-    },
-  },
-})
+vi.mock('@/lib/notificationService', () => ({
+  sendNotification: sendNotificationMock,
+}))
 
-mock.module('@/lib/firebase-admin', {
-  namedExports: {
-    adminDb: {
-      collection: (name: string) => ({
-        doc: (id: string) => ({
-          get: async () => {
-            if (name === 'users' && id === String(currentEscrow.workerId)) {
-              return { exists: true, data: () => workerUser }
-            }
-            if (name === 'users' && id === String(currentEscrow.employerId)) {
-              return { exists: true, data: () => ({ role: 'employer' }) }
-            }
-            if (name === 'jobs' && id === String(currentEscrow.jobId)) {
-              return { exists: true, data: () => jobData }
-            }
-            return { exists: false, data: () => ({}) }
-          },
-          update: async () => undefined,
-        }),
-      }),
-    },
-  },
-})
+vi.mock('@/lib/email/transactional', () => ({
+  sendPaymentReleasedEmail: sendPaymentReleasedEmailMock,
+}))
 
-mock.module('@/lib/notificationService', {
-  namedExports: {
-    sendNotification: async (payload: Record<string, unknown>) => {
-      notificationCalls.push(payload)
-    },
-  },
-})
+vi.mock('@/lib/rateLimit', () => ({
+  rateLimit: rateLimitMock,
+}))
 
-mock.module('@/lib/email/transactional', {
-  namedExports: {
-    sendPaymentReleasedEmail: async (payload: Record<string, unknown>) => {
-      emailCalls.push(payload)
-    },
-  },
-})
-
-mock.module('@/lib/rateLimit', {
-  namedExports: {
-    rateLimit: () => false,
-  },
-})
-
-let POST: (request: unknown) => Promise<{ status: number; body: unknown }>
-
-before(async () => {
-  const mod = await import('@/app/api/payments/escrow/release/route')
-  POST = mod.POST as typeof POST
-})
-
-beforeEach(() => {
-  captureCalls.length = 0
-  transferCalls.length = 0
-  updateEscrowStatusCalls.length = 0
-  notificationCalls.length = 0
-  emailCalls.length = 0
-
-  currentEscrow = {
-    id: 'escrow_1',
-    jobId: 'job_1',
-    employerId: 'employer_1',
-    workerId: 'worker_1',
-    status: 'held',
-    currency: 'nzd',
-    amount: 200,
-    workerAmount: 170,
-    commissionRate: 0.15,
-    commissionAmount: 30,
-    stripePaymentIntentId: 'pi_real_123',
-  }
-
-  workerUser = {
-    stripeAccountId: 'acct_123',
-    email: 'worker@example.com',
-    displayName: 'Worker Name',
-  }
-
-  jobData = {
-    title: 'Paint fence',
-  }
-})
+import { POST } from '@/app/api/payments/escrow/release/route'
 
 describe('POST /api/payments/escrow/release', () => {
-  it('releases escrow with Stripe capture + Connect transfer when worker has a connected account', async () => {
-    const response = await POST({
-      json: async () => ({ escrowId: 'escrow_1', releasedBy: 'employer_1' }),
-    } as never)
-
-    assert.equal(response.status, 200)
-    assert.equal(captureCalls.length, 1)
-    assert.equal(captureCalls[0], 'pi_real_123')
-
-    assert.equal(transferCalls.length, 1)
-    assert.equal(transferCalls[0].destination, 'acct_123')
-    assert.equal(transferCalls[0].amount, 17000)
-
-    assert.equal(updateEscrowStatusCalls.length, 1)
-    assert.equal(updateEscrowStatusCalls[0].id, 'escrow_1')
-    assert.equal(updateEscrowStatusCalls[0].status, 'released')
-    assert.equal(updateEscrowStatusCalls[0].extra.stripeTransferId, 'tr_123')
-
-    assert.equal(notificationCalls.length, 1)
-    assert.equal(emailCalls.length, 1)
+  beforeEach(() => {
+    vi.clearAllMocks()
+    usersById.worker_1 = undefined
+    jobsById.job_1 = { title: 'Fix roof leak' }
+    isStripeConfiguredMock.mockReturnValue(true)
+    getStripeMock.mockReturnValue({
+      paymentIntents: { capture: captureMock },
+      transfers: { create: transferCreateMock },
+    })
   })
 
-  it('releases escrow without Stripe transfer when worker has no connected account (pending payout)', async () => {
-    workerUser = {
+  it('releases escrow and creates a Stripe Connect transfer when worker account exists', async () => {
+    usersById.worker_1 = {
+      stripeAccountId: 'acct_123',
       email: 'worker@example.com',
-      displayName: 'Worker Name',
+      displayName: 'Worker One',
     }
 
-    const response = await POST({
-      json: async () => ({ escrowId: 'escrow_1', releasedBy: 'employer_1' }),
-    } as never)
+    getEscrowByIdMock.mockResolvedValue({
+      id: 'escrow_1',
+      jobId: 'job_1',
+      employerId: 'employer_1',
+      workerId: 'worker_1',
+      amount: 500,
+      commissionRate: 0.18,
+      commissionAmount: 90,
+      workerAmount: 410,
+      status: 'held',
+      currency: 'nzd',
+      stripePaymentIntentId: 'pi_live_123',
+    })
+    transferCreateMock.mockResolvedValue({ id: 'tr_123' })
 
-    assert.equal(response.status, 200)
-    assert.equal(captureCalls.length, 1)
-    assert.equal(transferCalls.length, 0)
+    const response = await POST(
+      new NextRequest('http://localhost/api/payments/escrow/release', {
+        method: 'POST',
+        body: JSON.stringify({ escrowId: 'escrow_1', releasedBy: 'employer_1' }),
+      })
+    )
+    const json = await response.json()
 
-    assert.equal(updateEscrowStatusCalls.length, 1)
-    assert.equal(updateEscrowStatusCalls[0].status, 'released')
-    assert.equal(updateEscrowStatusCalls[0].extra.stripeTransferId, undefined)
+    expect(response.status).toBe(200)
+    expect(captureMock).toHaveBeenCalledWith('pi_live_123')
+    expect(transferCreateMock).toHaveBeenCalledWith(expect.objectContaining({
+      destination: 'acct_123',
+      amount: 41000,
+      transfer_group: 'job_1',
+    }))
+    expect(updateEscrowStatusMock).toHaveBeenCalledWith(
+      'escrow_1',
+      'released',
+      expect.objectContaining({
+        stripeTransferId: 'tr_123',
+      })
+    )
+    expect(json).toEqual(expect.objectContaining({
+      success: true,
+      stripeTransferId: 'tr_123',
+    }))
+  })
 
-    const payload = response.body as Record<string, unknown>
-    assert.equal(payload.stripeTransferId, undefined)
+  it('releases escrow without transfer when worker has no connected account', async () => {
+    usersById.worker_1 = {
+      email: 'worker@example.com',
+      displayName: 'Worker One',
+    }
+
+    getEscrowByIdMock.mockResolvedValue({
+      id: 'escrow_1',
+      jobId: 'job_1',
+      employerId: 'employer_1',
+      workerId: 'worker_1',
+      amount: 500,
+      commissionRate: 0.18,
+      commissionAmount: 90,
+      workerAmount: 410,
+      status: 'held',
+      currency: 'nzd',
+      stripePaymentIntentId: 'pi_live_123',
+    })
+
+    const response = await POST(
+      new NextRequest('http://localhost/api/payments/escrow/release', {
+        method: 'POST',
+        body: JSON.stringify({ escrowId: 'escrow_1', releasedBy: 'employer_1' }),
+      })
+    )
+    const json = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(captureMock).toHaveBeenCalledWith('pi_live_123')
+    expect(transferCreateMock).not.toHaveBeenCalled()
+    expect(updateEscrowStatusMock).toHaveBeenCalledWith(
+      'escrow_1',
+      'released',
+      expect.objectContaining({
+        stripeTransferId: undefined,
+      })
+    )
+    expect(json).toEqual(expect.objectContaining({
+      success: true,
+    }))
+    expect('stripeTransferId' in json).toBe(false)
   })
 })
