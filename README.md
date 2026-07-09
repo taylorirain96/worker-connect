@@ -99,11 +99,11 @@ Counters are tracked **per client IP and per route category**.
 
 | Category | Routes | Limit |
 |---|---|---|
-| **Auth** | `POST /api/auth/login`, `POST /api/auth/session`, `POST /api/auth/register` | 5 req / min |
+| **Auth** | `POST /api/auth/login`, `POST /api/auth/session`, `POST /api/auth/register` | 5–10 req / min |
 | **Contact** | `POST /api/contact` | 5 req / min |
-| **Payment / escrow** | `/api/payments/*`, `/api/stripe/create-escrow`, `/api/stripe/release-payment`, `/api/payouts/*`, `/api/earnings/withdraw` | 10–20 req / min |
-| **Messaging** | `GET /api/messages/*`, `POST /api/messages`, `POST /api/messages/send` | 30 req / min |
-| **Search / browse** | `GET /api/search/*`, `GET /api/workers` | 30 req / min |
+| **Payment / escrow** | `/api/payments/*`, `/api/stripe/create-escrow`, `/api/stripe/release-payment`, `/api/payouts/*`, `/api/earnings/withdraw`, `/api/subscriptions/*` | 10–20 req / min |
+| **Messaging** | `GET+POST /api/messages`, `GET /api/messages/list`, `GET /api/messages/conversations`, `GET /api/messages/[id]`, `POST /api/messages/send` | 30 req / min |
+| **Search / browse** | `GET /api/search`, `GET /api/search/jobs`, `GET /api/search/workers`, `GET /api/search/suggestions`, `GET /api/workers` | 30 req / min |
 
 Webhook routes (`/api/stripe/webhook`, `/api/webhooks/stripe`) are intentionally **not** rate-limited because they originate from trusted external services (Stripe).
 

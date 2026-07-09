@@ -7,7 +7,7 @@ import type { UserProfile } from '@/types'
 import { rateLimit } from '@/lib/rateLimit'
 
 export async function GET(request: NextRequest) {
-  if (rateLimit(request, { max: 30, windowMs: 60_000, key: 'browse' })) {
+  if (rateLimit(request, { max: 30, windowMs: 60_000, key: 'search' })) {
     return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 })
   }
   try {
