@@ -5,9 +5,7 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { SITE_URL } from '@/lib/seo/config'
-
-const DRAFT_NOTICE =
-  'DRAFT — this content is a placeholder and has not been reviewed by a lawyer. Do not treat as legally binding until reviewed by qualified legal counsel.'
+import { LEGAL_DRAFT_NOTICE } from '@/lib/legalDraftNotice'
 
 export const metadata: Metadata = {
   title: 'Privacy Policy | QuickTrade',
@@ -16,7 +14,7 @@ export const metadata: Metadata = {
   alternates: { canonical: `${SITE_URL}/privacy` },
 }
 
-const privacySections = [
+const placeholderSections = [
   {
     heading: 'PLACEHOLDER — Data We Collect',
     points: [
@@ -75,7 +73,7 @@ export default function PrivacyPage() {
 
           <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm text-amber-100">
             <strong className="block font-semibold">DRAFT NOTICE</strong>
-            <p className="mt-2">{DRAFT_NOTICE}</p>
+            <p className="mt-2">{LEGAL_DRAFT_NOTICE}</p>
           </div>
 
           <header className="space-y-3">
@@ -86,7 +84,7 @@ export default function PrivacyPage() {
           </header>
 
           <section className="grid gap-4">
-            {privacySections.map((section) => (
+            {placeholderSections.map((section) => (
               <Card key={section.heading} className="bg-slate-900/60 border-slate-700/60">
                 <CardHeader>
                   <CardTitle className="text-white">{section.heading}</CardTitle>
