@@ -6,6 +6,7 @@
  * Body: { escrowId, raisedBy, reason }
  */
 import { NextRequest, NextResponse } from 'next/server'
+import * as Sentry from '@sentry/nextjs'
 import { getEscrowById, updateEscrowStatus } from '@/lib/services/escrowService'
 import { adminDb } from '@/lib/firebase-admin'
 import { sendNotification } from '@/lib/notificationService'
@@ -107,6 +108,12 @@ export async function POST(request: NextRequest) {
       message: 'Escrow funds frozen. QuickTrade will review and resolve the dispute.',
     })
   } catch (err) {
+    Sentry.withScope((scope) => {
+      scope.setContext('payments_escrow_dispute', {
+        route: '/api/payments/escrow/dispute',
+      })
+      Sentry.captureException(err)
+    })
     const message = err instanceof Error ? err.message : 'Unknown error'
     console.error('Error raising escrow dispute:', message)
     return NextResponse.json({ error: message }, { status: 500 })

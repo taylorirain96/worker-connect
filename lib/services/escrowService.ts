@@ -15,6 +15,7 @@ import {
   serverTimestamp,
   Timestamp,
 } from 'firebase/firestore'
+import * as Sentry from '@sentry/nextjs'
 import { db } from '@/lib/firebase'
 import { adminDb } from '@/lib/firebase-admin'
 import type {
@@ -31,6 +32,14 @@ import { COMMISSION_TIERS as TIERS, JOB_POSTING_FEES } from '@/types'
 
 const ESCROW_COL = 'escrowPayments'
 const JOB_POSTING_COL = 'jobPostingPayments'
+
+function captureAndThrow(error: Error, context: Record<string, unknown>): never {
+  Sentry.withScope((scope) => {
+    scope.setContext('escrow_service', context)
+    Sentry.captureException(error)
+  })
+  throw error
+}
 
 export type EscrowWorkflowStage =
   | 'posted'
@@ -195,7 +204,11 @@ export async function createEscrowRecord(
     })
     return ref.id
   }
-  if (!adminDb) throw new Error('Firestore not available')
+  if (!adminDb) {
+    captureAndThrow(new Error('Firestore not available'), {
+      operation: 'createEscrowRecord',
+    })
+  }
   const now = new Date().toISOString()
   const ref = await adminDb.collection(ESCROW_COL).add({
     ...data,
@@ -385,7 +398,12 @@ export async function openDispute(
     return
   }
 
-  throw new Error('Firestore not available')
+  captureAndThrow(new Error('Firestore not available'), {
+    operation: 'openDispute',
+    escrowId,
+    jobId,
+    openedBy,
+  })
 }
 
 /**
@@ -444,7 +462,13 @@ export async function resolveDispute(
     return
   }
 
-  throw new Error('Firestore not available')
+  captureAndThrow(new Error('Firestore not available'), {
+    operation: 'resolveDispute',
+    escrowId,
+    jobId,
+    resolution,
+    resolvedBy,
+  })
 }
 
 // ─── Job Posting Payment CRUD ─────────────────────────────────────────────────
@@ -453,7 +477,11 @@ export async function resolveDispute(
 export async function createJobPostingPaymentRecord(
   data: Omit<JobPostingPayment, 'id' | 'createdAt' | 'updatedAt'>
 ): Promise<string> {
-  if (!db) throw new Error('Firestore not available')
+  if (!db) {
+    captureAndThrow(new Error('Firestore not available'), {
+      operation: 'createJobPostingPaymentRecord',
+    })
+  }
   const ref = await addDoc(collection(db, JOB_POSTING_COL), {
     ...data,
     createdAt: serverTimestamp(),

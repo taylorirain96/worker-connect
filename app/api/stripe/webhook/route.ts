@@ -11,6 +11,7 @@
  * Configure this endpoint URL in your Stripe dashboard under Webhooks.
  */
 import { NextRequest, NextResponse } from 'next/server'
+import * as Sentry from '@sentry/nextjs'
 import type Stripe from 'stripe'
 import { constructWebhookEvent } from '@/lib/stripe'
 import { adminDb } from '@/lib/firebase-admin'
@@ -31,6 +32,12 @@ export async function POST(req: NextRequest) {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
 
   if (!webhookSecret) {
+    Sentry.withScope((scope) => {
+      scope.setContext('stripe_webhook_config', {
+        route: '/api/stripe/webhook',
+      })
+      Sentry.captureException(new Error('STRIPE_WEBHOOK_SECRET is not configured'))
+    })
     console.error('STRIPE_WEBHOOK_SECRET is not configured')
     return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 })
   }
@@ -47,6 +54,12 @@ export async function POST(req: NextRequest) {
     event = constructWebhookEvent(body, signature, webhookSecret)
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
+    Sentry.withScope((scope) => {
+      scope.setContext('stripe_webhook_signature_verification', {
+        route: '/api/stripe/webhook',
+      })
+      Sentry.captureException(err)
+    })
     console.error('Stripe webhook signature verification failed:', message)
     return NextResponse.json({ error: `Webhook signature verification failed: ${message}` }, { status: 400 })
   }
@@ -251,7 +264,17 @@ export async function POST(req: NextRequest) {
               stripePaymentId: pi.id,
               invoiceNumber: `QT-${Date.now()}`,
             }),
-          }).catch(() => {})
+          }).catch((invoiceErr) => {
+            Sentry.withScope((scope) => {
+              scope.setContext('stripe_webhook_invoice_email', {
+                route: '/api/stripe/webhook',
+                eventType: event.type,
+                stripePaymentIntentId: pi.id,
+                userEmail,
+              })
+              Sentry.captureException(invoiceErr)
+            })
+          })
         }
 
         break
@@ -458,6 +481,13 @@ export async function POST(req: NextRequest) {
               }
             }
           } catch (rewardErr) {
+            Sentry.withScope((scope) => {
+              scope.setContext('stripe_webhook_referral_reward', {
+                route: '/api/stripe/webhook',
+                eventType: event.type,
+              })
+              Sentry.captureException(rewardErr)
+            })
             console.error('Referral reward processing failed (non-fatal):', rewardErr)
           }
         }
@@ -601,6 +631,14 @@ export async function POST(req: NextRequest) {
         break
     }
   } catch (err) {
+    Sentry.withScope((scope) => {
+      scope.setContext('stripe_webhook_event_processing', {
+        route: '/api/stripe/webhook',
+        eventType: event.type,
+        eventId: event.id,
+      })
+      Sentry.captureException(err)
+    })
     console.error(`Error processing Stripe webhook event ${event.type}:`, err)
     return NextResponse.json({ error: 'Webhook handler failed' }, { status: 500 })
   }

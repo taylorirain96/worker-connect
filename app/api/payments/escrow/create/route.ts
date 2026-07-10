@@ -7,6 +7,7 @@
  * Body: { jobId, quoteId, employerId, workerId, amount, completedJobs }
  */
 import { NextRequest, NextResponse } from 'next/server'
+import * as Sentry from '@sentry/nextjs'
 import { getStripe, isStripeConfigured, toCents } from '@/lib/stripe'
 import { createEscrowRecord, calculateCommission } from '@/lib/services/escrowService'
 import { adminDb } from '@/lib/firebase-admin'
@@ -151,6 +152,12 @@ export async function POST(request: NextRequest) {
       currency,
     })
   } catch (err) {
+    Sentry.withScope((scope) => {
+      scope.setContext('payments_escrow_create', {
+        route: '/api/payments/escrow/create',
+      })
+      Sentry.captureException(err)
+    })
     const message = err instanceof Error ? err.message : 'Unknown error'
     console.error('Error creating escrow payment intent:', message)
     return NextResponse.json({ error: message }, { status: 500 })

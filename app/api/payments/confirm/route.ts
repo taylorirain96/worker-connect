@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import * as Sentry from '@sentry/nextjs'
 import { confirmPaymentIntent, isStripeConfigured } from '@/lib/stripe'
 import { rateLimit } from '@/lib/rateLimit'
 
@@ -42,6 +43,12 @@ export async function POST(req: NextRequest) {
     const result = await confirmPaymentIntent(paymentIntentId, paymentMethodId)
     return NextResponse.json(result)
   } catch (error) {
+    Sentry.withScope((scope) => {
+      scope.setContext('payments_confirm', {
+        route: '/api/payments/confirm',
+      })
+      Sentry.captureException(error)
+    })
     console.error('POST /api/payments/confirm error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }

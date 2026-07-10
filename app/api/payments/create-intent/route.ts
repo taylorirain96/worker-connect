@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import * as Sentry from '@sentry/nextjs'
 import { createPaymentIntent } from '@/lib/stripe'
 import { BUNDLE_PRICING } from '@/types/payment'
 import { getPostingFee } from '@/types'
@@ -163,6 +164,12 @@ export async function POST(req: NextRequest) {
       savingsPercent,
     })
   } catch (error) {
+    Sentry.withScope((scope) => {
+      scope.setContext('payments_create_intent', {
+        route: '/api/payments/create-intent',
+      })
+      Sentry.captureException(error)
+    })
     console.error('POST /api/payments/create-intent error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }

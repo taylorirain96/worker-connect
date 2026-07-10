@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import * as Sentry from '@sentry/nextjs'
 import { adminDb } from '@/lib/firebase-admin'
 
 export const dynamic = 'force-dynamic'
@@ -49,6 +50,12 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ available, pending, currency, stripeAccountId })
   } catch (error) {
+    Sentry.withScope((scope) => {
+      scope.setContext('payouts_balance', {
+        route: '/api/payouts/balance',
+      })
+      Sentry.captureException(error)
+    })
     console.error('[payouts/balance] GET error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }

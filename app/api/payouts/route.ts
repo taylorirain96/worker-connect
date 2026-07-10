@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import * as Sentry from '@sentry/nextjs'
 import { STRIPE_CONNECT_CONFIG } from '@/lib/stripe/stripeConnect'
 import { adminDb } from '@/lib/firebase-admin'
 import { FieldValue, Timestamp } from 'firebase-admin/firestore'
@@ -45,6 +46,13 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ payouts })
   } catch (error) {
+    Sentry.withScope((scope) => {
+      scope.setContext('payouts_list', {
+        route: '/api/payouts',
+        method: 'GET',
+      })
+      Sentry.captureException(error)
+    })
     console.error('List payouts error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
@@ -104,6 +112,13 @@ export async function POST(req: NextRequest) {
         : null,
     })
   } catch (error) {
+    Sentry.withScope((scope) => {
+      scope.setContext('payouts_create', {
+        route: '/api/payouts',
+        method: 'POST',
+      })
+      Sentry.captureException(error)
+    })
     console.error('Create payout error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }

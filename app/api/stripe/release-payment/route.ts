@@ -11,6 +11,7 @@
  *   Elite Worker (51+ jobs):   10%
  */
 import { NextResponse } from 'next/server'
+import * as Sentry from '@sentry/nextjs'
 import { getWorkerTier } from '@/types'
 import { isStripeConfigured } from '@/lib/stripe'
 import Stripe from 'stripe'
@@ -86,6 +87,16 @@ export async function POST(request: Request) {
           })
         }
       } catch (emailErr) {
+        Sentry.withScope((scope) => {
+          scope.setContext('stripe_release_payment_email', {
+            route: '/api/stripe/release-payment',
+            paymentIntentId,
+            jobId,
+            workerId,
+            amount,
+          })
+          Sentry.captureException(emailErr)
+        })
         console.error('Failed to send payment-released email:', emailErr)
       }
     }
@@ -122,7 +133,18 @@ export async function POST(request: Request) {
     }
 
     // Fire-and-forget payment email regardless of Stripe mode (non-blocking)
-    sendPaymentEmail().catch(() => {})
+    sendPaymentEmail().catch((emailErr) => {
+      Sentry.withScope((scope) => {
+        scope.setContext('stripe_release_payment_email_background', {
+          route: '/api/stripe/release-payment',
+          paymentIntentId,
+          jobId,
+          workerId,
+          amount,
+        })
+        Sentry.captureException(emailErr)
+      })
+    })
 
     // Push notification to worker: payment released (non-blocking)
     if (workerId) {
@@ -132,7 +154,18 @@ export async function POST(request: Request) {
         body: `NZ$${workerReceives.toFixed(2)} has been released for "${jobTitle ?? jobId}".`,
         type: 'payment_received',
         link: `/jobs/${jobId}`,
-      }).catch(() => {})
+      }).catch((notificationErr) => {
+        Sentry.withScope((scope) => {
+          scope.setContext('stripe_release_payment_notification_background', {
+            route: '/api/stripe/release-payment',
+            paymentIntentId,
+            jobId,
+            workerId,
+            amount,
+          })
+          Sentry.captureException(notificationErr)
+        })
+      })
     }
 
     const responsePayload = {
@@ -151,6 +184,12 @@ export async function POST(request: Request) {
 
     return NextResponse.json(responsePayload)
   } catch (error) {
+    Sentry.withScope((scope) => {
+      scope.setContext('stripe_release_payment', {
+        route: '/api/stripe/release-payment',
+      })
+      Sentry.captureException(error)
+    })
     console.error('POST /api/stripe/release-payment error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }

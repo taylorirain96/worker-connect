@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import * as Sentry from '@sentry/nextjs'
 import { rateLimit } from '@/lib/rateLimit'
 
 /**
@@ -57,6 +58,12 @@ export async function POST(req: NextRequest) {
       url: `${returnUrl}?mock_onboarding=1&account=${mockAccountId}`,
     })
   } catch (error) {
+    Sentry.withScope((scope) => {
+      scope.setContext('stripe_connect_onboard', {
+        route: '/api/stripe/connect/onboard',
+      })
+      Sentry.captureException(error)
+    })
     console.error('Stripe onboard error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
