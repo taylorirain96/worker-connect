@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import * as Sentry from '@sentry/nextjs'
 import { getStripe, confirmPaymentIntent } from '@/lib/stripe'
 import { adminDb } from '@/lib/firebase-admin'
 import { toIsoTimestamp } from '@/lib/server/firestoreSerializers'
@@ -35,6 +36,13 @@ export async function GET(
       },
     })
   } catch (error) {
+    Sentry.withScope((scope) => {
+      scope.setContext('payments_by_id_get', {
+        route: '/api/payments/[paymentId]',
+        method: 'GET',
+      })
+      Sentry.captureException(error)
+    })
     console.error('GET /api/payments/[paymentId] error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
@@ -99,6 +107,13 @@ export async function POST(
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
   } catch (error) {
+    Sentry.withScope((scope) => {
+      scope.setContext('payments_by_id_post', {
+        route: '/api/payments/[paymentId]',
+        method: 'POST',
+      })
+      Sentry.captureException(error)
+    })
     console.error('POST /api/payments/[paymentId] error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }

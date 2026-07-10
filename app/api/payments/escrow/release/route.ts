@@ -8,6 +8,7 @@
  * Body: { escrowId, releasedBy }
  */
 import { NextRequest, NextResponse } from 'next/server'
+import * as Sentry from '@sentry/nextjs'
 import { getStripe, isStripeConfigured, toCents } from '@/lib/stripe'
 import { getCurrencyDisplay, getEscrowById, updateEscrowStatus } from '@/lib/services/escrowService'
 import { adminDb } from '@/lib/firebase-admin'
@@ -164,6 +165,15 @@ export async function POST(request: NextRequest) {
         })
       }
     } catch (emailErr) {
+      Sentry.withScope((scope) => {
+        scope.setContext('payments_escrow_release_email', {
+          route: '/api/payments/escrow/release',
+          escrowId,
+          jobId: escrow.jobId,
+          workerId: escrow.workerId,
+        })
+        Sentry.captureException(emailErr)
+      })
       console.error('Failed to send payment-released email:', emailErr)
     }
 
@@ -179,6 +189,12 @@ export async function POST(request: NextRequest) {
       releasedAt,
     })
   } catch (err) {
+    Sentry.withScope((scope) => {
+      scope.setContext('payments_escrow_release', {
+        route: '/api/payments/escrow/release',
+      })
+      Sentry.captureException(err)
+    })
     const message = err instanceof Error ? err.message : 'Unknown error'
     console.error('Error releasing escrow:', message)
     return NextResponse.json({ error: message }, { status: 500 })

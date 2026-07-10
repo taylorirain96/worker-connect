@@ -8,6 +8,7 @@
  * Body: { jobId, employerId, estimatedValue, featuredListing?, urgentBadge? }
  */
 import { NextRequest, NextResponse } from 'next/server'
+import * as Sentry from '@sentry/nextjs'
 import { getStripe, isStripeConfigured } from '@/lib/stripe'
 import { createJobPostingPaymentRecord } from '@/lib/services/escrowService'
 import { getJobPostingFee } from '@/lib/services/escrowService'
@@ -172,6 +173,12 @@ export async function POST(request: NextRequest) {
       tier: feeConfig.tier,
     })
   } catch (err) {
+    Sentry.withScope((scope) => {
+      scope.setContext('payments_job_posting', {
+        route: '/api/payments/job-posting',
+      })
+      Sentry.captureException(err)
+    })
     const message = err instanceof Error ? err.message : 'Unknown error'
     console.error('Error creating job posting checkout session:', message)
     return NextResponse.json({ error: message }, { status: 500 })

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import * as Sentry from '@sentry/nextjs'
 import { calculateNetWithdrawal, MIN_WITHDRAWAL } from '@/lib/earnings/calculateEarnings'
 import { adminDb } from '@/lib/firebase-admin'
 import { FieldValue } from 'firebase-admin/firestore'
@@ -21,9 +22,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  let requestedAmount: number | undefined
+  let requestedTransferType: WithdrawRequestBody['transferType'] | undefined
+
   try {
     const body = (await req.json()) as WithdrawRequestBody
     const { amount, transferType, bankAccountId } = body
+    requestedAmount = amount
+    requestedTransferType = transferType
 
     // Basic validation
     if (!amount || !transferType || !bankAccountId) {
@@ -124,6 +130,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, withdrawal }, { status: 201 })
   } catch (error) {
     const msg = error instanceof Error ? error.message : ''
+    Sentry.withScope((scope) => {
+      scope.setContext('earnings_withdraw', {
+        route: '/api/earnings/withdraw',
+        userId: uid,
+        amount: requestedAmount,
+        transferType: requestedTransferType,
+      })
+      Sentry.captureException(error)
+    })
     if (msg === 'USER_NOT_FOUND') {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }

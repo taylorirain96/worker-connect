@@ -10,6 +10,7 @@
  * to hold funds without immediately charging the employer.
  */
 import { NextResponse } from 'next/server'
+import * as Sentry from '@sentry/nextjs'
 import { getWorkerTier } from '@/types'
 import { isStripeConfigured } from '@/lib/stripe'
 import Stripe from 'stripe'
@@ -105,6 +106,12 @@ export async function POST(request: Request) {
       autoReleaseAt,
     })
   } catch (error) {
+    Sentry.withScope((scope) => {
+      scope.setContext('stripe_create_escrow', {
+        route: '/api/stripe/create-escrow',
+      })
+      Sentry.captureException(error)
+    })
     console.error('POST /api/stripe/create-escrow error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }

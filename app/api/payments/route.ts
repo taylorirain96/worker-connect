@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import * as Sentry from '@sentry/nextjs'
 import { rateLimit } from '@/lib/rateLimit'
 import { adminDb } from '@/lib/firebase-admin'
 import { FieldValue, Timestamp } from 'firebase-admin/firestore'
@@ -45,6 +46,13 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ payments })
   } catch (error) {
+    Sentry.withScope((scope) => {
+      scope.setContext('payments_list', {
+        route: '/api/payments',
+        method: 'GET',
+      })
+      Sentry.captureException(error)
+    })
     console.error('GET /api/payments error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
@@ -119,6 +127,13 @@ export async function POST(req: NextRequest) {
       description,
     })
   } catch (error) {
+    Sentry.withScope((scope) => {
+      scope.setContext('payments_create', {
+        route: '/api/payments',
+        method: 'POST',
+      })
+      Sentry.captureException(error)
+    })
     console.error('POST /api/payments error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }

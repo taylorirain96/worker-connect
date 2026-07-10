@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import * as Sentry from '@sentry/nextjs'
 import Stripe from 'stripe'
 import { rateLimit } from '@/lib/rateLimit'
 
@@ -40,6 +41,12 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ url: accountLink.url })
   } catch (error) {
+    Sentry.withScope((scope) => {
+      scope.setContext('stripe_connect_account_link', {
+        route: '/api/stripe/connect/account-link',
+      })
+      Sentry.captureException(error)
+    })
     console.error('Stripe account link error:', error)
     return NextResponse.json({ error: 'Failed to create account link' }, { status: 500 })
   }

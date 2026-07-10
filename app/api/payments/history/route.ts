@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import * as Sentry from '@sentry/nextjs'
 import { adminDb } from '@/lib/firebase-admin'
 import { Timestamp } from 'firebase-admin/firestore'
 
@@ -63,6 +64,12 @@ export async function GET(req: NextRequest) {
       offset,
     })
   } catch (error) {
+    Sentry.withScope((scope) => {
+      scope.setContext('payments_history', {
+        route: '/api/payments/history',
+      })
+      Sentry.captureException(error)
+    })
     console.error('GET /api/payments/history error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }

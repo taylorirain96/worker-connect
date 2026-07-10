@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import * as Sentry from '@sentry/nextjs'
 import { STRIPE_CONNECT_CONFIG } from '@/lib/stripe/stripeConnect'
 import { rateLimit } from '@/lib/rateLimit'
 
@@ -83,6 +84,12 @@ export async function POST(req: NextRequest) {
       createdAt: new Date().toISOString(),
     })
   } catch (error) {
+    Sentry.withScope((scope) => {
+      scope.setContext('payouts_request', {
+        route: '/api/payouts/request',
+      })
+      Sentry.captureException(error)
+    })
     console.error('POST /api/payouts/request error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }

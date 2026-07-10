@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import * as Sentry from '@sentry/nextjs'
 import { adminDb } from '@/lib/firebase-admin'
 import { STRIPE_CONNECT_CONFIG } from '@/lib/stripe/stripeConnect'
 import { rateLimit } from '@/lib/rateLimit'
@@ -87,6 +88,12 @@ export async function POST(request: NextRequest) {
         : new Date(Date.now() + 3 * 86400000).toISOString(),
     })
   } catch (error) {
+    Sentry.withScope((scope) => {
+      scope.setContext('payouts_withdraw', {
+        route: '/api/payouts/withdraw',
+      })
+      Sentry.captureException(error)
+    })
     console.error('[payouts/withdraw] POST error:', error)
     const message =
       error instanceof Error ? error.message : 'Internal server error'

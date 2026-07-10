@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import * as Sentry from '@sentry/nextjs'
 import Stripe from 'stripe'
 import { rateLimit } from '@/lib/rateLimit'
 
@@ -16,7 +17,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Stripe not configured' }, { status: 500 })
     }
 
-    const body = await request.json().catch(() => ({})) as { email?: string; country?: string }
+    const body = await request.json().catch((parseErr) => {
+      Sentry.withScope((scope) => {
+        scope.setContext('stripe_connect_account_parse', {
+          route: '/api/stripe/connect/account',
+        })
+        Sentry.captureException(parseErr)
+      })
+      return {}
+    }) as { email?: string; country?: string }
 
     const stripe = new Stripe(stripeSecretKey)
     const account = await stripe.accounts.create({
@@ -31,6 +40,12 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ accountId: account.id })
   } catch (error) {
+    Sentry.withScope((scope) => {
+      scope.setContext('stripe_connect_account', {
+        route: '/api/stripe/connect/account',
+      })
+      Sentry.captureException(error)
+    })
     console.error('Stripe create account error:', error)
     return NextResponse.json({ error: 'Failed to create Stripe account' }, { status: 500 })
   }
