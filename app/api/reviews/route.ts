@@ -71,6 +71,32 @@ export async function POST(request: NextRequest) {
 
     const sanitisedTags: string[] = Array.isArray(tags) ? tags.filter((t) => typeof t === 'string') : []
 
+    // Verify the job exists, is completed, and the reviewer is a party to it
+    if (adminDb) {
+      const jobSnap = await adminDb.collection('jobs').doc(jobId).get()
+      if (!jobSnap.exists) {
+        return NextResponse.json(
+          { error: 'Reviews can only be submitted for completed jobs you were involved in.' },
+          { status: 403 },
+        )
+      }
+      const jobData = jobSnap.data() as Record<string, unknown>
+      if (jobData.status !== 'completed') {
+        return NextResponse.json(
+          { error: 'Reviews can only be submitted for completed jobs you were involved in.' },
+          { status: 403 },
+        )
+      }
+      const isParty =
+        reviewerId === jobData.employerId || reviewerId === jobData.assignedWorkerId
+      if (!isParty) {
+        return NextResponse.json(
+          { error: 'Reviews can only be submitted for completed jobs you were involved in.' },
+          { status: 403 },
+        )
+      }
+    }
+
     // Prevent duplicate reviews — one review per job per reviewer
     if (adminDb) {
       const existingSnap = await adminDb
