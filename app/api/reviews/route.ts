@@ -73,27 +73,19 @@ export async function POST(request: NextRequest) {
 
     // Verify the job exists, is completed, and the reviewer is a party to it
     if (adminDb) {
+      const REVIEW_GUARD_ERROR = 'Reviews can only be submitted for completed jobs you were involved in.'
       const jobSnap = await adminDb.collection('jobs').doc(jobId).get()
       if (!jobSnap.exists) {
-        return NextResponse.json(
-          { error: 'Reviews can only be submitted for completed jobs you were involved in.' },
-          { status: 403 },
-        )
+        return NextResponse.json({ error: REVIEW_GUARD_ERROR }, { status: 403 })
       }
       const jobData = jobSnap.data() as Record<string, unknown>
       if (jobData.status !== 'completed') {
-        return NextResponse.json(
-          { error: 'Reviews can only be submitted for completed jobs you were involved in.' },
-          { status: 403 },
-        )
+        return NextResponse.json({ error: REVIEW_GUARD_ERROR }, { status: 403 })
       }
       const isParty =
         reviewerId === jobData.employerId || reviewerId === jobData.assignedWorkerId
       if (!isParty) {
-        return NextResponse.json(
-          { error: 'Reviews can only be submitted for completed jobs you were involved in.' },
-          { status: 403 },
-        )
+        return NextResponse.json({ error: REVIEW_GUARD_ERROR }, { status: 403 })
       }
     }
 
