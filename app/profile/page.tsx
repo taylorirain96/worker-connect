@@ -22,8 +22,21 @@ const profileSchema = z.object({
   website: z.string().url('Please enter a valid URL').optional().or(z.literal('')),
   videoUrl: z.string().url('Please enter a valid YouTube or Vimeo URL').optional().or(z.literal('')),
   hourlyRate: z.coerce.number().min(0).optional(),
+  chargesQuoteFee: z.boolean().optional(),
+  quoteFeeAmount: z.preprocess(
+    (value) => (value === '' || value === null || value === undefined ? undefined : value),
+    z.coerce.number().min(10, 'Quote fee must be at least $10').max(50, 'Quote fee must be $50 or less').optional()
+  ),
   skills: z.string().optional(),
   availability: z.enum(['available', 'busy', 'unavailable']).optional(),
+}).superRefine((data, ctx) => {
+  if (data.chargesQuoteFee && data.quoteFeeAmount === undefined) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['quoteFeeAmount'],
+      message: 'Enter a quote fee between $10 and $50',
+    })
+  }
 })
 
 type ProfileFormData = z.output<typeof profileSchema>
@@ -37,6 +50,7 @@ export default function ProfilePage() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isDirty },
   } = useForm<ProfileFormInput, unknown, ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -48,10 +62,13 @@ export default function ProfilePage() {
       website: profile?.website || '',
       videoUrl: profile?.videoUrl || '',
       hourlyRate: profile?.hourlyRate || undefined,
+      chargesQuoteFee: profile?.chargesQuoteFee || false,
+      quoteFeeAmount: profile?.quoteFeeAmount || undefined,
       skills: profile?.skills?.join(', ') || '',
       availability: profile?.availability || 'available',
     },
   })
+  const chargesQuoteFee = watch('chargesQuoteFee')
 
   useEffect(() => {
     if (!user) {
@@ -83,8 +100,12 @@ export default function ProfilePage() {
           updatedAt: new Date().toISOString(),
         }
 
-        if (profile?.role === 'worker' && data.hourlyRate !== undefined) {
-          updates.hourlyRate = data.hourlyRate
+        if (profile?.role === 'worker') {
+          if (data.hourlyRate !== undefined) {
+            updates.hourlyRate = data.hourlyRate
+          }
+          updates.chargesQuoteFee = Boolean(data.chargesQuoteFee)
+          updates.quoteFeeAmount = data.chargesQuoteFee ? data.quoteFeeAmount ?? 0 : 0
         }
 
         await updateDoc(doc(db, 'users', user.uid), updates)
@@ -214,6 +235,39 @@ export default function ProfilePage() {
                     helperText="List your main skills"
                     {...register('skills')}
                   />
+
+                  <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-3">
+                    <label className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        className="mt-1 h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                        {...register('chargesQuoteFee')}
+                      />
+                      <span>
+                        <span className="block text-sm font-medium text-gray-900 dark:text-white">
+                          Charge a site-visit / in-person quote fee
+                        </span>
+                        <span className="block text-sm text-gray-500 dark:text-gray-400">
+                          Clients will see and pay this upfront before requesting an in-person quote.
+                          It stays separate from any later job payment.
+                        </span>
+                      </span>
+                    </label>
+
+                    <Input
+                      label="Quote fee amount (NZD)"
+                      type="number"
+                      min="10"
+                      max="50"
+                      step="1"
+                      placeholder="e.g., 25"
+                      leftIcon={<DollarSign className="h-4 w-4" />}
+                      helperText="Suggested range: $10–$50. This fee is non-refundable and not deducted from the final job price."
+                      error={errors.quoteFeeAmount?.message}
+                      disabled={!chargesQuoteFee}
+                      {...register('quoteFeeAmount')}
+                    />
+                  </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">

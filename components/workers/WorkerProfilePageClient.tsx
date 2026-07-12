@@ -36,6 +36,7 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import { getOrCreateConversation } from '@/lib/messaging'
 import toast from 'react-hot-toast'
 import FavouriteButton from '@/components/workers/FavouriteButton'
+import RequestQuoteModal from '@/components/workers/RequestQuoteModal'
 import VideoProfilePlayer from '@/components/workers/VideoProfilePlayer'
 import PortfolioGallery from '@/components/portfolio/PortfolioGallery'
 import ServicePackageCard from '@/components/servicePackages/ServicePackageCard'
@@ -59,6 +60,7 @@ export default function WorkerProfilePageClient({
   const [portfolio, setPortfolio] = useState(initialData.portfolio)
   const [servicePackages, setServicePackages] = useState(initialData.servicePackages)
   const [tradeLicences, setTradeLicences] = useState(initialData.tradeLicences)
+  const [showRequestQuoteModal, setShowRequestQuoteModal] = useState(false)
 
   useEffect(() => {
     setWorker(initialData.worker)
@@ -200,6 +202,13 @@ export default function WorkerProfilePageClient({
 
   return (
     <div className="flex flex-col min-h-screen">
+      {showRequestQuoteModal && user ? (
+        <RequestQuoteModal
+          worker={worker}
+          homeownerId={user.uid}
+          onClose={() => setShowRequestQuoteModal(false)}
+        />
+      ) : null}
       <Script
         id="jsonld-worker-profile"
         type="application/ld+json"
@@ -510,10 +519,27 @@ export default function WorkerProfilePageClient({
                     </Button>
                   </Link>
                 )}
-                <Button variant="outline" className="w-full mb-3">
+                <Button
+                  variant="outline"
+                  className="w-full mb-3"
+                  onClick={() => {
+                    if (!user) {
+                      router.push(`/auth/login?redirect=/workers/${worker.uid}`)
+                      return
+                    }
+                    setShowRequestQuoteModal(true)
+                  }}
+                >
                   <Calendar className="h-4 w-4" />
                   Request Quote
                 </Button>
+                {worker.chargesQuoteFee && worker.quoteFeeAmount ? (
+                  <p className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-200">
+                    Site-visit quote fee: {worker.country === 'AU' ? 'A$' : 'NZ$'}
+                    {worker.quoteFeeAmount.toFixed(2)}. It is paid upfront, non-refundable, and
+                    separate from any later job price.
+                  </p>
+                ) : null}
                 {user && user.uid !== worker.uid && currentProfile?.role === 'homeowner' && (
                   <div className="flex items-center justify-center pt-1">
                     <FavouriteButton

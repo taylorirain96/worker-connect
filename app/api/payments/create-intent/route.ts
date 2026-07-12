@@ -8,6 +8,8 @@ import type { BundleType } from '@/types/payment'
 import Stripe from 'stripe'
 import { rateLimit } from '@/lib/rateLimit'
 import { getCurrencyForJobCountry, getJobCountryById } from '@/lib/services/jobCountryService'
+import { adminDb } from '@/lib/firebase-admin'
+import { calculateQuoteFeeCommission } from '@/lib/services/quoteFeeService'
 
 /**
  * POST /api/payments/create-intent
@@ -44,6 +46,10 @@ export async function POST(req: NextRequest) {
       bundleType?: BundleType
       workerStripeAccountId?: string
       estimatedBudget?: number
+      paymentType?: 'job' | 'quote_fee'
+      requestDescription?: string
+      requestedDate?: string
+      address?: string
     }
 
     const {
@@ -56,6 +62,10 @@ export async function POST(req: NextRequest) {
       bundleType,
       workerStripeAccountId,
       estimatedBudget,
+      paymentType,
+      requestDescription,
+      requestedDate,
+      address,
     } = body
 
     const normalizeCurrency = (value?: string): string | undefined => value?.trim().toLowerCase()
@@ -63,6 +73,100 @@ export async function POST(req: NextRequest) {
     const fallbackCurrency = getCurrencyForJobCountry(jobCountry)
 
     void paymentMethod
+
+    if (paymentType === 'quote_fee') {
+      if (!employerId || !workerId) {
+        return NextResponse.json(
+          { error: 'Missing required fields: employerId, workerId' },
+          { status: 400 }
+        )
+      }
+
+      const workerSnap = await adminDb.collection('users').doc(workerId).get()
+      if (!workerSnap.exists) {
+        return NextResponse.json({ error: 'Worker not found' }, { status: 404 })
+      }
+
+      const workerData = workerSnap.data() as {
+        chargesQuoteFee?: boolean
+        quoteFeeAmount?: number
+        stripeAccountId?: string
+        displayName?: string
+        country?: 'NZ' | 'AU'
+      }
+
+      const quoteFeeAmount = Math.round(Number(workerData.quoteFeeAmount ?? 0) * 100) / 100
+      if (!workerData.chargesQuoteFee || quoteFeeAmount <= 0) {
+        return NextResponse.json(
+          { error: 'This worker does not currently charge a quote fee.' },
+          { status: 400 }
+        )
+      }
+
+      if (!workerData.stripeAccountId) {
+        return NextResponse.json(
+          { error: 'This worker is not ready to accept quote-fee payments yet.' },
+          { status: 400 }
+        )
+      }
+
+      const resolvedCurrency = normalizeCurrency(currency)
+        ?? (workerData.country === 'AU' ? 'aud' : 'nzd')
+      const { commissionRate, commissionAmount, workerAmount } =
+        calculateQuoteFeeCommission(quoteFeeAmount)
+
+      if (!process.env.STRIPE_SECRET_KEY) {
+        return NextResponse.json({
+          clientSecret: `pi_mock_${Date.now()}_secret_mock`,
+          paymentIntentId: `pi_mock_${Date.now()}`,
+          amount: Math.round(quoteFeeAmount * 100),
+          currency: resolvedCurrency,
+          quoteFeeAmount,
+          commissionRate,
+          commissionAmount,
+          workerAmount,
+        })
+      }
+
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
+      const amountCents = Math.round(quoteFeeAmount * 100)
+      const applicationFeeCents = Math.round(amountCents * commissionRate)
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amountCents,
+        currency: resolvedCurrency,
+        automatic_payment_methods: { enabled: true },
+        description:
+          description
+          ?? `QuickTrade quote/site visit fee — ${workerData.displayName ?? 'Worker'}`,
+        metadata: {
+          type: 'quote_fee',
+          employerId,
+          workerId,
+          workerName: workerData.displayName ?? 'Worker',
+          quoteFeeAmount: quoteFeeAmount.toFixed(2),
+          commissionRate: String(commissionRate),
+          commissionAmount: commissionAmount.toFixed(2),
+          workerAmount: workerAmount.toFixed(2),
+          requestDescription: (requestDescription ?? '').slice(0, 500),
+          requestedDate: requestedDate ?? '',
+          address: (address ?? '').slice(0, 500),
+        },
+        transfer_data: { destination: workerData.stripeAccountId },
+        application_fee_amount: applicationFeeCents,
+      })
+
+      return NextResponse.json({
+        clientSecret: paymentIntent.client_secret,
+        paymentIntentId: paymentIntent.id,
+        amount: paymentIntent.amount,
+        currency: paymentIntent.currency,
+        quoteFeeAmount,
+        commissionRate,
+        commissionAmount,
+        workerAmount,
+      })
+    }
 
     if (estimatedBudget !== undefined) {
       if (!jobId || !employerId) {
