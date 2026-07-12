@@ -72,7 +72,6 @@ export async function POST(req: NextRequest) {
       if (isStripeConfigured()) {
         const paymentIntent = await getStripe().paymentIntents.retrieve(paymentIntentId)
         const expectedQuoteFeeAmount = Number(paymentIntent.metadata?.quoteFeeAmount ?? 0)
-        const currentQuoteFeeAmountCents = Math.round(currentQuoteFeeAmount * 100)
         if (paymentIntent.metadata?.type !== 'quote_fee') {
           return NextResponse.json({ error: 'Invalid quote-fee payment.' }, { status: 400 })
         }
@@ -83,10 +82,10 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ error: 'Quote-fee payment has not completed yet.' }, { status: 400 })
         }
         if (normalizeCurrencyAmount(expectedQuoteFeeAmount) !== currentQuoteFeeAmount) {
-          return NextResponse.json({ error: 'Quote-fee payment amount does not match the payment record.' }, { status: 400 })
+          return NextResponse.json({ error: 'Quote-fee amount has changed since payment was initiated.' }, { status: 400 })
         }
-        if (paymentIntent.amount !== currentQuoteFeeAmountCents) {
-          return NextResponse.json({ error: 'Quote-fee payment amount does not match the payment record.' }, { status: 400 })
+        if (paymentIntent.amount !== Math.round(currentQuoteFeeAmount * 100)) {
+          return NextResponse.json({ error: 'Stripe payment amount does not match the expected quote fee.' }, { status: 400 })
         }
       } else if (!paymentIntentId.startsWith('pi_mock_')) {
         return NextResponse.json({ error: 'Invalid mock quote-fee payment.' }, { status: 400 })
