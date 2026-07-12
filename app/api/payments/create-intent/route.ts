@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
       }
 
       if (!requesterId) {
-        return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
       }
 
       if (requesterId !== employerId) {
