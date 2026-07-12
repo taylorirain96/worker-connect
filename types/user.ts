@@ -1,5 +1,15 @@
 export type Country = 'NZ' | 'AU'
 
+/** Which Pro/Elite feature a worker can trial with Boosts */
+export type TrialType = 'early_job_alerts' | 'featured_profile' | 'commission_8pct'
+
+/** A single active (or recently expired) trial stored on the worker's profile */
+export interface ActiveTrial {
+  type: TrialType
+  activatedAt: string // ISO timestamp
+  expiresAt: string   // ISO timestamp — when the trial lapses
+}
+
 export interface UserProfile {
   uid: string
   email: string | null
@@ -95,10 +105,17 @@ export interface UserProfile {
   hasLiabilityInsurance?: boolean
   /** Name of the worker's liability insurance provider (optional) */
   insuranceProvider?: string
+<<<<<<< HEAD
   /** Whether the worker charges a separate site-visit / in-person quote fee */
   chargesQuoteFee?: boolean
   /** Worker-set site-visit / in-person quote fee amount */
   quoteFeeAmount?: number
+=======
+  /** Boost balance — earned via achievements/leaderboard, spent on add-ons and trials */
+  boosts?: number
+  /** Currently active (or recently activated) feature trials */
+  activeTrials?: ActiveTrial[]
+>>>>>>> origin/main
 }
 
 export interface UserStats {
