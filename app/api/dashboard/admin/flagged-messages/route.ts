@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic'
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = request.nextUrl
-    const pageSize = Math.min(parseInt(searchParams.get('pageSize') ?? '50'), 100)
+    const pageSize = Math.min(parseInt(searchParams.get('pageSize') ?? '50', 10) || 50, 100)
 
     const snap = await adminDb
       .collection('flaggedMessages')

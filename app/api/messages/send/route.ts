@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
           adminDb
             .collection('escrowPayments')
             .where('jobId', '==', jobId)
-            .where('status', 'not-in', ['failed', 'cancelled'])
+            .where('status', 'in', ['pending', 'processing', 'held', 'in_escrow', 'released', 'completed', 'disputed', 'partial_refund'])
             .limit(1)
             .get(),
           adminDb
@@ -100,22 +100,18 @@ export async function POST(request: NextRequest) {
         }
 
         // User confirmed — log the flagged message for admin review (non-blocking).
-        ;(async () => {
-          try {
-            await adminDb.collection('flaggedMessages').add({
-              conversationId,
-              senderId,
-              senderName,
-              jobId: jobId ?? null,
-              matchedPattern: contactMatch.pattern,
-              matchedText: contactMatch.match,
-              messagePreview: textContent.slice(0, 200),
-              flaggedAt: new Date().toISOString(),
-            })
-          } catch {
-            // Non-fatal — do not block message delivery
-          }
-        })().catch(() => {})
+        adminDb.collection('flaggedMessages').add({
+          conversationId,
+          senderId,
+          senderName,
+          jobId: jobId ?? null,
+          matchedPattern: contactMatch.pattern,
+          matchedText: contactMatch.match,
+          messagePreview: textContent.slice(0, 200),
+          flaggedAt: new Date().toISOString(),
+        }).catch(() => {
+          // Non-fatal — do not block message delivery
+        })
       }
     }
     // ─────────────────────────────────────────────────────────────────────────

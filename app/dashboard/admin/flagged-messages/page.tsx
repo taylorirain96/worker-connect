@@ -43,15 +43,22 @@ const PATTERN_LABELS: Record<string, string> = {
 export default function FlaggedMessagesPage() {
   const [messages, setMessages] = useState<FlaggedMessage[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
 
   useEffect(() => {
     fetch('/api/dashboard/admin/flagged-messages?pageSize=100')
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error('Request failed')
+        return r.json()
+      })
       .then((d) => {
         setMessages(d.messages ?? [])
         setLoading(false)
       })
-      .catch(() => setLoading(false))
+      .catch(() => {
+        setError(true)
+        setLoading(false)
+      })
   }, [])
 
   if (loading) {
@@ -59,6 +66,12 @@ export default function FlaggedMessagesPage() {
       <div className="flex items-center justify-center h-64">
         <LoadingSpinner size="lg" />
       </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="p-8 text-center text-slate-400">Failed to load flagged messages. Check API connection.</div>
     )
   }
 
