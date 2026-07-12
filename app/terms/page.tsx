@@ -48,6 +48,16 @@ const placeholderSections = [
     ],
   },
   {
+    heading: 'Platform Role & Independent Tradespeople',
+    points: [
+      'QuickTrade is a platform that facilitates connections between clients and independent tradespeople. QuickTrade is not a party to any work agreement, contract, or engagement entered into between a client and a tradesperson through the platform.',
+      'QuickTrade expressly disclaims all liability for any job-related personal injury, property damage, defective workmanship, or any other loss or harm arising from work performed by tradespeople found through the platform.',
+      'Each tradesperson using QuickTrade is an independent contractor solely responsible for their own actions, professional standards, tax obligations, and compliance with applicable laws and regulations — including, without limitation, health and safety requirements.',
+      'Tradespeople are solely responsible for obtaining and maintaining any insurance they require to carry out their work, including public liability insurance. QuickTrade does not provide, arrange, or guarantee any insurance coverage for tradespeople or their work.',
+      'Clients are encouraged to verify a tradesperson\'s credentials, licences, and insurance status before engaging their services. Any "Insured" badge or similar indicator on a worker profile reflects a self-declaration by that tradesperson and has not been independently verified by QuickTrade.',
+    ],
+  },
+  {
     heading: 'PLACEHOLDER — Termination',
     points: [
       'Accounts may be suspended or terminated for policy violations, fraud, or safety risks.',

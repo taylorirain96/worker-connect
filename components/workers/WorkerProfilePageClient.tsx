@@ -23,6 +23,7 @@ import {
   MapPin,
   MessageSquare,
   Package,
+  ShieldPlus,
   Star,
   Video,
 } from 'lucide-react'
@@ -284,6 +285,12 @@ export default function WorkerProfilePageClient({
                       {worker.moverMode && (
                         <Badge variant="default" className="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-700">
                           🚚 Mover Ready
+                        </Badge>
+                      )}
+                      {worker.hasLiabilityInsurance && (
+                        <Badge variant="default" className="bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400 border border-teal-200 dark:border-teal-700">
+                          <ShieldPlus className="h-3 w-3" />
+                          Insured
                         </Badge>
                       )}
                       {portfolio.length > 0 && (

@@ -3,7 +3,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { MapPin, Star, CheckCircle, Briefcase, DollarSign, MessageSquare, ShieldCheck, HardHat } from 'lucide-react'
+import { MapPin, Star, CheckCircle, Briefcase, DollarSign, MessageSquare, ShieldCheck, HardHat, ShieldPlus } from 'lucide-react'
 import type { UserProfile } from '@/types'
 import { getInitials } from '@/lib/utils'
 import Badge from '@/components/ui/Badge'
@@ -100,6 +100,12 @@ export default function WorkerCard({ worker, isFavourited = false, onFavouriteTo
                     aria-label="WorkSafe NZ compliant"
                   />
                 )}
+              {worker.hasLiabilityInsurance && (
+                <ShieldPlus
+                  className="h-4 w-4 text-teal-500 flex-shrink-0"
+                  aria-label="Holds public liability insurance"
+                />
+              )}
             </div>
             {worker.location && (
               <div className="flex items-center gap-1 text-xs text-gray-500 mt-0.5">

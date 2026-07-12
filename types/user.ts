@@ -91,6 +91,10 @@ export interface UserProfile {
   availableBalance?: number
   /** Whether this worker has Mover Mode enabled (targets relocation jobs) */
   moverMode?: boolean
+  /** Whether the worker holds public liability insurance */
+  hasLiabilityInsurance?: boolean
+  /** Name of the worker's liability insurance provider (optional) */
+  insuranceProvider?: string
 }
 
 export interface UserStats {
