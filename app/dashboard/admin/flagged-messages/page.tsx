@@ -4,6 +4,10 @@ import { AlertTriangle } from 'lucide-react'
 import Badge from '@/components/ui/Badge'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const DEFAULT_PAGE_SIZE = 100
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface FlaggedMessage {
@@ -46,7 +50,7 @@ export default function FlaggedMessagesPage() {
   const [error, setError] = useState(false)
 
   useEffect(() => {
-    fetch('/api/dashboard/admin/flagged-messages?pageSize=100')
+    fetch(`/api/dashboard/admin/flagged-messages?pageSize=${DEFAULT_PAGE_SIZE}`)
       .then((r) => {
         if (!r.ok) throw new Error('Request failed')
         return r.json()

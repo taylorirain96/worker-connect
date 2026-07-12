@@ -9,6 +9,21 @@ import { detectContactInfo } from '@/lib/contactInfoDetector'
 export const dynamic = 'force-dynamic'
 
 /**
+ * Escrow statuses that represent an active or completed payment transaction.
+ * Excludes 'failed' and 'cancelled' which indicate no real transaction occurred.
+ */
+const ACTIVE_ESCROW_STATUSES = [
+  'pending',
+  'processing',
+  'held',
+  'in_escrow',
+  'released',
+  'completed',
+  'disputed',
+  'partial_refund',
+]
+
+/**
  * POST /api/messages/send
  * Send a message in a conversation.
  */
@@ -73,7 +88,7 @@ export async function POST(request: NextRequest) {
           adminDb
             .collection('escrowPayments')
             .where('jobId', '==', jobId)
-            .where('status', 'in', ['pending', 'processing', 'held', 'in_escrow', 'released', 'completed', 'disputed', 'partial_refund'])
+            .where('status', 'in', ACTIVE_ESCROW_STATUSES)
             .limit(1)
             .get(),
           adminDb
@@ -109,8 +124,8 @@ export async function POST(request: NextRequest) {
           matchedText: contactMatch.match,
           messagePreview: textContent.slice(0, 200),
           flaggedAt: new Date().toISOString(),
-        }).catch(() => {
-          // Non-fatal — do not block message delivery
+        }).catch((err) => {
+          console.error('Failed to log flagged message:', err)
         })
       }
     }
