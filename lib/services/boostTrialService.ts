@@ -52,7 +52,7 @@ export const TRIAL_DEFINITIONS: TrialDefinition[] = [
   },
 ]
 
-const MS_PER_HOUR = 60 * 60 * 1000
+const MILLISECONDS_PER_HOUR = 60 * 60 * 1000
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -135,7 +135,7 @@ export async function activateTrial(
   await spendBoosts(userId, definition.boostCost)
 
   const now = new Date()
-  const expiresAt = new Date(now.getTime() + definition.durationHours * MS_PER_HOUR)
+  const expiresAt = new Date(now.getTime() + definition.durationHours * MILLISECONDS_PER_HOUR)
 
   const trial: ActiveTrial = {
     type,
