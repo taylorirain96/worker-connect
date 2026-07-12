@@ -61,6 +61,7 @@ export default function WorkerProfilePageClient({
   const [servicePackages, setServicePackages] = useState(initialData.servicePackages)
   const [tradeLicences, setTradeLicences] = useState(initialData.tradeLicences)
   const [showRequestQuoteModal, setShowRequestQuoteModal] = useState(false)
+  const canRequestQuote = Boolean(user && user.uid !== worker.uid && currentProfile?.role === 'homeowner')
 
   useEffect(() => {
     setWorker(initialData.worker)
@@ -202,7 +203,7 @@ export default function WorkerProfilePageClient({
 
   return (
     <div className="flex flex-col min-h-screen">
-      {showRequestQuoteModal && user ? (
+      {showRequestQuoteModal && user && canRequestQuote ? (
         <RequestQuoteModal
           worker={worker}
           homeownerId={user.uid}
@@ -519,20 +520,26 @@ export default function WorkerProfilePageClient({
                     </Button>
                   </Link>
                 )}
-                <Button
-                  variant="outline"
-                  className="w-full mb-3"
-                  onClick={() => {
-                    if (!user) {
-                      router.push(`/auth/login?redirect=/workers/${worker.uid}`)
-                      return
-                    }
-                    setShowRequestQuoteModal(true)
-                  }}
-                >
-                  <Calendar className="h-4 w-4" />
-                  Request Quote
-                </Button>
+                {user?.uid !== worker.uid ? (
+                  <Button
+                    variant="outline"
+                    className="w-full mb-3"
+                    onClick={() => {
+                      if (!user) {
+                        router.push(`/auth/login?redirect=/workers/${worker.uid}`)
+                        return
+                      }
+                      if (currentProfile?.role !== 'homeowner') {
+                        toast.error('Only homeowners can request quotes.')
+                        return
+                      }
+                      setShowRequestQuoteModal(true)
+                    }}
+                  >
+                    <Calendar className="h-4 w-4" />
+                    Request Quote
+                  </Button>
+                ) : null}
                 {worker.chargesQuoteFee && worker.quoteFeeAmount ? (
                   <p className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-200">
                     Site-visit quote fee: {worker.country === 'AU' ? 'A$' : 'NZ$'}

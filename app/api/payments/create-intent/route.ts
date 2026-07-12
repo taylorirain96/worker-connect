@@ -39,6 +39,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const requesterId = req.headers.get('x-user-id')?.trim()
     const body = await req.json() as {
       amount?: number
       currency?: string
@@ -86,9 +87,32 @@ export async function POST(req: NextRequest) {
         )
       }
 
-      const workerSnap = await adminDb.collection('users').doc(workerId).get()
+      if (!requesterId) {
+        return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
+      }
+
+      if (requesterId !== employerId) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
+
+      const [workerSnap, employerSnap] = await Promise.all([
+        adminDb.collection('users').doc(workerId).get(),
+        adminDb.collection('users').doc(employerId).get(),
+      ])
+
       if (!workerSnap.exists) {
         return NextResponse.json({ error: 'Worker not found' }, { status: 404 })
+      }
+      if (!employerSnap.exists) {
+        return NextResponse.json({ error: 'Employer not found' }, { status: 404 })
+      }
+
+      const employerData = employerSnap.data() as { role?: string }
+      if (employerData.role !== 'homeowner') {
+        return NextResponse.json(
+          { error: 'Only homeowners can pay a worker quote fee.' },
+          { status: 403 }
+        )
       }
 
       const workerData = workerSnap.data() as {
@@ -103,13 +127,6 @@ export async function POST(req: NextRequest) {
       if (!workerData.chargesQuoteFee || quoteFeeAmount <= 0) {
         return NextResponse.json(
           { error: 'This worker does not currently charge a quote fee.' },
-          { status: 400 }
-        )
-      }
-
-      if (!workerData.stripeAccountId) {
-        return NextResponse.json(
-          { error: 'This worker is not ready to accept quote-fee payments yet.' },
           { status: 400 }
         )
       }
@@ -148,6 +165,13 @@ export async function POST(req: NextRequest) {
           commissionAmount,
           workerAmount,
         })
+      }
+
+      if (!workerData.stripeAccountId) {
+        return NextResponse.json(
+          { error: 'This worker is not ready to accept quote-fee payments yet.' },
+          { status: 400 }
+        )
       }
 
       const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)

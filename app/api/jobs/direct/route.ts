@@ -8,6 +8,7 @@ import {
   getQuoteFeePaymentByIntent,
   updateQuoteFeePayment,
 } from '@/lib/services/quoteFeeService'
+import { normalizeCurrencyAmount } from '@/lib/utils/money'
 
 export const dynamic = 'force-dynamic'
 
@@ -50,9 +51,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Worker not found' }, { status: 404 })
     }
 
-    const homeownerData = homeownerDoc.data()!
+    const homeownerData = homeownerDoc.data() as { displayName?: string; email?: string; role?: string }
     const workerData = workerDoc.data()!
+    if (homeownerData.role !== 'homeowner') {
+      return NextResponse.json({ error: 'Only homeowners can send direct requests.' }, { status: 403 })
+    }
     const requiresQuoteFee = Boolean(workerData.chargesQuoteFee && Number(workerData.quoteFeeAmount ?? 0) > 0)
+    const currentQuoteFeeAmount = normalizeCurrencyAmount(Number(workerData.quoteFeeAmount ?? 0))
     const now = new Date().toISOString()
     let quoteFeePayment = null as Awaited<ReturnType<typeof getQuoteFeePaymentByIntent>>
 
@@ -76,7 +81,10 @@ export async function POST(req: NextRequest) {
         if (paymentIntent.status !== 'succeeded') {
           return NextResponse.json({ error: 'Quote-fee payment has not completed yet.' }, { status: 400 })
         }
-        if (paymentIntent.amount !== Math.round(expectedQuoteFeeAmount * 100)) {
+        if (
+          paymentIntent.amount !== Math.round(expectedQuoteFeeAmount * 100)
+          || paymentIntent.amount !== Math.round(currentQuoteFeeAmount * 100)
+        ) {
           return NextResponse.json({ error: 'Quote-fee payment amount does not match the payment record.' }, { status: 400 })
         }
       } else if (!paymentIntentId.startsWith('pi_mock_')) {
@@ -86,6 +94,15 @@ export async function POST(req: NextRequest) {
       quoteFeePayment = await getQuoteFeePaymentByIntent(paymentIntentId)
       if (!quoteFeePayment) {
         return NextResponse.json({ error: 'Quote-fee payment record not found.' }, { status: 404 })
+      }
+      if (quoteFeePayment.workerId !== workerId || quoteFeePayment.employerId !== homeownerId) {
+        return NextResponse.json({ error: 'Quote-fee payment does not match this request.' }, { status: 400 })
+      }
+      if (quoteFeePayment.status === 'failed' || quoteFeePayment.status === 'refunded') {
+        return NextResponse.json({ error: 'Quote-fee payment is not valid.' }, { status: 400 })
+      }
+      if (normalizeCurrencyAmount(quoteFeePayment.amount) !== currentQuoteFeeAmount) {
+        return NextResponse.json({ error: 'Quote-fee payment amount does not match the payment record.' }, { status: 400 })
       }
 
       if (quoteFeePayment.directRequestId) {

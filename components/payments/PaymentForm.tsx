@@ -58,6 +58,7 @@ interface PaymentFormProps {
   description?: string
   createIntentPath?: string
   createIntentBody?: Record<string, unknown>
+  createIntentHeaders?: Record<string, string>
   successMessage?: string
   onSuccess?: (paymentIntentId: string) => void
   onError?: (error: string) => void
@@ -72,6 +73,7 @@ function PaymentFormInner({
   description,
   createIntentPath = '/api/payments/create-intent',
   createIntentBody,
+  createIntentHeaders,
   successMessage = 'Payment successful!',
   onSuccess,
   onError,
@@ -96,7 +98,10 @@ function PaymentFormInner({
       // Step 1: Create a Stripe PaymentIntent via /api/payments/create-intent
       const intentRes = await fetch(createIntentPath, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...createIntentHeaders,
+        },
         body: JSON.stringify({
           ...(createIntentBody ?? {
             amount,

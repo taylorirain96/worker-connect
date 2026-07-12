@@ -236,6 +236,9 @@ export default function RequestQuoteModal({
               employerId={homeownerId}
               workerId={worker.uid}
               description={`Quote/site visit fee for ${worker.displayName ?? 'worker'}`}
+              createIntentHeaders={{
+                'x-user-id': homeownerId,
+              }}
               createIntentBody={{
                 employerId: homeownerId,
                 workerId: worker.uid,
