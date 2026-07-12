@@ -105,17 +105,14 @@ export interface UserProfile {
   hasLiabilityInsurance?: boolean
   /** Name of the worker's liability insurance provider (optional) */
   insuranceProvider?: string
-<<<<<<< HEAD
   /** Whether the worker charges a separate site-visit / in-person quote fee */
   chargesQuoteFee?: boolean
   /** Worker-set site-visit / in-person quote fee amount */
   quoteFeeAmount?: number
-=======
   /** Boost balance — earned via achievements/leaderboard, spent on add-ons and trials */
   boosts?: number
   /** Currently active (or recently activated) feature trials */
   activeTrials?: ActiveTrial[]
->>>>>>> origin/main
 }
 
 export interface UserStats {
