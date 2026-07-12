@@ -48,6 +48,7 @@ const TYPE_CATEGORY_MAP: Record<NotificationType, NotificationCategory> = {
   placement_checkin_employer: 'system',
   placement_ended_worker: 'system',
   placement_ended_employer: 'system',
+  trial_expired: 'gamification',
 }
 
 function isQuietHours(prefs: Awaited<ReturnType<typeof getNotificationPreferences>>): boolean {
@@ -189,4 +190,13 @@ export const notify = {
 
   securityAlert: (userId: string, detail: string) =>
     sendNotification({ userId, type: 'security_alert', title: 'Security Alert', message: detail, actionUrl: '/settings' }),
+
+  trialExpired: (userId: string, featureName: string) =>
+    sendNotification({
+      userId,
+      type: 'trial_expired',
+      title: 'Your trial has ended ⏰',
+      message: `Your ${featureName} trial has expired. Subscribe to Pro or Elite to keep this benefit permanently.`,
+      actionUrl: '/pricing',
+    }),
 }

@@ -47,6 +47,8 @@ export type NotificationType =
   | 'placement_checkin_employer'
   | 'placement_ended_worker'
   | 'placement_ended_employer'
+  // Boost trial alerts
+  | 'trial_expired'
 
 export type NotificationChannel = 'push' | 'email' | 'sms' | 'in_app'
 
