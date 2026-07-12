@@ -5,12 +5,9 @@ import { sendDirectJobRequestEmail } from '@/lib/email/transactional'
 import { sendAdminNotification } from '@/lib/notifications/admin'
 import { getStripe, isStripeConfigured } from '@/lib/stripe'
 import {
-  calculateQuoteFeeCommission,
-  createQuoteFeePaymentRecord,
   getQuoteFeePaymentByIntent,
   updateQuoteFeePayment,
 } from '@/lib/services/quoteFeeService'
-import { normalizeCurrencyAmount } from '@/lib/utils/money'
 
 export const dynamic = 'force-dynamic'
 
@@ -56,10 +53,8 @@ export async function POST(req: NextRequest) {
     const homeownerData = homeownerDoc.data()!
     const workerData = workerDoc.data()!
     const requiresQuoteFee = Boolean(workerData.chargesQuoteFee && Number(workerData.quoteFeeAmount ?? 0) > 0)
-    const quoteFeeAmount = normalizeCurrencyAmount(Number(workerData.quoteFeeAmount ?? 0))
-    const quoteFeeCurrency = workerData.country === 'AU' ? 'aud' : 'nzd'
     const now = new Date().toISOString()
-    let quoteFeePaymentId: string | null = null
+    let quoteFeePayment = null as Awaited<ReturnType<typeof getQuoteFeePaymentByIntent>>
 
     if (requiresQuoteFee) {
       if (!paymentIntentId) {
@@ -71,6 +66,7 @@ export async function POST(req: NextRequest) {
 
       if (isStripeConfigured()) {
         const paymentIntent = await getStripe().paymentIntents.retrieve(paymentIntentId)
+        const expectedQuoteFeeAmount = Number(paymentIntent.metadata?.quoteFeeAmount ?? 0)
         if (paymentIntent.metadata?.type !== 'quote_fee') {
           return NextResponse.json({ error: 'Invalid quote-fee payment.' }, { status: 400 })
         }
@@ -80,27 +76,29 @@ export async function POST(req: NextRequest) {
         if (paymentIntent.status !== 'succeeded') {
           return NextResponse.json({ error: 'Quote-fee payment has not completed yet.' }, { status: 400 })
         }
-        if (paymentIntent.amount !== Math.round(quoteFeeAmount * 100)) {
-          return NextResponse.json({ error: 'Quote-fee payment amount does not match this worker setting.' }, { status: 400 })
+        if (paymentIntent.amount !== Math.round(expectedQuoteFeeAmount * 100)) {
+          return NextResponse.json({ error: 'Quote-fee payment amount does not match the payment record.' }, { status: 400 })
         }
       } else if (!paymentIntentId.startsWith('pi_mock_')) {
         return NextResponse.json({ error: 'Invalid mock quote-fee payment.' }, { status: 400 })
       }
 
-      const existingPayment = await getQuoteFeePaymentByIntent(paymentIntentId)
-      if (existingPayment?.directRequestId) {
+      quoteFeePayment = await getQuoteFeePaymentByIntent(paymentIntentId)
+      if (!quoteFeePayment) {
+        return NextResponse.json({ error: 'Quote-fee payment record not found.' }, { status: 404 })
+      }
+
+      if (quoteFeePayment.directRequestId) {
         return NextResponse.json({
           success: true,
-          requestId: existingPayment.directRequestId,
+          requestId: quoteFeePayment.directRequestId,
           alreadyProcessed: true,
         })
       }
-
-      quoteFeePaymentId = existingPayment?.id ?? null
     }
 
-    const requestRef = requiresQuoteFee && paymentIntentId
-      ? adminDb.collection('directRequests').doc(paymentIntentId)
+    const requestRef = requiresQuoteFee && quoteFeePayment
+      ? adminDb.collection('directRequests').doc(quoteFeePayment.id)
       : adminDb.collection('directRequests').doc()
 
     if (requiresQuoteFee) {
@@ -123,58 +121,22 @@ export async function POST(req: NextRequest) {
       status: 'pending' as const,
       quoteFeeRequired: requiresQuoteFee,
       quoteFeePaid: requiresQuoteFee,
-      quoteFeeAmount: requiresQuoteFee ? quoteFeeAmount : 0,
-      quoteFeeCurrency: requiresQuoteFee ? quoteFeeCurrency : null,
+      quoteFeeAmount: requiresQuoteFee ? quoteFeePayment?.amount ?? 0 : 0,
+      quoteFeeCurrency: requiresQuoteFee ? quoteFeePayment?.currency ?? 'nzd' : null,
       quoteFeePaymentIntentId: requiresQuoteFee ? paymentIntentId ?? null : null,
-      quoteFeePaymentId,
+      quoteFeePaymentId: quoteFeePayment?.id ?? null,
       createdAt: now,
       updatedAt: now,
     }
 
     await requestRef.set(request)
 
-    if (requiresQuoteFee && paymentIntentId) {
-      const commission = calculateQuoteFeeCommission(quoteFeeAmount)
-      if (quoteFeePaymentId) {
-        await updateQuoteFeePayment(quoteFeePaymentId, {
-          status: 'completed',
-          directRequestId: requestRef.id,
-          amount: quoteFeeAmount,
-          currency: quoteFeeCurrency,
-          employerId: homeownerId,
-          workerId,
-          workerName: request.workerName,
-          stripePaymentIntentId: paymentIntentId,
-          commissionRate: commission.commissionRate,
-          commissionAmount: commission.commissionAmount,
-          workerAmount: commission.workerAmount,
-          requestDescription: description,
-          requestedDate: date,
-          address,
-          completedAt: now,
-          paymentType: 'quote_fee',
-        })
-      } else {
-        quoteFeePaymentId = await createQuoteFeePaymentRecord({
-          employerId: homeownerId,
-          workerId,
-          workerName: request.workerName,
-          amount: quoteFeeAmount,
-          currency: quoteFeeCurrency,
-          status: 'completed',
-          stripePaymentIntentId: paymentIntentId,
-          commissionRate: commission.commissionRate,
-          commissionAmount: commission.commissionAmount,
-          workerAmount: commission.workerAmount,
-          directRequestId: requestRef.id,
-          requestDescription: description,
-          requestedDate: date,
-          address,
-          paymentType: 'quote_fee',
-          completedAt: now,
-        })
-        await requestRef.update({ quoteFeePaymentId, updatedAt: now })
-      }
+    if (requiresQuoteFee && quoteFeePayment) {
+      await updateQuoteFeePayment(quoteFeePayment.id, {
+        status: 'completed',
+        directRequestId: requestRef.id,
+        completedAt: now,
+      })
     }
 
     // Send email to worker (non-blocking)

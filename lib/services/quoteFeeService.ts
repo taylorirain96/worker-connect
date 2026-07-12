@@ -55,7 +55,8 @@ function toQuoteFeePayment(id: string, data: Record<string, unknown>): QuoteFeeP
 
 export function calculateQuoteFeeCommission(amount: number) {
   const normalizedAmount = normalizeCurrencyAmount(amount)
-  const commissionAmount = Math.round(normalizedAmount * QUOTE_FEE_COMMISSION_RATE * 100) / 100
+  const commissionCents = Math.round(normalizedAmount * QUOTE_FEE_COMMISSION_RATE * 100)
+  const commissionAmount = commissionCents / 100
   const workerAmount = normalizeCurrencyAmount(normalizedAmount - commissionAmount)
 
   return {

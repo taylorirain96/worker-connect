@@ -9,7 +9,10 @@ import Stripe from 'stripe'
 import { rateLimit } from '@/lib/rateLimit'
 import { getCurrencyForJobCountry, getJobCountryById } from '@/lib/services/jobCountryService'
 import { adminDb } from '@/lib/firebase-admin'
-import { calculateQuoteFeeCommission } from '@/lib/services/quoteFeeService'
+import {
+  calculateQuoteFeeCommission,
+  createQuoteFeePaymentRecord,
+} from '@/lib/services/quoteFeeService'
 import { normalizeCurrencyAmount } from '@/lib/utils/money'
 
 /**
@@ -117,9 +120,27 @@ export async function POST(req: NextRequest) {
         calculateQuoteFeeCommission(quoteFeeAmount)
 
       if (!process.env.STRIPE_SECRET_KEY) {
+        const mockPaymentIntentId = `pi_mock_${Date.now()}`
+        await createQuoteFeePaymentRecord({
+          employerId,
+          workerId,
+          workerName: workerData.displayName ?? 'Worker',
+          amount: quoteFeeAmount,
+          currency: resolvedCurrency === 'aud' ? 'aud' : 'nzd',
+          status: 'pending',
+          stripePaymentIntentId: mockPaymentIntentId,
+          commissionRate,
+          commissionAmount,
+          workerAmount,
+          requestDescription,
+          requestedDate,
+          address,
+          paymentType: 'quote_fee',
+        })
+
         return NextResponse.json({
-          clientSecret: `pi_mock_${Date.now()}_secret_mock`,
-          paymentIntentId: `pi_mock_${Date.now()}`,
+          clientSecret: `${mockPaymentIntentId}_secret_mock`,
+          paymentIntentId: mockPaymentIntentId,
           amount: Math.round(quoteFeeAmount * 100),
           currency: resolvedCurrency,
           quoteFeeAmount,
@@ -131,7 +152,7 @@ export async function POST(req: NextRequest) {
 
       const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
       const amountCents = Math.round(quoteFeeAmount * 100)
-      const applicationFeeCents = Math.round(amountCents * commissionRate)
+      const applicationFeeCents = Math.round(commissionAmount * 100)
 
       const paymentIntent = await stripe.paymentIntents.create({
         amount: amountCents,
@@ -155,6 +176,23 @@ export async function POST(req: NextRequest) {
         },
         transfer_data: { destination: workerData.stripeAccountId },
         application_fee_amount: applicationFeeCents,
+      })
+
+      await createQuoteFeePaymentRecord({
+        employerId,
+        workerId,
+        workerName: workerData.displayName ?? 'Worker',
+        amount: quoteFeeAmount,
+        currency: resolvedCurrency === 'aud' ? 'aud' : 'nzd',
+        status: 'pending',
+        stripePaymentIntentId: paymentIntent.id,
+        commissionRate,
+        commissionAmount,
+        workerAmount,
+        requestDescription,
+        requestedDate,
+        address,
+        paymentType: 'quote_fee',
       })
 
       return NextResponse.json({

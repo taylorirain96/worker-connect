@@ -14,6 +14,9 @@ import toast from 'react-hot-toast'
 import { User, MapPin, DollarSign, FileText, Video } from 'lucide-react'
 import ProfileHatHeader from '@/components/profiles/ProfileHatHeader'
 
+const QUOTE_FEE_MIN = 10
+const QUOTE_FEE_MAX = 50
+
 const profileSchema = z.object({
   displayName: z.string().min(2, 'Name must be at least 2 characters'),
   bio: z.string().max(500, 'Bio must be under 500 characters').optional(),
@@ -25,7 +28,11 @@ const profileSchema = z.object({
   chargesQuoteFee: z.boolean().optional(),
   quoteFeeAmount: z.preprocess(
     (value) => (value === '' || value === null || value === undefined ? undefined : value),
-    z.coerce.number().min(10, 'Quote fee must be at least $10').max(50, 'Quote fee must be $50 or less').optional()
+    z.coerce
+      .number()
+      .min(QUOTE_FEE_MIN, `Quote fee must be at least $${QUOTE_FEE_MIN}`)
+      .max(QUOTE_FEE_MAX, `Quote fee must be $${QUOTE_FEE_MAX} or less`)
+      .optional()
   ),
   skills: z.string().optional(),
   availability: z.enum(['available', 'busy', 'unavailable']).optional(),
@@ -34,7 +41,7 @@ const profileSchema = z.object({
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ['quoteFeeAmount'],
-      message: 'Enter a quote fee between $10 and $50',
+      message: `Enter a quote fee between $${QUOTE_FEE_MIN} and $${QUOTE_FEE_MAX}`,
     })
   }
 })
@@ -258,12 +265,12 @@ export default function ProfilePage() {
                     <Input
                       label={`Quote fee amount (${quoteFeeCurrencyLabel})`}
                       type="number"
-                      min="10"
-                      max="50"
+                      min={String(QUOTE_FEE_MIN)}
+                      max={String(QUOTE_FEE_MAX)}
                       step="1"
                       placeholder="e.g., 25"
                       leftIcon={<DollarSign className="h-4 w-4" />}
-                      helperText="Suggested range: $10–$50. This fee is non-refundable and not deducted from the final job price."
+                      helperText={`Suggested range: $${QUOTE_FEE_MIN}–$${QUOTE_FEE_MAX}. This fee is non-refundable and not deducted from the final job price.`}
                       error={errors.quoteFeeAmount?.message}
                       disabled={!chargesQuoteFee}
                       {...register('quoteFeeAmount')}

@@ -27,6 +27,8 @@ export default function RequestQuoteModal({
   const [address, setAddress] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [step, setStep] = useState<'details' | 'payment'>('details')
+  const [minRequestDate] = useState(() => new Date().toISOString().split('T')[0])
+  const [paymentReference] = useState(() => `quote-fee-request-${worker.uid}-${Date.now()}`)
 
   const quoteFeeAmount = normalizeCurrencyAmount(Number(worker.quoteFeeAmount ?? 0))
   const requiresQuoteFee = Boolean(worker.chargesQuoteFee && quoteFeeAmount > 0)
@@ -157,7 +159,7 @@ export default function RequestQuoteModal({
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                min={new Date().toISOString().split('T')[0]}
+                min={minRequestDate}
                 className="w-full px-3 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
                 required
               />
@@ -230,7 +232,7 @@ export default function RequestQuoteModal({
             <PaymentForm
               amount={quoteFeeAmount}
               currency={currency}
-              jobId={`quote-fee-${worker.uid}`}
+              jobId={paymentReference}
               employerId={homeownerId}
               workerId={worker.uid}
               description={`Quote/site visit fee for ${worker.displayName ?? 'worker'}`}
