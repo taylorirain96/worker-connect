@@ -103,20 +103,26 @@ const WORKER_ADDONS = [
   { feature: 'Skill certification badge', price: '$24.99 one-off' },
 ]
 
+const TRIAL_ADDONS = [
+  { feature: 'Early Job Alerts (30 min head start)', cost: '20 Boosts', duration: '24-hour trial' },
+  { feature: 'Featured Profile placement', cost: '30 Boosts', duration: '48-hour trial' },
+  { feature: 'Flat 8% commission rate', cost: '15 Boosts', duration: '24-hour trial' },
+]
+
 const LEADERBOARD_PRIZES = [
-  { rank: '🥇 #1 Worker of the Month', prize: '$25 credit' },
-  { rank: '🥈 #2', prize: '$15 credit' },
-  { rank: '🥉 #3', prize: '$10 credit' },
+  { rank: '🥇 #1 Worker of the Month', prize: '+25 Boosts' },
+  { rank: '🥈 #2', prize: '+15 Boosts' },
+  { rank: '🥉 #3', prize: '+10 Boosts' },
 ]
 
 const ACHIEVEMENT_BADGES = [
-  { badge: '💎 High Value', how: 'Complete a $5,000+ job', reward: '$5 credit' },
-  { badge: '🔄 Consistent', how: '1 job every 30 days for 3 months', reward: '$5 credit' },
-  { badge: '⭐ Trusted', how: '5 jobs all rated 4.5+ stars', reward: '$5 credit + free verified badge' },
-  { badge: '💰 Big Earner', how: 'Earn $5,000 in a month', reward: 'Bonus: drop to 8% commission that month' },
-  { badge: '🎯 10 Jobs', how: 'Complete 10 jobs', reward: '$5 credit' },
-  { badge: '💼 50 Jobs', how: 'Complete 50 jobs', reward: '$20 credit' },
-  { badge: '🔥 Loyal', how: '30 day login streak', reward: '$3 credit' },
+  { badge: '💎 High Value', how: 'Complete a $5,000+ job', reward: '+5 Boosts' },
+  { badge: '🔄 Consistent', how: '1 job every 30 days for 3 months', reward: '+5 Boosts' },
+  { badge: '⭐ Trusted', how: '5 jobs all rated 4.5+ stars', reward: '+5 Boosts + free verified badge' },
+  { badge: '💰 Big Earner', how: 'Earn $5,000 in a month', reward: '+20 Boosts' },
+  { badge: '🎯 10 Jobs', how: 'Complete 10 jobs', reward: '+5 Boosts' },
+  { badge: '💼 50 Jobs', how: 'Complete 50 jobs', reward: '+20 Boosts' },
+  { badge: '🔥 Loyal', how: '30 day login streak', reward: '+3 Boosts' },
   { badge: '✅ Placed', how: 'Successfully hired through QuickTrade', reward: '"Placed by QuickTrade" badge' },
 ]
 
@@ -146,8 +152,8 @@ const FAQS = [
     a: "If your hired worker leaves or doesn't work out within the first 30 days, we'll re-list your job for free. It's our way of making sure you actually get the right person, not just any person.",
   },
   {
-    q: 'Can I earn credits through achievements?',
-    a: "Yes! Workers earn credits by completing jobs, achieving milestones, and maintaining streaks. Credits can only be spent on QuickTrade platform features like profile boosts and add-ons — they can't be withdrawn as cash.",
+    q: 'Can I earn Boosts through achievements?',
+    a: "Yes! Workers earn Boosts by completing jobs, achieving milestones, and maintaining streaks. Boosts can only be spent on QuickTrade platform features like profile boosts, add-ons, and feature trials — they have no cash value and can't be withdrawn.",
   },
   {
     q: "What's included in the Pro Worker subscription?",
@@ -455,6 +461,34 @@ export default function PricingContent() {
                 </div>
               </div>
             </div>
+
+            {/* Try It — Boost-powered trials */}
+            <div className="mt-8 rounded-2xl bg-indigo-900/20 border border-indigo-500/30 overflow-hidden">
+              <div className="px-6 py-4 border-b border-indigo-500/20 bg-indigo-900/30">
+                <h3 className="text-white font-semibold flex items-center gap-2">
+                  <Zap className="h-4 w-4 text-indigo-400" /> Try It — Spend Boosts to trial Pro/Elite features
+                </h3>
+                <p className="text-slate-400 text-xs mt-1">
+                  Not ready to subscribe? Spend Boosts to unlock a feature for a limited window. Trials expire automatically — no cancellation needed.
+                </p>
+              </div>
+              <div className="divide-y divide-indigo-500/10">
+                {TRIAL_ADDONS.map((row) => (
+                  <div key={row.feature} className="flex items-center justify-between px-6 py-3.5 hover:bg-indigo-900/20 transition-colors">
+                    <div>
+                      <span className="text-slate-300 text-sm">{row.feature}</span>
+                      <span className="ml-2 text-indigo-400 text-xs font-medium">({row.duration})</span>
+                    </div>
+                    <span className="text-indigo-300 font-semibold text-sm">{row.cost}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="px-6 py-3 bg-indigo-900/10">
+                <p className="text-slate-500 text-xs">
+                  Boosts have no cash value and cannot be withdrawn. Earn Boosts by completing jobs and hitting milestones.
+                </p>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -467,7 +501,7 @@ export default function PricingContent() {
               </span>
               <h2 className="text-3xl font-bold text-white mt-4 mb-2">Earn while you work</h2>
               <p className="text-slate-400 max-w-xl mx-auto">
-                Complete jobs, hit milestones, and earn credits to spend on platform features. Leaderboard rankings are 100% merit-based and cannot be purchased.
+                Complete jobs, hit milestones, and earn Boosts to spend on platform features. Leaderboard rankings are 100% merit-based and cannot be purchased.
               </p>
             </div>
 
@@ -485,7 +519,7 @@ export default function PricingContent() {
                 ))}
               </div>
               <p className="text-slate-500 text-xs mt-4 text-center">
-                Leaderboard rankings are 100% merit-based and cannot be purchased
+                Leaderboard rankings are 100% merit-based and cannot be purchased. Boosts have no cash value.
               </p>
             </div>
 
@@ -514,7 +548,7 @@ export default function PricingContent() {
               </div>
             </div>
             <p className="text-slate-500 text-xs text-center">
-              Credits can only be spent on QuickTrade platform features
+              Boosts can only be spent on QuickTrade platform features — they have no cash value and cannot be withdrawn.
             </p>
           </div>
         </section>
