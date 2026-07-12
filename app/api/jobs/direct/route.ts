@@ -10,6 +10,7 @@ import {
   getQuoteFeePaymentByIntent,
   updateQuoteFeePayment,
 } from '@/lib/services/quoteFeeService'
+import { normalizeCurrencyAmount } from '@/lib/utils/money'
 
 export const dynamic = 'force-dynamic'
 
@@ -55,7 +56,7 @@ export async function POST(req: NextRequest) {
     const homeownerData = homeownerDoc.data()!
     const workerData = workerDoc.data()!
     const requiresQuoteFee = Boolean(workerData.chargesQuoteFee && Number(workerData.quoteFeeAmount ?? 0) > 0)
-    const quoteFeeAmount = Math.round(Number(workerData.quoteFeeAmount ?? 0) * 100) / 100
+    const quoteFeeAmount = normalizeCurrencyAmount(Number(workerData.quoteFeeAmount ?? 0))
     const quoteFeeCurrency = workerData.country === 'AU' ? 'aud' : 'nzd'
     const now = new Date().toISOString()
     let quoteFeePaymentId: string | null = null
@@ -98,7 +99,16 @@ export async function POST(req: NextRequest) {
       quoteFeePaymentId = existingPayment?.id ?? null
     }
 
-    const requestRef = adminDb.collection('directRequests').doc()
+    const requestRef = requiresQuoteFee && paymentIntentId
+      ? adminDb.collection('directRequests').doc(paymentIntentId)
+      : adminDb.collection('directRequests').doc()
+
+    if (requiresQuoteFee) {
+      const existingRequest = await requestRef.get()
+      if (existingRequest.exists) {
+        return NextResponse.json({ success: true, requestId: requestRef.id, alreadyProcessed: true })
+      }
+    }
 
     const request = {
       homeownerId,

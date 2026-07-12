@@ -1,5 +1,6 @@
 import { adminDb } from '@/lib/firebase-admin'
 import type { QuoteFeePayment } from '@/types'
+import { normalizeCurrencyAmount } from '@/lib/utils/money'
 
 const QUOTE_FEE_PAYMENTS_COL = 'quoteFeePayments'
 
@@ -53,9 +54,9 @@ function toQuoteFeePayment(id: string, data: Record<string, unknown>): QuoteFeeP
 }
 
 export function calculateQuoteFeeCommission(amount: number) {
-  const normalizedAmount = Math.round(amount * 100) / 100
+  const normalizedAmount = normalizeCurrencyAmount(amount)
   const commissionAmount = Math.round(normalizedAmount * QUOTE_FEE_COMMISSION_RATE * 100) / 100
-  const workerAmount = Math.round((normalizedAmount - commissionAmount) * 100) / 100
+  const workerAmount = normalizeCurrencyAmount(normalizedAmount - commissionAmount)
 
   return {
     commissionRate: QUOTE_FEE_COMMISSION_RATE,

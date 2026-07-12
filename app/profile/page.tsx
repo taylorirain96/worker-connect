@@ -69,6 +69,7 @@ export default function ProfilePage() {
     },
   })
   const chargesQuoteFee = watch('chargesQuoteFee')
+  const quoteFeeCurrencyLabel = profile?.country === 'AU' ? 'AUD' : 'NZD'
 
   useEffect(() => {
     if (!user) {
@@ -255,7 +256,7 @@ export default function ProfilePage() {
                     </label>
 
                     <Input
-                      label="Quote fee amount (NZD)"
+                      label={`Quote fee amount (${quoteFeeCurrencyLabel})`}
                       type="number"
                       min="10"
                       max="50"

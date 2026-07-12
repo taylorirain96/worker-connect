@@ -6,6 +6,7 @@ import { CreditCard, Send, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import PaymentForm from '@/components/payments/PaymentForm'
 import { getInitials } from '@/lib/utils'
+import { normalizeCurrencyAmount } from '@/lib/utils/money'
 import type { UserProfile } from '@/types'
 
 interface RequestQuoteModalProps {
@@ -27,7 +28,7 @@ export default function RequestQuoteModal({
   const [submitting, setSubmitting] = useState(false)
   const [step, setStep] = useState<'details' | 'payment'>('details')
 
-  const quoteFeeAmount = Math.round(Number(worker.quoteFeeAmount ?? 0) * 100) / 100
+  const quoteFeeAmount = normalizeCurrencyAmount(Number(worker.quoteFeeAmount ?? 0))
   const requiresQuoteFee = Boolean(worker.chargesQuoteFee && quoteFeeAmount > 0)
   const currency = worker.country === 'AU' ? 'aud' : 'nzd'
 

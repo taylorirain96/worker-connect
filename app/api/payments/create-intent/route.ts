@@ -10,6 +10,7 @@ import { rateLimit } from '@/lib/rateLimit'
 import { getCurrencyForJobCountry, getJobCountryById } from '@/lib/services/jobCountryService'
 import { adminDb } from '@/lib/firebase-admin'
 import { calculateQuoteFeeCommission } from '@/lib/services/quoteFeeService'
+import { normalizeCurrencyAmount } from '@/lib/utils/money'
 
 /**
  * POST /api/payments/create-intent
@@ -95,7 +96,7 @@ export async function POST(req: NextRequest) {
         country?: 'NZ' | 'AU'
       }
 
-      const quoteFeeAmount = Math.round(Number(workerData.quoteFeeAmount ?? 0) * 100) / 100
+      const quoteFeeAmount = normalizeCurrencyAmount(Number(workerData.quoteFeeAmount ?? 0))
       if (!workerData.chargesQuoteFee || quoteFeeAmount <= 0) {
         return NextResponse.json(
           { error: 'This worker does not currently charge a quote fee.' },
