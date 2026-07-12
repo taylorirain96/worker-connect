@@ -254,7 +254,7 @@ export default function HomePage() {
                 </div>
                 <span>{worker.jobs} jobs</span>
               </div>
-              <div className="flex items-center gap-1 text-xs text-slate-500 mt-2">
+              <div className="flex items-center gap-1 text-xs text-slate-400 mt-2">
                 <MapPin className="h-3 w-3" />
                 {worker.location}
               </div>

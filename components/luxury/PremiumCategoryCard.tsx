@@ -37,7 +37,7 @@ export default function PremiumCategoryCard({
       <span className="text-sm font-semibold text-slate-200 group-hover:text-white transition-colors duration-300 text-center leading-tight">
         {label}
       </span>
-      <span className="text-xs text-slate-500 group-hover:text-slate-400 text-center mt-1 leading-tight transition-colors duration-300 hidden sm:block">
+      <span className="text-xs text-slate-400 group-hover:text-slate-300 text-center mt-1 leading-tight transition-colors duration-300 hidden sm:block">
         {description}
       </span>
       {isPremium && (
