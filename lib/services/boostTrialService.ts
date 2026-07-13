@@ -52,6 +52,8 @@ export const TRIAL_DEFINITIONS: TrialDefinition[] = [
   },
 ]
 
+const MILLISECONDS_PER_HOUR = 60 * 60 * 1000
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /** Returns true if a trial has not yet reached its expiresAt time. */
@@ -133,7 +135,7 @@ export async function activateTrial(
   await spendBoosts(userId, definition.boostCost)
 
   const now = new Date()
-  const expiresAt = new Date(now.getTime() + definition.durationHours * 60 * 60 * 1000)
+  const expiresAt = new Date(now.getTime() + definition.durationHours * MILLISECONDS_PER_HOUR)
 
   const trial: ActiveTrial = {
     type,

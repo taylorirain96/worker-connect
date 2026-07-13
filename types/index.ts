@@ -1361,6 +1361,29 @@ export interface JobPostingPayment {
   completedAt?: string
 }
 
+export interface QuoteFeePayment {
+  id: string
+  employerId: string
+  workerId: string
+  workerName: string
+  amount: number
+  currency: 'nzd' | 'aud'
+  status: 'pending' | 'completed' | 'failed' | 'refunded'
+  stripePaymentIntentId?: string
+  commissionRate: number
+  commissionAmount: number
+  workerAmount: number
+  directRequestId?: string
+  requestDescription?: string
+  requestedDate?: string
+  address?: string
+  paymentType: 'quote_fee'
+  createdAt: string
+  updatedAt: string
+  completedAt?: string
+  failedAt?: string
+}
+
 /** Worker earnings summary for the earnings dashboard */
 export interface WorkerEarningsSummary {
   workerId: string
@@ -1441,7 +1464,7 @@ export function getPostingFee(estimatedBudgetNZD: number): PostingFeeInfo {
   )
 }
 
-export type JobPaymentType = 'posting_fee' | 'escrow' | 'release'
+export type JobPaymentType = 'posting_fee' | 'escrow' | 'release' | 'quote_fee'
 
 export interface JobPaymentRecord {
   id: string

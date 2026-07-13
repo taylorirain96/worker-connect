@@ -25,9 +25,9 @@ export async function POST(req: NextRequest) {
 
     const { paymentIntentId, paymentMethodId } = body
 
-    if (!paymentIntentId || !paymentMethodId) {
+    if (!paymentIntentId) {
       return NextResponse.json(
-        { error: 'Missing required fields: paymentIntentId, paymentMethodId' },
+        { error: 'Missing required field: paymentIntentId' },
         { status: 400 }
       )
     }
@@ -38,6 +38,13 @@ export async function POST(req: NextRequest) {
         status: 'succeeded',
         paymentIntentId,
       })
+    }
+
+    if (!paymentMethodId) {
+      return NextResponse.json(
+        { error: 'Missing required field: paymentMethodId' },
+        { status: 400 }
+      )
     }
 
     const result = await confirmPaymentIntent(paymentIntentId, paymentMethodId)

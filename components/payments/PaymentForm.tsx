@@ -56,6 +56,10 @@ interface PaymentFormProps {
   employerId: string
   workerId: string
   description?: string
+  createIntentPath?: string
+  createIntentBody?: Record<string, unknown>
+  createIntentHeaders?: Record<string, string>
+  successMessage?: string
   onSuccess?: (paymentIntentId: string) => void
   onError?: (error: string) => void
 }
@@ -67,6 +71,10 @@ function PaymentFormInner({
   employerId,
   workerId,
   description,
+  createIntentPath = '/api/payments/create-intent',
+  createIntentBody,
+  createIntentHeaders,
+  successMessage = 'Payment successful!',
   onSuccess,
   onError,
 }: PaymentFormProps) {
@@ -88,17 +96,22 @@ function PaymentFormInner({
 
     try {
       // Step 1: Create a Stripe PaymentIntent via /api/payments/create-intent
-      const intentRes = await fetch('/api/payments/create-intent', {
+      const intentRes = await fetch(createIntentPath, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...createIntentHeaders,
+        },
         body: JSON.stringify({
-          amount,
-          currency,
-          jobId,
-          employerId,
-          workerId,
-          description,
-          paymentMethod,
+          ...(createIntentBody ?? {
+            amount,
+            currency,
+            jobId,
+            employerId,
+            workerId,
+            description,
+            paymentMethod,
+          }),
         }),
       })
 
@@ -152,7 +165,7 @@ function PaymentFormInner({
         }
       }
 
-      toast.success('Payment successful!')
+      toast.success(successMessage)
       onSuccess?.(paymentIntentId)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Payment failed'
@@ -171,7 +184,7 @@ function PaymentFormInner({
           {description ?? 'Payment'}
         </span>
         <span className="font-semibold text-gray-900 dark:text-white">
-          {new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount)}
+          {new Intl.NumberFormat('en-US', { style: 'currency', currency: currency.toUpperCase() }).format(amount)}
         </span>
       </div>
 

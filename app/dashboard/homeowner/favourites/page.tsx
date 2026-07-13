@@ -8,173 +8,11 @@ import Footer from '@/components/layout/Footer'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { getUserProfile } from '@/lib/users/getProfile'
 import FavouriteButton from '@/components/workers/FavouriteButton'
-import { MapPin, Star, CheckCircle, Briefcase, Heart, X, Calendar, ArrowLeft, Send } from 'lucide-react'
+import RequestQuoteModal from '@/components/workers/RequestQuoteModal'
+import { MapPin, Star, CheckCircle, Briefcase, Heart, Calendar, ArrowLeft } from 'lucide-react'
 import { getInitials } from '@/lib/utils'
 import toast from 'react-hot-toast'
 import type { UserProfile } from '@/types'
-
-// ─── Quick Rebook Modal ───────────────────────────────────────────────────────
-
-interface RebookModalProps {
-  worker: UserProfile
-  homeownerId: string
-  onClose: () => void
-}
-
-function RebookModal({ worker, homeownerId, onClose }: RebookModalProps) {
-  const [description, setDescription] = useState('')
-  const [date, setDate] = useState('')
-  const [address, setAddress] = useState('')
-  const [submitting, setSubmitting] = useState(false)
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!description.trim() || !date || !address.trim()) {
-      toast.error('Please fill in all fields')
-      return
-    }
-    setSubmitting(true)
-    try {
-      const res = await fetch('/api/jobs/direct', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-user-id': homeownerId,
-        },
-        body: JSON.stringify({
-          workerId: worker.uid,
-          description: description.trim(),
-          date,
-          address: address.trim(),
-        }),
-      })
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        throw new Error((data as { error?: string }).error ?? 'Request failed')
-      }
-      toast.success(`Request sent to ${worker.displayName ?? 'the worker'}! They'll be in touch soon.`)
-      onClose()
-    } catch (err) {
-      console.error('Rebook request failed:', err)
-      toast.error('Could not send request. Please try again.')
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center gap-3">
-            {worker.photoURL ? (
-              <Image
-                src={worker.photoURL}
-                alt={worker.displayName ?? 'Worker'}
-                width={40}
-                height={40}
-                className="h-10 w-10 rounded-full object-cover"
-              />
-            ) : (
-              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white text-sm font-bold">
-                {getInitials(worker.displayName ?? 'W')}
-              </div>
-            )}
-            <div>
-              <h2 className="font-semibold text-gray-900 dark:text-white text-sm">
-                Request {worker.displayName ?? 'Worker'}
-              </h2>
-              {worker.skills && worker.skills.length > 0 && (
-                <p className="text-xs text-gray-500 capitalize">{worker.skills[0]}</p>
-              )}
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            aria-label="Close"
-          >
-            <X className="h-4 w-4 text-gray-500" />
-          </button>
-        </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-              What do you need done? <span className="text-rose-500">*</span>
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={3}
-              placeholder="e.g. Fix the leaking tap in the kitchen, replace the washer…"
-              className="w-full px-3 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-              Date needed <span className="text-rose-500">*</span>
-            </label>
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              min={new Date().toISOString().split('T')[0]}
-              className="w-full px-3 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-              Address <span className="text-rose-500">*</span>
-            </label>
-            <input
-              type="text"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              placeholder="e.g. 12 Sample Street, Auckland"
-              className="w-full px-3 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
-              required
-            />
-          </div>
-
-          <p className="text-xs text-gray-400">
-            This request goes directly to {worker.displayName ?? 'the worker'} — it won&apos;t be posted publicly.
-          </p>
-
-          <div className="flex gap-3 pt-1">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white transition-colors"
-            >
-              <Send className="h-3.5 w-3.5" />
-              {submitting ? 'Sending…' : 'Send Request'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  )
-}
 
 // ─── Favourite Worker Card ─────────────────────────────────────────────────────
 
@@ -242,6 +80,12 @@ function FavouriteWorkerCard({ worker, onRemove, onRebook }: FavouriteWorkerCard
                 {worker.location}
               </div>
             )}
+            {worker.chargesQuoteFee && worker.quoteFeeAmount ? (
+              <div className="mt-1 inline-flex rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
+                Site quote fee {worker.country === 'AU' ? 'A$' : 'NZ$'}
+                {worker.quoteFeeAmount.toFixed(2)}
+              </div>
+            ) : null}
           </div>
         </div>
       </Link>
@@ -338,7 +182,7 @@ export default function HomeownerFavouritesPage() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-950">
       {rebookWorker && user && (
-        <RebookModal
+        <RequestQuoteModal
           worker={rebookWorker}
           homeownerId={user.uid}
           onClose={() => setRebookWorker(null)}

@@ -119,7 +119,7 @@ const ACHIEVEMENT_BADGES = [
   { badge: '💎 High Value', how: 'Complete a $5,000+ job', reward: '+5 Boosts' },
   { badge: '🔄 Consistent', how: '1 job every 30 days for 3 months', reward: '+5 Boosts' },
   { badge: '⭐ Trusted', how: '5 jobs all rated 4.5+ stars', reward: '+5 Boosts + free verified badge' },
-  { badge: '💰 Big Earner', how: 'Earn $5,000 in a month', reward: '+20 Boosts' },
+  { badge: '💰 Big Earner', how: 'Earn $5,000 in a month', reward: '+20 Boosts (enough for a 24-hour 8% commission trial)' },
   { badge: '🎯 10 Jobs', how: 'Complete 10 jobs', reward: '+5 Boosts' },
   { badge: '💼 50 Jobs', how: 'Complete 50 jobs', reward: '+20 Boosts' },
   { badge: '🔥 Loyal', how: '30 day login streak', reward: '+3 Boosts' },

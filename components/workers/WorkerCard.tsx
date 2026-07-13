@@ -142,6 +142,12 @@ export default function WorkerCard({ worker, isFavourited = false, onFavouriteTo
             >
               {worker.availability === 'available' ? 'Available' : worker.availability === 'busy' ? 'Busy' : 'Unavailable'}
             </Badge>
+            {worker.chargesQuoteFee && worker.quoteFeeAmount ? (
+              <div className="mt-1 text-[11px] font-medium text-amber-700 dark:text-amber-300">
+                Site quote fee {worker.country === 'AU' ? 'A$' : 'NZ$'}
+                {worker.quoteFeeAmount.toFixed(2)}
+              </div>
+            ) : null}
             <div className="mt-2 flex justify-end">
               <FavouriteButton
                 workerId={worker.uid}
