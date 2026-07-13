@@ -46,9 +46,9 @@ export default function SocialProofTicker() {
         >
           {current.label}
           {current.location && (
-            <span className="text-slate-500"> · {current.location}</span>
+            <span className="text-slate-400"> · {current.location}</span>
           )}
-          <span className="text-slate-600 ml-2">{current.timeAgo}</span>
+          <span className="text-slate-400 ml-2">{current.timeAgo}</span>
         </span>
       </div>
     </div>

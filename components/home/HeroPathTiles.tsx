@@ -110,6 +110,7 @@ export default function HeroPathTiles() {
           </button>
           <div
             aria-hidden={expanded !== 'work'}
+            inert={expanded !== 'work' ? true : undefined}
             className={`grid grid-cols-2 gap-3 overflow-hidden transition-all duration-300 ${expanded === 'work' ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
           >
             {WORK_SUBTILES.map(({ icon: Icon, title, description, href }) => (
@@ -151,6 +152,7 @@ export default function HeroPathTiles() {
           </button>
           <div
             aria-hidden={expanded !== 'hire'}
+            inert={expanded !== 'hire' ? true : undefined}
             className={`grid grid-cols-2 gap-3 overflow-hidden transition-all duration-300 ${expanded === 'hire' ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
           >
             {HIRE_SUBTILES.map(({ icon: Icon, title, description, href }) => (
