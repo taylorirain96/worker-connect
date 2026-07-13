@@ -4,8 +4,24 @@ import { sendMessage } from '@/lib/services/messagingService'
 import { adminDb } from '@/lib/firebase-admin'
 import { sendAdminNotification } from '@/lib/notifications/admin'
 import { rateLimit } from '@/lib/rateLimit'
+import { detectContactInfo } from '@/lib/contactInfoDetector'
 
 export const dynamic = 'force-dynamic'
+
+/**
+ * Escrow statuses that represent an active or completed payment transaction.
+ * Excludes 'failed' and 'cancelled' which indicate no real transaction occurred.
+ */
+const ACTIVE_ESCROW_STATUSES = [
+  'pending',
+  'processing',
+  'held',
+  'in_escrow',
+  'released',
+  'completed',
+  'disputed',
+  'partial_refund',
+]
 
 /**
  * POST /api/messages/send
@@ -18,7 +34,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { conversationId, senderId, senderName, content, type, senderAvatar, imageUrls } = body
+    const { conversationId, senderId, senderName, content, type, senderAvatar, imageUrls, confirmed } = body
     const authenticatedUserId = request.headers.get('x-user-id')
 
     const textContent = typeof content === 'string' ? content.trim() : ''
@@ -52,10 +68,68 @@ export async function POST(request: NextRequest) {
     if (!convSnap.exists) {
       return NextResponse.json({ error: 'Conversation not found' }, { status: 404 })
     }
-    const participants: string[] = convSnap.data()?.participants ?? []
+    const convData = convSnap.data() ?? {}
+    const participants: string[] = convData.participants ?? []
     if (!participants.includes(authenticatedUserId)) {
       return NextResponse.json({ error: 'Forbidden conversation access' }, { status: 403 })
     }
+
+    // ── Contact-info circumvention check ─────────────────────────────────────
+    // Only scan text messages (images have no detectable contact info).
+    const jobId: string | undefined = convData.jobId
+    const contactMatch = textContent ? detectContactInfo(textContent) : null
+
+    if (contactMatch) {
+      // Check whether a transaction has already occurred for this job.
+      // If it has, skip the warning entirely.
+      let transactionExists = false
+      if (jobId) {
+        const [escrowSnap, quoteSnap] = await Promise.all([
+          adminDb
+            .collection('escrowPayments')
+            .where('jobId', '==', jobId)
+            .where('status', 'in', ACTIVE_ESCROW_STATUSES)
+            .limit(1)
+            .get(),
+          adminDb
+            .collection('quotes')
+            .where('jobId', '==', jobId)
+            .where('status', '==', 'accepted')
+            .limit(1)
+            .get(),
+        ])
+        transactionExists = !escrowSnap.empty || !quoteSnap.empty
+      }
+
+      if (!transactionExists) {
+        if (!confirmed) {
+          // Ask the client to confirm before sending.
+          return NextResponse.json(
+            {
+              warning: true,
+              message:
+                'Sharing contact details before booking may violate our Terms of Service. Send anyway?',
+            },
+            { status: 200 }
+          )
+        }
+
+        // User confirmed — log the flagged message for admin review (non-blocking).
+        adminDb.collection('flaggedMessages').add({
+          conversationId,
+          senderId,
+          senderName,
+          jobId: jobId ?? null,
+          matchedPattern: contactMatch.pattern,
+          matchedText: contactMatch.match,
+          messagePreview: textContent.slice(0, 200),
+          flaggedAt: new Date().toISOString(),
+        }).catch((err) => {
+          console.error('Failed to log flagged message:', err)
+        })
+      }
+    }
+    // ─────────────────────────────────────────────────────────────────────────
 
     const messageId = await sendMessage(
       conversationId,
