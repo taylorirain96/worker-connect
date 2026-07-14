@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { HOMEOWNER_FIXTURE, WORKER_FIXTURE, emulatorsConfigured } from './fixtures'
+import { ACHIEVEMENT_REWARDS } from '@/lib/gamification/rewards'
 
 const skipReason =
   'Firebase emulator suite is not configured (set FIRESTORE_EMULATOR_HOST + FIREBASE_AUTH_EMULATOR_HOST, or run `npm run test:e2e:emulators`).'
@@ -62,7 +63,11 @@ test.describe('boost awards', () => {
 
     const workerSnap = await db.collection('users').doc(WORKER_FIXTURE.uid).get()
     const workerData = workerSnap.data() ?? {}
-    expect(workerData.boosts).toBe(25)
+    const expectedBoostTotal = ACHIEVEMENT_REWARDS
+      .filter((achievement) => ['high_value', 'big_earner'].includes(achievement.id))
+      .reduce((sum, achievement) => sum + achievement.boostReward, 0)
+
+    expect(workerData.boosts).toBe(expectedBoostTotal)
     expect(workerData.awardedAchievements).toEqual(
       expect.arrayContaining(['high_value', 'big_earner']),
     )

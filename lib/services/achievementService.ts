@@ -106,7 +106,7 @@ export async function checkAndAwardAchievements(workerId: string, jobId: string)
   const completedJobs: CompletedJobRecord[] = jobsSnap.docs
     .flatMap((docSnap) => {
       const job = docSnap.data() as Record<string, unknown>
-      if (job.assignedWorkerId !== workerId || job.status !== 'completed') {
+      if (job.status !== 'completed') {
         return []
       }
 
