@@ -3,6 +3,7 @@
  * In production these would check Firestore / Stripe subscription status.
  * For now read from the user profile field `subscriptionTier`.
  */
+import { getWorkerTier as getCompletedJobsWorkerTier } from '@/types'
 import type { UserProfile, ActiveTrial } from '@/types'
 import { hasActiveTrial } from '@/lib/services/boostTrialService'
 
@@ -64,18 +65,38 @@ export function hasFeaturedProfile(
   return hasActiveTrial(trials ?? profile?.activeTrials, 'featured_profile')
 }
 
+export function getBaseWorkerCommissionRate(
+  profile: UserProfile | null | undefined
+): number {
+  const tier = getWorkerTier(profile)
+  if (tier === 'elite') return 0.06
+  if (tier === 'pro') return 0.08
+  return getCompletedJobsWorkerTier(profile?.completedJobs ?? 0).commissionRate
+}
+
 /**
- * Returns the effective commission rate override for the worker if a
- * `commission_8pct` Boost trial is currently active. Returns `null` when no
- * trial is active and the normal tier rate should be applied.
+ * Returns the best active commission-rate override for the worker. The
+ * `commission_8pct` trial can help free-tier workers, while
+ * `commission_discount_stack` shaves an extra 2% off the worker's current
+ * rate, including Pro and Elite subscriptions.
  */
 export function getTrialCommissionRate(
   profile: UserProfile | null | undefined,
   trials?: ActiveTrial[]
 ): number | null {
-  // Workers already on Pro (8%) or Elite (6%) don't benefit from the trial
-  const tier = getWorkerTier(profile)
-  if (tier === 'pro' || tier === 'elite') return null
-  if (hasActiveTrial(trials ?? profile?.activeTrials, 'commission_8pct')) return 0.08
-  return null
+  const activeTrials = trials ?? profile?.activeTrials
+  const baseRate = getBaseWorkerCommissionRate(profile)
+
+  let bestRate: number | null = null
+
+  if (baseRate > 0.08 && hasActiveTrial(activeTrials, 'commission_8pct')) {
+    bestRate = 0.08
+  }
+
+  if (hasActiveTrial(activeTrials, 'commission_discount_stack')) {
+    const stackedRate = Math.max(0, baseRate - 0.02)
+    bestRate = bestRate === null ? stackedRate : Math.min(bestRate, stackedRate)
+  }
+
+  return bestRate !== null && bestRate < baseRate ? bestRate : null
 }

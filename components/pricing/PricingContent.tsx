@@ -3,6 +3,8 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
+import { useAuth } from '@/components/providers/AuthProvider'
+import { getTrialAvailability } from '@/lib/services/boostTrialService'
 import {
   Briefcase,
   HardHat,
@@ -15,6 +17,7 @@ import {
   Trophy,
   Building2,
 } from 'lucide-react'
+import type { TrialType } from '@/types'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -103,10 +106,16 @@ const WORKER_ADDONS = [
   { feature: 'Skill certification badge', price: '$24.99 one-off' },
 ]
 
-const TRIAL_ADDONS = [
-  { feature: 'Early Job Alerts (30 min head start)', cost: '20 Boosts', duration: '24-hour trial' },
-  { feature: 'Featured Profile placement', cost: '30 Boosts', duration: '48-hour trial' },
-  { feature: 'Flat 8% commission rate', cost: '15 Boosts', duration: '24-hour trial' },
+const TRIAL_ADDONS: Array<{
+  type: TrialType
+  feature: string
+  cost: string
+  duration: string
+}> = [
+  { type: 'early_job_alerts', feature: 'Early Job Alerts (30 min head start)', cost: '20 Boosts', duration: '24-hour trial' },
+  { type: 'featured_profile', feature: 'Featured Profile placement', cost: '30 Boosts', duration: '48-hour trial' },
+  { type: 'commission_8pct', feature: 'Flat 8% commission rate', cost: '15 Boosts', duration: '24-hour trial' },
+  { type: 'commission_discount_stack', feature: 'Extra 2% off your current commission', cost: '20 Boosts', duration: '24-hour trial' },
 ]
 
 const LEADERBOARD_PRIZES = [
@@ -119,7 +128,7 @@ const ACHIEVEMENT_BADGES = [
   { badge: '💎 High Value', how: 'Complete a $5,000+ job', reward: '+5 Boosts' },
   { badge: '🔄 Consistent', how: '1 job every 30 days for 3 months', reward: '+5 Boosts' },
   { badge: '⭐ Trusted', how: '5 jobs all rated 4.5+ stars', reward: '+5 Boosts + free verified badge' },
-  { badge: '💰 Big Earner', how: 'Earn $5,000 in a month', reward: '+20 Boosts (enough for a 24-hour 8% commission trial)' },
+  { badge: '💰 Big Earner', how: 'Earn $5,000 in a month', reward: '+20 Boosts (enough for a 24-hour extra 2% commission discount trial)' },
   { badge: '🎯 10 Jobs', how: 'Complete 10 jobs', reward: '+5 Boosts' },
   { badge: '💼 50 Jobs', how: 'Complete 50 jobs', reward: '+20 Boosts' },
   { badge: '🔥 Loyal', how: '30 day login streak', reward: '+3 Boosts' },
@@ -153,11 +162,11 @@ const FAQS = [
   },
   {
     q: 'Can I earn Boosts through achievements?',
-    a: "Yes! Workers earn Boosts by completing jobs, achieving milestones, and maintaining streaks. Boosts can only be spent on QuickTrade platform features like profile boosts, add-ons, and feature trials — they have no cash value and can't be withdrawn.",
+    a: "Yes! Workers earn Boosts by completing jobs, achieving milestones, and maintaining streaks. Boosts can be spent on QuickTrade platform features like profile boosts, add-ons, and time-limited trial perks — including extra commission discount stacks for any worker tier. They have no cash value and can't be withdrawn.",
   },
   {
     q: "What's included in the Pro Worker subscription?",
-    a: "Pro Worker ($49 NZD/month) gives you a flat 8% commission rate on every job — down from the standard 18% starting rate. If you're doing 3+ jobs a month, Pro easily pays for itself. Elite Worker ($89/month) drops your rate to 6%.",
+    a: "Pro Worker ($49 NZD/month) gives you a flat 8% commission rate on every job — down from the standard sliding scale. Elite Worker ($89/month) drops your rate to 6% and includes Featured Profile placement. Both tiers can still spend Boosts on a temporary extra commission discount stack when they want even more savings.",
   },
 ]
 
@@ -165,6 +174,16 @@ const FAQS = [
 
 export default function PricingContent() {
   const [billing, setBilling] = useState<'monthly' | 'yearly'>('monthly')
+  const { profile } = useAuth()
+  const trialAvailability = getTrialAvailability(profile)
+  const visibleTrials = TRIAL_ADDONS.map((row) => {
+    const availability = trialAvailability.find((trial) => trial.definition.type === row.type)
+    return {
+      ...row,
+      available: availability?.available ?? true,
+      reason: availability?.reason,
+    }
+  })
 
   const yearlyMonthlySavingPct = 20
 
@@ -466,20 +485,33 @@ export default function PricingContent() {
             <div className="mt-8 rounded-2xl bg-indigo-900/20 border border-indigo-500/30 overflow-hidden">
               <div className="px-6 py-4 border-b border-indigo-500/20 bg-indigo-900/30">
                 <h3 className="text-white font-semibold flex items-center gap-2">
-                  <Zap className="h-4 w-4 text-indigo-400" /> Try It — Spend Boosts to trial Pro/Elite features
+                  <Zap className="h-4 w-4 text-indigo-400" /> Try It — Spend Boosts on feature trials & commission discounts
                 </h3>
                 <p className="text-slate-400 text-xs mt-1">
-                  Not ready to subscribe? Spend Boosts to unlock a feature for a limited window. Trials expire automatically — no cancellation needed.
+                  Not ready to subscribe? Spend Boosts to unlock a feature for a limited window. Eligible options adapt to your current worker plan, and trials expire automatically — no cancellation needed.
                 </p>
               </div>
               <div className="divide-y divide-indigo-500/10">
-                {TRIAL_ADDONS.map((row) => (
-                  <div key={row.feature} className="flex items-center justify-between px-6 py-3.5 hover:bg-indigo-900/20 transition-colors">
+                {visibleTrials.map((row) => (
+                  <div
+                    key={row.feature}
+                    className={`flex items-center justify-between px-6 py-3.5 transition-colors ${
+                      row.available ? 'hover:bg-indigo-900/20' : 'bg-slate-900/20 opacity-70'
+                    }`}
+                  >
                     <div>
-                      <span className="text-slate-300 text-sm">{row.feature}</span>
+                      <span className={`text-sm ${row.available ? 'text-slate-300' : 'text-slate-400'}`}>{row.feature}</span>
                       <span className="ml-2 text-indigo-400 text-xs font-medium">({row.duration})</span>
+                      {!row.available && row.reason ? (
+                        <p className="mt-1 text-xs text-amber-300">{row.reason}</p>
+                      ) : null}
                     </div>
-                    <span className="text-indigo-300 font-semibold text-sm">{row.cost}</span>
+                    <div className="text-right">
+                      <span className={`font-semibold text-sm ${row.available ? 'text-indigo-300' : 'text-slate-500'}`}>{row.cost}</span>
+                      {!row.available ? (
+                        <p className="mt-1 text-xs text-slate-500">Unavailable on your current plan</p>
+                      ) : null}
+                    </div>
                   </div>
                 ))}
               </div>
