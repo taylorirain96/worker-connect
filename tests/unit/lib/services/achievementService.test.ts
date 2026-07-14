@@ -7,7 +7,7 @@ import {
 const RECENT_DATES = [
   '2026-07-10T12:00:00.000Z',
   '2026-06-12T12:00:00.000Z',
-  '2026-05-16T12:00:00.000Z',
+  '2026-04-20T12:00:00.000Z',
 ]
 
 describe('achievementService threshold logic', () => {

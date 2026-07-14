@@ -104,20 +104,23 @@ export async function checkAndAwardAchievements(workerId: string, jobId: string)
   )
 
   const completedJobs: CompletedJobRecord[] = jobsSnap.docs
-    .map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
-    .filter((job) => job.assignedWorkerId === workerId && job.status === 'completed')
-    .map((job) => {
-      const escrow = escrowsByJobId.get(job.id)
+    .flatMap((docSnap) => {
+      const job = docSnap.data() as Record<string, unknown>
+      if (job.assignedWorkerId !== workerId || job.status !== 'completed') {
+        return []
+      }
+
+      const escrow = escrowsByJobId.get(docSnap.id)
       const jobValue = Number(escrow?.amount ?? job.budget ?? 0)
       const workerEarnings = Number(
         escrow?.workerReceives ?? escrow?.workerAmount ?? escrow?.amount ?? job.budget ?? 0,
       )
-      return {
-        id: job.id,
+      return [{
+        id: docSnap.id,
         completedAt: typeof job.completedAt === 'string' ? job.completedAt : anchorIso,
         jobValue,
         workerEarnings,
-      }
+      }]
     })
 
   const lifetimeEarnings = completedJobs.reduce((sum, job) => sum + job.workerEarnings, 0)
