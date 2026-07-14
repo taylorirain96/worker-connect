@@ -79,17 +79,11 @@ function getTrialLabel(type: TrialType): string {
   return TRIAL_DEFINITIONS.find((d) => d.type === type)?.label ?? type
 }
 
-function getWorkerSubscriptionTier(profile: UserProfile | null | undefined): 'free' | 'pro' | 'elite' {
-  if (profile?.workerSubscriptionTier === 'elite') return 'elite'
-  if (profile?.workerSubscriptionTier === 'pro') return 'pro'
-  return 'free'
-}
-
 export function getTrialBlockReason(
   profile: UserProfile | null | undefined,
   type: TrialType
 ): string | null {
-  const tier = getWorkerSubscriptionTier(profile)
+  const tier = profile?.workerSubscriptionTier ?? 'free'
 
   if (type === 'featured_profile' && tier === 'elite') {
     return 'Elite Worker already includes Featured Profile placement.'

@@ -118,6 +118,9 @@ const TRIAL_ADDONS: Array<{
   { type: 'commission_discount_stack', feature: 'Extra 2% off your current commission', cost: '20 Boosts', duration: '24-hour trial' },
 ]
 
+const COMMISSION_STACK_TRIAL =
+  TRIAL_ADDONS.find((trial) => trial.type === 'commission_discount_stack') ?? TRIAL_ADDONS[0]
+
 const LEADERBOARD_PRIZES = [
   { rank: '🥇 #1 Worker of the Month', prize: '+25 Boosts' },
   { rank: '🥈 #2', prize: '+15 Boosts' },
@@ -128,7 +131,11 @@ const ACHIEVEMENT_BADGES = [
   { badge: '💎 High Value', how: 'Complete a $5,000+ job', reward: '+5 Boosts' },
   { badge: '🔄 Consistent', how: '1 job every 30 days for 3 months', reward: '+5 Boosts' },
   { badge: '⭐ Trusted', how: '5 jobs all rated 4.5+ stars', reward: '+5 Boosts + free verified badge' },
-  { badge: '💰 Big Earner', how: 'Earn $5,000 in a month', reward: '+20 Boosts (enough for a 24-hour extra 2% commission discount trial)' },
+  {
+    badge: '💰 Big Earner',
+    how: 'Earn $5,000 in a month',
+    reward: `+20 Boosts (enough for a ${COMMISSION_STACK_TRIAL.duration} ${COMMISSION_STACK_TRIAL.feature.toLowerCase()} trial)`,
+  },
   { badge: '🎯 10 Jobs', how: 'Complete 10 jobs', reward: '+5 Boosts' },
   { badge: '💼 50 Jobs', how: 'Complete 50 jobs', reward: '+20 Boosts' },
   { badge: '🔥 Loyal', how: '30 day login streak', reward: '+3 Boosts' },
