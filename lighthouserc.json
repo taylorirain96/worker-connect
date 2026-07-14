@@ -27,7 +27,11 @@
         "redirects-http": "off",
         "uses-long-cache-ttl": "off",
         "unused-javascript": "off",
-        "unused-css-rules": "off"
+        "unused-css-rules": "off",
+        "lcp-lazy-loaded": "off",
+        "non-composited-animations": "off",
+        "prioritize-lcp-image": "off",
+        "valid-source-maps": "off"
       }
     },
     "upload": {

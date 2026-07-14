@@ -7,7 +7,7 @@ export default function TrustSignalBar() {
       <div className="flex items-center gap-2 flex-shrink-0">
         <Users className="h-4 w-4 text-indigo-400 flex-shrink-0" />
         <span className="text-white font-bold text-sm whitespace-nowrap">12,847+</span>
-        <span className="text-slate-400 text-sm whitespace-nowrap">Happy Clients</span>
+        <span className="text-slate-300 text-sm whitespace-nowrap">Happy Clients</span>
       </div>
       <div className="w-px h-4 bg-slate-700 flex-shrink-0" />
       <div className="flex items-center gap-2 flex-shrink-0">

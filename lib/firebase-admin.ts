@@ -3,13 +3,25 @@ import { getFirestore } from 'firebase-admin/firestore'
 import { getAuth } from 'firebase-admin/auth'
 import { getDatabase } from 'firebase-admin/database'
 
-if (!getApps().length) {
-  const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_KEY
-    ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY)
-    : {
-        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-      }
+const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_KEY
+  ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY)
+  : {
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+    }
 
+export const firebaseAdminProjectId =
+  serviceAccount.projectId ??
+  process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ??
+  process.env.GCLOUD_PROJECT ??
+  process.env.GOOGLE_CLOUD_PROJECT
+
+export const isFirebaseAdminConfigured = Boolean(
+  firebaseAdminProjectId ||
+  process.env.GOOGLE_APPLICATION_CREDENTIALS ||
+  serviceAccount.private_key
+)
+
+if (!getApps().length) {
   // When running against the Firebase emulator suite (E2E / local dev),
   // firebase-admin auto-honors FIRESTORE_EMULATOR_HOST / FIREBASE_AUTH_EMULATOR_HOST
   // and does NOT require real credentials. Skip applicationDefault() in that
@@ -20,23 +32,18 @@ if (!getApps().length) {
     process.env.FIRESTORE_EMULATOR_HOST || process.env.FIREBASE_AUTH_EMULATOR_HOST,
   )
 
-  const projectId =
-    serviceAccount.projectId ??
-    process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ??
-    process.env.GCLOUD_PROJECT ??
-    process.env.GOOGLE_CLOUD_PROJECT
-
   if (usingEmulator) {
     initializeApp({
-      projectId,
-      databaseURL: `https://${projectId ?? 'placeholder'}-default-rtdb.firebaseio.com`,
+      projectId: firebaseAdminProjectId,
+      databaseURL: `https://${firebaseAdminProjectId ?? 'placeholder'}-default-rtdb.firebaseio.com`,
     })
   } else {
     initializeApp({
       credential: serviceAccount.private_key
         ? cert(serviceAccount)
         : applicationDefault(),
-      databaseURL: `https://${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}-default-rtdb.firebaseio.com`,
+      projectId: firebaseAdminProjectId,
+      databaseURL: `https://${firebaseAdminProjectId ?? 'placeholder'}-default-rtdb.firebaseio.com`,
     })
   }
 }

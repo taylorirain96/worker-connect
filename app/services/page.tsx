@@ -139,7 +139,7 @@ export default function ServicesPage() {
               </span>{' '}
               Near You
             </h1>
-            <p className="text-lg text-slate-400 max-w-2xl mx-auto mb-8">
+            <p className="text-lg text-slate-300 max-w-2xl mx-auto mb-8">
               Browse all services available on QuickTrade across New Zealand — from plumbing and
               electrical to cleaning and landscaping. Vetted professionals, real reviews, fair prices.
             </p>
@@ -169,7 +169,7 @@ export default function ServicesPage() {
                     <p className="font-semibold text-slate-200 group-hover:text-white transition-colors">
                       {service.name}
                     </p>
-                    <p className="text-sm text-slate-500 mt-0.5 group-hover:text-slate-400 transition-colors leading-snug">
+                    <p className="text-sm text-slate-300 mt-0.5 group-hover:text-slate-200 transition-colors leading-snug">
                       {service.description}
                     </p>
                   </div>
@@ -185,7 +185,7 @@ export default function ServicesPage() {
             <h2 className="text-2xl font-bold text-white mb-3 text-center">
               Why hire through QuickTrade?
             </h2>
-            <p className="text-slate-400 text-center mb-10 max-w-xl mx-auto">
+            <p className="text-slate-300 text-center mb-10 max-w-xl mx-auto">
               New Zealand&apos;s trusted platform for connecting homeowners with qualified tradespeople.
             </p>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -226,7 +226,7 @@ export default function ServicesPage() {
                     {icon}
                   </div>
                   <h3 className="text-white font-semibold mb-2">{title}</h3>
-                  <p className="text-slate-400 text-sm leading-relaxed">{body}</p>
+                  <p className="text-slate-300 text-sm leading-relaxed">{body}</p>
                 </div>
               ))}
             </div>
@@ -241,7 +241,7 @@ export default function ServicesPage() {
               {SERVICES_FAQS.map((faq) => (
                 <div key={faq.q} className="rounded-xl bg-slate-900/60 border border-slate-700/50 p-6">
                   <h3 className="text-white font-semibold mb-2">{faq.q}</h3>
-                  <p className="text-slate-400 text-sm leading-relaxed">{faq.a}</p>
+                  <p className="text-slate-300 text-sm leading-relaxed">{faq.a}</p>
                 </div>
               ))}
             </div>
@@ -253,7 +253,7 @@ export default function ServicesPage() {
           <div className="max-w-4xl mx-auto">
             <div className="rounded-2xl border border-slate-700/50 bg-slate-900/50 p-10 text-center">
               <p className="text-slate-300 font-semibold mb-2">Ready to get your job done?</p>
-              <p className="text-slate-500 text-sm mb-6 max-w-sm mx-auto">
+              <p className="text-slate-300 text-sm mb-6 max-w-sm mx-auto">
                 Post a job for free and receive quotes from verified local tradespeople.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">

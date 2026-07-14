@@ -106,16 +106,16 @@ export default async function AUServiceCityPage({ params }: Props) {
                 {cityName}
               </span>
             </h1>
-            <p className="text-lg text-slate-400 max-w-2xl mb-6">
+            <p className="text-lg text-slate-300 max-w-2xl mb-6">
               Find trusted {service.namePlural} in {cityName}, Australia. Get competitive quotes, compare reviews,
               and hire with confidence. All prices include 10% GST.
             </p>
 
             {auPriceFrom && auPriceTo && (
               <div className="inline-flex items-center gap-3 px-5 py-3 rounded-xl bg-slate-800/60 border border-slate-700/50">
-                <span className="text-slate-400 text-sm">Typical price (inc. GST):</span>
+                <span className="text-slate-300 text-sm">Typical price (inc. GST):</span>
                 <span className="text-white font-semibold">A${auPriceFrom}–A${auPriceTo}</span>
-                <span className="text-slate-400 text-sm">{details?.priceUnit}</span>
+                <span className="text-slate-300 text-sm">{details?.priceUnit}</span>
               </div>
             )}
           </div>
@@ -180,7 +180,7 @@ export default async function AUServiceCityPage({ params }: Props) {
                 {details.faqs.map((faq, i) => (
                   <div key={i} className="rounded-xl bg-slate-900/60 border border-slate-700/50 p-6">
                     <h3 className="text-white font-semibold mb-2">{faq.question}</h3>
-                    <p className="text-slate-400 text-sm leading-relaxed">{faq.answer}</p>
+                    <p className="text-slate-300 text-sm leading-relaxed">{faq.answer}</p>
                   </div>
                 ))}
               </div>
@@ -200,7 +200,7 @@ export default async function AUServiceCityPage({ params }: Props) {
                   className="p-3 rounded-xl bg-slate-900/70 border border-slate-700/50 hover:border-indigo-500/40 transition-all text-center"
                 >
                   <p className="text-sm font-medium text-slate-200">{city}</p>
-                  <p className="text-xs text-slate-500 mt-0.5">Australia</p>
+                  <p className="text-xs text-slate-300 mt-0.5">Australia</p>
                 </Link>
               ))}
             </div>

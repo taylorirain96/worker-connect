@@ -1,5 +1,5 @@
 import { unstable_cache } from 'next/cache'
-import { adminDb } from '@/lib/firebase-admin'
+import { adminDb, isFirebaseAdminConfigured } from '@/lib/firebase-admin'
 import type { JobCategory } from '@/types'
 
 interface ServiceAggregateRating {
@@ -45,7 +45,7 @@ const SERVICE_CATEGORY_MAP: Record<string, JobCategory[]> = {
 const getCachedServiceAggregateRating = unstable_cache(
   async (serviceSlug: string): Promise<ServiceAggregateRating | null> => {
     const categories = SERVICE_CATEGORY_MAP[serviceSlug]
-    if (!categories?.length) return null
+    if (!categories?.length || !isFirebaseAdminConfigured) return null
 
     try {
       let jobsSnap
@@ -57,7 +57,6 @@ const getCachedServiceAggregateRating = unstable_cache(
           .limit(MAX_COMPLETED_JOBS_TO_SAMPLE)
           .get()
       } catch (error) {
-        console.warn('[serviceRatings] Falling back to category-only query:', error)
         jobsSnap = await adminDb
           .collection('jobs')
           .where('category', 'in', categories)
@@ -112,8 +111,7 @@ const getCachedServiceAggregateRating = unstable_cache(
         bestRating: 5,
         worstRating: 1,
       }
-    } catch (error) {
-      console.error('[serviceRatings] Failed to load aggregate rating:', error)
+    } catch {
       return null
     }
   },

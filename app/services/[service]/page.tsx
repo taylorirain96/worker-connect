@@ -127,7 +127,7 @@ export default async function ServicePage({ params }: Props) {
           style={{ background: 'linear-gradient(135deg, #0a0f1e 0%, #111827 60%, #0a0f1e 100%)' }}
         >
           <div className="max-w-4xl mx-auto">
-            <nav className="flex items-center gap-2 text-sm text-slate-500 mb-8">
+            <nav className="flex items-center gap-2 text-sm text-slate-300 mb-8">
               <Link href="/" className="hover:text-slate-300 transition-colors">Home</Link>
               <span>/</span>
               <Link href="/services" className="hover:text-slate-300 transition-colors">Services</Link>
@@ -147,7 +147,7 @@ export default async function ServicePage({ params }: Props) {
               </span>
             </h1>
 
-            <p className="text-lg text-slate-400 max-w-2xl mb-8">
+            <p className="text-lg text-slate-300 max-w-2xl mb-8">
               {service.description}{' '}
               {isHeatPumps
                 ? 'Whether you need air conditioning, aircon servicing, or a new heat pump installation, our verified professionals are ready to help. '
@@ -158,11 +158,11 @@ export default async function ServicePage({ params }: Props) {
 
             {details && (
               <div className="inline-flex items-center gap-3 px-5 py-3 rounded-xl bg-slate-800/60 border border-slate-700/50">
-                <span className="text-slate-400 text-sm">Typical price:</span>
+                <span className="text-slate-300 text-sm">Typical price:</span>
                 <span className="text-white font-semibold">
                   ${details.priceFrom}–${details.priceTo}
                 </span>
-                <span className="text-slate-400 text-sm">{details.priceUnit}</span>
+                <span className="text-slate-300 text-sm">{details.priceUnit}</span>
               </div>
             )}
           </div>
@@ -179,7 +179,7 @@ export default async function ServicePage({ params }: Props) {
                 </h2>
                 <div className="rounded-xl border border-slate-700/50 bg-slate-900/60 overflow-hidden">
                   <div className="flex items-center justify-between px-5 py-4 border-b border-slate-700/50">
-                    <span className="text-slate-400 text-sm">Price range</span>
+                    <span className="text-slate-300 text-sm">Price range</span>
                     <span className="text-white font-semibold">
                       ${details.priceFrom}–${details.priceTo} {details.priceUnit}
                     </span>
@@ -222,7 +222,7 @@ export default async function ServicePage({ params }: Props) {
             <h2 className="text-2xl font-bold text-white mb-2">
               Available in these locations
             </h2>
-            <p className="text-slate-400 mb-8">
+            <p className="text-slate-300 mb-8">
               Select your city to find {service.namePlural} near you.
             </p>
 
@@ -236,7 +236,7 @@ export default async function ServicePage({ params }: Props) {
                   <span className="font-semibold text-slate-200 group-hover:text-white transition-colors text-sm">
                     {loc.cityName}
                   </span>
-                  <span className="text-xs text-slate-500 group-hover:text-slate-400 transition-colors mt-0.5">
+                  <span className="text-xs text-slate-300 group-hover:text-slate-200 transition-colors mt-0.5">
                     {loc.regionName}
                   </span>
                 </Link>
@@ -259,7 +259,7 @@ export default async function ServicePage({ params }: Props) {
                     className="rounded-xl bg-slate-900/60 border border-slate-700/50 p-6"
                   >
                     <h3 className="text-white font-semibold mb-2">{faq.question}</h3>
-                    <p className="text-slate-400 text-sm leading-relaxed">{faq.answer}</p>
+                    <p className="text-slate-300 text-sm leading-relaxed">{faq.answer}</p>
                   </div>
                 ))}
               </div>
@@ -274,7 +274,7 @@ export default async function ServicePage({ params }: Props) {
               <p className="text-slate-300 font-semibold mb-2">
                 Ready to hire a {service.name} professional?
               </p>
-              <p className="text-slate-500 text-sm mb-6 max-w-sm mx-auto">
+              <p className="text-slate-300 text-sm mb-6 max-w-sm mx-auto">
                 Post a job and qualified {service.namePlural} will reach out with quotes.
               </p>
               <Link

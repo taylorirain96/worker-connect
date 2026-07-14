@@ -204,7 +204,7 @@ export default async function ServiceCityPage({ params }: Props) {
                 {location.cityName}
               </span>
             </h1>
-            <p className="text-lg text-slate-400 max-w-2xl mb-6">
+            <p className="text-lg text-slate-300 max-w-2xl mb-6">
               Looking for trusted {service.namePlural} in {location.cityName}? QuickTrade connects
               you with verified local {service.namePlural} across {location.regionName}.
               {isHeatPumps
@@ -215,11 +215,11 @@ export default async function ServiceCityPage({ params }: Props) {
 
             {details && (
               <div className="inline-flex items-center gap-3 px-5 py-3 rounded-xl bg-slate-800/60 border border-slate-700/50">
-                <span className="text-slate-400 text-sm">Typical price:</span>
+                <span className="text-slate-300 text-sm">Typical price:</span>
                 <span className="text-white font-semibold">
                   ${details.priceFrom}–${details.priceTo}
                 </span>
-                <span className="text-slate-400 text-sm">{details.priceUnit}</span>
+                <span className="text-slate-300 text-sm">{details.priceUnit}</span>
               </div>
             )}
           </div>
@@ -308,7 +308,7 @@ export default async function ServiceCityPage({ params }: Props) {
                     className="rounded-xl bg-slate-900/60 border border-slate-700/50 p-6"
                   >
                     <h3 className="text-white font-semibold mb-2">{faq.question}</h3>
-                    <p className="text-slate-400 text-sm leading-relaxed">{faq.answer}</p>
+                    <p className="text-slate-300 text-sm leading-relaxed">{faq.answer}</p>
                   </div>
                 ))}
               </div>
@@ -352,7 +352,7 @@ export default async function ServiceCityPage({ params }: Props) {
                   className="p-3 rounded-xl bg-slate-900/70 border border-slate-700/50 hover:border-indigo-500/40 hover:shadow-[0_0_16px_rgba(99,102,241,0.1)] transition-all duration-200 text-center"
                 >
                   <p className="text-sm font-medium text-slate-200">{loc.cityName}</p>
-                  <p className="text-xs text-slate-500 mt-0.5">{loc.regionName}</p>
+                  <p className="text-xs text-slate-300 mt-0.5">{loc.regionName}</p>
                 </Link>
               ))}
             </div>

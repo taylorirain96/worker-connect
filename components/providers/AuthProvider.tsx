@@ -53,7 +53,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const firebaseAuth = firebaseModule.auth
         const firebaseDb = firebaseModule.db
         if (!firebaseAuth) {
-          console.warn('Firebase Auth not initialized. Configure Firebase environment variables.')
           setLoading(false)
           return
         }

@@ -7,12 +7,7 @@ import { getStorage, type FirebaseStorage } from 'firebase/storage'
 const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY
 const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID
 const useEmulator = process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATOR === '1'
-
-if (typeof window !== 'undefined' && !useEmulator && (!apiKey || !projectId)) {
-  console.warn(
-    'Firebase environment variables are not configured. Set NEXT_PUBLIC_FIREBASE_* variables to enable authentication and database features.'
-  )
-}
+export const isFirebaseClientConfigured = Boolean((apiKey && projectId) || useEmulator)
 
 const firebaseConfig = {
   // Auth Emulator accepts any non-empty API key; fall back to a placeholder
@@ -33,7 +28,7 @@ let db: Firestore | null = null
 let rtdb: Database | null = null
 let storage: FirebaseStorage | null = null
 
-if ((apiKey && projectId) || useEmulator) {
+if (isFirebaseClientConfigured) {
   try {
     app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]
     auth = getAuth(app)

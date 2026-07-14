@@ -84,7 +84,7 @@ export default function HeroPathTiles() {
           </>
         )}
       </h1>
-      <p className="text-xl text-slate-400 mb-10 max-w-2xl mx-auto">
+      <p className="text-xl text-slate-300 mb-10 max-w-2xl mx-auto">
         Whether you need a tradie or you are one — QuickTrade connects the right people across New Zealand.
       </p>
 
@@ -106,7 +106,7 @@ export default function HeroPathTiles() {
               />
             </div>
             <h2 className="text-base font-bold text-white mb-1">I want work</h2>
-            <p className="text-sm text-slate-400">Tradies & job seekers</p>
+            <p className="text-sm text-slate-300">Tradies & job seekers</p>
           </button>
           <div
             aria-hidden={expanded !== 'work'}
@@ -123,7 +123,7 @@ export default function HeroPathTiles() {
                   <Icon className="h-4 w-4 text-indigo-400" />
                 </div>
                 <h3 className="text-sm font-semibold text-white mb-1">{title}</h3>
-                <p className="text-xs text-slate-400 mb-2">{description}</p>
+                <p className="text-xs text-slate-300 mb-2">{description}</p>
                 <span className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-400 group-hover:text-indigo-300 transition-colors">
                   Go <ArrowRight className="h-3 w-3" />
                 </span>
@@ -148,7 +148,7 @@ export default function HeroPathTiles() {
               />
             </div>
             <h2 className="text-base font-bold text-white mb-1">I need work done</h2>
-            <p className="text-sm text-slate-400">One-off or hire someone</p>
+            <p className="text-sm text-slate-300">One-off or hire someone</p>
           </button>
           <div
             aria-hidden={expanded !== 'hire'}
@@ -165,7 +165,7 @@ export default function HeroPathTiles() {
                   <Icon className="h-4 w-4 text-indigo-400" />
                 </div>
                 <h3 className="text-sm font-semibold text-white mb-1">{title}</h3>
-                <p className="text-xs text-slate-400 mb-2">{description}</p>
+                <p className="text-xs text-slate-300 mb-2">{description}</p>
                 <span className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-400 group-hover:text-indigo-300 transition-colors">
                   Go <ArrowRight className="h-3 w-3" />
                 </span>
