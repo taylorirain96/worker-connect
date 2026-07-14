@@ -11,7 +11,7 @@ export default function Footer() {
             <Link href="/" className="flex items-center space-x-2 mb-4">
               <Wrench className="h-6 w-6 text-primary-600" />
               <span className="text-lg font-bold text-primary-600">
-                Quick<span className="text-accent-500">Trade</span>
+                Quick<span className="text-indigo-700">Trade</span>
               </span>
             </Link>
             <p className="text-gray-500 dark:text-gray-400 text-sm max-w-md mb-6">
@@ -22,21 +22,21 @@ export default function Footer() {
               <a
                 href="#"
                 aria-label="Follow QuickTrade on X"
-                className="text-gray-400 hover:text-primary-600 transition-colors"
+                className="text-gray-600 hover:text-primary-600 transition-colors"
               >
                 <SocialMark platformToken="X" className="h-5 w-5 text-xs" />
               </a>
               <a
                 href="#"
                 aria-label="Follow QuickTrade on LinkedIn"
-                className="text-gray-400 hover:text-primary-600 transition-colors"
+                className="text-gray-600 hover:text-primary-600 transition-colors"
               >
                 <SocialMark platformToken="in" className="h-5 w-5 text-xs" />
               </a>
               <a
                 href="#"
                 aria-label="Follow QuickTrade on Facebook"
-                className="text-gray-400 hover:text-primary-600 transition-colors"
+                className="text-gray-600 hover:text-primary-600 transition-colors"
               >
                 <SocialMark platformToken="f" className="h-5 w-5 text-xs" />
               </a>
@@ -132,7 +132,7 @@ export default function Footer() {
           <p className="text-sm text-gray-500 dark:text-gray-400">
             © {new Date().getFullYear()} QuickTrade. All rights reserved.
           </p>
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-gray-600">
             Built with ❤️ for skilled trades workers
           </p>
         </div>

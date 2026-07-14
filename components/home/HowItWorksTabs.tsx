@@ -162,8 +162,8 @@ export default function HowItWorksTabs() {
               </div>
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className={`text-xs font-bold ${active.accentColor} opacity-70 uppercase tracking-wide`}>{step}</span>
-                  <h4 className="font-semibold text-white">{title}</h4>
+                  <span className={`text-xs font-bold ${active.accentColor} uppercase tracking-wide`}>{step}</span>
+                  <h3 className="font-semibold text-white">{title}</h3>
                 </div>
                 <p className="text-sm text-slate-400">{description}</p>
               </div>
