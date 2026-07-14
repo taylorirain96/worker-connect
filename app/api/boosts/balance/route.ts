@@ -11,12 +11,24 @@ export const dynamic = 'force-dynamic'
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const userId = searchParams.get('userId')
+  const requesterId = req.headers.get('x-user-id')
 
   if (!userId) {
     return NextResponse.json({ error: 'Missing userId' }, { status: 400 })
   }
 
+  if (!requesterId) {
+    return NextResponse.json({ error: 'Missing requester identity' }, { status: 401 })
+  }
+
   try {
+    if (requesterId !== userId) {
+      const requesterDoc = await adminDb.collection('users').doc(requesterId).get()
+      if (requesterDoc.data()?.role !== 'admin') {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
+    }
+
     const userDoc = await adminDb.collection('users').doc(userId).get()
     if (!userDoc.exists) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })

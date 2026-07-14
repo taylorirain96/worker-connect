@@ -42,7 +42,9 @@ export default function WorkerSubscriptionPage() {
       const data = await res.json() as { subscription: Subscription | null }
       setSubscription(data.subscription)
 
-      const boostsRes = await fetch(`/api/boosts/balance?userId=${user.uid}`)
+      const boostsRes = await fetch(`/api/boosts/balance?userId=${user.uid}`, {
+        headers: { 'x-user-id': user.uid },
+      })
       if (boostsRes.ok) {
         const boostsData = await boostsRes.json() as { boosts: number; transactions: BoostTransaction[] }
         setBoosts(boostsData.boosts)

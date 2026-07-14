@@ -159,7 +159,9 @@ export async function awardBoosts(
   amount: number,
   opts: BoostMutationOptions = {},
 ): Promise<boolean> {
-  if (amount <= 0) return false
+  if (amount <= 0) {
+    throw new Error(`Boost awards must be positive. Received: ${amount}`)
+  }
 
   const createdAt = new Date().toISOString()
 
