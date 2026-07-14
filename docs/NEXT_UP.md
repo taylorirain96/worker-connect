@@ -91,16 +91,16 @@ forged cookie no longer satisfies the `/dashboard` and `/admin` guards.
 
 ---
 
-### 5. Playwright E2E for the highest-revenue path 🟡 In progress
+### 5. ~~Playwright E2E for the highest-revenue path~~ ✅ Shipped
 **Goal:** Lock in the post-job → quote → accept → escrow → release → review
 flow with an automated end-to-end test.
 
-**Status**
-- ✅ Playwright scaffolding landed: `@playwright/test` dev dep,
+**What shipped**
+- ✅ Playwright scaffolding: `@playwright/test` dev dep,
   `playwright.config.ts` (webServer = `npm run start`), `e2e/smoke.spec.ts`
   covering the homepage + `/auth/login`, `npm run test:e2e` script, and a
   `.github/workflows/e2e.yml` job running on PRs.
-- ✅ **Firebase emulator harness foundation landed:**
+- ✅ **Firebase emulator harness:**
   - `firebase.json` declares Auth (`9099`) and Firestore (`8080`) emulator
     ports.
   - `e2e/fixtures.ts` exports shared homeowner + worker fixture constants
@@ -115,20 +115,24 @@ flow with an automated end-to-end test.
   - `lib/firebase.ts` calls `connectAuthEmulator` /
     `connectFirestoreEmulator` in the browser when
     `NEXT_PUBLIC_USE_FIREBASE_EMULATOR=1`.
-- ✅ `e2e/revenue-path.spec.ts` now exercises the post-job → quote → accept →
+- ✅ `e2e/revenue-path.spec.ts` exercises the post-job → quote → accept →
   escrow-create → release → review flow end-to-end against the Firebase
   emulator harness, using Stripe mock mode (`STRIPE_MODE=mock`) to avoid live
   payment endpoint calls.
+- ✅ `e2e/stripe-webhook.spec.ts` drives the webhook route
+  (`/api/stripe/webhook`) directly with HMAC-signed event payloads using
+  Stripe's `generateTestHeaderString` helper. Covers:
+  - `payment_intent.succeeded` (type=escrow) → escrow record status `held` +
+    job `escrowStatus`/`workflowStage` updated in Firestore.
+  - `charge.refunded` → payment record status `refunded` + refund document
+    created in the `refunds` collection.
+  - Negative cases: missing signature → 400, tampered payload → 400.
+  - Deprecated `/api/webhooks/stripe` endpoint → 410 Gone.
 
-**Remaining work**
-- Optional follow-up: drive the Stripe webhook route directly with signed mock
-  webhook fixtures if we want coverage of webhook event parsing paths in the
-  same job.
-
-**Acceptance**
+**Acceptance** ✅
 - `npm run test:e2e` runs Playwright headless, exercising the full path with
   one homeowner + one worker test account.
-- New GitHub Actions job in `.github/workflows/` runs E2E on PRs. ✅
+- New GitHub Actions job in `.github/workflows/` runs E2E on PRs.
 
 ---
 
