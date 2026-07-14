@@ -176,8 +176,11 @@ export default function PricingContent() {
   const [billing, setBilling] = useState<'monthly' | 'yearly'>('monthly')
   const { profile } = useAuth()
   const trialAvailability = getTrialAvailability(profile)
+  const trialAvailabilityByType = new Map(
+    trialAvailability.map((trial) => [trial.definition.type, trial] as const)
+  )
   const visibleTrials = TRIAL_ADDONS.map((row) => {
-    const availability = trialAvailability.find((trial) => trial.definition.type === row.type)
+    const availability = trialAvailabilityByType.get(row.type)
     return {
       ...row,
       available: availability?.available ?? true,

@@ -10,6 +10,8 @@ import { hasActiveTrial } from '@/lib/services/boostTrialService'
 export type WorkerTier = 'free' | 'pro' | 'elite'
 export type EmployerTier = 'free' | 'pro' | 'business' | 'enterprise'
 
+const COMMISSION_DISCOUNT_STACK_RATE = 0.02
+
 export function getWorkerTier(profile: UserProfile | null | undefined): WorkerTier {
   if (!profile) return 'free'
   const tier = profile.workerSubscriptionTier
@@ -94,7 +96,10 @@ export function getTrialCommissionRate(
   }
 
   if (hasActiveTrial(activeTrials, 'commission_discount_stack')) {
-    const stackedRate = Math.max(0, Number((baseRate - 0.02).toFixed(4)))
+    const stackedRate = Math.max(
+      0,
+      Number((baseRate - COMMISSION_DISCOUNT_STACK_RATE).toFixed(4))
+    )
     bestRate = bestRate === null ? stackedRate : Math.min(bestRate, stackedRate)
   }
 
