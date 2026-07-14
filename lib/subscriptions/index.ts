@@ -94,7 +94,7 @@ export function getTrialCommissionRate(
   }
 
   if (hasActiveTrial(activeTrials, 'commission_discount_stack')) {
-    const stackedRate = Math.max(0, baseRate - 0.02)
+    const stackedRate = Math.max(0, Number((baseRate - 0.02).toFixed(4)))
     bestRate = bestRate === null ? stackedRate : Math.min(bestRate, stackedRate)
   }
 
