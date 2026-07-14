@@ -141,8 +141,9 @@ export async function checkAndAwardAchievements(workerId: string, jobId: string)
     return Number(review.rating ?? 0) >= 4.5 ? count + 1 : count
   }, 0)
 
-  const awardedAchievements = Array.isArray(userSnap.data()?.awardedAchievements)
-    ? (userSnap.data()?.awardedAchievements as string[])
+  const userData = userSnap.data()
+  const awardedAchievements = Array.isArray(userData?.awardedAchievements)
+    ? (userData.awardedAchievements as string[])
     : []
 
   const newlyEarned = getNewlyEarnedAchievements({
