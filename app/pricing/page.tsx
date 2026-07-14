@@ -42,7 +42,7 @@ const pricingFaqJsonLd = {
       name: "What's included in the Pro Worker subscription?",
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Pro Worker ($49 NZD/month) gives you a flat 8% commission rate on every job — down from the standard 18% starting rate. If you\'re doing 3+ jobs a month, Pro easily pays for itself. Elite Worker ($89/month) drops your rate to 6%.',
+        text: 'Pro Worker ($49 NZD/month) gives you a flat 8% commission rate on every job — down from the standard sliding scale. Elite Worker ($89/month) drops your rate to 6% and includes Featured Profile placement. Both tiers can still spend Boosts on a temporary extra commission discount stack when they want even more savings.',
       },
     },
   ],
@@ -74,4 +74,3 @@ export default function PricingPage() {
     </>
   )
 }
-

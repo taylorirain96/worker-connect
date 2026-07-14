@@ -18,7 +18,7 @@ import {
   updateDoc,
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
-import type { ActiveTrial, TrialType } from '@/types'
+import type { ActiveTrial, TrialType, UserProfile } from '@/types'
 import { notify } from '@/lib/notifications/service'
 
 // ─── Trial catalogue ──────────────────────────────────────────────────────────
@@ -38,6 +38,12 @@ export interface BoostMutationOptions {
   badgeId?: string
   achievementId?: string
   transactionId?: string
+}
+
+export interface TrialAvailability {
+  definition: TrialDefinition
+  available: boolean
+  reason?: string
 }
 
 export const TRIAL_DEFINITIONS: TrialDefinition[] = [
@@ -61,6 +67,13 @@ export const TRIAL_DEFINITIONS: TrialDefinition[] = [
     boostCost: 15,
     durationHours: 24,
     description: '24-hour trial of a flat 8% commission rate on completed jobs',
+  },
+  {
+    type: 'commission_discount_stack',
+    label: 'Extra 2% Commission Discount',
+    boostCost: 20,
+    durationHours: 24,
+    description: '24-hour trial of an extra 2% off your current commission rate',
   },
 ]
 
@@ -129,6 +142,51 @@ async function recordClientBoostTransaction(
   await addDoc(items, transactionData)
 }
 
+export function getTrialBlockReason(
+  profile: UserProfile | null | undefined,
+  type: TrialType
+): string | null {
+  const tier = profile?.workerSubscriptionTier ?? 'free'
+
+  if (type === 'featured_profile' && tier === 'elite') {
+    return 'Elite Worker already includes Featured Profile placement.'
+  }
+
+  if (type === 'commission_8pct') {
+    if (tier === 'elite') {
+      return 'Elite Worker already includes a better 6% commission rate.'
+    }
+
+    if (tier === 'pro') {
+      return 'Pro Worker already includes a flat 8% commission rate.'
+    }
+  }
+
+  return null
+}
+
+export function getTrialAvailability(
+  profile: UserProfile | null | undefined
+): TrialAvailability[] {
+  return TRIAL_DEFINITIONS.map((definition) => {
+    const reason = getTrialBlockReason(profile, definition.type)
+
+    return {
+      definition,
+      available: reason === null,
+      reason: reason ?? undefined,
+    }
+  })
+}
+
+export function getAvailableTrialDefinitions(
+  profile: UserProfile | null | undefined
+): TrialDefinition[] {
+  return getTrialAvailability(profile)
+    .filter((trial) => trial.available)
+    .map((trial) => trial.definition)
+}
+
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 /**
@@ -145,7 +203,7 @@ export function filterActiveTrials(trials: ActiveTrial[] | undefined): ActiveTri
  */
 export function hasActiveTrial(
   trials: ActiveTrial[] | undefined,
-  type: TrialType,
+  type: TrialType
 ): boolean {
   return filterActiveTrials(trials).some((t) => t.type === type)
 }
@@ -284,16 +342,10 @@ export async function spendBoosts(
  */
 export async function activateTrial(
   userId: string,
-  type: TrialType,
+  type: TrialType
 ): Promise<ActiveTrial> {
   const definition = TRIAL_DEFINITIONS.find((d) => d.type === type)
   if (!definition) throw new Error(`Unknown trial type: ${type}`)
-
-  await spendBoosts(userId, definition.boostCost, {
-    reason: `${definition.label} trial activated`,
-    source: 'trial',
-    transactionId: `trial-${type}-${Date.now()}`,
-  })
 
   const now = new Date()
   const expiresAt = new Date(now.getTime() + definition.durationHours * MILLISECONDS_PER_HOUR)
@@ -304,12 +356,47 @@ export async function activateTrial(
     expiresAt: expiresAt.toISOString(),
   }
 
-  if (!db) throw new Error('Firebase not configured')
-  const ref = doc(db, 'users', userId)
-  await updateDoc(ref, {
-    activeTrials: arrayUnion(trial),
-    updatedAt: serverTimestamp(),
-  })
+  const spendOptions: BoostMutationOptions = {
+    reason: `${definition.label} trial activated`,
+    source: 'trial',
+    transactionId: `trial-${type}-${Date.now()}`,
+  }
+
+  if (db) {
+    const ref = doc(db, 'users', userId)
+    const snap = await getDoc(ref)
+    if (!snap.exists()) throw new Error('Worker profile not found')
+
+    const profile = snap.data() as UserProfile
+    const unavailableReason = getTrialBlockReason(profile, type)
+    if (unavailableReason) throw new Error(unavailableReason)
+
+    await spendBoosts(userId, definition.boostCost, spendOptions)
+    await updateDoc(ref, {
+      activeTrials: arrayUnion(trial),
+      updatedAt: serverTimestamp(),
+    })
+
+    return trial
+  }
+
+  const adminHelpers = await getAdminBoostHelpers()
+  if (!adminHelpers?.adminDb) throw new Error('Firebase not configured')
+
+  const { adminDb, FieldValue } = adminHelpers
+  const userRef = adminDb.collection('users').doc(userId)
+  const userSnap = await userRef.get()
+  if (!userSnap.exists) throw new Error('Worker profile not found')
+
+  const profile = userSnap.data() as UserProfile
+  const unavailableReason = getTrialBlockReason(profile, type)
+  if (unavailableReason) throw new Error(unavailableReason)
+
+  await spendBoosts(userId, definition.boostCost, spendOptions)
+  await userRef.set({
+    activeTrials: FieldValue.arrayUnion(trial),
+    updatedAt: now.toISOString(),
+  }, { merge: true })
 
   return trial
 }

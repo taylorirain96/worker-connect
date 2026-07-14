@@ -1,7 +1,11 @@
 export type Country = 'NZ' | 'AU'
 
 /** Which Pro/Elite feature a worker can trial with Boosts */
-export type TrialType = 'early_job_alerts' | 'featured_profile' | 'commission_8pct'
+export type TrialType =
+  | 'early_job_alerts'
+  | 'featured_profile'
+  | 'commission_8pct'
+  | 'commission_discount_stack'
 
 /** A single active (or recently expired) trial stored on the worker's profile */
 export interface ActiveTrial {
