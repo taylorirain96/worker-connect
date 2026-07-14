@@ -13,6 +13,7 @@ import SubscriptionSelector from '@/components/payments/SubscriptionSelector'
 import toast from 'react-hot-toast'
 import { SUBSCRIPTION_PLANS } from '@/types/payment'
 import type { Subscription } from '@/types/payment'
+import type { BoostTransaction } from '@/types'
 import { cn } from '@/lib/utils'
 
 function fmtDate(iso: string) {
@@ -23,6 +24,8 @@ export default function WorkerSubscriptionPage() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const [subscription, setSubscription] = useState<Subscription | null>(null)
+  const [boosts, setBoosts] = useState(0)
+  const [boostHistory, setBoostHistory] = useState<BoostTransaction[]>([])
   const [loading, setLoading] = useState(true)
   const [cancelling, setCancelling] = useState(false)
 
@@ -38,6 +41,13 @@ export default function WorkerSubscriptionPage() {
       if (!res.ok) throw new Error('Failed to load subscription')
       const data = await res.json() as { subscription: Subscription | null }
       setSubscription(data.subscription)
+
+      const boostsRes = await fetch(`/api/boosts/balance?userId=${user.uid}`)
+      if (boostsRes.ok) {
+        const boostsData = await boostsRes.json() as { boosts: number; transactions: BoostTransaction[] }
+        setBoosts(boostsData.boosts)
+        setBoostHistory(boostsData.transactions)
+      }
     } catch {
       toast.error('Could not load subscription. Please try again.')
     } finally {
@@ -206,6 +216,48 @@ export default function WorkerSubscriptionPage() {
                   <Link href="/contact" className="text-indigo-600 hover:underline">contact support</Link>.
                 </p>
               )}
+
+              <Card>
+                <CardContent className="pt-5 space-y-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Boosts</h2>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Earn Boosts from achievements and leaderboard finishes.</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{boosts}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">available</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white mb-2">Recent Boost activity</p>
+                    {boostHistory.length === 0 ? (
+                      <p className="text-sm text-gray-500 dark:text-gray-400">No Boost activity yet.</p>
+                    ) : (
+                      <ul className="space-y-2">
+                        {boostHistory.map((transaction) => (
+                          <li
+                            key={transaction.id}
+                            className="flex items-start justify-between gap-4 rounded-lg border border-gray-100 dark:border-gray-800 px-3 py-2"
+                          >
+                            <div>
+                              <p className="text-sm text-gray-900 dark:text-white">{transaction.reason}</p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">{fmtDate(transaction.createdAt)}</p>
+                            </div>
+                            <span className={cn(
+                              'text-sm font-semibold',
+                              transaction.amount >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400',
+                            )}>
+                              {transaction.amount >= 0 ? '+' : ''}{transaction.amount}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
             </>
           )}
         </div>

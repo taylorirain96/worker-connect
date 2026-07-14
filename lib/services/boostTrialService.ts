@@ -7,12 +7,15 @@
  * Firestore profile document.
  */
 import {
+  addDoc,
+  arrayUnion,
+  collection,
   doc,
   getDoc,
-  updateDoc,
-  arrayUnion,
   increment,
   serverTimestamp,
+  setDoc,
+  updateDoc,
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import type { ActiveTrial, TrialType } from '@/types'
@@ -26,6 +29,15 @@ export interface TrialDefinition {
   boostCost: number
   durationHours: number
   description: string
+}
+
+export interface BoostMutationOptions {
+  reason?: string
+  source?: 'achievement' | 'leaderboard' | 'trial' | 'manual'
+  jobId?: string
+  badgeId?: string
+  achievementId?: string
+  transactionId?: string
 }
 
 export const TRIAL_DEFINITIONS: TrialDefinition[] = [
@@ -66,6 +78,57 @@ function getTrialLabel(type: TrialType): string {
   return TRIAL_DEFINITIONS.find((d) => d.type === type)?.label ?? type
 }
 
+function buildBoostTransactionData(
+  userId: string,
+  amount: number,
+  type: 'award' | 'spend',
+  opts: BoostMutationOptions,
+  createdAt: string,
+) {
+  return {
+    userId,
+    amount,
+    type,
+    reason: opts.reason ?? (type === 'award' ? 'Boosts awarded' : 'Boosts spent'),
+    createdAt,
+    ...(opts.jobId ? { jobId: opts.jobId } : {}),
+    ...(opts.badgeId ? { badgeId: opts.badgeId } : {}),
+    ...(opts.achievementId ? { achievementId: opts.achievementId } : {}),
+    ...(opts.source ? { source: opts.source } : {}),
+  }
+}
+
+async function getAdminBoostHelpers() {
+  if (typeof window !== 'undefined') return null
+
+  const [{ adminDb }, { FieldValue }] = await Promise.all([
+    import('@/lib/firebase-admin'),
+    import('firebase-admin/firestore'),
+  ])
+
+  return { adminDb, FieldValue }
+}
+
+async function recordClientBoostTransaction(
+  userId: string,
+  amount: number,
+  type: 'award' | 'spend',
+  opts: BoostMutationOptions,
+  createdAt: string,
+) {
+  if (!db) return
+
+  const transactionData = buildBoostTransactionData(userId, amount, type, opts, createdAt)
+  const items = collection(doc(db, 'boostTransactions', userId), 'items')
+
+  if (opts.transactionId) {
+    await setDoc(doc(items, opts.transactionId), transactionData, { merge: true })
+    return
+  }
+
+  await addDoc(items, transactionData)
+}
+
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 /**
@@ -82,20 +145,69 @@ export function filterActiveTrials(trials: ActiveTrial[] | undefined): ActiveTri
  */
 export function hasActiveTrial(
   trials: ActiveTrial[] | undefined,
-  type: TrialType
+  type: TrialType,
 ): boolean {
   return filterActiveTrials(trials).some((t) => t.type === type)
 }
 
 /**
  * Awards the given number of Boosts to a worker's profile.
+ * Returns true when the award was applied, false when an idempotency guard skipped it.
  */
-export async function awardBoosts(userId: string, amount: number): Promise<void> {
-  if (!db) return
-  const ref = doc(db, 'users', userId)
-  await updateDoc(ref, {
-    boosts: increment(amount),
-    updatedAt: serverTimestamp(),
+export async function awardBoosts(
+  userId: string,
+  amount: number,
+  opts: BoostMutationOptions = {},
+): Promise<boolean> {
+  if (amount <= 0) return false
+
+  const createdAt = new Date().toISOString()
+
+  if (db) {
+    const ref = doc(db, 'users', userId)
+    const payload: Record<string, unknown> = {
+      boosts: increment(amount),
+      updatedAt: serverTimestamp(),
+    }
+
+    if (opts.achievementId) {
+      payload.awardedAchievements = arrayUnion(opts.achievementId)
+    }
+
+    await updateDoc(ref, payload)
+    await recordClientBoostTransaction(userId, amount, 'award', opts, createdAt)
+    return true
+  }
+
+  const adminHelpers = await getAdminBoostHelpers()
+  if (!adminHelpers?.adminDb) return false
+
+  const { adminDb, FieldValue } = adminHelpers
+  const userRef = adminDb.collection('users').doc(userId)
+  const txRef = opts.transactionId
+    ? adminDb.collection('boostTransactions').doc(userId).collection('items').doc(opts.transactionId)
+    : adminDb.collection('boostTransactions').doc(userId).collection('items').doc()
+
+  return adminDb.runTransaction(async (tx) => {
+    const userSnap = await tx.get(userRef)
+    const currentAchievements = Array.isArray(userSnap.data()?.awardedAchievements)
+      ? userSnap.data()?.awardedAchievements as string[]
+      : []
+
+    if (opts.achievementId && currentAchievements.includes(opts.achievementId)) {
+      return false
+    }
+
+    tx.set(userRef, {
+      boosts: FieldValue.increment(amount),
+      updatedAt: createdAt,
+      ...(opts.achievementId
+        ? { awardedAchievements: [...currentAchievements, opts.achievementId] }
+        : {}),
+    }, { merge: true })
+
+    tx.set(txRef, buildBoostTransactionData(userId, amount, 'award', opts, createdAt))
+    return true
   })
 }
 
@@ -103,18 +215,61 @@ export async function awardBoosts(userId: string, amount: number): Promise<void>
  * Deducts the given number of Boosts from a worker's profile.
  * Throws if the worker has insufficient balance.
  */
-export async function spendBoosts(userId: string, amount: number): Promise<void> {
-  if (!db) throw new Error('Firebase not configured')
-  const ref = doc(db, 'users', userId)
-  const snap = await getDoc(ref)
-  if (!snap.exists()) throw new Error('Worker profile not found')
-  const currentBoosts: number = snap.data().boosts ?? 0
-  if (currentBoosts < amount) {
-    throw new Error(`Insufficient Boosts: have ${currentBoosts}, need ${amount}`)
+export async function spendBoosts(
+  userId: string,
+  amount: number,
+  opts: BoostMutationOptions = {},
+): Promise<void> {
+  if (amount <= 0) return
+
+  const createdAt = new Date().toISOString()
+  const spendOptions: BoostMutationOptions = {
+    reason: opts.reason ?? 'Boosts spent on a feature trial',
+    source: opts.source ?? 'trial',
+    ...opts,
   }
-  await updateDoc(ref, {
-    boosts: increment(-amount),
-    updatedAt: serverTimestamp(),
+
+  if (db) {
+    const ref = doc(db, 'users', userId)
+    const snap = await getDoc(ref)
+    if (!snap.exists()) throw new Error('Worker profile not found')
+
+    const currentBoosts: number = snap.data().boosts ?? 0
+    if (currentBoosts < amount) {
+      throw new Error(`Insufficient Boosts: have ${currentBoosts}, need ${amount}`)
+    }
+
+    await updateDoc(ref, {
+      boosts: increment(-amount),
+      updatedAt: serverTimestamp(),
+    })
+    await recordClientBoostTransaction(userId, -amount, 'spend', spendOptions, createdAt)
+    return
+  }
+
+  const adminHelpers = await getAdminBoostHelpers()
+  if (!adminHelpers?.adminDb) throw new Error('Firebase not configured')
+
+  const { adminDb, FieldValue } = adminHelpers
+  const userRef = adminDb.collection('users').doc(userId)
+  const txRef = spendOptions.transactionId
+    ? adminDb.collection('boostTransactions').doc(userId).collection('items').doc(spendOptions.transactionId)
+    : adminDb.collection('boostTransactions').doc(userId).collection('items').doc()
+
+  await adminDb.runTransaction(async (tx) => {
+    const userSnap = await tx.get(userRef)
+    if (!userSnap.exists) throw new Error('Worker profile not found')
+
+    const currentBoosts: number = userSnap.data()?.boosts ?? 0
+    if (currentBoosts < amount) {
+      throw new Error(`Insufficient Boosts: have ${currentBoosts}, need ${amount}`)
+    }
+
+    tx.set(userRef, {
+      boosts: FieldValue.increment(-amount),
+      updatedAt: createdAt,
+    }, { merge: true })
+    tx.set(txRef, buildBoostTransactionData(userId, -amount, 'spend', spendOptions, createdAt))
   })
 }
 
@@ -127,12 +282,16 @@ export async function spendBoosts(userId: string, amount: number): Promise<void>
  */
 export async function activateTrial(
   userId: string,
-  type: TrialType
+  type: TrialType,
 ): Promise<ActiveTrial> {
   const definition = TRIAL_DEFINITIONS.find((d) => d.type === type)
   if (!definition) throw new Error(`Unknown trial type: ${type}`)
 
-  await spendBoosts(userId, definition.boostCost)
+  await spendBoosts(userId, definition.boostCost, {
+    reason: `${definition.label} trial activated`,
+    source: 'trial',
+    transactionId: `trial-${type}-${Date.now()}`,
+  })
 
   const now = new Date()
   const expiresAt = new Date(now.getTime() + definition.durationHours * MILLISECONDS_PER_HOUR)

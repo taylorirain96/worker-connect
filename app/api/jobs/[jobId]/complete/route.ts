@@ -21,6 +21,7 @@ import {
 import { sendSMS as sendTwilioSMS } from '@/lib/sms'
 import { buildSMSMessage } from '@/lib/notifications/sms'
 import { getCurrencyDisplay } from '@/lib/services/escrowService'
+import { checkAndAwardAchievements } from '@/lib/services/achievementService'
 
 export const dynamic = 'force-dynamic'
 
@@ -218,6 +219,10 @@ export async function POST(request: NextRequest, props: { params: Promise<{ jobI
         metadata: { jobId, completedAt, ...(workerAmount !== undefined ? { workerAmount } : {}) },
         actionUrl: `/jobs/${jobId}`,
       })
+
+      if (escrowReleased) {
+        await checkAndAwardAchievements(workerIdToNotify, jobId)
+      }
     }
 
     // ── Notify homeowner ─────────────────────────────────────────────────────

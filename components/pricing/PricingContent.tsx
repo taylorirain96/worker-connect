@@ -15,8 +15,15 @@ import {
   Trophy,
   Building2,
 } from 'lucide-react'
+import { ACHIEVEMENT_BADGES, LEADERBOARD_PRIZES } from '@/lib/gamification/rewards'
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
+
+const PRICING_ACHIEVEMENT_BADGES = [
+  ...ACHIEVEMENT_BADGES,
+  { badge: '🔥 Loyal', how: '30 day login streak', reward: '+3 Boosts' },
+  { badge: '✅ Placed', how: 'Successfully hired through QuickTrade', reward: '"Placed by QuickTrade" badge' },
+]
 
 const HOW_IT_WORKS = [
   { step: '1', title: 'Post FREE', desc: 'Post your job in minutes. No credit card, no fees.' },
@@ -107,23 +114,6 @@ const TRIAL_ADDONS = [
   { feature: 'Early Job Alerts (30 min head start)', cost: '20 Boosts', duration: '24-hour trial' },
   { feature: 'Featured Profile placement', cost: '30 Boosts', duration: '48-hour trial' },
   { feature: 'Flat 8% commission rate', cost: '15 Boosts', duration: '24-hour trial' },
-]
-
-const LEADERBOARD_PRIZES = [
-  { rank: '🥇 #1 Worker of the Month', prize: '+25 Boosts' },
-  { rank: '🥈 #2', prize: '+15 Boosts' },
-  { rank: '🥉 #3', prize: '+10 Boosts' },
-]
-
-const ACHIEVEMENT_BADGES = [
-  { badge: '💎 High Value', how: 'Complete a $5,000+ job', reward: '+5 Boosts' },
-  { badge: '🔄 Consistent', how: '1 job every 30 days for 3 months', reward: '+5 Boosts' },
-  { badge: '⭐ Trusted', how: '5 jobs all rated 4.5+ stars', reward: '+5 Boosts + free verified badge' },
-  { badge: '💰 Big Earner', how: 'Earn $5,000 in a month', reward: '+20 Boosts (enough for a 24-hour 8% commission trial)' },
-  { badge: '🎯 10 Jobs', how: 'Complete 10 jobs', reward: '+5 Boosts' },
-  { badge: '💼 50 Jobs', how: 'Complete 50 jobs', reward: '+20 Boosts' },
-  { badge: '🔥 Loyal', how: '30 day login streak', reward: '+3 Boosts' },
-  { badge: '✅ Placed', how: 'Successfully hired through QuickTrade', reward: '"Placed by QuickTrade" badge' },
 ]
 
 const FAQS = [
@@ -513,7 +503,7 @@ export default function PricingContent() {
               <div className="grid grid-cols-3 gap-4">
                 {LEADERBOARD_PRIZES.map((prize) => (
                   <div key={prize.rank} className="text-center">
-                    <p className="text-xl font-bold text-white">{prize.rank}</p>
+                    <p className="text-xl font-bold text-white">{prize.label}</p>
                     <p className="text-yellow-300 font-semibold mt-1">{prize.prize}</p>
                   </div>
                 ))}
@@ -536,7 +526,7 @@ export default function PricingContent() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-700/30">
-                    {ACHIEVEMENT_BADGES.map((row) => (
+                    {PRICING_ACHIEVEMENT_BADGES.map((row) => (
                       <tr key={row.badge} className="hover:bg-slate-800/30 transition-colors">
                         <td className="py-3.5 px-6 text-white font-medium">{row.badge}</td>
                         <td className="py-3.5 px-4 text-slate-400">{row.how}</td>

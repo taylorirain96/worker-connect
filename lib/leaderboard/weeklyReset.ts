@@ -11,6 +11,8 @@ import {
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { awardBadge, awardPoints } from '@/lib/services/gamificationService'
+import { LEADERBOARD_PRIZES } from '@/lib/gamification/rewards'
+import { awardBoosts } from '@/lib/services/boostTrialService'
 import {
   getWeekId,
   assignRanks,
@@ -51,7 +53,20 @@ export async function runWeeklyReset(): Promise<{ success: boolean; message: str
         const bonus = getBonusForRank(entry.rank)
         if (!bonus) continue
         await awardPoints(entry.userId, bonus.bonusPoints, `Weekly leaderboard #${entry.rank} bonus — week ${weekId}`)
-        await awardBadge(entry.userId, bonus.badgeId)
+
+        if (category === 'all') {
+          const prize = LEADERBOARD_PRIZES.find((item) => item.rank === entry.rank)
+          if (prize) {
+            await awardBoosts(entry.userId, prize.boostReward, {
+              reason: `Weekly leaderboard #${entry.rank} reward — week ${weekId}`,
+              source: 'leaderboard',
+              badgeId: prize.badgeId,
+              transactionId: `weekly-${weekId}-${entry.rank}`,
+            })
+          }
+
+          await awardBadge(entry.userId, bonus.badgeId)
+        }
       }
     }
 

@@ -111,8 +111,25 @@ export interface UserProfile {
   quoteFeeAmount?: number
   /** Boost balance — earned via achievements/leaderboard, spent on add-ons and trials */
   boosts?: number
+  /** One-off achievements that have already granted a badge/boost reward */
+  awardedAchievements?: string[]
   /** Currently active (or recently activated) feature trials */
   activeTrials?: ActiveTrial[]
+}
+
+export type BoostTransactionType = 'award' | 'spend'
+
+export interface BoostTransaction {
+  id: string
+  userId: string
+  amount: number
+  type: BoostTransactionType
+  reason: string
+  createdAt: string
+  jobId?: string
+  badgeId?: string
+  achievementId?: string
+  source?: 'achievement' | 'leaderboard' | 'trial' | 'manual'
 }
 
 export interface UserStats {
